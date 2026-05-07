@@ -168,6 +168,13 @@ echo [!] Iniciando configuracion completa...
 if not exist ".env" (
     echo [!] Archivo .env no encontrado. Creando desde ejemplo...
     copy .env.example .env
+    echo.
+    set /p USER_PORT=">> [?] En que puerto quieres correr el bot? (Presiona Enter para usar 8000): "
+    if "!USER_PORT!"=="" set USER_PORT=8000
+    
+    echo [!] Configurando puerto !USER_PORT!...
+    powershell -Command "(Get-Content .env) -replace 'PORT=8000', 'PORT=!USER_PORT!' | Set-Content .env"
+    powershell -Command "(Get-Content .env) -replace 'localhost:8000', 'localhost:!USER_PORT!' | Set-Content .env"
 )
 call npm install
 echo ✅ Instalacion finalizada.

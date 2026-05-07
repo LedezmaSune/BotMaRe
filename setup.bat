@@ -38,8 +38,19 @@ echo [2/3] Configurando archivo de entorno (.env)...
 if not exist ".env" (
     echo Creando archivo .env desde plantilla...
     copy ".env.example" ".env"
+    
     echo.
-    echo [!] IMPORTANTE: Se ha creado tu archivo .env
+    set /p USER_PORT=">> [?] En que puerto quieres correr el bot? (Presiona Enter para usar 8000): "
+    if "!USER_PORT!"=="" set USER_PORT=8000
+
+    echo [!] Configurando puerto !USER_PORT! en el sistema...
+    
+    :: Usamos PowerShell para editar el archivo de forma segura
+    powershell -Command "(Get-Content .env) -replace 'PORT=8000', 'PORT=!USER_PORT!' | Set-Content .env"
+    powershell -Command "(Get-Content .env) -replace 'localhost:8000', 'localhost:!USER_PORT!' | Set-Content .env"
+
+    echo.
+    echo [!] IMPORTANTE: Se ha creado tu archivo .env con el puerto !USER_PORT!
     echo     EDÍTALO y pon tus API Keys de IA antes de iniciar.
 ) else (
     echo El archivo .env ya existe, respetando configuracion actual.
