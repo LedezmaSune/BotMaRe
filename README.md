@@ -61,18 +61,28 @@ npm start
 
 ---
 
+## 🛡️ Seguridad y Buenas Prácticas
+Para mantener tu sistema seguro y evitar filtraciones a GitHub:
+
+1. **Nunca subas el archivo `.env`**: Este archivo contiene tus llaves privadas. Ya está en el `.gitignore`, pero asegúrate de no forzar su subida.
+2. **Usa credenciales seguras**: Cambia `DASHBOARD_PASS` en tu `.env` inmediatamente.
+3. **Logs Limpios**: El sistema está configurado para no mostrar llaves en los logs, pero siempre revisa antes de compartir capturas de pantalla.
+4. **Actualizaciones**: Usa la opción `U` en el `manager.bat` para mantener el sistema al día con parches de seguridad.
+
+---
+
 ## 🛠️ Estructura del Proyecto (Monolito)
 ```
 BotMaRe/
 ├── src/
-│   ├── core/             # Cerebro del sistema (IA, Memoria, Config)
-│   ├── infrastructure/   # Conectividad (WhatsApp, Telegram, Túneles)
-│   ├── modules/          # Lógica de Negocio (Mensajes, IA, Calendario)
-│   ├── routes/           # Endpoints de la API
-│   └── server.ts         # Punto de entrada unificado
-├── out/                  # Interfaz compilada (Static Export)
-├── data/                 # Base de datos SQLite y Sesiones (Ignorado en Git)
-└── .env                  # Configuración privada
+│   ├── core/             # Cerebro (Bot.ts, System, Router)
+│   ├── infrastructure/   # Conexiones (WhatsApp, Telegram)
+│   ├── modules/          # Funcionalidades (IA, Mensajes, Reminders)
+│   ├── routes/           # API Endpoints
+│   └── server.ts         # Punto de entrada unificado (Express + Socket.io)
+├── out/                  # Interfaz estática (Generada con npm run build)
+├── data/                 # Bases de datos y archivos locales (Ignorado)
+└── manager.bat           # Panel de control Maestro (Recomendado)
 ```
 
 ---
@@ -90,13 +100,13 @@ BotMaRe intenta conectar en este orden (Failover automático):
 ## ❓ Preguntas Frecuentes
 
 **¿Por qué la pantalla se queda en blanco?**
-Asegúrate de haber ejecutado `npm run build` al menos una vez para generar la carpeta `out/`. El modo `npm start` sirve estos archivos estáticos.
+Asegúrate de haber ejecutado la opción **9** en el `manager.bat` o `npm run build`. Esto genera la carpeta `out/` que el servidor necesita para mostrar el Dashboard.
 
 **¿Cómo cambio el puerto?**
 Edita la variable `PORT` en tu archivo `.env`. Por defecto es el **8000**.
 
-**¿Cómo resetear la sesión de WhatsApp?**
-Borra el archivo `data/whatsapp_auth.db` y reinicia el bot para escanear un nuevo código QR.
+**¿Es seguro usarlo en un VPS?**
+Sí, pero se recomienda usar un túnel (Opción **T** en manager) o configurar un Proxy Inverso (Nginx) con SSL para proteger el tráfico.
 
 ---
 

@@ -58,7 +58,7 @@ export class Bot {
      */
     async start() {
         console.log('[Bot] Motor modular inicializado. Conectando a WhatsApp...');
-        await this.client.connect();
+        void this.client.connect();
     }
 
     /**

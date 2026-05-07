@@ -70,6 +70,14 @@ if (process.env.NODE_ENV === 'development' && !isPkg) {
     app.use(express.static(frontendPath));
     app.get(/.*/, (req: any, res: any) => {
         if (!req.path.startsWith('/api')) {
+            // Soporte para deep-linking en export estático de Next.js
+            const potentialHtmlPath = path.join(frontendPath, req.path === '/' ? 'index.html' : `${req.path}.html`);
+            
+            if (fs.existsSync(potentialHtmlPath)) {
+                return res.sendFile(potentialHtmlPath);
+            }
+
+            // Fallback a index.html para rutas no encontradas (SPA mode)
             const indexPath = path.join(frontendPath, 'index.html');
             if (fs.existsSync(indexPath)) {
                 res.sendFile(indexPath);

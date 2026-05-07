@@ -6,28 +6,35 @@ color 0b
 :MENU
 cls
 :: --- AUTODIAGNOSTICO ---
-set "MISSING="
-if not exist "node_modules" set "MISSING=1"
-if not exist ".env" set "MISSING=1"
-if not exist "src\server.ts" set "MISSING=1"
+set "MISSING_ENV="
+if not exist ".env" set "MISSING_ENV=1"
+
+set "MISSING_DEPS="
+if not exist "node_modules" set "MISSING_DEPS=1"
+
+set "MISSING_OUT="
+if not exist "out\index.html" set "MISSING_OUT=1"
 
 echo ========================================================
 echo          🦊 BOTMARE - UNIFICADO DASHBOARD 🦊
 echo ========================================================
-if defined MISSING (
+if defined MISSING_ENV (
     color 0e
-    echo.
-    echo  [!] ATENCION: El sistema no esta configurado aun.
-    echo      Se recomienda elegir la OPCION 8 para comenzar.
-    echo  --------------------------------------------------------
-) else (
-    color 0b
+    echo  [!] ALERTA: Falta archivo .env ^(Configuracion^)
+)
+if defined MISSING_DEPS (
+    color 0e
+    echo  [!] ALERTA: Faltan dependencias ^(Ejecuta opcion 8^)
+)
+if defined MISSING_OUT (
+    color 0c
+    echo  [!] ALERTA: Interfaz no compilada ^(Ejecuta opcion 9^)
 )
 echo.
 echo  [ 1 ] EJECUCION DEL SISTEMA
 echo  --------------------------------------------------------
 echo  1. MODO DESARROLLO (Recarga en vivo)
-echo  2. MODO PRODUCCION (Iniciar con PM2 - Segundo Plano)
+echo  2. MODO PRODUCCION (Iniciar con PM2)
 echo  3. DETENER TODO (Stop PM2)
 echo  4. VER LOGS EN TIEMPO REAL
 echo.
@@ -40,7 +47,7 @@ echo.
 echo  [ 3 ] HERRAMIENTAS Y BUILD
 echo  --------------------------------------------------------
 echo  8. INSTALAR / REPARAR (Setup Completo)
-echo  9. COMPILAR FRONTEND (Genera carpeta out)
+echo  9. COMPILAR FRONTEND (Generar carpeta out)
 echo  U. ACTUALIZAR (Git Pull + Install)
 echo.
 echo  [ 4 ] ACCESO RAPIDO
@@ -81,8 +88,15 @@ goto MENU
 :PROD_MODE
 cls
 echo [!] Iniciando en Modo Produccion (PM2)...
-echo [!] Compilando Interfaz Estatica...
-call npm run build
+if defined MISSING_OUT (
+    echo [!] Detectado: Interfaz no compilada. Compilando ahora...
+    call npm run build
+) else (
+    echo [?] ¿Deseas recompilar la interfaz antes de iniciar? (S/N)
+    set /p rebuild=">> "
+    if /i "!rebuild!"=="S" call npm run build
+)
+
 echo [!] Iniciando en PM2...
 call npx pm2 delete BotMaRe-Unified >nul 2>&1
 call npx pm2 start "npx tsx src/server.ts" --name BotMaRe-Unified
@@ -151,6 +165,10 @@ goto MENU
 :RUN_SETUP
 cls
 echo [!] Iniciando configuracion completa...
+if not exist ".env" (
+    echo [!] Archivo .env no encontrado. Creando desde ejemplo...
+    copy .env.example .env
+)
 call npm install
 echo ✅ Instalacion finalizada.
 pause

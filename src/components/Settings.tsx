@@ -179,13 +179,16 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onUpdate, onParseE
                             <input type="file" className="hidden" onChange={handleFileUpload} accept=".env,text/plain" />
                         </label>
 
-                        <button 
-                            onClick={handleDownloadBackup}
-                            className="flex items-center gap-2 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 px-6 py-3 rounded-2xl font-bold text-sm border border-indigo-500/30 transition-all active:scale-95"
-                        >
-                            <Download size={18} />
-                            Generar Respaldo
-                        </button>
+                        <div className="flex flex-col gap-2">
+                            <button 
+                                onClick={handleDownloadBackup}
+                                className="flex items-center gap-2 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 px-6 py-3 rounded-2xl font-bold text-sm border border-indigo-500/30 transition-all active:scale-95"
+                            >
+                                <Download size={18} />
+                                Generar Respaldo (en partes)
+                            </button>
+                            <span className="text-[10px] text-indigo-400/50 px-2">Sistema y Multimedia por separado</span>
+                        </div>
 
                         <label className="flex items-center gap-2 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 px-6 py-3 rounded-2xl font-bold text-sm border border-emerald-500/30 transition-all active:scale-95 cursor-pointer">
                             <RefreshCw size={18} />

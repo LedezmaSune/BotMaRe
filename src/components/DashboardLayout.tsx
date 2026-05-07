@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2 } from 'lucide-react';
 
 import { ConnectionOverlay } from '@/components/ConnectionOverlay';
 import { ThemeToggle, UpdateChecker, AIToggle } from '@/components/StatusHeader';
+import { PageTransition } from '@/components/PageTransition';
 import { siteConfig } from '@/config';
 import { useGlobalBotData } from '@/app/BotDataProvider';
 import { TabId } from '@/hooks/useBotData';
@@ -24,13 +26,20 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     const { status, qr, settings, handleCleanUploads, setActiveTab } = useGlobalBotData();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const pathname = usePathname();
-    const router = useRouter();
-
-    const handleNavigation = (path: string, id: TabId) => {
+    const handleTabChange = (id: TabId) => {
         setActiveTab(id);
         setIsMenuOpen(false);
-        router.push(path);
     };
+
+    // Sincronizar el estado del Tab con la URL al cargar o cambiar de ruta
+    useEffect(() => {
+        const currentRoute = routes.find(r => 
+            pathname === r.path || (pathname.startsWith(r.path) && r.path !== '/')
+        );
+        if (currentRoute) {
+            setActiveTab(currentRoute.id);
+        }
+    }, [pathname, setActiveTab]);
 
     return (
         <div className="min-h-screen bg-background text-foreground font-sans selection:bg-cyan-500/30 transition-colors duration-300">
@@ -111,9 +120,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                         {routes.map((route) => {
                             const isActive = pathname === route.path || (pathname.startsWith(route.path) && route.path !== '/');
                             return (
-                                <button
+                                <Link
                                     key={route.path}
-                                    onClick={() => handleNavigation(route.path, route.id)}
+                                    href={route.path}
+                                    onClick={() => handleTabChange(route.id)}
                                     className={`flex items-center gap-4 w-full px-5 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 relative group overflow-hidden ${
                                         isActive
                                             ? 'text-white shadow-xl shadow-cyan-500/20 scale-[1.02]'
@@ -127,7 +137,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                                         <route.icon size={18} strokeWidth={isActive ? 2.5 : 2} />
                                         <span>{route.label}</span>
                                     </div>
-                                </button>
+                                </Link>
                             );
                         })}
                     </div>
@@ -140,9 +150,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
             {/* --- CONTENIDO PRINCIPAL --- */}
             <main className="relative z-10 pt-24 pb-4 px-4 sm:pt-28 sm:pb-8 sm:px-8 md:pt-32 md:pb-12 md:px-12 max-w-[1400px] mx-auto w-full min-h-screen flex flex-col">
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 flex-1">
+                <PageTransition>
                     {children}
-                </div>
+                </PageTransition>
 
                 {/* Footer / Status Bar */}
                 <footer className="mt-20 py-10 border-t border-app-border mt-auto">

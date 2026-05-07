@@ -1,10 +1,10 @@
 @echo off
 setlocal enabledelayedexpansion
-title BotMaRe - Instalador Maestro
+title BotMaRe - Unificado Setup
 color 0b
 
 echo ========================================================
-echo   🦊 INICIANDO INSTALACION AUTOMATICA DE BOTMARE 🦊
+echo          🦊 BOTMARE - INSTALADOR MAESTRO 🦊
 echo ========================================================
 echo.
 
@@ -15,10 +15,8 @@ if %errorlevel% neq 0 (
     echo ❌ [ERROR] Node.js no esta instalado.
     echo.
     echo BotMaRe necesita Node.js para funcionar. 
-    echo Voy a abrir la pagina de descarga por ti...
-    start https://nodejs.org/
+    echo Descargalo en: https://nodejs.org/
     echo.
-    echo Una vez instalado, reinicia este script.
     pause
     exit /b
 )
@@ -28,8 +26,8 @@ echo [1/3] Instalando dependencias del sistema...
 call npm install
 if %errorlevel% neq 0 (
     echo.
-    echo ❌ [ERROR] Hubo un problema al instalar las dependencias.
-    echo Intente ejecutar 'npm install' manualmente.
+    echo ❌ [ERROR] Error al instalar dependencias.
+    echo Revisa tu conexion a internet o permisos.
     pause
     exit /b
 )
@@ -38,25 +36,26 @@ if %errorlevel% neq 0 (
 echo [2/3] Configurando archivo de entorno (.env)...
 
 if not exist ".env" (
-    echo Creando archivo .env desde el ejemplo...
+    echo Creando archivo .env desde plantilla...
     copy ".env.example" ".env"
     echo.
-    echo [!] IMPORTANTE: Se ha creado un archivo .env
-    echo     Por favor, abrelo y pon tus API Keys.
+    echo [!] IMPORTANTE: Se ha creado tu archivo .env
+    echo     EDÍTALO y pon tus API Keys de IA antes de iniciar.
 ) else (
-    echo El archivo .env ya existe, saltando...
+    echo El archivo .env ya existe, respetando configuracion actual.
 )
 
 :: 4. Finalización
-echo [3/3] Finalizando instalacion...
+echo [3/3] Preparando el sistema para el primer arranque...
 echo.
 echo ========================================================
 echo ✅ INSTALACION COMPLETADA CON EXITO
 echo ========================================================
 echo.
-echo 📝 PROXIMOS PASOS:
-echo 1. Abre el archivo .env y pon tus llaves de IA (DeepSeek, etc.)
-echo 2. Ejecuta 'npm start' o usa el 'manager.bat' para iniciar.
+echo 📝 SIGUIENTES PASOS:
+echo 1. Abre el archivo .env y configura tus llaves de IA.
+echo 2. Ejecuta 'manager.bat' y elige la opcion 9 para compilar.
+echo 3. Inicia el sistema con la opcion 1 o 2 del manager.
 echo ========================================================
 echo.
 pause

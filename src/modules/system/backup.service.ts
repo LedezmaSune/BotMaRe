@@ -24,81 +24,120 @@ function encryptFile(inputPath: string, outputPath: string) {
 }
 
 function decryptFile(inputPath: string, outputPath: string) {
-    const input = fs.readFileSync(inputPath);
-    const initVector = input.subarray(0, 16);
-    const encryptedData = input.subarray(16);
-    const key = getEncryptionKey();
-    const decipher = crypto.createDecipheriv(ENCRYPTION_ALGORITHM, key, initVector);
-    const decrypted = Buffer.concat([decipher.update(encryptedData), decipher.final()]);
-    fs.writeFileSync(outputPath, decrypted);
+    try {
+        const input = fs.readFileSync(inputPath);
+        const initVector = input.subarray(0, 16);
+        const encryptedData = input.subarray(16);
+        const key = getEncryptionKey();
+        const decipher = crypto.createDecipheriv(ENCRYPTION_ALGORITHM, key, initVector);
+        const decrypted = Buffer.concat([decipher.update(encryptedData), decipher.final()]);
+        fs.writeFileSync(outputPath, decrypted);
+    } catch (error) {
+        console.error('❌ Error al desencriptar archivo:', error);
+        throw new Error('La contraseña de desencriptado es incorrecta o el archivo está corrupto.');
+    }
 }
 
 export class BackupService {
     private static backupDir = path.join(process.cwd(), 'backups');
 
     /**
-     * Crea un archivo ZIP con la base de datos y configuraciones
+     * Crea archivos ZIP con el respaldo dividido en partes (Core y Multimedia)
      */
-    static async createBackup(sendToTelegram: boolean = false): Promise<string> {
+    static async createBackup(sendToTelegram: boolean = false): Promise<string[]> {
         if (!fs.existsSync(this.backupDir)) {
             fs.mkdirSync(this.backupDir, { recursive: true });
         }
 
-        const zip = new AdmZip();
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-        const filename = `backup-botmare-${timestamp}.zip.enc`;
-        const filePath = path.join(this.backupDir, filename);
-        const tempZipPath = path.join(this.backupDir, `temp-${timestamp}.zip`);
+        const backupPaths: string[] = [];
 
-        // 1. Incluir carpeta data (DB, WhatsApp Session, Uploads)
-        const dataPath = path.join(process.cwd(), 'data');
-        if (fs.existsSync(dataPath)) {
-            zip.addLocalFolder(dataPath, 'data');
+        // --- PARTE 1: CORE (Base de datos, Sesiones, Configuración) ---
+        const coreZip = new AdmZip();
+        
+        // 1. Incluir Base de Datos
+        const dbFile = path.join(process.cwd(), 'data', 'database.db');
+        if (fs.existsSync(dbFile)) coreZip.addLocalFile(dbFile, 'data');
+        
+        const authDbFile = path.join(process.cwd(), 'data', 'whatsapp_auth.db');
+        if (fs.existsSync(authDbFile)) coreZip.addLocalFile(authDbFile, 'data');
+
+        // 2. Incluir Sesión de WhatsApp (Baileys)
+        const authDir = path.join(process.cwd(), 'auth_info_baileys');
+        if (fs.existsSync(authDir)) {
+            coreZip.addLocalFolder(authDir, 'auth_info_baileys');
         }
 
-        // 2. Incluir archivo .env
+        // 3. Incluir archivo .env
         const envPath = path.join(process.cwd(), '.env');
         if (fs.existsSync(envPath)) {
-            zip.addLocalFile(envPath);
+            coreZip.addLocalFile(envPath);
         }
 
-        // Guardar temporalmente y cifrar
-        zip.writeZip(tempZipPath);
-        encryptFile(tempZipPath, filePath);
-        fs.unlinkSync(tempZipPath);
+        const coreFilename = `backup-P1-SISTEMA-${timestamp}.zip.enc`;
+        const coreFilePath = path.join(this.backupDir, coreFilename);
+        const tempCoreZip = path.join(this.backupDir, `temp-core-${timestamp}.zip`);
+        
+        coreZip.writeZip(tempCoreZip);
+        encryptFile(tempCoreZip, coreFilePath);
+        fs.unlinkSync(tempCoreZip);
+        backupPaths.push(coreFilePath);
+
+        // --- PARTE 2: MULTIMEDIA (Uploads) ---
+        const uploadsDir = path.join(process.cwd(), 'data', 'uploads');
+        if (fs.existsSync(uploadsDir) && fs.readdirSync(uploadsDir).length > 0) {
+            const mediaZip = new AdmZip();
+            mediaZip.addLocalFolder(uploadsDir, 'data/uploads');
+
+            const mediaFilename = `backup-P2-MEDIA-${timestamp}.zip.enc`;
+            const mediaFilePath = path.join(this.backupDir, mediaFilename);
+            const tempMediaZip = path.join(this.backupDir, `temp-media-${timestamp}.zip`);
+
+            mediaZip.writeZip(tempMediaZip);
+            encryptFile(tempMediaZip, mediaFilePath);
+            fs.unlinkSync(tempMediaZip);
+            backupPaths.push(mediaFilePath);
+        }
 
         if (sendToTelegram) {
-            await this.sendBackupToTelegram(filePath, 'Manual');
+            await this.sendBackupToTelegram(backupPaths, 'Manual');
         }
 
-        // Limpiar respaldos antiguos después de crear uno nuevo
+        // Limpiar respaldos antiguos
         this.cleanOldBackups();
         this.cleanOldUploads(3);
 
-        return filePath;
+        return backupPaths;
     }
 
     /**
-     * Envía un archivo de respaldo a todos los administradores configurados
+     * Envía uno o varios archivos de respaldo a todos los administradores
      */
-    static async sendBackupToTelegram(filePath: string, type: 'Manual' | 'Automático') {
+    static async sendBackupToTelegram(filePaths: string | string[], type: 'Manual' | 'Automático') {
         try {
+            const paths = Array.isArray(filePaths) ? filePaths : [filePaths];
             const settings = await getSettings() as any;
             const botName = settings.bot_name || process.env.NEXT_PUBLIC_APP_NAME || 'BotMaRe';
-            const filename = path.basename(filePath);
             const now = new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
 
-            const caption = `🔔 *¡NOTIFICACIÓN DE RESPALDO!*\n\n` +
-                            `🤖 *Bot:* ${botName}\n` +
-                            `📁 *Archivo:* \`${filename}\`\n` +
-                            `📅 *Fecha:* ${now}\n` +
-                            `⚙️ *Tipo:* ${type}\n\n` +
-                            `🔐 _El archivo está CIFRADO por seguridad (AES-256)._\n` +
-                            `🔑 _La contraseña de desencriptado es la contraseña de tu Dashboard._\n\n` +
-                            `💾 _Contiene: Base de Datos, Sesiones de WhatsApp y Multimedia._`;
+            if (!bot || !settings.TELEGRAM_ALLOWED_USER_IDS) return;
 
-            if (bot && settings.TELEGRAM_ALLOWED_USER_IDS) {
-                const userIds = settings.TELEGRAM_ALLOWED_USER_IDS.split(',').map((id: string) => id.trim());
+            const userIds = settings.TELEGRAM_ALLOWED_USER_IDS.split(',').map((id: string) => id.trim());
+
+            for (const filePath of paths) {
+                const filename = path.basename(filePath);
+                const isMedia = filename.includes('MEDIA');
+                
+                const caption = `📦 *RESPALDO: ${isMedia ? 'PARTE 2 (MULTIMEDIA)' : 'PARTE 1 (SISTEMA)'}*\n\n` +
+                                `🤖 *Bot:* ${botName}\n` +
+                                `📁 *Archivo:* \`${filename}\`\n` +
+                                `📅 *Fecha:* ${now}\n` +
+                                `⚙️ *Tipo:* ${type}\n\n` +
+                                (isMedia 
+                                    ? `🖼️ _Contiene todas las fotos y vídeos de los recordatorios._`
+                                    : `🔐 _Contiene Base de Datos, Sesiones de WhatsApp y Configuración._`) + 
+                                `\n\n🔑 _Usa la contraseña de tu Dashboard para desencriptar._`;
+
                 for (const userId of userIds) {
                     try {
                         await bot.api.sendDocument(userId, new InputFile(filePath), {
@@ -106,7 +145,7 @@ export class BackupService {
                             parse_mode: 'Markdown'
                         });
                     } catch (e) {
-                        console.error(`❌ Error enviando backup al usuario ${userId}:`, e);
+                        console.error(`❌ Error enviando backup ${filename} al usuario ${userId}:`, e);
                     }
                 }
             }
@@ -123,8 +162,8 @@ export class BackupService {
         cron.schedule('0 3 * * *', async () => {
             console.log('📦 [Backup] Iniciando respaldo diario programado...');
             try {
-                const filePath = await this.createBackup();
-                await this.sendBackupToTelegram(filePath, 'Automático');
+                const filePaths = await this.createBackup();
+                await this.sendBackupToTelegram(filePaths, 'Automático');
                 
                 // Limpiar respaldos antiguos (mantener solo los últimos 7 días localmente)
                 this.cleanOldBackups(7);
@@ -192,27 +231,30 @@ export class BackupService {
             // 1. Extraer a carpeta temporal
             zip.extractAllTo(tempExtractPath, true);
 
-            // 2. Validar estructura básica (debe tener carpeta 'data')
+            // 3. Reemplazar carpeta data (si existe en el zip)
             const extractedDataPath = path.join(tempExtractPath, 'data');
-            if (!fs.existsSync(extractedDataPath)) {
-                throw new Error('El archivo de respaldo no es válido o está corrupto.');
+            if (fs.existsSync(extractedDataPath)) {
+                const currentDataPath = path.join(process.cwd(), 'data');
+                if (!fs.existsSync(currentDataPath)) fs.mkdirSync(currentDataPath, { recursive: true });
+                fs.cpSync(extractedDataPath, currentDataPath, { recursive: true });
             }
 
-            // 3. Reemplazar carpeta data
-            const currentDataPath = path.join(process.cwd(), 'data');
-            if (fs.existsSync(currentDataPath)) {
-                fs.rmSync(currentDataPath, { recursive: true, force: true });
+            // 4. Reemplazar carpeta auth_info_baileys (si existe en el zip)
+            const extractedAuthPath = path.join(tempExtractPath, 'auth_info_baileys');
+            if (fs.existsSync(extractedAuthPath)) {
+                const currentAuthPath = path.join(process.cwd(), 'auth_info_baileys');
+                if (fs.existsSync(currentAuthPath)) fs.rmSync(currentAuthPath, { recursive: true, force: true });
+                fs.cpSync(extractedAuthPath, currentAuthPath, { recursive: true });
             }
-            fs.cpSync(extractedDataPath, currentDataPath, { recursive: true });
 
-            // 4. Reemplazar archivo .env (si existe en el backup)
+            // 5. Reemplazar archivo .env (si existe en el backup)
             const extractedEnvPath = path.join(tempExtractPath, '.env');
             if (fs.existsSync(extractedEnvPath)) {
                 const currentEnvPath = path.join(process.cwd(), '.env');
                 fs.copyFileSync(extractedEnvPath, currentEnvPath);
             }
 
-            // 5. Limpieza
+            // 6. Limpieza
             fs.rmSync(tempExtractPath, { recursive: true, force: true });
             if (fs.existsSync(tempDecryptedPath)) {
                 fs.unlinkSync(tempDecryptedPath);

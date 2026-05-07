@@ -106,3 +106,15 @@ h1, h2, h3, h4, .font-black {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* NProgress Custom Styles */
+#nprogress .bar {
+  background: #06b6d4 !important; /* cyan-500 */
+  height: 3px !important;
+  box-shadow: 0 0 10px #06b6d4, 0 0 5px #06b6d4 !important;
+  z-index: 9999 !important;
+}
+
+#nprogress .peg {
+  box-shadow: 0 0 10px #06b6d4, 0 0 5px #06b6d4 !important;
+}

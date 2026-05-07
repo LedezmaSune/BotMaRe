@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { siteConfig } from "../config";
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
 
 import { BotDataProvider } from "./BotDataProvider";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { NavigationProgressBar } from "@/components/NavigationProgressBar";
 
 export default function RootLayout({
   children,
@@ -33,6 +35,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-screen flex flex-col overflow-x-hidden" suppressHydrationWarning>
+        <Suspense fallback={null}>
+            <NavigationProgressBar />
+        </Suspense>
         <BotDataProvider>
             <DashboardLayout>
                 {children}
