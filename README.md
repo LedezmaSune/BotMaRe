@@ -61,29 +61,35 @@ npm start
 
 ---
 
-## 🛡️ Seguridad y Buenas Prácticas
-Para mantener tu sistema seguro y evitar filtraciones a GitHub:
+## 🛠️ Comandos de Control (Terminal)
+Hemos migrado toda la lógica a `npm` para que el sistema sea más rápido y profesional. Abre tu terminal en la carpeta del proyecto y usa:
 
-1. **Nunca subas el archivo `.env`**: Este archivo contiene tus llaves privadas. Ya está en el `.gitignore`, pero asegúrate de no forzar su subida.
-2. **Usa credenciales seguras**: Cambia `DASHBOARD_PASS` en tu `.env` inmediatamente.
-3. **Logs Limpios**: El sistema está configurado para no mostrar llaves en los logs, pero siempre revisa antes de compartir capturas de pantalla.
-4. **Actualizaciones**: Usa la opción `U` en el `manager.bat` para mantener el sistema al día con parches de seguridad.
+| Comando | 🦊 ¿Qué hace? |
+| :--- | :--- |
+| `npm run setup` | **Instalación**: Prepara el `.env` e instala todo. |
+| `npm run build` | **Compilación**: Genera la carpeta `out` (Dashboard). |
+| `npm start` | **Arranque**: Inicia el motor y el servidor. |
+| `npm run dev` | **Desarrollo**: Recarga en vivo para cambios de código. |
+| `npm run pm2:start` | **Producción**: Corre el bot en segundo plano. |
+| `npm run reset:wa` | **Limpieza**: Cierra sesión y borra el QR actual. |
+| `npm run tunnel` | **Acceso Web**: Abre un túnel seguro con Cloudflare. |
 
 ---
 
-## 🛠️ Estructura del Proyecto (Monolito)
-```
-BotMaRe/
-├── src/
-│   ├── core/             # Cerebro (Bot.ts, System, Router)
-│   ├── infrastructure/   # Conexiones (WhatsApp, Telegram)
-│   ├── modules/          # Funcionalidades (IA, Mensajes, Reminders)
-│   ├── routes/           # API Endpoints
-│   └── server.ts         # Punto de entrada unificado (Express + Socket.io)
-├── out/                  # Interfaz estática (Generada con npm run build)
-├── data/                 # Bases de datos y archivos locales (Ignorado)
-└── manager.bat           # Panel de control Maestro (Recomendado)
-```
+## 🏗️ Estructura del "Cerebro" (Arquitectura)
+Para que entiendas cómo fluye la información en **BotMaRe**:
+
+1.  **Entrada**: WhatsApp recibe un mensaje via `infrastructure/whatsapp`.
+2.  **Procesamiento**: El `core/router.ts` decide si el mensaje es para la IA o un comando.
+3.  **Módulos**: Se activa la lógica en `modules/` (IA, Recordatorios, etc.).
+4.  **Salida**: Se envía la respuesta y se actualiza el **Dashboard** vía Socket.io.
+
+---
+
+## 🛡️ Seguridad Checklist
+- [ ] **Archivo .env**: Nunca lo compartas. Contiene tus llaves privadas.
+- [ ] **Carpeta data/**: Contiene tu sesión de WhatsApp. Mantenla privada.
+- [ ] **Puerto**: Por defecto es el `8000`. Puedes cambiarlo en el `.env`.
 
 ---
 
@@ -100,15 +106,13 @@ BotMaRe intenta conectar en este orden (Failover automático):
 ## ❓ Preguntas Frecuentes
 
 **¿Por qué la pantalla se queda en blanco?**
-Asegúrate de haber ejecutado la opción **9** en el `manager.bat` o `npm run build`. Esto genera la carpeta `out/` que el servidor necesita para mostrar el Dashboard.
+Falta compilar. Ejecuta `npm run build` para generar los archivos de la interfaz.
 
-**¿Cómo cambio el puerto?**
-Edita la variable `PORT` en tu archivo `.env`. Por defecto es el **8000**.
+**¿Cómo lo pongo en un servidor 24/7?**
+Usa `npm run pm2:start`. Esto mantendrá el bot vivo aunque cierres la terminal.
 
-**¿Es seguro usarlo en un VPS?**
-Sí, pero se recomienda usar un túnel (Opción **T** en manager) o configurar un Proxy Inverso (Nginx) con SSL para proteger el tráfico.
-
----
+**¿Cómo actualizo a la última versión?**
+Ejecuta `git pull` seguido de `npm install`.
 
 <p align="center">
   Desarrollado con ❤️ por <strong><a href="https://github.com/LedezmaSune">LedezmaSune</a></strong><br/>
