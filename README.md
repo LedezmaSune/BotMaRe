@@ -103,6 +103,22 @@ Cuando inicias BotMaRe, el motor atraviesa estas etapas para garantizar estabili
 
 ---
 
+## 🆘 Solución de Problemas Comunes
+
+### Error: `EISDIR` / `readlink` (en discos externos)
+Si instalas el bot en un disco externo (D:, E:, etc.) formateado en **exFAT**, verás errores de `readlink`. 
+**Solución**:
+1. Mueve el proyecto al disco **C:** (NTFS).
+2. O ejecuta: `git config --global core.symlinks false`, borra `node_modules` y haz `npm install` de nuevo.
+
+### La terminal se cierra sola
+Asegúrate de haber corrido `npm run setup` primero para crear el archivo `.env`. Sin ese archivo, el bot no arrancará.
+
+### Fallo en la conexión de WhatsApp
+Si ves el error `Timed Out` al conectar, revisa tu conexión a internet o usa `npm run reset:wa` para limpiar la sesión y escanear el QR de nuevo.
+
+---
+
 <p align="center">
   Hecho con ❤️ por <strong><a href="https://github.com/LedezmaSune">LedezmaSune</a></strong><br/>
   <em>"Automatizando el futuro, un mensaje a la vez."</em>
