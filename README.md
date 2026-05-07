@@ -61,60 +61,61 @@ npm start
 
 ---
 
-## 🛠️ Comandos de Control (Terminal)
-Hemos migrado toda la lógica a `npm` para que el sistema sea más rápido y profesional. Abre tu terminal en la carpeta del proyecto y usa:
+## 🚀 Guía de Despliegue Multi-Plataforma
+BotMaRe está diseñado para correr en cualquier lugar. Elige tu entorno:
 
-| Comando | 🦊 ¿Qué hace? |
+### 🏠 1. Local (Windows/Mac) — Ideal para uso personal
+1.  **Instala**: `npm run setup`
+2.  **Inicia**: `npm start`
+3.  **Dashboard**: Abre `http://localhost:8000`
+
+### ☁️ 2. VPS (Linux - Ubuntu/Debian) — Ideal para uso 24/7
+Recomendamos usar **PM2** para que el bot no se detenga nunca:
+1.  **Instala**: `npm run setup`
+2.  **Levanta**: `npm run pm2:start`
+3.  **Monitorea**: `npm run pm2:logs`
+
+### 🐋 3. Docker (Universal) — Ideal para aislamiento total
+Si tienes Docker instalado, no necesitas Node.js en tu sistema:
+```bash
+docker-compose up -d
+```
+*El contenedor se encargará de instalar, compilar e iniciar todo por ti.*
+
+---
+
+## 🏗️ Arquitectura del Motor (Fases)
+Para un arranque seguro y sin errores, BotMaRe sigue este flujo:
+
+| Fase | 🦊 Objetivo |
 | :--- | :--- |
-| `npm run setup` | **Instalación**: Prepara el `.env` e instala todo. |
-| `npm run build` | **Compilación**: Genera la carpeta `out` (Dashboard). |
-| `npm start` | **Arranque**: Inicia el motor y el servidor. |
-| `npm run dev` | **Desarrollo**: Recarga en vivo para cambios de código. |
-| `npm run pm2:start` | **Producción**: Corre el bot en segundo plano. |
-| `npm run reset:wa` | **Limpieza**: Cierra sesión y borra el QR actual. |
-| `npm run tunnel` | **Acceso Web**: Abre un túnel seguro con Cloudflare. |
+| **Fase 0** | **Validación**: Revisa carpetas y el archivo `.env`. |
+| **Fase 1** | **Memoria**: Conecta la base de datos SQLite. |
+| **Fase 2** | **Acceso**: Activa túneles de Cloudflare (si aplica). |
+| **Fase 3** | **Cerebros**: Inicia IA, Telegram y el Programador. |
+| **Fase 4** | **Motor**: Enciende el Servidor Web y WhatsApp. |
 
 ---
 
-## 🏗️ Estructura del "Cerebro" (Arquitectura)
-Para que entiendas cómo fluye la información en **BotMaRe**:
-
-1.  **Entrada**: WhatsApp recibe un mensaje via `infrastructure/whatsapp`.
-2.  **Procesamiento**: El `core/router.ts` decide si el mensaje es para la IA o un comando.
-3.  **Módulos**: Se activa la lógica en `modules/` (IA, Recordatorios, etc.).
-4.  **Salida**: Se envía la respuesta y se actualiza el **Dashboard** vía Socket.io.
-
----
-
-## 🛡️ Seguridad Checklist
-- [ ] **Archivo .env**: Nunca lo compartas. Contiene tus llaves privadas.
-- [ ] **Carpeta data/**: Contiene tu sesión de WhatsApp. Mantenla privada.
-- [ ] **Puerto**: Por defecto es el `8000`. Puedes cambiarlo en el `.env`.
+## 🛠️ Comandos Pro (NPM)
+| Comando | ✨ ¿Para qué sirve? |
+| :--- | :--- |
+| `npm run setup` | Configuración inicial y descarga de librerías. |
+| `npm run build` | Compila la interfaz (Genera la carpeta `out`). |
+| `npm start` | **Inteligente**: Compila si falta `out` e inicia el bot. |
+| `npm run reset:wa` | Resetea la sesión de WhatsApp (QR nuevo). |
+| `npm run tunnel` | Abre tu bot al mundo de forma segura. |
 
 ---
 
-## 🔑 Proveedores de IA Soportados
-BotMaRe intenta conectar en este orden (Failover automático):
-1. **Groq** (Llama 3.3 - Velocidad extrema)
-2. **DeepSeek** (Inteligencia pura y económica) ⭐ *NUEVO*
-3. **Google Gemini** (Excelente visión y contexto)
-4. **OpenAI** (El estándar de la industria)
-5. **OpenRouter / NVIDIA** (Respaldo total)
+## 🛡️ Checklist de Seguridad
+- [ ] **API Keys**: Ponlas en el `.env`, nunca en el código.
+- [ ] **Sesión**: La carpeta `data/` es tu identidad de WhatsApp. Protégela.
+- [ ] **Acceso**: Cambia `DASHBOARD_PASS` en el `.env` antes de subir a un VPS.
 
 ---
-
-## ❓ Preguntas Frecuentes
-
-**¿Por qué la pantalla se queda en blanco?**
-Falta compilar. Ejecuta `npm run build` para generar los archivos de la interfaz.
-
-**¿Cómo lo pongo en un servidor 24/7?**
-Usa `npm run pm2:start`. Esto mantendrá el bot vivo aunque cierres la terminal.
-
-**¿Cómo actualizo a la última versión?**
-Ejecuta `git pull` seguido de `npm install`.
 
 <p align="center">
   Desarrollado con ❤️ por <strong><a href="https://github.com/LedezmaSune">LedezmaSune</a></strong><br/>
-  Impulsado por el motor <strong>Kitsune Unified</strong> 🦊
+  <strong>BotMaRe v1.1.0 — Monolito Unificado</strong> 🦊
 </p>
