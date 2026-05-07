@@ -8,6 +8,9 @@ echo          🦊 BOTMARE - INSTALADOR MAESTRO 🦊
 echo ========================================================
 echo.
 
+:: Configurar esta carpeta como segura en Git para evitar errores de "dubious ownership"
+git config --global --add safe.directory "%cd:\=/%" >nul 2>&1
+
 :: 1. Verificar Node.js
 node -v >nul 2>&1
 if %errorlevel% neq 0 (

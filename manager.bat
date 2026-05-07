@@ -1,7 +1,10 @@
 @echo off
 setlocal enabledelayedexpansion
 title BotMaRe - Unificado Control Panel
-color 0b
+color 0a
+
+:: Configurar esta carpeta como segura en Git para evitar errores de "dubious ownership"
+git config --global --add safe.directory "%cd:\=/%" >nul 2>&1
 
 :MENU
 cls
