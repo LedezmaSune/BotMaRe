@@ -9,9 +9,10 @@ interface MassMessagingProps {
     onSend: (contacts: string, message: string, media: File | null) => Promise<void>;
     onReview: (text: string) => Promise<string | null>;
     templates: Template[];
+    groups: any[];
 }
 
-export function MassMessaging({ onSend, onReview, templates }: MassMessagingProps) {
+export function MassMessaging({ onSend, onReview, templates, groups }: MassMessagingProps) {
     const [contacts, setContacts] = useState('');
     const [message, setMessage] = useState('');
     const [media, setMedia] = useState<File | null>(null);
@@ -63,18 +64,35 @@ export function MassMessaging({ onSend, onReview, templates }: MassMessagingProp
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 relative z-10">
                 {/* Contacts */}
                 <div className="space-y-4">
-                    <div className="flex justify-between items-center mb-2">
-                        <label className="text-[10px] uppercase font-bold text-app-text-muted tracking-widest flex items-center gap-2">
-                            Base de Datos
-                            <label className="cursor-pointer bg-slate-200 dark:bg-slate-800/80 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded-md text-[9px] transition-colors border border-slate-300 dark:border-slate-700/50 flex items-center gap-1 active:scale-95">
-                                <Upload size={12} /> Subir CSV
-                                <input type="file" accept=".csv" className="hidden" onChange={handleCSVUpload} />
+                        <div className="flex items-center gap-2">
+                            <label className="text-[10px] uppercase font-bold text-app-text-muted tracking-widest flex items-center gap-2">
+                                Base de Datos
+                                <label className="cursor-pointer bg-slate-200 dark:bg-slate-800/80 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded-md text-[9px] transition-colors border border-slate-300 dark:border-slate-700/50 flex items-center gap-1 active:scale-95">
+                                    <Upload size={12} /> Subir CSV
+                                    <input type="file" accept=".csv" className="hidden" onChange={handleCSVUpload} />
+                                </label>
                             </label>
-                        </label>
+
+                            {groups.length > 0 && (
+                                <select 
+                                    className="bg-slate-200 dark:bg-slate-800/80 border-none rounded-md text-[9px] font-bold py-1 px-2 outline-none cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 text-app-text"
+                                    onChange={(e) => {
+                                        if (e.target.value) {
+                                            setContacts(prev => prev + (prev ? '\n' : '') + e.target.value);
+                                            e.target.value = "";
+                                        }
+                                    }}
+                                >
+                                    <option value="">+ Añadir Grupo</option>
+                                    {groups.map(g => (
+                                        <option key={g.id} value={g.id}>{g.subject}</option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
                         <span className="text-[10px] font-bold text-orange-400 bg-orange-500/10 px-2 py-1 rounded-lg border border-orange-500/20">
                             {contactCount} contactos
                         </span>
-                    </div>
                     <textarea 
                         value={contacts}
                         onChange={(e) => setContacts(e.target.value)}

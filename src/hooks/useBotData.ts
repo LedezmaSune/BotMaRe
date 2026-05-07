@@ -6,7 +6,7 @@ import { parseContactList } from '../utils/contactParser';
 const API_BASE = '/api';
 const SOCKET_URL = ''; // En el monolito unificado, el socket vive en la misma URL/Puerto que la web
 
-export type TabId = 'mass' | 'scheduling' | 'calendar' | 'templates' | 'personality' | 'settings' | 'audits';
+export type TabId = 'mass' | 'scheduling' | 'calendar' | 'templates' | 'groups' | 'personality' | 'settings' | 'audits';
 
 export function useBotData() {
     const [status, setStatus] = useState<ConnectionState>('disconnected');
@@ -15,6 +15,7 @@ export function useBotData() {
     const [audits, setAudits] = useState<Audit[]>([]);
     const [reminders, setReminders] = useState<Reminder[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
+    const [groups, setGroups] = useState<any[]>([]);
     const [settings, setSettings] = useState<Settings | null>(null);
     const [prefillDate, setPrefillDate] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
@@ -30,6 +31,11 @@ export function useBotData() {
             if (auditsRes.ok) setAudits(await auditsRes.json());
             if (remindersRes.ok) setReminders(await remindersRes.json());
             if (templatesRes.ok) setTemplates(await templatesRes.json());
+
+            if (currentTab === 'groups' || currentTab === 'mass' || currentTab === 'scheduling') {
+                const groupsRes = await fetch(`${API_BASE}/whatsapp/groups`);
+                if (groupsRes.ok) setGroups(await groupsRes.json());
+            }
 
             if (!settings || currentTab === 'personality' || currentTab === 'settings') {
                 const settingsRes = await fetch(`${API_BASE}/settings`);
@@ -175,6 +181,7 @@ export function useBotData() {
         audits,
         reminders,
         templates,
+        groups,
         settings,
         prefillDate,
         setPrefillDate,
