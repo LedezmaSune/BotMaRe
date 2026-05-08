@@ -4,22 +4,21 @@ import React, { useState, useRef, useEffect } from 'react';
 
 const VARIABLES = [
     { tag: '{NOMBRE}', desc: 'Nombre completo' },
+    { tag: '{FIRST_NAME}', desc: 'Primer nombre' },
     { tag: '{NOMBRE_PILA}', desc: 'Primer nombre' },
     { tag: '{APELLIDO}', desc: 'Apellidos' },
+    { tag: '{LAST_NAME}', desc: 'Apellidos' },
     { tag: '{HORA_12}', desc: 'Hora (12h)' },
     { tag: '{HORA_24}', desc: 'Hora (24h)' },
     { tag: '{DIA_SEMANA}', desc: 'Día de la semana' },
-    { tag: '{DIA_SEMANA_MANANA}', desc: 'Día de mañana' },
+    { tag: '{DAY_OF_WEEK}', desc: 'Día de la semana' },
     { tag: '{DIA_MES}', desc: 'Día del mes' },
     { tag: '{MES}', desc: 'Mes actual' },
-    { tag: '{PROXIMO_MES}', desc: 'Próximo mes' },
-    { tag: '{MES_ANTERIOR}', desc: 'Mes anterior' },
+    { tag: '{MONTH}', desc: 'Mes actual' },
     { tag: '{ANO}', desc: 'Año actual' },
-    { tag: '{PROXIMO_ANO}', desc: 'Próximo año' },
-    { tag: '{ANO_ANTERIOR}', desc: 'Año pasado' },
+    { tag: '{YEAR}', desc: 'Año actual' },
     { tag: '{FECHA}', desc: 'Fecha actual' },
-    { tag: '{FECHA_MANANA}', desc: 'Fecha de mañana' },
-    { tag: '{FECHA_PASADO_MANANA}', desc: 'Fecha pasado mañana' },
+    { tag: '{DATE}', desc: 'Fecha actual' },
     { tag: '{NUMERO_ALEATORIO}', desc: 'Número aleatorio' }
 ];
 
