@@ -1,6 +1,9 @@
 const path = require('path');
 const fs = require('fs');
 
+// Detectar automáticamente el nombre de la carpeta actual para usarlo como nombre de la app en PM2
+const folderName = path.basename(__dirname);
+
 // Intentar leer el puerto desde el archivo .env automáticamente
 let envPort = 8000;
 const envPath = path.join(__dirname, '.env');
@@ -15,18 +18,18 @@ if (fs.existsSync(envPath)) {
 module.exports = {
   apps: [
     {
-      name: "botmare-unified",
+      name: folderName, // Nombre dinámico basado en la carpeta
       script: "npx",
       args: "tsx src/server.ts",
       interpreter: "none",
-      cwd: __dirname, // Detecta automáticamente la carpeta donde está este archivo
+      cwd: __dirname,
       instances: 1,
       autorestart: true,
       watch: false,
       max_memory_restart: "1G",
       env: {
         NODE_ENV: "production",
-        PORT: envPort // Usa el puerto detectado del .env o el 8000 por defecto
+        PORT: envPort
       },
       error_file: path.join(__dirname, "data/logs/err.log"),
       out_file: path.join(__dirname, "data/logs/out.log"),
