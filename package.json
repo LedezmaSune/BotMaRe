@@ -11,8 +11,12 @@
     "setup": "node -e \"const fs=require('fs'); if(!fs.existsSync('.env')) fs.copyFileSync('.env.example', '.env')\" && npm install",
     "reset:wa": "rimraf data/whatsapp_auth.db auth_info_baileys",
     "tunnel": "cloudflared tunnel --url http://localhost:8000",
-    "pm2:start": "node -e \"if(!require('fs').existsSync('out')) require('child_process').execSync('npm run build', {stdio:'inherit'})\" && pm2 delete BotMaRe-Unified || true && pm2 start \"tsx src/server.ts\" --name BotMaRe-Unified",
-    "pm2:stop": "pm2 stop BotMaRe-Unified",    "pm2:logs": "pm2 logs BotMaRe-Unified",
+    "pm2:start": "node -e \"if(!require('fs').existsSync('out')) require('child_process').execSync('npm run build', {stdio:'inherit'})\" && pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop ecosystem.config.js",
+    "pm2:restart": "pm2 restart ecosystem.config.js",
+    "pm2:delete": "pm2 delete ecosystem.config.js",
+    "pm2:logs": "pm2 logs botmare-unified",
+    "pm2:monit": "pm2 monit",
     "lint": "next lint"
   },
   "dependencies": {
