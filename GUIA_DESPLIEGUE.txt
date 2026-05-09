@@ -1,0 +1,141 @@
+===========================================================================
+    GUIA DE DESPLIEGUE RAPIDO - BOTMARE (CORTEX PM2)
+===========================================================================
+
+Este sistema esta diseñado para ser "Clone & Run". El archivo 
+'ecosystem.config.js' detectara automaticamente el nombre de tu 
+carpeta y el puerto configurado en el archivo .env.
+
+---------------------------------------------------------------------------
+1. PREPARACION (Solo la primera vez o al actualizar)
+---------------------------------------------------------------------------
+Instala todas las dependencias y prepara el entorno:
+
+   npm run setup
+
+---------------------------------------------------------------------------
+2. INICIO EN PRODUCCION (PM2)
+---------------------------------------------------------------------------
+Lanza el bot en segundo plano. Se mantendra encendido siempre:
+
+   npm run pm2:start
+
+---------------------------------------------------------------------------
+3. MONITOREO Y LOGS
+---------------------------------------------------------------------------
+Ver que esta haciendo el bot (Logs):
+   npm run pm2:logs
+
+Ver uso de memoria y CPU (Panel visual):
+   npm run pm2:monit
+
+---------------------------------------------------------------------------
+4. MANTENIMIENTO
+---------------------------------------------------------------------------
+Detener el bot:
+   npm run pm2:stop
+
+Reiniciar el bot:
+   npm run pm2:restart
+
+Borrar sesion de WhatsApp (para escanear QR nuevo):
+   npm run reset:wa
+
+---------------------------------------------------------------------------
+5. COMANDOS DE EMERGENCIA (Windows)
+---------------------------------------------------------------------------
+¿El puerto esta ocupado o PM2 se volvio loco? Usa esto:
+
+Limpiar todos los procesos de PM2:
+   pm2 kill
+
+Liberar un puerto especifico (ejemplo: puerto 8000):
+   for /f "tokens=5" %a in ('netstat -aon ^| findstr :8000') do taskkill /f /pid %a
+
+Ver que procesos estan usando puertos:
+   netstat -ano | findstr :8000
+
+===========================================================================
+   CODIGO DEL ECOSYSTEM INTELIGENTE (ecosystem.config.js)
+===========================================================================
+Si necesitas recrear el archivo, copia este codigo exacto:
+
+const path = require('path');
+const fs = require('fs');
+
+const folderName = path.basename(__dirname);
+let envPort = 8000;
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  const portMatch = envContent.match(/^PORT\s*=\s*(\d+)/m);
+  if (portMatch) envPort = parseInt(portMatch[1], 10);
+}
+
+module.exports = {
+  apps: [{
+    name: folderName,
+    script: 'npx',
+    args: 'tsx src/server.ts',
+    interpreter: 'none',
+    cwd: __dirname,
+    instances: 1,
+    autorestart: true,
+    max_memory_restart: '1G',
+    env: { NODE_ENV: 'production', PORT: envPort },
+    error_file: path.join(__dirname, 'data/logs/err.log'),
+    out_file: path.join(__dirname, 'data/logs/out.log'),
+    log_date_format: 'YYYY-MM-DD HH:mm:ss',
+    merge_logs: true
+  }]
+};
+===========================================================================
+
+===========================================================================
+   CODIGO PARA CREAR ARCHIVO DE EMERGENCIA (EMERGENCIA.bat)
+===========================================================================
+Si necesitas recrear la utilidad de limpieza, copia este codigo en un 
+archivo llamado 'EMERGENCIA.bat':
+
+@echo off
+title EMERGENCIA - Limpiador de Puertos y PM2
+cd /d "%~dp0"
+cls
+echo ===================================================
+echo    BOTMARE - UTILIDAD DE EMERGENCIA
+echo ===================================================
+echo.
+echo  1. MATAR TODOS LOS PROCESOS DE PM2
+echo  2. LIBERAR PUERTO 8000 (Default)
+echo  3. LIBERAR PUERTO ESPECIFICO
+echo  0. SALIR
+echo.
+echo ===================================================
+set /p opt=" Seleccione una opcion: "
+if "%opt%"=="1" goto KILL_PM2
+if "%opt%"=="2" goto KILL_8000
+if "%opt%"=="3" goto KILL_CUSTOM
+if "%opt%"=="0" exit
+goto MENU
+:KILL_PM2
+echo.
+echo [!] Matando PM2...
+pm2 kill
+pause
+goto MENU
+:KILL_8000
+echo.
+echo [!] Liberando puerto 8000...
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr :8000') do taskkill /f /pid %%a
+pause
+goto MENU
+:KILL_CUSTOM
+echo.
+set /p puerto=" Ingrese el numero de puerto a liberar: "
+echo [!] Liberando puerto %puerto%...
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr :%puerto%') do taskkill /f /pid %%a
+pause
+goto MENU
+:MENU
+goto MENU
+===========================================================================

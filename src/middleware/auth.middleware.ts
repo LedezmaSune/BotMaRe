@@ -17,8 +17,16 @@ export const basicAuth = (req: Request, res: Response, next: NextFunction) => {
     const b64auth = (req.headers.authorization || '').split(' ')[1] || '';
     const [login, password] = Buffer.from(b64auth, 'base64').toString().split(':');
 
+    const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
     if (login && password && login === auth.login && password === auth.password) {
+        // Opcional: Log de acceso exitoso (descomentar si se desea auditar cada acceso)
+        // console.log(`[Security] Acceso concedido a ${login} desde ${clientIp}`);
         return next();
+    }
+
+    if (b64auth) {
+        console.warn(`[Security] INTENTO DE ACCESO FALLIDO desde ${clientIp} - Usuario: ${login}`);
     }
 
     res.set('WWW-Authenticate', 'Basic realm="BotMaRe Dashboard"');

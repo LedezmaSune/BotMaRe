@@ -6,6 +6,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 // Core & Infrastructure
 import { Bot } from './core/bot';
@@ -34,6 +36,24 @@ const io = new Server(server, {
 });
 
 // Middleware Configuration
+app.set('trust proxy', 1); // Confiar en proxies (Cloudflare, Nginx, etc.)
+
+// 1. Seguridad de Cabeceras (Helmet)
+app.use(helmet({
+    contentSecurityPolicy: false, // Desactivado para permitir scripts de Next.js y socket.io
+    crossOriginEmbedderPolicy: false
+}));
+
+// 2. Limitador de Peticiones (Anti-Brute Force)
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 100, // Limite de 100 peticiones por IP
+    message: 'Demasiadas peticiones desde esta IP. Por favor, intenta de nuevo en 15 minutos.',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+app.use('/api', limiter); // Aplicar limite a las rutas de API
+
 app.use(cors({
     origin: true,
     credentials: true
