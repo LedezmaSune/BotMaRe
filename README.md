@@ -1,125 +1,112 @@
-# 🦊 BotMaRe AI - Monolito Unificado v1.1.0
+<p align="center">
+  <img src="botmare_banner_premium_1778362915447.png" alt="BotMaRe AI Banner" width="800">
+</p>
 
-> **La navaja suiza de la automatización en WhatsApp.** Inteligencia Artificial, Dashboard Premium y Gestión de Tareas en un solo proceso ultra-eficiente.
+<p align="center">
+  <img src="https://img.shields.io/badge/Version-1.2.0-orange?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js" alt="Next.js">
+  <img src="https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react" alt="React">
+  <img src="https://img.shields.io/badge/Security-Fortified-success?style=for-the-badge&logo=shield" alt="Security">
+</p>
+
+<h1 align="center">🦊 BotMaRe AI</h1>
+
+<p align="center">
+  <strong>La navaja suiza de la automatización en WhatsApp.</strong><br/>
+  Inteligencia Artificial, Dashboard Premium y Gestión Profesional en un solo proceso ultra-eficiente.
+</p>
 
 ---
 
-## 💎 ¿Qué hace a BotMaRe único?
+## 💎 Características de Élite
 
-BotMaRe no es solo un bot; es una **infraestructura completa** diseñada para funcionar 24/7 sin complicaciones.
+BotMaRe no es solo un bot; es una **infraestructura modular de grado empresarial** diseñada para el siglo XXI.
 
-*   **🧠 Inteligencia Multi-Cerebro**: Conexión nativa con **DeepSeek**, Groq, Gemini y OpenAI. Si una falla, el bot puede rotar automáticamente.
-*   **🎨 Dashboard de Cristal**: Interfaz web moderna (Glassmorphism) construida con Next.js 15 para monitorear todo en tiempo real.
-*   **⚙️ Monolito Unificado**: Olvídate de abrir 3 terminales. El motor y la web corren juntos en un solo puerto (**8000**).
-*   **🛡️ Seguridad de Grado Industrial**: Protección por contraseña, túneles seguros y aislamiento total de sesiones.
+*   **🧠 Inteligencia Híbrida**: Rota automáticamente entre **DeepSeek**, Groq, Gemini y OpenAI. ¡Nunca te quedarás sin respuestas!
+*   **🎨 Dashboard de Cristal**: Interfaz web ultra-moderna con **Glassmorphism**, gráficas en tiempo real y gestión de campañas masivas.
+*   **🛡️ Escudo de Seguridad**: Integración nativa con **Helmet.js**, **Rate Limiting** (anti-fuerza bruta) y auditoría de accesos en tiempo real.
+*   **⚡ Despliegue Inteligente**: Archivos `.bat` de un solo clic para Windows y configuración de **PM2** auto-detectable para servidores Linux/VPS.
+*   **🌍 Acceso Global**: Túneles de **Cloudflare** integrados para acceder a tu bot desde cualquier parte del mundo de forma segura.
 
 ---
 
-## 🛠️ Guía de Inicio Rápido
+## 🚀 Guía de Inicio Relámpago
 
 ```mermaid
-graph LR
-    A[1. Clonar] --> B[2. Setup]
-    B --> C[3. Configurar .env]
-    C --> D[4. Iniciar]
-    style D fill:#f96,stroke:#333,stroke-width:4px
+graph TD
+    A[📥 Clonar Proyecto] --> B[🛠️ Ejecutar Setup]
+    B --> C[🔑 Configurar .env]
+    C --> D[🚀 Lanzar Bot]
+    style D fill:#ff8c00,stroke:#fff,stroke-width:3px,color:#fff
 ```
 
-### 1. Clonar e Instalar
+### 1. Preparación en 30 segundos
 ```bash
 git clone https://github.com/LedezmaSune/BotMaRe.git
 cd BotMaRe
 npm run setup
 ```
 
-### 2. Configurar "Las Llaves"
-Crea tu archivo `.env` y rellena tus API Keys (puedes usar solo una o todas):
-```bash
-# El comando 'setup' ya creó el archivo .env por ti. 
-# Solo ábrelo y pon tus llaves de DeepSeek, Groq o Gemini.
-```
+### 2. Configuración
+Abre el archivo `.env` que se creó automáticamente y rellena tus API Keys. ¡Puedes usar solo una o todas!
 
-### 3. ¡Despegar!
-```bash
-npm start
-```
-*Si es tu primera vez, el bot detectará que falta la interfaz y la **compilará automáticamente** por ti.*
+### 3. ¡Despegue!
+- **Para desarrollo:** `npm start`
+- **Para producción (Recomendado):** Usa el archivo `LANZAR_BOT.bat` o ejecuta `npm run pm2:start`.
 
 ---
 
-## 🌍 Despliegue en Cualquier Sistema
+## 🛡️ Nueva Capa de Seguridad "Fortified"
+Hemos elevado los estándares de seguridad para proteger tu información:
 
-| Entorno | Método Recomendado | Comando |
-| :--- | :--- | :--- |
-| **🏠 Tu PC (Windows/Mac)** | Local / NPM | `npm start` |
-| **☁️ VPS (Ubuntu/Debian)** | PM2 (Fondo) | `npm run pm2:start` |
-| **🐋 Servidor Docker** | Contenedor | `docker-compose up -d` |
-| **🌐 Acceso Remoto** | Cloudflare Tunnel | `npm run tunnel` |
+*   **Anti-Brute Force:** Bloqueo automático de IPs tras múltiples intentos fallidos.
+*   **HTTP Security Headers:** Protección contra XSS, Clickjacking y Sniffing vía Helmet.
+*   **Real-time Audit:** Registro inmediato de intentos de acceso sospechosos en la consola.
+*   **Trust Proxy:** Detección precisa de la ubicación del usuario incluso detrás de túneles.
 
 ---
 
-## 🏗️ El Ciclo de Vida (Fases de Arranque)
+## 📊 Arquitectura de Operaciones
 
 ```mermaid
 sequenceDiagram
-    participant U as Usuario
-    participant S as Servidor
-    participant IA as Motores IA
-    participant WA as WhatsApp
-
-    U->>S: npm start
-    S->>S: Fase 0-2: Validación y Red
-    S->>IA: Fase 3: Conexión IA
-    S->>WA: Fase 4: Conexión QR
-    WA-->>U: Bot Listo 🦊
+    participant U as Administrador
+    participant D as Dashboard (Web)
+    participant M as Motor BotMaRe
+    participant WA as WhatsApp API
+    
+    U->>D: Acceso Seguro (Auth)
+    D->>M: Envía Comando / Campaña
+    M->>WA: Procesa Mensaje con IA
+    WA-->>M: Notifica Entrega
+    M-->>D: Actualiza Gráficas en Vivo
 ```
 
-Cuando inicias BotMaRe, el motor atraviesa estas etapas para garantizar estabilidad:
-
-1.  **Fase 0 - Entorno**: Verifica que tengas tus llaves y carpetas listas.
-2.  **Fase 1 - Memoria**: Se despierta la base de datos **SQLite**.
-3.  **Fase 2 - Red**: Prepara los túneles de acceso externo.
-4.  **Fase 3 - Lógica**: Carga los modelos de IA y el bot de Telegram.
-5.  **Fase 4 - Motor**: Enciende el servidor web y conecta con **WhatsApp**.
-
 ---
 
-## 🧰 Caja de Herramientas (Comandos NPM)
+## 🧰 Comandos de Poder (NPM)
 
-| Comando | 🦊 Función |
+| Comando | Acción |
 | :--- | :--- |
-| `npm run setup` | Instalación limpia y creación de `.env`. |
-| `npm run build` | Re-compila el Dashboard manualmente. |
-| `npm run reset:wa` | **Botón de pánico**: Borra la sesión y genera nuevo QR. |
-| `npm run pm2:logs` | Mira qué está pasando en tu VPS en tiempo real. |
-| `npm run clean` | Borra archivos temporales para liberar espacio. |
+| `npm run setup` | Instalación total y creación de entorno. |
+| `npm run pm2:start` | Lanza el bot en segundo plano (Modo Servidor). |
+| `npm run reset:wa` | **Reset Maestro**: Limpia la sesión para un nuevo QR. |
+| `npm run pm2:monit` | Panel visual de rendimiento en tiempo real. |
+| `npm run build` | Compila manualmente la interfaz del dashboard. |
 
 ---
 
-## 🛡️ Checklist de Seguridad Pro
-- [ ] Cambia la `DASHBOARD_PASS` en tu `.env`.
-- [ ] No compartas nunca el archivo `.env`.
-- [ ] Usa `npm run tunnel` si no sabes abrir puertos en tu router.
+## 🆘 ¿Algo no funciona?
 
----
+### Errores de Disco (exFAT/Externos)
+Si usas un disco externo, ejecuta: `git config --global core.symlinks false` antes de instalar.
 
-## 🆘 Solución de Problemas Comunes
-
-### Error: `EISDIR` / `readlink` (en discos externos)
-Si instalas el bot en un disco externo (D:, E:, etc.) formateado en **exFAT**, verás errores de `readlink`. 
-**Solución**:
-1. Mueve el proyecto al disco **C:** (NTFS).
-2. O ejecuta: `git config --global core.symlinks false`, borra `node_modules` y haz `npm install` de nuevo.
-
-### La terminal se cierra sola
-Asegúrate de haber corrido `npm run setup` primero para crear el archivo `.env`. Sin ese archivo, el bot no arrancará.
-
-### Fallo en la conexión de WhatsApp
-Si ves el error `Timed Out` al conectar, revisa tu conexión a internet o usa `npm run reset:wa` para limpiar la sesión y escanear el QR de nuevo.
+### El Dashboard no carga
+Asegúrate de que el puerto **8000** esté libre o cámbialo en el `.env`. Si usas Cloudflare, verifica que `npm run tunnel` esté activo.
 
 ---
 
 <p align="center">
   Hecho con ❤️ por <strong><a href="https://github.com/LedezmaSune">LedezmaSune</a></strong><br/>
-  <em>"Automatizando el futuro, un mensaje a la vez."</em>
+  <em>"Elevando la automatización al siguiente nivel."</em>
 </p>
