@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Layout, Plus, Trash2, Save, FileText, X, Wand2, Loader2, Edit2 } from 'lucide-react';
+import { Layout, Plus, Trash2, Save, FileText, X, Wand2, Loader2, Edit2, Upload, Download } from 'lucide-react';
 import { Template } from '../types';
 import { VariableTextarea } from './VariableTextarea';
 
@@ -75,22 +75,75 @@ export function Templates({ templates, onRefresh, onReview }: TemplatesProps) {
                         <p className="text-app-text-muted text-xs uppercase tracking-widest font-bold">Mensajes predefinidos para difusión y recordatorios</p>
                     </div>
                 </div>
-                 <button
-                    onClick={() => {
-                        if (showForm) {
-                            setShowForm(false);
-                            setEditingId(null);
-                            setName('');
-                            setContent('');
-                        } else {
-                            setShowForm(true);
-                        }
-                    }}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all shadow-lg active:scale-95 ${showForm ? 'bg-slate-200 dark:bg-slate-800 text-app-text' : 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-indigo-500/20'}`}
-                >
-                    {showForm ? <X size={20} /> : <Plus size={20} />}
-                    {showForm ? 'Cerrar' : 'Nueva Plantilla'}
-                </button>
+
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => {
+                            const blob = new Blob([JSON.stringify(templates, null, 2)], { type: 'application/json' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `plantillas_botmare_${new Date().toISOString().split('T')[0]}.json`;
+                            a.click();
+                        }}
+                        className="p-3 bg-app-card border border-app-border rounded-2xl text-app-text-muted hover:text-indigo-500 hover:border-indigo-500/50 transition-all shadow-sm"
+                        title="Exportar todas las plantillas"
+                    >
+                        <Save size={20} />
+                    </button>
+
+                    <label className="p-3 bg-app-card border border-app-border rounded-2xl text-app-text-muted hover:text-emerald-500 hover:border-emerald-500/50 transition-all shadow-sm cursor-pointer" title="Importar plantillas desde JSON">
+                        <Upload size={20} />
+                        <input 
+                            type="file" 
+                            className="hidden" 
+                            accept=".json" 
+                            onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                const reader = new FileReader();
+                                reader.onload = async (ev) => {
+                                    try {
+                                        const data = JSON.parse(ev.target?.result as string);
+                                        const templatesToImport = Array.isArray(data) ? data : (data.templates || []);
+                                        
+                                        if (confirm(`¿Deseas importar ${templatesToImport.length} plantillas?`)) {
+                                            for (const t of templatesToImport) {
+                                                await fetch('/api/templates', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ name: t.name, content: t.content })
+                                                });
+                                            }
+                                            onRefresh();
+                                            alert('✅ Plantillas importadas con éxito.');
+                                        }
+                                    } catch (err) {
+                                        alert('❌ Error al leer el archivo de plantillas.');
+                                    }
+                                };
+                                reader.readAsText(file);
+                            }}
+                        />
+                    </label>
+
+                    <button
+                        onClick={() => {
+                            if (showForm) {
+                                setShowForm(false);
+                                setEditingId(null);
+                                setName('');
+                                setContent('');
+                            } else {
+                                setShowForm(true);
+                            }
+                        }}
+                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all shadow-lg active:scale-95 ${showForm ? 'bg-slate-200 dark:bg-slate-800 text-app-text' : 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-indigo-500/20'}`}
+                    >
+                        {showForm ? <X size={20} /> : <Plus size={20} />}
+                        {showForm ? 'Cerrar' : 'Nueva Plantilla'}
+                    </button>
+                </div>
             </div>
 
             {showForm && (

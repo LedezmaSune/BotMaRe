@@ -25,6 +25,7 @@ export function createSystemRouter(controller: SystemController) {
     router.get('/check-update', controller.checkUpdates);
     router.post('/apply-update', controller.applyUpdate);
     router.get('/backup', controller.downloadBackup);
+    router.get('/export-readable', controller.exportReadable);
     router.post('/restore', upload.single('backup'), controller.restoreBackup);
     
     return router;

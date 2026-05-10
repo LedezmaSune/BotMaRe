@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, Loader2, Send, Clock, Trash2, CheckCircle, Edit3, Zap, Save, Wand2, Sparkles } from 'lucide-react';
+import { Bell, Loader2, Send, Clock, Trash2, CheckCircle, Edit3, Zap, Save, Wand2, Sparkles, Upload, Download, Info } from 'lucide-react';
 import { Reminder, Template } from '../types';
 import { VariableTextarea } from './VariableTextarea';
 
@@ -141,6 +141,65 @@ export function Reminders({ reminders, templates, onAdd, onDelete, initialTime }
                         <h2 className="text-lg md:text-xl font-bold text-app-text leading-tight">{editingId ? 'Editar' : 'Programar'}</h2>
                         <p className="text-app-text-muted text-[10px] md:text-xs">{editingId ? 'Modifica el recordatorio.' : 'Recordatorios automáticos.'}</p>
                     </div>
+                </div>
+
+                <div className="flex items-center gap-2 mb-6">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const blob = new Blob([JSON.stringify(reminders, null, 2)], { type: 'application/json' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `agenda_botmare_${new Date().toISOString().split('T')[0]}.json`;
+                            a.click();
+                        }}
+                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-slate-100 dark:bg-slate-800 border border-app-border rounded-xl text-[10px] font-black uppercase text-app-text-muted hover:text-cyan-500 hover:border-cyan-500/50 transition-all"
+                        title="Exportar agenda"
+                    >
+                        <Save size={14} />
+                        Exportar
+                    </button>
+
+                    <label className="flex-1 flex-row flex items-center justify-center gap-2 py-2 bg-slate-100 dark:bg-slate-800 border border-app-border rounded-xl text-[10px] font-black uppercase text-app-text-muted hover:text-emerald-500 hover:border-emerald-500/50 transition-all cursor-pointer" title="Importar agenda">
+                        <Upload size={14} />
+                        Importar
+                        <input 
+                            type="file" 
+                            className="hidden" 
+                            accept=".json" 
+                            onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                const reader = new FileReader();
+                                reader.onload = async (ev) => {
+                                    try {
+                                        const data = JSON.parse(ev.target?.result as string);
+                                        const toImport = Array.isArray(data) ? data : (data.reminders || []);
+                                        
+                                        if (confirm(`¿Deseas importar ${toImport.length} recordatorios a la agenda?`)) {
+                                            for (const r of toImport) {
+                                                await onAdd(r.chatId, r.text, r.time, null, r.repeat, r.repeatInterval, r.repeatUnit, r.title);
+                                            }
+                                            alert('✅ Agenda importada con éxito.');
+                                        }
+                                    } catch (err) {
+                                        alert('❌ Error al leer el archivo de agenda.');
+                                    }
+                                };
+                                reader.readAsText(file);
+                            }}
+                        />
+                    </label>
+
+                    <button
+                        type="button"
+                        onClick={() => alert(`📌 GUÍA CARGA MASIVA JSON\n\nEl archivo debe ser un .json con esta estructura:\n[\n  {\n    "title": "Nombre opcional",\n    "chatId": "521XXXXXXXXXX",\n    "text": "Tu mensaje aquí",\n    "time": "2024-12-31T23:59",\n    "repeat": "none"\n  }\n]\n\nCampos: chatId (número o grupo), time (YYYY-MM-DDTHH:MM), repeat (none/daily/weekly).`)}
+                        className="p-2 bg-slate-100 dark:bg-slate-800 border border-app-border rounded-xl text-app-text-muted hover:text-amber-500 transition-all"
+                        title="Ver ayuda de formato"
+                    >
+                        <Info size={16} />
+                    </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">

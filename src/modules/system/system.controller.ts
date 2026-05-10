@@ -100,4 +100,14 @@ export class SystemController {
             res.status(500).json({ error: error.message || 'Error al restaurar el respaldo.' });
         }
     });
+    exportReadable = asyncHandler(async (req: Request, res: Response) => {
+        const { BackupService } = require('./backup.service');
+        try {
+            const filePath = await BackupService.createHumanReadableBackup();
+            res.download(filePath, path.basename(filePath));
+        } catch (error) {
+            console.error('Error exportando datos legibles:', error);
+            res.status(500).json({ error: 'Error al exportar los datos.' });
+        }
+    });
 }

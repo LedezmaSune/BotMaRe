@@ -67,6 +67,24 @@ npm start
 
 ---
 
+## 🔄 Mantenimiento y Actualización
+
+Mantener el bot al día es vital para recibir nuevas funciones de seguridad anti-baneo y mejoras en la IA.
+
+### ⚡ Actualización Rápida (Recomendado)
+Hemos incluido scripts que automatizan todo el proceso (Backups + Descarga + Build):
+
+*   **En Windows:** Haz doble clic en `actualizar.bat`.
+*   **En Linux/macOS:** Ejecuta `./update.sh`.
+
+### 🛡️ ¿Qué hace la actualización automática?
+1.  **Respaldo**: Guarda una copia de tu `database.db` y `.env` en la carpeta `backups/pre-update/`.
+2.  **Sincronización**: Baja las últimas mejoras desde GitHub.
+3.  **Mantenimiento**: Instala nuevas librerías y **reconstruye el Dashboard** automáticamente.
+4.  **Reinicio**: Te pregunta si deseas arrancar el bot de inmediato.
+
+---
+
 ## 🌐 Entornos Pro (VPS y Docker)
 
 ### 🚀 Despliegue en VPS (con PM2)

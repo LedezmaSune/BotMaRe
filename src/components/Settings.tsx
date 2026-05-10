@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Save, Upload, Key, Cpu, Shield, Globe, Terminal, Info, Brain, Download, RefreshCw, Trash2 } from 'lucide-react';
+import { Save, Upload, Key, Cpu, Shield, Globe, Terminal, Info, Brain, Download, RefreshCw, Trash2, FileText } from 'lucide-react';
 
 interface SettingsProps {
     settings: any;
@@ -203,6 +203,14 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onUpdate, onParseE
                         >
                             <Trash2 size={18} />
                             Limpiar Multimedia
+                        </button>
+
+                        <button 
+                            onClick={() => window.location.href = '/api/system/export-readable'}
+                            className="flex items-center gap-2 bg-amber-600/20 hover:bg-amber-600/40 text-amber-400 px-6 py-3 rounded-2xl font-bold text-sm border border-amber-500/30 transition-all active:scale-95"
+                        >
+                            <FileText size={18} />
+                            Exportar Legible (TXT + Multimedia)
                         </button>
                     </div>
                 </div>

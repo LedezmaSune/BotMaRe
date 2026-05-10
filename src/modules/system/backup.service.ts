@@ -313,6 +313,71 @@ export class BackupService {
         }
     }
 
+    /**
+     * Crea un respaldo legible (TXT + Carpeta de Medios) sin cifrar
+     */
+    static async createHumanReadableBackup(): Promise<string> {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+        const exportZip = new AdmZip();
+        
+        // 1. Obtener datos de la base de datos
+        const { getSettings, listTemplates, listReminders } = require('../../core/memory');
+        const settings = await getSettings();
+        const templates = await listTemplates();
+        const reminders = await listReminders('owner', true);
+
+        // 2. Crear archivo de texto de resumen
+        let summary = `=================================================\n`;
+        summary += `   RESPALDO LEGIBLE - BOTMARE AI\n`;
+        summary += `   Generado el: ${new Date().toLocaleString()}\n`;
+        summary += `=================================================\n\n`;
+
+        summary += `--- CONFIGURACIÓN GENERAL ---\n`;
+        summary += `Nombre del Bot: ${settings.bot_name}\n`;
+        summary += `IA Activada: ${settings.AI_ENABLED}\n`;
+        summary += `Grupos Permitidos: ${settings.ALLOWED_GROUPS || 'Ninguno'}\n\n`;
+
+        summary += `--- PERSONALIDAD (SYSTEM PROMPT) ---\n`;
+        summary += `${settings.system_prompt}\n\n`;
+
+        summary += `--- CEREBRO DE DATOS (CONOCIMIENTO) ---\n`;
+        summary += `${settings.possible_responses}\n\n`;
+
+        summary += `--- PLANTILLAS DE MENSAJES ---\n`;
+        templates.forEach((t: any) => {
+            summary += `> [${t.name}]\n${t.content}\n\n`;
+        });
+
+        summary += `--- RECORDATORIOS PROGRAMADOS ---\n`;
+        reminders.forEach((r: any) => {
+            summary += `[${r.status.toUpperCase()}] Para: ${r.chatId} - Fecha: ${r.time}\nTexto: ${r.text}\n\n`;
+        });
+
+        exportZip.addFile('RESUMEN_BOTMARE.txt', Buffer.from(summary, 'utf8'));
+
+        // 2.5 Añadir JSON para restauración técnica
+        const technicalData = {
+            settings,
+            templates,
+            reminders,
+            version: '1.1.0',
+            timestamp: new Date().toISOString()
+        };
+        exportZip.addFile('datos_para_restaurar.json', Buffer.from(JSON.stringify(technicalData, null, 2), 'utf8'));
+
+        // 3. Incluir Multimedia (sin cifrar)
+        const uploadsDir = path.join(process.cwd(), 'data', 'uploads');
+        if (fs.existsSync(uploadsDir) && fs.readdirSync(uploadsDir).length > 0) {
+            exportZip.addLocalFolder(uploadsDir, 'multimedia');
+        }
+
+        const exportFilename = `Exportacion-LEGIBLE-${timestamp}.zip`;
+        const exportFilePath = path.join(this.backupDir, exportFilename);
+        
+        exportZip.writeZip(exportFilePath);
+        return exportFilePath;
+    }
+
     static getBackupDir() {
         return this.backupDir;
     }
