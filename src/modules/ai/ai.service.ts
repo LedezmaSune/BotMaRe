@@ -24,8 +24,26 @@ export class AIService {
         const settings = await getSettings() as any;
         const history = await getHistory(jid);
         
+        const basePrompt = settings.system_prompt || 'Eres un asistente útil.';
+        const knowledge = settings.possible_responses || '';
+        
+        const didacticPrompt = `
+        NOMBRE DEL BOT: ${settings.bot_name || 'BotMaRe'}
+        
+        PERSONALIDAD E INSTRUCCIONES:
+        ${basePrompt} 
+        
+        CONOCIMIENTO Y REGLAS (CEREBRO DE DATOS):
+        ${knowledge}
+        
+        REGLAS DE ESTILO CRÍTICAS:
+        1. Sé directo y evita el relleno innecesario.
+        2. Intenta que tus respuestas no superen los 2 párrafos pequeños.
+        3. Mantén un tono amigable, humano y profesional según tu personalidad definida.
+        4. No uses introducciones largas, ve directo a la información útil.`;
+
         const messages = [
-            { role: 'system', content: settings.system_prompt || 'Eres un asistente útil.' },
+            { role: 'system', content: didacticPrompt },
             ...history,
             { role: 'user', content: text }
         ];
