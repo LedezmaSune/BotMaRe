@@ -35,42 +35,50 @@ const io = new Server(server, {
     }
 });
 
-// Middleware Configuration
-app.set('trust proxy', 1); // Confiar en proxies (Cloudflare, Nginx, etc.)
-
-// 1. Seguridad de Cabeceras (Helmet)
-app.use(helmet({
-    contentSecurityPolicy: false, // Desactivado para permitir scripts de Next.js y socket.io
-    crossOriginEmbedderPolicy: false
-}));
-
-// 2. Limitador de Peticiones (Anti-Brute Force)
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 100, // Limite de 100 peticiones por IP
-    message: 'Demasiadas peticiones desde esta IP. Por favor, intenta de nuevo en 15 minutos.',
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-app.use('/api', limiter); // Aplicar limite a las rutas de API
-
 app.use(cors({
     origin: true,
     credentials: true
 }));
+
+app.set('trust proxy', 1);
+
+// 1. Seguridad de Cabeceras (Configuración Pro-Dashboard)
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            imgSrc: ["'self'", "data:", "blob:"],
+            connectSrc: ["'self'", "wss:", "ws:", "http://localhost:*", "https://*"], 
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: [],
+        },
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// 2. Limitador de Peticiones
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 2000, // Aún más permisivo
+    message: 'Demasiadas peticiones.',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+app.use('/api', limiter);
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-app.use(basicAuth);
 
 // --- NUEVA ARQUITECTURA MODULAR ---
 const bot = new Bot(io);
 const messageService = bot.getMessageService();
 const reminderService = new ReminderService();
 
-// Routes Configuration
-app.use('/api', createMainRouter(bot.getSocketAdapter()));
-
-// Static Files & Proxy Logic
+// El Dashboard (estático) primero
 const isPkg = (process as any).pkg;
 const frontendPath = isPkg 
     ? path.join(path.dirname(process.execPath), 'frontend')
@@ -88,6 +96,15 @@ if (process.env.NODE_ENV === 'development' && !isPkg) {
     }));
 } else {
     app.use(express.static(frontendPath));
+}
+
+// La seguridad SOLO para la API y rutas sensibles
+app.use(basicAuth);
+
+// Routes Configuration
+app.use('/api', createMainRouter(bot.getSocketAdapter()));
+
+if (!(process.env.NODE_ENV === 'development' && !isPkg)) {
     app.get(/.*/, (req: any, res: any) => {
         if (!req.path.startsWith('/api')) {
             // Soporte para deep-linking en export estático de Next.js

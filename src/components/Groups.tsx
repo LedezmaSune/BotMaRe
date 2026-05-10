@@ -5,10 +5,12 @@ import { useState } from 'react';
 
 interface GroupsProps {
     groups: any[];
+    allowedGroups: string[];
+    onToggle: (jid: string) => void;
     onRefresh: () => void;
 }
 
-export function Groups({ groups, onRefresh }: GroupsProps) {
+export function Groups({ groups, allowedGroups, onToggle, onRefresh }: GroupsProps) {
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredGroups = groups.filter(g => 
@@ -18,7 +20,7 @@ export function Groups({ groups, onRefresh }: GroupsProps) {
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
-        alert('Copiado al portapapeles: ' + text);
+        // alert('Copiado al portapapeles: ' + text);
     };
 
     return (
@@ -29,8 +31,8 @@ export function Groups({ groups, onRefresh }: GroupsProps) {
                         <Users size={24} />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-black text-app-text tracking-tight">Grupos de WhatsApp</h2>
-                        <p className="text-app-text-muted text-xs uppercase tracking-widest font-bold">Listado de grupos activos para difusión</p>
+                        <h2 className="text-2xl font-black text-app-text tracking-tight">Gestión de Grupos</h2>
+                        <p className="text-app-text-muted text-xs uppercase tracking-widest font-bold">Activa o desactiva la IA en grupos específicos</p>
                     </div>
                 </div>
                 
@@ -56,35 +58,54 @@ export function Groups({ groups, onRefresh }: GroupsProps) {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredGroups.map((group) => (
-                    <div key={group.id} className="bg-app-card border border-app-border rounded-2xl p-5 hover:border-cyan-500/50 transition-all group relative overflow-hidden flex flex-col justify-between">
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-[9px] font-black text-cyan-500 uppercase tracking-widest bg-cyan-500/10 px-2 py-0.5 rounded-md">WhatsApp Group</span>
-                                <span className="text-[9px] font-bold text-app-text-muted">{group.participants?.length || 0} Miembros</span>
+                {filteredGroups.map((group) => {
+                    const isAllowed = allowedGroups.includes(group.id);
+                    
+                    return (
+                        <div key={group.id} className={`bg-app-card border rounded-2xl p-5 transition-all group relative overflow-hidden flex flex-col justify-between ${isAllowed ? 'border-cyan-500/50 ring-1 ring-cyan-500/20' : 'border-app-border hover:border-app-border-hover'}`}>
+                            <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${isAllowed ? 'bg-cyan-500 text-white' : 'bg-app-border text-app-text-muted'}`}>
+                                            {isAllowed ? 'IA Activa' : 'IA Inactiva'}
+                                        </span>
+                                    </div>
+                                    <span className="text-[9px] font-bold text-app-text-muted">{group.participants?.length || 0} Miembros</span>
+                                </div>
+                                
+                                <h3 className="font-bold text-app-text text-sm mb-1 truncate" title={group.subject}>
+                                    {group.subject || 'Sin nombre'}
+                                </h3>
+                                
+                                <div className="flex items-center gap-1 group/id">
+                                    <p className="text-[10px] font-mono text-app-text-muted truncate flex-1">
+                                        {group.id}
+                                    </p>
+                                    <button 
+                                        onClick={() => copyToClipboard(group.id)}
+                                        className="opacity-0 group-hover/id:opacity-100 p-1 hover:text-cyan-500 transition-all"
+                                        title="Copiar ID"
+                                    >
+                                        <Copy size={12} />
+                                    </button>
+                                </div>
                             </div>
-                            <h3 className="font-bold text-app-text text-sm mb-1 truncate" title={group.subject}>
-                                {group.subject || 'Sin nombre'}
-                            </h3>
-                            <div className="flex items-center gap-1 group/id">
-                                <p className="text-[10px] font-mono text-app-text-muted truncate flex-1">
-                                    {group.id}
-                                </p>
-                                <button 
-                                    onClick={() => copyToClipboard(group.id)}
-                                    className="opacity-0 group-hover/id:opacity-100 p-1 hover:text-cyan-500 transition-all"
-                                    title="Copiar ID"
+                            
+                            <div className="mt-4 pt-4 border-t border-app-border/50 flex items-center justify-between">
+                                <span className="text-[8px] font-bold text-app-text-muted uppercase">
+                                    {group.creation ? `Creado: ${new Date(group.creation * 1000).toLocaleDateString()}` : 'Fecha desconocida'}
+                                </span>
+                                
+                                <button
+                                    onClick={() => onToggle(group.id)}
+                                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${isAllowed ? 'bg-cyan-500' : 'bg-app-border'}`}
                                 >
-                                    <Copy size={12} />
+                                    <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${isAllowed ? 'translate-x-5' : 'translate-x-1'}`} />
                                 </button>
                             </div>
                         </div>
-                        
-                        <div className="mt-4 pt-4 border-t border-app-border/50 flex items-center justify-between">
-                            <span className="text-[8px] font-bold text-app-text-muted uppercase">Creado: {new Date(group.creation * 1000).toLocaleDateString()}</span>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
 
                 {filteredGroups.length === 0 && (
                     <div className="col-span-full py-20 text-center bg-app-card/20 rounded-3xl border-2 border-dashed border-app-border">

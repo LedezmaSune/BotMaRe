@@ -19,6 +19,7 @@ export class WhatsAppClient {
     private socket: any;
     private state: 'connecting' | 'connected' | 'disconnected' = 'disconnected';
     private qr: string | null = null;
+    private groupCache: any = null;
 
     // Callbacks para desacoplar el cliente del resto de la app
     public onStatusUpdate?: (data: { state: string, qr?: string }) => void;
@@ -99,6 +100,11 @@ export class WhatsAppClient {
         return await this.socket.sendMessage(jid, content);
     }
 
+    async sendPresence(jid: string, state: 'composing' | 'recording' | 'paused') {
+        if (this.state !== 'connected' || !this.socket) return;
+        await this.socket.sendPresenceUpdate(state, jid);
+    }
+
     getSocket() {
         return this.socket;
     }
@@ -115,11 +121,24 @@ export class WhatsAppClient {
     }
 
     async getGroups() {
-        if (!this.socket) return {};
+        // Si no está conectado, devolvemos el caché sin intentar la consulta
+        if (!this.socket || this.state !== 'connected') {
+            return this.groupCache || {};
+        }
+
         try {
-            return await this.socket.groupFetchAllParticipating();
-        } catch (e) {
-            return {};
+            const groups = await this.socket.groupFetchAllParticipating();
+            if (groups && Object.keys(groups).length > 0) {
+                this.groupCache = groups;
+            }
+            return groups || this.groupCache || {};
+        } catch (e: any) {
+            // Si el error es por conexión cerrada, no lo mostramos como un error crítico
+            if (e.message?.includes('Connection Closed')) {
+                return this.groupCache || {};
+            }
+            console.error('[Infraestructura WA] Error al obtener grupos:', e);
+            return this.groupCache || {};
         }
     }
 

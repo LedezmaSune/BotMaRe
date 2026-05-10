@@ -111,6 +111,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onUpdate, onParseE
             icon: Brain,
             keys: [
                 { id: 'AI_ENABLED', label: 'IA Activada', desc: 'true / false - Apaga la IA para responder manualmente.', provider: 'Sistema' },
+                { id: 'ENABLE_GROUPS', label: 'Soporte para Grupos', desc: 'true / false - Habilita la respuesta en grupos (requiere mención).', provider: 'Sistema' },
             ]
         },
         {

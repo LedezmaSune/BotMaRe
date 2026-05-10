@@ -37,7 +37,10 @@ export async function getAllConfig(): Promise<Record<string, string>> {
         'OPENAI_MODEL',
         'NVIDIA_MODEL',
         'OPENROUTER_MODEL',
-        'DEEPSEEK_MODEL'
+        'DEEPSEEK_MODEL',
+        'AI_ENABLED',
+        'ENABLE_GROUPS',
+        'ALLOWED_GROUPS'
     ];
     
     const merged: Record<string, string> = { ...dbSettings };

@@ -35,6 +35,13 @@ export class MessageService {
 
     async sendMessage(jid: string, text: string) {
         const target = this.formatJid(jid);
+        
+        // Simular escritura (Escribiendo...)
+        const typingTime = Math.min(text.length * 50, 4000); // Máximo 4 segundos de escritura
+        await this.client.sendPresence(target, 'composing');
+        await new Promise(r => setTimeout(r, 1000 + Math.random() * typingTime));
+        await this.client.sendPresence(target, 'paused');
+
         return await this.client.sendRaw(target, { text });
     }
 

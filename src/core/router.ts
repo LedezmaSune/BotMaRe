@@ -1,6 +1,7 @@
 import { WAMessage } from '@whiskeysockets/baileys';
 import { MessageController } from '../modules/messages/message.controller';
 import { getSettings } from './memory';
+import { getConfig } from './config';
 
 /**
  * CORE LAYER - ROUTER
@@ -32,6 +33,21 @@ export class Router {
 
         // Lógica de filtrado en grupos
         if (jid.endsWith('@g.us')) {
+            const enableGroups = await getConfig('ENABLE_GROUPS', 'false');
+            if (enableGroups !== 'true') {
+                return; // Grupos deshabilitados globalmente
+            }
+
+            // Verificar si el grupo específico está permitido
+            const allowedGroupsRaw = await getConfig('ALLOWED_GROUPS', '');
+            if (allowedGroupsRaw) {
+                const allowedGroups = allowedGroupsRaw.split(',').map(id => id.trim());
+                if (!allowedGroups.includes(jid)) {
+                    console.log(`[Router] Grupo ${jid} no está en la lista blanca.`);
+                    return;
+                }
+            }
+
             const isMentioned = await this.checkBotMention(text, messageContent, socket);
             if (!isMentioned) return;
         }

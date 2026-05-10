@@ -17,6 +17,7 @@ export function useBotData() {
     const [templates, setTemplates] = useState<Template[]>([]);
     const [groups, setGroups] = useState<any[]>([]);
     const [settings, setSettings] = useState<Settings | null>(null);
+    const [allowedGroups, setAllowedGroups] = useState<string[]>([]);
     const [prefillDate, setPrefillDate] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -34,12 +35,26 @@ export function useBotData() {
 
             if (currentTab === 'groups' || currentTab === 'mass' || currentTab === 'scheduling') {
                 const groupsRes = await fetch(`${API_BASE}/whatsapp/groups`);
-                if (groupsRes.ok) setGroups(await groupsRes.json());
+                if (groupsRes.ok) {
+                    const newGroups = await groupsRes.json();
+                    // Solo actualizamos si la respuesta tiene datos o si es la primera vez que cargamos
+                    if (newGroups.length > 0 || groups.length === 0) {
+                        setGroups(newGroups);
+                    }
+                }
             }
 
-            if (!settings || currentTab === 'personality' || currentTab === 'settings') {
+            if (!settings || currentTab === 'personality' || currentTab === 'settings' || currentTab === 'groups') {
                 const settingsRes = await fetch(`${API_BASE}/settings`);
-                if (settingsRes.ok) setSettings(await settingsRes.json());
+                if (settingsRes.ok) {
+                    const s = await settingsRes.json();
+                    setSettings(s);
+                    if (s.ALLOWED_GROUPS) {
+                        setAllowedGroups(s.ALLOWED_GROUPS.split(',').map((id: string) => id.trim()));
+                    } else {
+                        setAllowedGroups([]);
+                    }
+                }
             }
         } catch (error) {
             console.error('[useBotData] Error fetching data:', error);
@@ -60,7 +75,7 @@ export function useBotData() {
         void fetchData(activeTab);
         const interval = setInterval(() => {
             void fetchData(activeTab);
-        }, 5000);
+        }, 30000); // Actualizar cada 30 segundos en lugar de 5 para evitar saturación
         return () => clearInterval(interval);
     }, [activeTab, fetchData]);
 
@@ -155,9 +170,25 @@ export function useBotData() {
             body: JSON.stringify(newSettings)
         });
         if (res.ok) {
-            setSettings(newSettings);
+            setSettings(prev => ({ ...prev, ...newSettings }));
+            if (newSettings.ALLOWED_GROUPS !== undefined) {
+                setAllowedGroups(newSettings.ALLOWED_GROUPS.split(',').map((id: string) => id.trim()).filter(Boolean));
+            }
             alert('✅ Configuración guardada.');
         }
+    };
+
+    const handleToggleGroup = async (jid: string) => {
+        const isAllowed = allowedGroups.includes(jid);
+        let newAllowed: string[];
+        if (isAllowed) {
+            newAllowed = allowedGroups.filter(id => id !== jid);
+        } else {
+            newAllowed = [...allowedGroups, jid];
+        }
+
+        const newSettings = { ALLOWED_GROUPS: newAllowed.join(',') };
+        await handleUpdateSettings(newSettings);
     };
 
     const handleParseEnv = async (content: string) => {
@@ -182,6 +213,7 @@ export function useBotData() {
         reminders,
         templates,
         groups,
+        allowedGroups,
         settings,
         prefillDate,
         setPrefillDate,
@@ -193,6 +225,7 @@ export function useBotData() {
         handleAddReminder,
         handleDeleteReminder,
         handleUpdateSettings,
+        handleToggleGroup,
         handleParseEnv
     };
 }

@@ -57,9 +57,18 @@ export class MassDiffusionService {
                 logEntry.status = 'success';
                 logs.push(logEntry);
 
-                // Delay between contacts (3-6s) to avoid bans
-                const delay = 3000 + Math.random() * 3000;
+                // --- PROTECCIÓN ANTI-BAN MEJORADA ---
+                const index = logs.length;
+                let delay = 5000 + Math.random() * 5000; // 5-10 segundos base
+                
+                // Pausa larga cada 10 mensajes (simular descanso humano)
+                if (index % 10 === 0) {
+                    console.log(`[Mass] Pausa de seguridad larga (Burst Protection)...`);
+                    delay += 15000 + Math.random() * 10000; // +15-25 segundos extra
+                }
+
                 await new Promise(r => setTimeout(r, delay));
+                // ------------------------------------
             } catch (error: any) {
                 console.error(`[Mass] Failed to send to ${contact.number}:`, error.message);
                 logEntry.status = 'failed';
