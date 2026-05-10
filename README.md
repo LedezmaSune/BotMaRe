@@ -1,89 +1,94 @@
-# 🦊 BotMaRe AI - Sistema de Gestión Inteligente de WhatsApp
+# 🦊 BotMaRe AI - Guía Maestra del Usuario
 
-BotMaRe es una plataforma modular de automatización para WhatsApp impulsada por Inteligencia Artificial (IA). Diseñada para ser potente, segura y fácil de usar, permite gestionar múltiples funciones desde un Dashboard web premium.
-
-## 🌟 Características Principales
-
-- **🧠 Motor de IA Multimodelo**: Soporte para Groq, Gemini, OpenAI, DeepSeek y Nvidia.
-- **🛡️ Escudo Anti-Baneo Avanzado**: Simulación de escritura ("Escribiendo..."), pausas aleatorias (jitter) y protección por ráfagas (burst protection).
-- **👥 Gestión de Grupos**: Activa o desactiva la IA en grupos específicos desde el Dashboard.
-- **📅 Programador de Recordatorios**: Envío de mensajes y multimedia programados.
-- **📢 Difusión Masiva**: Envío de campañas a listas de contactos con variables personalizadas.
-- **🔒 Privacidad Total**: Base de datos SQLite local y cifrado en todas las comunicaciones.
-- **🌍 Acceso Global**: Túnel integrado para acceder al Dashboard desde cualquier lugar.
+¡Bienvenido a **BotMaRe AI**! Esta no es solo una herramienta de mensajes; es el "cerebro" para tu WhatsApp. Esta guía te enseñará desde cómo instalarlo hasta cómo convertirlo en un asistente que trabaje por ti las 24 horas.
 
 ---
 
-## 🛠️ Instalación y Configuración
+## 🎯 ¿Qué puedes hacer con BotMaRe?
 
-### Requisitos Previos
-- [Node.js](https://nodejs.org/) (Versión 18 o superior recomendada).
-- [Git](https://git-scm.com/).
-
-### Paso a Paso
-
-1. **Clonar el repositorio**:
-   ```bash
-   git clone <url-del-repositorio>
-   cd BotMaRe-main
-   ```
-
-2. **Instalar dependencias**:
-   ```bash
-   npm run setup
-   ```
-   *Este comando instalará los módulos necesarios y creará tu archivo `.env` inicial.*
-
-3. **Configurar el entorno**:
-   Abre el archivo `.env` y añade al menos una API Key de IA (Groq, Gemini, etc.) o hazlo directamente desde el Dashboard en la pestaña de **Configuración**.
-
-4. **Compilar el Dashboard**:
-   Si es la primera vez o has hecho cambios visuales, ejecuta:
-   ```bash
-   npm run build
-   ```
-
-5. **Iniciar el Bot**:
-   ```bash
-   npm start
-   ```
-   *O usa el archivo `manager.bat` si estás en Windows para una gestión más fácil.*
+*   **Asistente Inteligente**: Responde dudas de clientes usando los mejores modelos de IA (ChatGPT, Gemini, Claude, etc.).
+*   **Secretario Programador**: Agenda mensajes para que se envíen solos en una fecha y hora específica.
+*   **Difusor Seguro**: Envía avisos a cientos de contactos sin que WhatsApp te bloquee fácilmente.
+*   **Control de Grupos**: Decide exactamente en qué grupos debe intervenir la IA y en cuáles no.
 
 ---
 
-## 📱 Uso de la Plataforma
+## 🛠️ Paso 1: Preparando el Terreno (Instalación)
 
-### Vincular WhatsApp
-Al iniciar el bot, aparecerá un código QR en la consola o en el Dashboard. Escanéalo con tu aplicación de WhatsApp (Dispositivos vinculados).
+Antes de empezar, asegúrate de tener estas dos herramientas en tu PC:
+1.  **[Node.js](https://nodejs.org/)**: Es el motor que hace que el bot camine.
+2.  **[Git](https://git-scm.com/)**: Es lo que nos permite descargar y actualizar el código.
 
-### Gestión de Grupos
-1. Ve a la pestaña **Grupos**.
-2. Usa el interruptor para habilitar la IA en los grupos que desees.
-3. El bot responderá en los grupos habilitados solo cuando sea **mencionado** o cuando alguien **responda directamente** a uno de sus mensajes.
+### 🚀 Instalación Rápida
+Abre una terminal (PowerShell o CMD) en la carpeta donde quieras el proyecto y escribe:
 
-### Envíos Masivos (Anti-Ban)
-El sistema aplica automáticamente:
-- Esperas de 5-10 segundos entre contactos.
-- Una pausa de seguridad de 20 segundos cada 10 mensajes.
-- Simulación de escritura para evitar patrones robóticos.
+```bash
+# 1. Descarga el proyecto
+git clone https://github.com/LedezmaSune/BotMaRe.git
 
----
+# 2. Entra a la carpeta
+cd BotMaRe
 
-## 🖥️ Comandos Útiles
-
-| Comando | Descripción |
-|---------|-------------|
-| `npm run dev` | Inicia en modo desarrollo (cambios en tiempo real). |
-| `npm run build` | Compila la interfaz para producción. |
-| `npm run clean` | Limpia archivos temporales y builds antiguos. |
-| `npm run reset:wa` | Borra la sesión de WhatsApp (útil para cambiar de número). |
+# 3. Prepara todo automáticamente
+npm run setup
+```
+> **💡 Consejo Didáctico:** El comando `npm run setup` es como "armar los muebles". Solo se hace la primera vez para dejar todo listo.
 
 ---
 
-## 🔒 Seguridad
-- **Cambio de Credenciales**: Es altamente recomendable cambiar el usuario y contraseña del Dashboard en la pestaña de **Configuración** si planeas usar el acceso web público.
-- **Base de Datos**: El archivo `data/database.db` contiene tus configuraciones y recordatorios. Mantén copias de seguridad regularmente.
+## ⚙️ Paso 2: Configurando el "Cerebro" (IA)
+
+Para que el bot hable, necesita una "llave" (API Key) de algún servicio de IA.
+1. Inicia el bot con `npm start`.
+2. Abre tu navegador en `http://localhost:8000`.
+3. Ve a la pestaña de **⚙️ Configuración**.
+4. Pega tu llave de **Gemini** (gratis y recomendada para empezar) o **Groq**.
+5. ¡Dale a **Guardar Cambios**!
 
 ---
 
-© 2024 BotMaRe AI - Powered by Kitsune Engine.
+## 🛡️ Paso 3: El Escudo Anti-Baneo (Muy importante)
+
+WhatsApp es estricto con los bots. Por eso, BotMaRe incluye protecciones automáticas:
+
+| Función | ¿Qué hace? | ¿Por qué es bueno? |
+|---------|------------|--------------------|
+| **Simulación de Escritura** | Verás el mensaje "Escribiendo..." antes de cada respuesta. | Parece que un humano está redactando el mensaje. |
+| **Jitter (Retraso Aleatorio)** | El bot espera entre 5 y 10 segundos entre cada envío. | Evita que WhatsApp detecte un ritmo robótico perfecto. |
+| **Pausa de Ráfaga** | Cada 10 mensajes masivos, el bot se detiene 20 segundos. | Simula que el usuario se tomó un pequeño descanso. |
+
+---
+
+## 👥 Paso 4: Dominando los Grupos
+
+Por defecto, la IA no responde en grupos para no molestar. Para activarla:
+1. Ve a la pestaña **👥 Grupos**.
+2. Verás una lista de tus grupos actuales.
+3. Activa el interruptor (Switch) en el grupo que quieras.
+4. **Regla de Oro:** En los grupos, el bot solo responderá si alguien lo **menciona** (@BotMaRe) o si alguien **responde** a un mensaje previo del bot.
+
+---
+
+## 🆘 Solución de Problemas Comunes
+
+*   **¿El QR no carga?**
+    *   *Solución:* Asegúrate de que tu internet sea estable y refresca el Dashboard.
+*   **¿Hice un cambio y no lo veo en la web?**
+    *   *Solución:* Ejecuta `npm run build` en la terminal. Esto "refresca" los archivos visuales del Dashboard.
+*   **¿Error "Connection Closed"?**
+    *   *Solución:* Es normal si WhatsApp se desconecta un segundo. El bot intentará reconectar solo. Si no lo hace, reinicia el programa.
+
+---
+
+## ⌨️ Diccionario de Comandos Rápidos
+
+| Si quieres... | Escribe en la terminal... |
+|---------------|---------------------------|
+| **Arrancar el bot normal** | `npm start` |
+| **Probar cambios visuales** | `npm run dev` |
+| **Limpiar errores antiguos** | `npm run clean` |
+| **Borrar la sesión (cerrar sesión)** | `npm run reset:wa` |
+
+---
+
+© 2024 **BotMaRe AI** - Creado con ❤️ para facilitar tu comunicación.
