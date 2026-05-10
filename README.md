@@ -13,81 +13,103 @@
 
 ---
 
-## 🛠️ Paso 1: Preparando el Terreno (Instalación)
+## 📂 Estructura del Proyecto (Mapa de Carpetas)
 
-Antes de empezar, asegúrate de tener estas dos herramientas en tu PC:
-1.  **[Node.js](https://nodejs.org/)**: Es el motor que hace que el bot camine.
-2.  **[Git](https://git-scm.com/)**: Es lo que nos permite descargar y actualizar el código.
+Para que sepas dónde encontrar cada pieza del bot:
 
-### 🚀 Instalación Rápida
-Abre una terminal (PowerShell o CMD) en la carpeta donde quieras el proyecto y escribe:
-
-```bash
-# 1. Descarga el proyecto
-git clone https://github.com/LedezmaSune/BotMaRe.git
-
-# 2. Entra a la carpeta
-cd BotMaRe
-
-# 3. Prepara todo automáticamente
-npm run setup
+```text
+BotMaRe/
+├── src/                # 🧠 Código Fuente (El corazón del bot)
+│   ├── core/           # Lógica central (IA, Router, Seguridad)
+│   ├── infrastructure/ # Conexión pura con WhatsApp (Baileys)
+│   ├── modules/        # Funcionalidades (Mensajes, Recordatorios, Ajustes)
+│   └── app/            # Interfaz Web (Dashboard en Next.js)
+├── data/               # 💾 Tus Datos (Base de datos, Sesión, Archivos subidos)
+├── public/             # Imágenes y assets visuales
+├── .env                # Configuración de llaves secretas
+└── package.json        # Listado de módulos y comandos
 ```
-> **💡 Consejo Didáctico:** El comando `npm run setup` es como "armar los muebles". Solo se hace la primera vez para dejar todo listo.
 
 ---
 
-## ⚙️ Paso 2: Configurando el "Cerebro" (IA)
+## 🛠️ Instalación y Configuración
 
-Para que el bot hable, necesita una "llave" (API Key) de algún servicio de IA.
-1. Inicia el bot con `npm start`.
-2. Abre tu navegador en `http://localhost:8000`.
-3. Ve a la pestaña de **⚙️ Configuración**.
-4. Pega tu llave de **Gemini** (gratis y recomendada para empezar) o **Groq**.
-5. ¡Dale a **Guardar Cambios**!
+### Requisitos Previos
+1.  **[Node.js](https://nodejs.org/)**: Versión 18 o superior.
+2.  **[Git](https://git-scm.com/)**: Para descargar y actualizar.
+
+### 🚀 Guía por Sistema Operativo
+
+#### 🪟 Windows
+1. Descarga el código: `git clone https://github.com/LedezmaSune/BotMaRe.git`
+2. Ejecuta `setup.bat` o escribe en la terminal: `npm run setup`
+3. Inicia con: `npm start` o usa el `manager.bat`.
+
+#### 🐧 Linux (Ubuntu/Debian)
+```bash
+sudo apt update && sudo apt install nodejs npm git -y
+git clone https://github.com/LedezmaSune/BotMaRe.git
+cd BotMaRe
+npm run setup
+npm run build
+npm start
+```
+
+#### 🍎 macOS
+```bash
+brew install node git
+git clone https://github.com/LedezmaSune/BotMaRe.git
+cd BotMaRe
+npm run setup
+npm run build
+npm start
+```
 
 ---
 
-## 🛡️ Paso 3: El Escudo Anti-Baneo (Muy importante)
+## 🌐 Entornos Pro (VPS y Docker)
 
-WhatsApp es estricto con los bots. Por eso, BotMaRe incluye protecciones automáticas:
+### 🚀 Despliegue en VPS (con PM2)
+Si quieres que el bot nunca se apague, usa PM2:
+```bash
+npm install -g pm2
+npm run pm2:start  # Inicia el bot en segundo plano
+npm run pm2:logs   # Mira qué está pasando en tiempo real
+npm run pm2:stop   # Detiene el bot
+```
 
-| Función | ¿Qué hace? | ¿Por qué es bueno? |
-|---------|------------|--------------------|
-| **Simulación de Escritura** | Verás el mensaje "Escribiendo..." antes de cada respuesta. | Parece que un humano está redactando el mensaje. |
-| **Jitter (Retraso Aleatorio)** | El bot espera entre 5 y 10 segundos entre cada envío. | Evita que WhatsApp detecte un ritmo robótico perfecto. |
-| **Pausa de Ráfaga** | Cada 10 mensajes masivos, el bot se detiene 20 segundos. | Simula que el usuario se tomó un pequeño descanso. |
+### 🐳 Docker (Contenedores)
+Si prefieres usar Docker para evitar instalar Node.js en tu sistema:
+```bash
+docker-compose up -d --build
+```
+*El Dashboard estará disponible en el puerto 8000.*
 
 ---
 
-## 👥 Paso 4: Dominando los Grupos
+## 🛡️ El Escudo Anti-Baneo
 
-Por defecto, la IA no responde en grupos para no molestar. Para activarla:
+WhatsApp es estricto. BotMaRe incluye protecciones automáticas:
+
+| Función | ¿Qué hace? | Beneficio |
+|---------|------------|-----------|
+| **Simulación de Escritura** | Activa "Escribiendo..." antes de cada mensaje. | Parece un humano real. |
+| **Jitter (Retraso Aleatorio)** | Espera entre 5-10s entre envíos. | Rompe patrones robóticos. |
+| **Burst Protection** | Pausa larga de 20s cada 10 mensajes masivos. | Simula descansos humanos. |
+
+---
+
+## 👥 Gestión de Grupos
 1. Ve a la pestaña **👥 Grupos**.
-2. Verás una lista de tus grupos actuales.
-3. Activa el interruptor (Switch) en el grupo que quieras.
-4. **Regla de Oro:** En los grupos, el bot solo responderá si alguien lo **menciona** (@BotMaRe) o si alguien **responde** a un mensaje previo del bot.
+2. Activa el interruptor en los grupos deseados.
+3. **Regla:** Solo responderá si es **mencionado** (@NombreBot) o si alguien le **responde** directamente.
 
 ---
 
-## 🆘 Solución de Problemas Comunes
-
-*   **¿El QR no carga?**
-    *   *Solución:* Asegúrate de que tu internet sea estable y refresca el Dashboard.
-*   **¿Hice un cambio y no lo veo en la web?**
-    *   *Solución:* Ejecuta `npm run build` en la terminal. Esto "refresca" los archivos visuales del Dashboard.
-*   **¿Error "Connection Closed"?**
-    *   *Solución:* Es normal si WhatsApp se desconecta un segundo. El bot intentará reconectar solo. Si no lo hace, reinicia el programa.
-
----
-
-## ⌨️ Diccionario de Comandos Rápidos
-
-| Si quieres... | Escribe en la terminal... |
-|---------------|---------------------------|
-| **Arrancar el bot normal** | `npm start` |
-| **Probar cambios visuales** | `npm run dev` |
-| **Limpiar errores antiguos** | `npm run clean` |
-| **Borrar la sesión (cerrar sesión)** | `npm run reset:wa` |
+## 🆘 SOS - Solución de Problemas
+*   **¿QR no carga?** Refresca el Dashboard o revisa tu internet.
+*   **¿Cambios visuales no aparecen?** Ejecuta `npm run build`.
+*   **¿Error de conexión?** El bot reconecta solo. Si falla mucho, usa `npm run reset:wa`.
 
 ---
 
