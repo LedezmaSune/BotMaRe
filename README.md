@@ -1,144 +1,81 @@
-# 🦊 BotMaRe AI - Guía Maestra del Usuario
+# 🦊 BotMaRe AI - Ecosistema Avanzado de WhatsApp
 
-¡Bienvenido a **BotMaRe AI**! Esta no es solo una herramienta de mensajes; es el "cerebro" para tu WhatsApp. Esta guía te enseñará desde cómo instalarlo hasta cómo convertirlo en un asistente que trabaje por ti las 24 horas.
-
----
-
-## 🎯 ¿Qué puedes hacer con BotMaRe?
-
-*   **Asistente Inteligente**: Responde dudas de clientes usando los mejores modelos de IA (ChatGPT, Gemini, Claude, etc.).
-*   **Secretario Programador**: Agenda mensajes para que se envíen solos en una fecha y hora específica.
-*   **Difusor Seguro**: Envía avisos a cientos de contactos sin que WhatsApp te bloquee fácilmente.
-*   **Control de Grupos**: Decide exactamente en qué grupos debe intervenir la IA y en cuáles no.
+¡Bienvenido a la vanguardia de la automatización! **BotMaRe AI 2026** es la plataforma definitiva diseñada para transformar tu WhatsApp en un centro de operaciones inteligente, portátil y de alto rendimiento.
 
 ---
 
-## 📂 Estructura del Proyecto (Mapa de Carpetas)
+## 💎 Características de Élite
 
-Para que sepas dónde encontrar cada pieza del bot:
+*   **🧠 IA Multi-Modelo**: Integración nativa con los cerebros más potentes del mercado (ChatGPT, Gemini, Claude, DeepSeek).
+*   **📅 Suite de Programación Pro**: Gestiona recordatorios individuales o masivos con un sistema de pestañas intuitivo.
+*   **📦 Portabilidad Inteligente**: Respalda y mueve tu agenda entre servidores con auto-reparación de rutas multimedia.
+*   **🚀 Difusión de Alto Volumen**: Motor de envíos masivos con protección anti-bloqueo de última generación.
+*   **🛡️ Escudo Maestro**: Simulación de escritura humana, retrasos aleatorios (jitter) y pausas inteligentes.
+
+---
+
+## 📂 Estructura del Ecosistema
 
 ```text
 BotMaRe/
-├── src/                # 🧠 Código Fuente (El corazón del bot)
-│   ├── core/           # Lógica central (IA, Router, Seguridad)
-│   ├── infrastructure/ # Conexión pura con WhatsApp (Baileys)
-│   ├── modules/        # Funcionalidades (Mensajes, Recordatorios, Ajustes)
-│   └── app/            # Interfaz Web (Dashboard en Next.js)
-├── data/               # 💾 Tus Datos (Base de datos, Sesión, Archivos subidos)
-├── public/             # Imágenes y assets visuales
-├── .env                # Configuración de llaves secretas
-└── package.json        # Listado de módulos y comandos
+├── src/                # 🧠 Core & Business Logic
+│   ├── core/           # Motor de IA y Base de Datos
+│   ├── infrastructure/ # Conexión Baileys de alta estabilidad
+│   ├── modules/        # Servicios de Mensajería y Sistema
+│   └── app/            # Dashboard Next.js de alto rendimiento
+├── data/               # 💾 Almacenamiento Seguro (Sesiones y Media)
+├── backups/            # 🛡️ Copias de seguridad automáticas
+└── .env                # Control de llaves y configuración Pro
 ```
 
 ---
 
-## 🛠️ Instalación y Configuración
+## 🚀 Instalación y Despliegue Express
 
-### Requisitos Previos
-1.  **[Node.js](https://nodejs.org/)**: Versión 18 o superior.
-2.  **[Git](https://git-scm.com/)**: Para descargar y actualizar.
+### 🪟 Windows (Optimizado)
+1.  **Clonar**: `git clone https://github.com/LedezmaSune/BotMaRe.git`
+2.  **Preparar**: Doble clic en `setup.bat` (o `npm run setup`)
+3.  **Lanzar**: `npm start` o usa el `manager.bat`
 
-### 🚀 Guía por Sistema Operativo
-
-#### 🪟 Windows
-1. Descarga el código: `git clone https://github.com/LedezmaSune/BotMaRe.git`
-2. Ejecuta `setup.bat` o escribe en la terminal: `npm run setup`
-3. Inicia con: `npm start` o usa el `manager.bat`.
-
-#### 🐧 Linux (Ubuntu/Debian)
+### 🐧 Linux & 🍎 macOS
 ```bash
-sudo apt update && sudo apt install nodejs npm git -y
 git clone https://github.com/LedezmaSune/BotMaRe.git
 cd BotMaRe
-npm run setup
-npm run build
-npm start
-```
-
-#### 🍎 macOS
-```bash
-brew install node git
-git clone https://github.com/LedezmaSune/BotMaRe.git
-cd BotMaRe
-npm run setup
-npm run build
+npm run setup && npm run build
 npm start
 ```
 
 ---
 
-## 🔄 Mantenimiento y Actualización
+## 🔄 Gestión Masiva y Resiliencia de Datos
 
-Mantener el bot al día es vital para recibir nuevas funciones de seguridad anti-baneo y mejoras en la IA.
+El motor **BotMaRe 2026** está diseñado para la movilidad absoluta:
 
-### ⚡ Actualización Rápida (Recomendado)
-Hemos incluido scripts que automatizan todo el proceso (Backups + Descarga + Build):
-
-*   **En Windows:** Haz doble clic en `actualizar.bat`.
-*   **En Linux/macOS:** Ejecuta `./update.sh`.
-
-### 🛡️ ¿Qué hace la actualización automática?
-1.  **Respaldo**: Guarda una copia de tu `database.db` y `.env` en la carpeta `backups/pre-update/`.
-2.  **Sincronización**: Baja las últimas mejoras desde GitHub.
-3.  **Mantenimiento**: Instala nuevas librerías y **reconstruye el Dashboard** automáticamente.
-4.  **Reinicio**: Te pregunta si deseas arrancar el bot de inmediato.
+1.  **Carga Masiva**: Importa agendas JSON con miles de registros en segundos.
+2.  **Sincronización de Multimedia**: Sube tus archivos en lote y el bot los emparejará automáticamente.
+3.  **Auto-Fix de Rutas**: Si cambias de computadora, el bot detecta las rutas rotas y las repara buscando los archivos por nombre. ✨
 
 ---
 
-## 🌐 Entornos Pro (VPS y Docker)
+## 🛡️ Seguridad Anti-Baneo 2026
 
-### 🚀 Despliegue en VPS (con PM2)
-Si quieres que el bot nunca se apague, usa PM2:
-```bash
-npm install -g pm2
-npm run pm2:start  # Inicia el bot en segundo plano
-npm run pm2:logs   # Mira qué está pasando en tiempo real
-npm run pm2:stop   # Detiene el bot
-```
+Implementamos los protocolos más avanzados para proteger tu línea:
 
-### 🐳 Docker (Contenedores)
-Si prefieres usar Docker para evitar instalar Node.js en tu sistema:
-```bash
-docker-compose up -d --build
-```
-*El Dashboard estará disponible en el puerto 8000.*
+| Protección | Tecnología | Impacto |
+| :--- | :--- | :--- |
+| **Escritura Fantasma** | Simulación de eventos `composing` | 100% Humano |
+| **Delay Dinámico** | Algoritmos de jitter aleatorio | Indetectable |
+| **Control de Ráfaga** | Pausas cíclicas programadas | Seguridad Máxima |
 
 ---
 
-## 🛡️ El Escudo Anti-Baneo
+## 🆘 Soporte y Mantenimiento
 
-WhatsApp es estricto. BotMaRe incluye protecciones automáticas:
-
-| Función | ¿Qué hace? | Beneficio |
-|---------|------------|-----------|
-| **Simulación de Escritura** | Activa "Escribiendo..." antes de cada mensaje. | Parece un humano real. |
-| **Jitter (Retraso Aleatorio)** | Espera entre 5-10s entre envíos. | Rompe patrones robóticos. |
-| **Burst Protection** | Pausa larga de 20s cada 10 mensajes masivos. | Simula descansos humanos. |
+*   **¿Problemas de Conexión?**: Ejecuta `npm run reset:wa` para una limpieza profunda de sesión.
+*   **¿Interfaz Desactualizada?**: Un simple `npm run build` refrescará todos los componentes.
+*   **¿Actualizaciones?**: Usa `actualizar.bat` o `./update.sh` para estar siempre a la última.
 
 ---
 
-## 👥 Gestión de Grupos
-1. Ve a la pestaña **👥 Grupos**.
-2. Activa el interruptor en los grupos deseados.
-3. **Regla:** Solo responderá si es **mencionado** (@NombreBot) o si alguien le **responde** directamente.
-
----
-
-## 🚀 Gestión Masiva y Portabilidad
-BotMaRe ahora incluye herramientas avanzadas para la gestión de grandes volúmenes de datos:
-
-*   **Pestaña Dual (Individual/Masivo)**: Separación de la interfaz para una programación rápida uno a uno o una gestión masiva por archivos.
-*   **Multimedia en Lote**: Sube cientos de archivos de una sola vez conservando sus nombres originales para sincronización perfecta.
-*   **Portabilidad Inteligente**: ¡Lleva tu bot a cualquier parte! Al importar un JSON, el bot repara automáticamente las rutas de imágenes si detecta que has movido el proyecto de carpeta o de computadora.
-*   **Exportación Total**: Genera respaldos de tu agenda completa en formato JSON para migraciones rápidas entre instancias.
-
----
-
-## 🆘 SOS - Solución de Problemas
-*   **¿QR no carga?** Refresca el Dashboard o revisa tu internet.
-*   **¿Cambios visuales no aparecen?** Ejecuta `npm run build`.
-*   **¿Error de conexión?** El bot reconecta solo. Si falla mucho, usa `npm run reset:wa`.
-
----
-
-© 2024 **BotMaRe AI** - Creado con ❤️ para facilitar tu comunicación.
+© 2026 **BotMaRe AI** - Potenciando la comunicación del futuro.
+*Creado con ❤️ para mentes innovadoras.*
