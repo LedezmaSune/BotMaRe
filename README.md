@@ -124,6 +124,16 @@ WhatsApp es estricto. BotMaRe incluye protecciones automáticas:
 
 ---
 
+## 🚀 Gestión Masiva y Portabilidad
+BotMaRe ahora incluye herramientas avanzadas para la gestión de grandes volúmenes de datos:
+
+*   **Pestaña Dual (Individual/Masivo)**: Separación de la interfaz para una programación rápida uno a uno o una gestión masiva por archivos.
+*   **Multimedia en Lote**: Sube cientos de archivos de una sola vez conservando sus nombres originales para sincronización perfecta.
+*   **Portabilidad Inteligente**: ¡Lleva tu bot a cualquier parte! Al importar un JSON, el bot repara automáticamente las rutas de imágenes si detecta que has movido el proyecto de carpeta o de computadora.
+*   **Exportación Total**: Genera respaldos de tu agenda completa en formato JSON para migraciones rápidas entre instancias.
+
+---
+
 ## 🆘 SOS - Solución de Problemas
 *   **¿QR no carga?** Refresca el Dashboard o revisa tu internet.
 *   **¿Cambios visuales no aparecen?** Ejecuta `npm run build`.

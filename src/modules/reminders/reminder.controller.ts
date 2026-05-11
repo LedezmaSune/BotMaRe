@@ -14,8 +14,8 @@ export class ReminderController {
     });
 
     create = asyncHandler(async (req: Request, res: Response) => {
-        const { chatId, text, time, repeat, repeatInterval, repeatUnit, title } = req.body;
-        const id = await this.reminderService.create('owner', chatId, text, time, undefined, undefined, repeat, repeatInterval, repeatUnit, title);
+        const { chatId, text, time, repeat, repeatInterval, repeatUnit, title, mediaPath, mediaType } = req.body;
+        const id = await this.reminderService.create('owner', chatId, text, time, mediaPath, mediaType, repeat, repeatInterval, repeatUnit, title);
         res.json({ success: true, id });
     });
 

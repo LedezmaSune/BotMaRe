@@ -212,6 +212,36 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onUpdate, onParseE
                             <FileText size={18} />
                             Exportar Legible (TXT + Multimedia)
                         </button>
+
+                        <label className="flex items-center gap-2 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 px-6 py-3 rounded-2xl font-bold text-sm border border-emerald-500/30 transition-all active:scale-95 cursor-pointer">
+                            <Upload size={18} />
+                            Subir Multimedia en Lote
+                            <input 
+                                type="file" 
+                                className="hidden" 
+                                multiple 
+                                onChange={async (e) => {
+                                    const files = e.target.files;
+                                    if (!files || files.length === 0) return;
+                                    
+                                    const formData = new FormData();
+                                    for (let i = 0; i < files.length; i++) {
+                                        formData.append('files', files[i]);
+                                    }
+                                    
+                                    try {
+                                        const res = await fetch('/api/system/upload-multiple', {
+                                            method: 'POST',
+                                            body: formData
+                                        });
+                                        const data = await res.json();
+                                        alert(`✅ ${data.message}`);
+                                    } catch (err) {
+                                        alert('❌ Error al subir archivos.');
+                                    }
+                                }}
+                            />
+                        </label>
                     </div>
                 </div>
 

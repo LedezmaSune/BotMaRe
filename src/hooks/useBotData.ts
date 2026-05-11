@@ -126,7 +126,7 @@ export function useBotData() {
         }
     };
 
-    const handleAddReminder = async (chatId: string, text: string, time: string, media: File | null, repeat?: string, repeatInterval?: number, repeatUnit?: string, title?: string) => {
+    const handleAddReminder = async (chatId: string, text: string, time: string, media: File | null, repeat?: string, repeatInterval?: number, repeatUnit?: string, title?: string, mediaPath?: string, mediaType?: string) => {
         setIsLoading(true);
         try {
             const formData = new FormData();
@@ -138,17 +138,20 @@ export function useBotData() {
             if (repeat) formData.append('repeat', repeat);
             if (repeatInterval) formData.append('repeatInterval', repeatInterval.toString());
             if (repeatUnit) formData.append('repeatUnit', repeatUnit);
+            if (mediaPath) formData.append('mediaPath', mediaPath);
+            if (mediaType) formData.append('mediaType', mediaType);
 
             const url = media ? `${API_BASE}/reminders/with-media` : `${API_BASE}/reminders`;
             const res = await fetch(url, {
                 method: 'POST',
-                body: media ? formData : JSON.stringify({ chatId, text, time, repeat, repeatInterval, repeatUnit, title }),
+                body: media ? formData : JSON.stringify({ chatId, text, time, repeat, repeatInterval, repeatUnit, title, mediaPath, mediaType }),
                 headers: media ? {} : { 'Content-Type': 'application/json' }
             });
 
             if (res.ok) {
                 void fetchData(activeTab);
-                alert('✅ Recordatorio programado.');
+                // Si viene de una importación masiva (mediaPath), no mostramos alerta individual para no saturar
+                if (!mediaPath) alert('✅ Recordatorio programado.');
             }
         } catch (e) {
             alert('❌ Error al programar.');
