@@ -20,6 +20,8 @@ export class WhatsAppClient {
     private state: 'connecting' | 'connected' | 'disconnected' = 'disconnected';
     private qr: string | null = null;
     private groupCache: any = null;
+    private groupCacheTime: number = 0;
+    private groupFetchPromise: Promise<any> | null = null;
 
     // Callbacks para desacoplar el cliente del resto de la app
     public onStatusUpdate?: (data: { state: string, qr?: string }) => void;
@@ -126,20 +128,39 @@ export class WhatsAppClient {
             return this.groupCache || {};
         }
 
-        try {
-            const groups = await this.socket.groupFetchAllParticipating();
-            if (groups && Object.keys(groups).length > 0) {
-                this.groupCache = groups;
-            }
-            return groups || this.groupCache || {};
-        } catch (e: any) {
-            // Si el error es por conexión cerrada, no lo mostramos como un error crítico
-            if (e.message?.includes('Connection Closed')) {
-                return this.groupCache || {};
-            }
-            console.error('[Infraestructura WA] Error al obtener grupos:', e);
-            return this.groupCache || {};
+        const now = Date.now();
+        // Usar caché si tiene menos de 5 minutos (300,000 ms)
+        if (this.groupCache && (now - this.groupCacheTime < 300000)) {
+            return this.groupCache;
         }
+
+        // Si ya hay una petición en curso, esperar a que termine
+        if (this.groupFetchPromise) {
+            return this.groupFetchPromise;
+        }
+
+        this.groupFetchPromise = (async () => {
+            try {
+                const groups = await this.socket.groupFetchAllParticipating();
+                if (groups && Object.keys(groups).length > 0) {
+                    this.groupCache = groups;
+                    this.groupCacheTime = Date.now();
+                }
+                return groups || this.groupCache || {};
+            } catch (e: any) {
+                // Manejar errores conocidos silenciosamente para evitar spam en consola
+                if (e.message?.includes('rate-overlimit') || e?.output?.payload?.message === 'rate-overlimit') {
+                    console.warn('[Infraestructura WA] Límite de tasa excedido en grupos (rate-overlimit). Usando caché o devolviendo vacío.');
+                } else if (!e.message?.includes('Connection Closed')) {
+                    console.error('[Infraestructura WA] Error al obtener grupos:', e);
+                }
+                return this.groupCache || {};
+            } finally {
+                this.groupFetchPromise = null;
+            }
+        })();
+
+        return this.groupFetchPromise;
     }
 
     getStatus() {

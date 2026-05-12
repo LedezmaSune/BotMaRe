@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users } from 'lucide-react';
+import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users, BookOpen } from 'lucide-react';
 
 import { ConnectionOverlay } from '@/components/ConnectionOverlay';
-import { ThemeToggle, UpdateChecker, AIToggle } from '@/components/StatusHeader';
+import { ThemeToggle, UpdateChecker, AIToggle, GlobalClock } from '@/components/StatusHeader';
 import { PageTransition } from '@/components/PageTransition';
 import { siteConfig } from '@/config';
 import { useGlobalBotData } from '@/app/BotDataProvider';
@@ -20,7 +20,8 @@ const routes: Array<{ path: string; icon: any; label: string; id: TabId }> = [
     { path: '/groups', icon: Users, label: 'Grupos', id: 'groups' },
     { path: '/personality', icon: Brain, label: 'Cerebro IA', id: 'personality' },
     { path: '/settings', icon: SettingsIcon, label: 'Configuración', id: 'settings' },
-    { path: '/audits', icon: History, label: 'Auditoría', id: 'audits' }
+    { path: '/audits', icon: History, label: 'Auditoría', id: 'audits' },
+    { path: '/manual', icon: BookOpen, label: 'Manual de Uso', id: 'manual' as TabId }
 ];
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -71,6 +72,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                             <span className="text-[8px] font-bold text-app-text-muted uppercase tracking-[0.2em] opacity-50">{settings?.bot_name || 'Bot'}</span>
                         </div>
                     </div>
+                </div>
+
+                {/* Clock en medio de la barra superior (oculto en móviles muy pequeños) */}
+                <div className="hidden md:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <GlobalClock />
                 </div>
 
                 <div className="flex items-center gap-2 md:gap-4">

@@ -143,6 +143,16 @@ export async function updateReminderStatus(id: number, status: 'pending' | 'proc
     return stmt.run(status, id);
 }
 
+export async function deleteRemindersBulk(userId: string, type: 'all' | 'pending' | 'sent') {
+    if (type === 'pending') {
+        db.prepare("DELETE FROM reminders WHERE userId = ? AND status != 'sent'").run(userId);
+    } else if (type === 'sent') {
+        db.prepare("DELETE FROM reminders WHERE userId = ? AND status = 'sent'").run(userId);
+    } else {
+        db.prepare("DELETE FROM reminders WHERE userId = ?").run(userId);
+    }
+}
+
 // Templates API
 export async function listTemplates() {
     return db.prepare('SELECT * FROM templates ORDER BY name ASC').all();

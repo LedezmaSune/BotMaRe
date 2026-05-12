@@ -5,6 +5,30 @@ import { ShieldCheck, Trash2, Loader2, RefreshCw, Sun, Moon, Brain } from 'lucid
 import { ConnectionState } from '../types';
 import { useGlobalBotData } from '@/app/BotDataProvider';
 
+export function GlobalClock() {
+    const [currentTime, setCurrentTime] = useState(new Date());
+    const [mounted, setMounted] = useState(false);
+    
+    useEffect(() => {
+        setMounted(true);
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    if (!mounted) return null;
+
+    return (
+        <div className="flex flex-col items-center justify-center bg-app-card/30 border border-app-border/50 px-4 py-1.5 rounded-2xl shadow-inner">
+            <h2 className="text-sm font-black text-app-text tabular-nums tracking-widest uppercase">
+                {currentTime.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </h2>
+            <p className="text-[8px] font-bold text-cyan-500 uppercase tracking-[0.2em] -mt-0.5">
+                {currentTime.toLocaleDateString('es-MX', { weekday: 'long', day: '2-digit', month: 'short' })}
+            </p>
+        </div>
+    );
+}
+
 export function AIToggle() {
     const { settings, handleUpdateSettings } = useGlobalBotData();
     const isEnabled = settings?.AI_ENABLED !== 'false';

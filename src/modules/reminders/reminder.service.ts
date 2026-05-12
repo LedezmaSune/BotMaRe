@@ -5,11 +5,15 @@ import {
     listReminders, 
     deleteReminder, 
     updateReminderStatus, 
-    logAudit 
+    logAudit,
+    deleteRemindersBulk
 } from '../../core/memory';
 import { Reminder } from '../../types';
 
 export class ReminderService {
+    async bulkDelete(userId: string, type: 'all' | 'pending' | 'sent') {
+        return await deleteRemindersBulk(userId, type);
+    }
     async create(userId: string, chatId: string, text: string, time: string, mediaPath?: string, mediaType?: string, repeat?: string, repeatInterval?: number, repeatUnit?: string, title?: string) {
         let finalPath = mediaPath;
         let finalType = mediaType;
@@ -17,15 +21,31 @@ export class ReminderService {
         // Lógica de "Ruta Portátil": Si la ruta no existe, buscamos el archivo en uploads local
         if (finalPath && !fs.existsSync(finalPath)) {
             const fileName = path.basename(finalPath);
-            const localPath = path.resolve('data/uploads', fileName);
+            const uploadsDir = path.resolve('data/uploads');
+            let localPath = path.join(uploadsDir, fileName);
             
+            // Intento 1: Coincidencia exacta
+            if (!fs.existsSync(localPath)) {
+                // Intento 2: Buscar archivos que se parezcan (ignorando codificación corrupta)
+                if (fs.existsSync(uploadsDir)) {
+                    const filesInDir = fs.readdirSync(uploadsDir);
+                    // Buscamos un archivo que comparta los primeros 15 caracteres (usualmente el ID o fecha)
+                    const prefix = fileName.substring(0, 15);
+                    const match = filesInDir.find(f => f.startsWith(prefix) || fileName.startsWith(f.substring(0, 15)));
+                    
+                    if (match) {
+                        localPath = path.join(uploadsDir, match);
+                        console.log(`[Portability] Coincidencia difusa encontrada: ${match}`);
+                    }
+                }
+            }
+
             if (fs.existsSync(localPath)) {
                 console.log(`[Portability] Reparando ruta: ${finalPath} -> ${localPath}`);
                 finalPath = localPath;
                 
-                // Si no tiene tipo, intentamos deducirlo
                 if (!finalType) {
-                    const ext = path.extname(fileName).toLowerCase();
+                    const ext = path.extname(localPath).toLowerCase();
                     if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) finalType = 'image';
                     else if (['.mp4', '.avi', '.mov'].includes(ext)) finalType = 'video';
                     else if (['.mp3', '.ogg', '.wav'].includes(ext)) finalType = 'audio';

@@ -42,6 +42,12 @@ export class ReminderController {
         res.json({ success: true });
     });
 
+    bulkDelete = asyncHandler(async (req: Request, res: Response) => {
+        const { type } = req.query;
+        await this.reminderService.bulkDelete('owner', (type as any) || 'all');
+        res.json({ success: true });
+    });
+
     update = asyncHandler(async (req: Request, res: Response) => {
         const id = req.params.id;
         const { chatId, text, time, repeat, repeatInterval, repeatUnit, title } = req.body;

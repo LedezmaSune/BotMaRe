@@ -47,13 +47,20 @@ npm start
 
 ---
 
-## 🔄 Gestión Masiva y Resiliencia de Datos
+## 🔄 Gestión Masiva Inteligente y Resiliencia
 
-El motor **BotMaRe 2026** está diseñado para la movilidad absoluta:
+El motor **BotMaRe 2026** está diseñado para la automatización a gran escala:
 
-1.  **Carga Masiva**: Importa agendas JSON con miles de registros en segundos.
-2.  **Sincronización de Multimedia**: Sube tus archivos en lote y el bot los emparejará automáticamente.
+1.  **Asistente Inteligente (Lotes)**: Sube tus archivos multimedia nombrados como `DD-MM` y el bot detectará automáticamente la fecha (asumiendo el año en curso) para programar la entrega, ¡sin intervención manual!
+2.  **Manejo de Variables**: Usa la etiqueta `{ARCHIVO}` en tu mensaje global y el bot la sustituirá con el nombre del cliente o archivo adjunto en tiempo real.
 3.  **Auto-Fix de Rutas**: Si cambias de computadora, el bot detecta las rutas rotas y las repara buscando los archivos por nombre. ✨
+4.  **Promise Lock en Consultas**: El sistema incorpora cachés de 5 minutos y candados asíncronos para protegerse del molesto error `rate-overlimit` de WhatsApp al buscar grupos masivamente.
+
+---
+
+## 📖 Documentación y Manual de Uso
+
+Para explorar cómo vender, configurar y sacar provecho a los módulos de IA y Carga Masiva, consulta nuestro **[Manual de Usuario](./MANUAL_DE_USUARIO.md)**, también disponible de forma interactiva dentro del propio **Dashboard Web**.
 
 ---
 

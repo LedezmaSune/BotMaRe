@@ -1,7 +1,9 @@
 import { DateTime } from 'luxon';
+import fs from 'fs';
+import path from 'path';
 import { MessageService } from '../messages/message.service';
 import { ReminderService } from '../reminders/reminder.service';
-import { db } from '../../core/memory'; // Still needed for raw queries for now, or we could move this to ReminderService
+import { db } from '../../core/memory'; 
 import { processVariables } from '../../utils/variables';
 import { parseContactList } from '../../utils/contactParser';
 
@@ -51,7 +53,32 @@ export class Scheduler {
                     const personalizedText = processVariables(r.text, targetName);
 
                     if (r.mediaPath) {
-                        await this.waService.sendMedia(targetId, r.mediaPath, personalizedText);
+                        let finalPath = r.mediaPath;
+                        
+                        // Reparación en caliente: Si la ruta no existe, buscamos el archivo en uploads local
+                        if (!fs.existsSync(finalPath)) {
+                            const fileName = path.basename(finalPath);
+                            const uploadsDir = path.resolve('data/uploads');
+                            const localPath = path.join(uploadsDir, fileName);
+
+                            if (fs.existsSync(localPath)) {
+                                finalPath = localPath;
+                            } else if (fs.existsSync(uploadsDir)) {
+                                // Búsqueda difusa por prefijo (primeros 15 caracteres)
+                                const filesInDir = fs.readdirSync(uploadsDir);
+                                const prefix = fileName.substring(0, 15);
+                                const match = filesInDir.find(f => f.startsWith(prefix) || fileName.startsWith(f.substring(0, 15)));
+                                if (match) finalPath = path.join(uploadsDir, match);
+                            }
+                        }
+
+                        // Verificación final antes de enviar
+                        if (fs.existsSync(finalPath)) {
+                            await this.waService.sendMedia(targetId, finalPath, personalizedText);
+                        } else {
+                            console.warn(`[Scheduler] Saltando multimedia para ${r.id}: archivo no encontrado tras reparación.`);
+                            await this.waService.sendMessage(targetId, personalizedText + "\n\n(No se pudo adjuntar el archivo multimedia)");
+                        }
                     } else {
                         await this.waService.sendMessage(targetId, personalizedText);
                     }
@@ -140,12 +167,24 @@ export class Scheduler {
                     const timeMatch = reminderTime.match(/(\d{1,2}):(\d{2})/);
                     const timePart = timeMatch ? `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}` : '08:00';
                     reminderTime = `${tomorrow}T${timePart}`;
-                } else if (reminderTime.length === 5 && reminderTime.includes(':')) {
+                }
+                
+                if (reminderTime.length === 5 && reminderTime.includes(':')) {
                     // Handle "HH:mm" -> prepend today
                     reminderTime = `${now.toFormat('yyyy-MM-dd')}T${reminderTime}`;
                 }
 
-                if (reminderTime <= nowStr!) {
+                const rDateTime = DateTime.fromISO(reminderTime).setZone('America/Mexico_City');
+                const diffMinutes = now.diff(rDateTime, 'minutes').minutes;
+
+                if (rDateTime.isValid && rDateTime <= now) {
+                    // Si el recordatorio tiene más de 5 minutos de retraso, no lo enviamos automáticamente
+                    if (diffMinutes > 5) {
+                        console.warn(`[Scheduler] Saltando ${r.id}: Fecha expirada (${diffMinutes.toFixed(1)} min de retraso).`);
+                        await this.reminderService.updateStatus(r.id, 'failed');
+                        await this.reminderService.logAudit('system', 'REMINDER_EXPIRED_SKIPPED', { id: r.id, delay: diffMinutes });
+                        continue;
+                    }
                     due.push(r);
                 }
             }

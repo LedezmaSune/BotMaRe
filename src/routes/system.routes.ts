@@ -17,8 +17,9 @@ const storage = multer.diskStorage({
         cb(null, dir);
     },
     filename: (req: any, file: any, cb: any) => {
-        // Mantenemos el nombre original para compatibilidad con importaciones masivas
-        cb(null, file.originalname);
+        // Limpiamos el nombre de caracteres especiales para evitar errores en Windows
+        const cleanName = file.originalname.replace(/[\\/:*?"<>|]/g, '_');
+        cb(null, cleanName);
     }
 });
 const upload = multer({ storage });
@@ -35,11 +36,17 @@ export function createSystemRouter(controller: SystemController) {
     router.get('/backup', controller.downloadBackup);
     router.get('/export-readable', controller.exportReadable);
     
-    router.post('/upload-multiple', upload.array('files', 100), (req, res) => {
-        const files = (req.files as any[]).map(f => ({
+    router.post('/upload-multiple', upload.any(), (req, res) => {
+        const reqFiles = (req.files as any[]) || [];
+        if (reqFiles.length === 0) {
+            return res.status(400).json({ success: false, error: 'No se recibieron archivos. Asegúrate de seleccionar archivos válidos.' });
+        }
+
+        const files = reqFiles.map(f => ({
             name: f.originalname,
-            path: f.path.replace(/\\/g, '/') // Convertimos barras para portabilidad
+            path: f.path.replace(/\\/g, '/')
         }));
+        
         res.json({ 
             success: true, 
             message: `${files.length} archivos subidos correctamente a data/uploads.`,
