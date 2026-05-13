@@ -1,0 +1,6 @@
+allowBuilds:
+  better-sqlite3: true
+  cloudflared: true
+  esbuild: true
+  protobufjs: true
+  sharp: true

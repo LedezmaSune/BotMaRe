@@ -8,6 +8,7 @@ export function createReminderRouter(controller: ReminderController, upload: mul
     router.get('/', controller.list);
     router.post('/', controller.create);
     router.post('/with-media', upload.single('media'), controller.createWithMedia);
+    router.post('/bulk/fix-dates', controller.fixDates);
     router.delete('/bulk', controller.bulkDelete);
     router.delete('/:id', controller.delete);
     router.patch('/:id', controller.update);

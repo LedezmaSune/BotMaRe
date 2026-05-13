@@ -1,4 +1,5 @@
 'use client';
+import React from 'react';
 
 import { useState } from 'react';
 import { Brain, Sparkles, Loader2 } from 'lucide-react';
@@ -44,7 +45,7 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                                 <input
                                     type="text"
                                     value={settings.bot_name}
-                                    onChange={(e) => setSettings({...settings, bot_name: e.target.value})}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSettings({...settings, bot_name: e.target.value})}
                                     className="w-full bg-black/40 border border-app-border rounded-2xl px-5 py-4 text-sm focus:border-purple-500/50 focus:bg-black/60 outline-none transition-all text-white placeholder:text-white/20"
                                     placeholder={siteConfig.aiPlaceholder}
                                 />
@@ -54,7 +55,7 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                                 <label className="text-xs uppercase font-black text-purple-400 mb-3 block tracking-[0.2em]">System Prompt (Instrucciones de Comportamiento)</label>
                                 <textarea
                                     value={settings.system_prompt}
-                                    onChange={(e) => setSettings({...settings, system_prompt: e.target.value})}
+                                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSettings({...settings, system_prompt: e.target.value})}
                                     className="w-full h-64 bg-black/40 border border-app-border rounded-2xl px-5 py-4 text-sm focus:border-purple-500/50 focus:bg-black/60 outline-none resize-none transition-all text-white placeholder:text-white/20 leading-relaxed"
                                     placeholder="Ej: Eres un experto asesor financiero amable y directo..."
                                 />
@@ -70,7 +71,7 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                                 <label className="text-xs uppercase font-black text-cyan-400 mb-3 block tracking-[0.2em]">Cerebro de Datos (Reglas y Conocimiento)</label>
                                 <textarea
                                     value={settings.possible_responses}
-                                    onChange={(e) => setSettings({...settings, possible_responses: e.target.value})}
+                                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSettings({...settings, possible_responses: e.target.value})}
                                     className="w-full h-80 bg-black/40 border border-app-border rounded-2xl px-5 py-4 text-sm focus:border-cyan-500/50 focus:bg-black/60 outline-none resize-none transition-all font-mono text-cyan-50/90 leading-relaxed scrollbar-thin"
                                     placeholder="Lista aquí tus productos, precios, horarios o reglas específicas de respuesta..."
                                 />
@@ -134,7 +135,7 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                                             type="file" 
                                             accept=".txt,.csv,.md,.pdf" 
                                             className="hidden" 
-                                            onChange={async (e) => {
+                                            onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
                                                 const file = e.target.files?.[0];
                                                 if (!file) return;
                                                 

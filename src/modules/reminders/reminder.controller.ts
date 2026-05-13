@@ -63,4 +63,32 @@ export class ReminderController {
         await Scheduler.sendNow(parseInt(id as string));
         res.json({ success: true });
     });
+
+    fixDates = asyncHandler(async (req: Request, res: Response) => {
+        const reminders = db.prepare("SELECT id, time FROM reminders WHERE status IN ('pending', 'failed')").all() as { id: number, time: string }[];
+        
+        let fixed = 0;
+        let deleted = 0;
+        const currentYear = new Date().getFullYear().toString();
+
+        const updateStmt = db.prepare("UPDATE reminders SET time = ?, status = 'pending' WHERE id = ?");
+        const deleteStmt = db.prepare("DELETE FROM reminders WHERE id = ?");
+
+        for (const r of reminders) {
+            if (r.time && r.time.match(/^\d{4}-/)) {
+                const newTimeStrLocal = r.time.replace(/^\d{4}/, currentYear);
+                const checkDate = new Date(newTimeStrLocal);
+                
+                if (checkDate < new Date()) {
+                    deleteStmt.run(r.id);
+                    deleted++;
+                } else {
+                    updateStmt.run(newTimeStrLocal, r.id);
+                    fixed++;
+                }
+            }
+        }
+
+        res.json({ success: true, fixed, deleted });
+    });
 }
