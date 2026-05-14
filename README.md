@@ -13,66 +13,76 @@ Tras nuestra última gran actualización a una arquitectura **Modular Monolith**
 *   **📦 Portabilidad Inteligente**: Respalda y mueve tu agenda entre servidores con auto-reparación de rutas multimedia.
 *   **🚀 Difusión de Alto Volumen**: Motor de envíos masivos con protección anti-bloqueo de última generación.
 *   **🛡️ Escudo Maestro**: Simulación de escritura humana, retrasos aleatorios (jitter) y pausas inteligentes.
-*   **⚡ Arquitectura pnpm**: Dependencias hiper-optimizadas, resolviendo bloqueos pasados y agilizando instalaciones.
+*   **⚡ Arquitectura pnpm**: Dependencias hiper-optimizadas, resolviendo bloqueos pasados y agilizando instalaciones en cualquier plataforma.
 
 ---
 
-## 🚀 Instalación y Despliegue Express (Guía Definitiva)
+## 🚀 Instalación y Despliegue Multiplataforma
 
-Hemos simplificado todo para que arrancar sea pan comido, sin importar tu nivel técnico.
+Hemos optimizado el despliegue para que el bot corra impecable en cualquier sistema operativo. **Requisitos universales:** `Node.js` (v20+), `Git`.
 
-### Requisitos Previos:
-Asegúrate de tener instalados:
-*   **Node.js** (v20 o v22)
-*   **pnpm** (Ejecuta `npm install -g pnpm` si no lo tienes)
-*   **Git**
+### 🪟 Instalación en Windows
+1. Clona el repositorio: `git clone https://github.com/LedezmaSune/BotMaRe.git`
+2. Entra a la carpeta: `cd BotMaRe`
+3. Dale doble clic al archivo `setup.bat`. Esto instalará pnpm y todas las dependencias automáticamente de forma segura.
+4. (Opcional) Abre `manager.bat` para compilar y arrancar el servidor con un menú interactivo.
 
-### 1️⃣ Descarga e Instalación Inicial
-```bash
-# 1. Clona el repositorio
-git clone https://github.com/LedezmaSune/BotMaRe.git
-cd BotMaRe
+### 🐧 Instalación en Linux / 🍎 macOS
+1. Abre tu terminal y clona el proyecto:
+   ```bash
+   git clone https://github.com/LedezmaSune/BotMaRe.git
+   cd BotMaRe
+   ```
+2. Dale permisos de ejecución al instalador y ejecútalo:
+   ```bash
+   chmod +x setup.sh update.sh
+   ./setup.sh
+   ```
+3. Compila el dashboard y arranca el ecosistema completo:
+   ```bash
+   pnpm run build
+   pnpm run dev
+   ```
 
-# 2. Instala TODAS las dependencias a la velocidad de la luz
-pnpm install
-
-# (Si te marca un error sobre builds ignorados, corre esto para habilitar sqlite3):
-pnpm approve-builds && pnpm rebuild
-```
-
-### 2️⃣ Modo Desarrollo (Para hacer cambios en vivo)
-Si quieres editar código, cambiar colores o probar algo:
-```bash
-pnpm run dev
-```
-*Esto arrancará el **UI Dashboard** (`localhost:3000`) y el **Motor de WhatsApp** (`localhost:8000`) al mismo tiempo.*
+### 📱 Instalación en Termux (Android)
+Puedes convertir tu celular en un servidor 24/7. Termux requiere compilar la base de datos localmente, así que necesitas paquetes adicionales:
+1. Actualiza Termux e instala los compiladores básicos:
+   ```bash
+   pkg update && pkg upgrade -y
+   pkg install git nodejs python make clang -y
+   ```
+2. Clona el repositorio e instala pnpm:
+   ```bash
+   git clone https://github.com/LedezmaSune/BotMaRe.git
+   cd BotMaRe
+   npm install -g pnpm pm2
+   ```
+3. Instala las dependencias y desactiva las restricciones estrictas para compilar SQLite:
+   ```bash
+   pnpm config set ignore-scripts false
+   pnpm install
+   ```
+4. *Nota: Cloudflared (el túnel web) no es compatible nativamente con NPM en Termux. Descárgalo desde Termux (`pkg install cloudflared`) y ábrelo en una pestaña aparte si deseas acceso externo.*
+5. Arranca el servidor local: `pnpm run build && pnpm run start`.
 
 ---
 
-## 🏭 ¡Modo Producción! (Recomendado para servidores)
+## 🏭 ¡Modo Producción! (Recomendado para servidores web)
 
-El modo de desarrollo es lento. Para poner tu BotMaRe a trabajar de forma seria, necesitamos **compilarlo**.
+El modo de desarrollo (`pnpm run dev`) es lento. Para poner tu BotMaRe a trabajar de forma seria en un VPS (Ubuntu, Debian, etc), necesitamos compilarlo e iniciarlo con PM2:
 
-### Paso A: Compilar el código (Ultra Rápido)
 ```bash
+# 1. Compila el dashboard para máxima velocidad
 pnpm run build
-```
-*(Esto tomará tu código y generará una versión súper comprimida y optimizada de tu Dashboard en Next.js).*
 
-### Paso B: Arrancar 24/7 con PM2
-Queremos que el bot sobreviva incluso si cierras la ventana negra o se reinicia la compu.
-```bash
-# Instala PM2 globalmente si no lo tienes:
-npm install -g pm2
-
-# Enciende el ecosistema completo:
+# 2. Enciende el ecosistema completo en segundo plano
 pnpm run pm2:start
 ```
 
 **Comandos Útiles de PM2:**
 *   `pnpm run pm2:logs` → Ver qué está haciendo el bot en vivo.
 *   `pnpm run pm2:monit` → Ver el consumo de RAM/CPU de tu bot.
-*   `pnpm run pm2:restart` → Reiniciar el motor.
+*   `pnpm run pm2:restart` → Reiniciar el motor de WhatsApp.
 *   `pnpm run pm2:stop` → Detener el bot por completo.
 
 ---
@@ -92,10 +102,10 @@ El motor **BotMaRe 2026** está diseñado para la automatización a gran escala:
 
 *   **¿La carpeta `node_modules` se corrompió? (`ENOTEMPTY`)**
     En Windows, bórrala manualmente o corre: `Remove-Item -Recurse -Force node_modules` y luego `pnpm install`.
-*   **¿Falta el archivo `better_sqlite3.node`?**
-    Se soluciona aprobando las compilaciones: `pnpm approve-builds` seguido de `pnpm rebuild`.
-*   **¿El dashboard no carga los grupos?**
-    Verifica que tu celular esté conectado. Si hay un `failed to decrypt message` en tu terminal, es normal: WhatsApp está sincronizando llaves de grupos viejos tras la instalación.
+*   **¿Falta el archivo `better_sqlite3.node` en Windows/Linux?**
+    Se soluciona aprobando las compilaciones en tu terminal: `pnpm approve-builds` seguido de `pnpm rebuild`.
+*   **¿El dashboard no carga los grupos de WhatsApp?**
+    Verifica que tu celular esté conectado. Si hay un `failed to decrypt message` en tu terminal, es normal: WhatsApp está sincronizando llaves de grupos viejos tras la instalación y el bot sigue corriendo bien.
 
 ---
 
