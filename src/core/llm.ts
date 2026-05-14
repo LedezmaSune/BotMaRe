@@ -128,7 +128,7 @@ export async function callLLM(
     if (geminiKeys.length > 0) {
         try {
             return await tryProvider('Gemini', geminiKeys, {
-                baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
+                baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
                 model: config['GEMINI_MODEL'] || "gemini-1.5-flash"
             }, cleanedMessages, tools, hasVision);
         } catch (e) {}
@@ -150,7 +150,7 @@ export async function callLLM(
         try {
             return await tryProvider('OpenRouter', orKeys, {
                 baseURL: "https://openrouter.ai/api/v1",
-                model: config['OPENROUTER_MODEL'] || "google/gemini-2.0-flash-lite-preview-02-05:free",
+                model: config['OPENROUTER_MODEL'] || "meta-llama/llama-3.2-3b-instruct:free",
                 defaultHeaders: {
                     "HTTP-Referer": "http://localhost:8000",
                     "X-Title": "BotMaRe AI",
