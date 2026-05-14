@@ -49,20 +49,21 @@ export function initTelegramBot(
 
   bot.command("start", async (ctx) => {
     const keyboard = new InlineKeyboard()
-      .text("🌌 Dashboard", "menu_dashboard").row()
+      .text("🌌 Dashboard Web", "menu_dashboard").row()
+      .text("📱 Estado WhatsApp", "menu_status").row()
       .text("📅 Recordatorios", "menu_reminders").row()
       .text("📣 Difusión Masiva", "menu_masivo").row()
       .text("🧠 Cerebro IA", "menu_cerebro").row()
       .text("📊 Auditoría", "menu_auditoria");
     
-    await ctx.reply("👋 ¡Hola! Soy tu asistente de OpenGravity.\n¿Qué te gustaría hacer hoy?", { reply_markup: keyboard });
+    await ctx.reply("🦊 ¡Hola! Soy tu asistente maestro de *BotMaRe AI*.\n¿Qué te gustaría hacer hoy?", { reply_markup: keyboard, parse_mode: "Markdown" });
   });
 
   bot.command(["dashboard", "dashbord"], async (ctx) => {
     const { TunnelService } = await import("../core/tunnel");
     const tunnelUrl = TunnelService.getInstance().getUrl();
     const targetUrl = tunnelUrl || process.env.DASHBOARD_URL || "http://localhost:8000";
-    await ctx.reply(`🌌 *OpenGravity Dashboard*\n🔗 ${targetUrl}`, { parse_mode: "Markdown" });
+    await ctx.reply(`🌌 *BotMaRe Dashboard*\n🔗 ${targetUrl}`, { parse_mode: "Markdown" });
   });
 
   bot.command(["recordatorios", "recordatorio"], async (ctx) => {
@@ -85,7 +86,13 @@ export function initTelegramBot(
         const { TunnelService } = await import("../core/tunnel");
         const tunnelUrl = TunnelService.getInstance().getUrl();
         const targetUrl = tunnelUrl || process.env.DASHBOARD_URL || "http://localhost:8000";
-        await ctx.reply(`🌌 *OpenGravity Dashboard*\n🔗 ${targetUrl}`, { parse_mode: "Markdown" });
+        await ctx.reply(`🌌 *BotMaRe Dashboard*\n🔗 ${targetUrl}`, { parse_mode: "Markdown" });
+      } else if (data === "menu_status") {
+        const status = waService.getStatus();
+        const isConnected = status.state === 'connected';
+        const emoji = isConnected ? '🟢' : '🔴';
+        const text = `📱 *Estado de WhatsApp*\n\nEstado: ${emoji} *${status.state.toUpperCase()}*\n\n_Si está desconectado, puedes intentar reiniciar el bot o escanear el QR desde el Dashboard._`;
+        await ctx.reply(text, { parse_mode: "Markdown" });
       } else if (data === "menu_reminders") {
         const keyboard = new InlineKeyboard()
           .text("📋 Ver Activos", "view_reminders")
