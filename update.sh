@@ -38,13 +38,13 @@ fi
 echo -e "${GREEN}  ✓ Código actualizado.${NC}"
 
 # 4. Instalar dependencias
-echo -e "${YELLOW}[3/5] Actualizando librerías (npm install)...${NC}"
-npm install --quiet
+echo -e "${YELLOW}[3/5] Actualizando librerías (pnpm install)...${NC}"
+pnpm install --quiet
 echo -e "${GREEN}  ✓ Librerías al día.${NC}"
 
 # 5. Reconstruir Dashboard (Crítico para ver cambios visuales)
 echo -e "${YELLOW}[4/5] Reconstruyendo interfaz visual (Build)...${NC}"
-npm run build
+pnpm run build
 if [ $? -ne 0 ]; then
     echo -e "${RED}[!] Error en la construcción del Dashboard.${NC}"
     exit 1

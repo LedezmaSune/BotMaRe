@@ -13,7 +13,9 @@ fi
 
 # 2. Instalar dependencias
 echo "[1/3] Instalando dependencias del sistema..."
-npm install
+npm install -g pnpm
+pnpm config set ignore-scripts false
+pnpm install
 
 # 3. Configurar archivo .env
 echo "[2/3] Configurando archivo de entorno (.env)..."

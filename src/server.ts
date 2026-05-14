@@ -175,7 +175,8 @@ async function bootstrap() {
         const localIP = SystemUtils.getLocalIP();
         
         console.log(`\n=======================================================`);
-        console.log(`🦊 MOTOR BOTMARE ACTIVADO`);
+        const brand = process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe';
+        console.log(`🦊 MOTOR ${brand.toUpperCase()} ACTIVADO`);
         console.log(`=======================================================`);
         console.log(`🏠 LOCAL:  http://localhost:${PORT}`);
         console.log(`🌐 RED:    http://${localIP}:${PORT}`);

@@ -56,14 +56,14 @@ export function initTelegramBot(
       .text("🧠 Cerebro IA", "menu_cerebro").row()
       .text("📊 Auditoría", "menu_auditoria");
     
-    await ctx.reply("🦊 ¡Hola! Soy tu asistente maestro de *BotMaRe AI*.\n¿Qué te gustaría hacer hoy?", { reply_markup: keyboard, parse_mode: "Markdown" });
+    await ctx.reply("🦊 ¡Hola! Soy tu asistente maestro de *${process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe'}*.\n¿Qué te gustaría hacer hoy?", { reply_markup: keyboard, parse_mode: "Markdown" });
   });
 
   bot.command(["dashboard", "dashbord"], async (ctx) => {
     const { TunnelService } = await import("../core/tunnel");
     const tunnelUrl = TunnelService.getInstance().getUrl();
     const targetUrl = tunnelUrl || process.env.DASHBOARD_URL || "http://localhost:8000";
-    await ctx.reply(`🌌 *BotMaRe Dashboard*\n🔗 ${targetUrl}`, { parse_mode: "Markdown" });
+    await ctx.reply(`🌌 *${process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe'} Dashboard*\n🔗 ${targetUrl}`, { parse_mode: "Markdown" });
   });
 
   bot.command(["recordatorios", "recordatorio"], async (ctx) => {
@@ -86,7 +86,7 @@ export function initTelegramBot(
         const { TunnelService } = await import("../core/tunnel");
         const tunnelUrl = TunnelService.getInstance().getUrl();
         const targetUrl = tunnelUrl || process.env.DASHBOARD_URL || "http://localhost:8000";
-        await ctx.reply(`🌌 *BotMaRe Dashboard*\n🔗 ${targetUrl}`, { parse_mode: "Markdown" });
+        await ctx.reply(`🌌 *${process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe'} Dashboard*\n🔗 ${targetUrl}`, { parse_mode: "Markdown" });
       } else if (data === "menu_status") {
         const status = waService.getStatus();
         const isConnected = status.state === 'connected';

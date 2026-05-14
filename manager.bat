@@ -85,7 +85,7 @@ goto MENU
 :DEV_MODE
 cls
 echo [!] Iniciando en Modo Desarrollo...
-call npm run dev
+call pnpm run dev
 goto MENU
 
 :PROD_MODE
@@ -93,11 +93,11 @@ cls
 echo [!] Iniciando en Modo Produccion (PM2)...
 if defined MISSING_OUT (
     echo [!] Detectado: Interfaz no compilada. Compilando ahora...
-    call npm run build
+    call pnpm run build
 ) else (
     echo [?] ¿Deseas recompilar la interfaz antes de iniciar? (S/N)
     set /p rebuild=">> "
-    if /i "!rebuild!"=="S" call npm run build
+    if /i "!rebuild!"=="S" call pnpm run build
 )
 
 echo [!] Iniciando en PM2...
@@ -179,7 +179,7 @@ if not exist ".env" (
     powershell -Command "(Get-Content .env) -replace 'PORT=8000', 'PORT=!USER_PORT!' | Set-Content .env"
     powershell -Command "(Get-Content .env) -replace 'localhost:8000', 'localhost:!USER_PORT!' | Set-Content .env"
 )
-call npm install
+call pnpm install
 echo ✅ Instalacion finalizada.
 pause
 goto MENU
@@ -187,7 +187,7 @@ goto MENU
 :RUN_BUILD
 cls
 echo [!] Compilando Frontend (Export)...
-call npm run build
+call pnpm run build
 echo ✅ Compilacion terminada. La carpeta 'out' esta lista.
 pause
 goto MENU
@@ -196,7 +196,7 @@ goto MENU
 cls
 echo [!] Actualizando desde el repositorio...
 call git pull
-call npm install
+call pnpm install
 echo ✅ Actualizacion finalizada.
 pause
 goto MENU

@@ -40,7 +40,7 @@ export class WhatsAppClient {
                 },
                 logger,
                 printQRInTerminal: false,
-                browser: ['BotMaRe AI', 'Chrome', '1.0.0'],
+                browser: [process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe', 'Chrome', '1.0.0'],
                 syncFullHistory: false, // No descargar todo el historial para evitar Timeouts
                 shouldSyncHistoryMessage: () => false, // No sincronizar mensajes antiguos
                 generateHighQualityLinkPreview: false, // Ahorrar recursos al no generar previsualizaciones pro

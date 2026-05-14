@@ -37,13 +37,13 @@ if %errorlevel% neq 0 (
 echo    OK - Codigo actualizado.
 
 :: 4. Instalar librerias
-echo [3/5] Actualizando librerias (npm install)...
-call npm install --quiet
+echo [3/5] Actualizando librerias (pnpm install)...
+call pnpm install --quiet
 echo    OK - Librerias al dia.
 
 :: 5. Reconstruir Dashboard
-echo [4/5] Reconstruyendo interfaz (npm run build)...
-call npm run build
+echo [4/5] Reconstruyendo interfaz (pnpm run build)...
+call pnpm run build
 if %errorlevel% neq 0 (
     color 0C
     echo [!] ERROR: Fallo al reconstruir el Dashboard.

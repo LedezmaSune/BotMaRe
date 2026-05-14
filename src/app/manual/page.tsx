@@ -12,11 +12,11 @@ export default function ManualPage() {
                     </div>
                     <div>
                         <h1 className="text-3xl md:text-4xl font-black text-app-text tracking-tighter">Manual de Usuario</h1>
-                        <p className="text-app-text-muted font-bold text-sm tracking-widest uppercase">BotMaRe AI 2026</p>
+                        <p className="text-app-text-muted font-bold text-sm tracking-widest uppercase">{process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || "BotMaRe"} 2026</p>
                     </div>
                 </div>
                 <p className="text-app-text-muted/80 max-w-2xl leading-relaxed mt-4">
-                    Bienvenido al centro de conocimiento de BotMaRe. Este manual te guiará para dominar 
+                    Bienvenido al centro de conocimiento de {process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || "BotMaRe"}. Este manual te guiará para dominar 
                     las herramientas de automatización, inteligencia artificial y envíos masivos.
                 </p>
             </header>
