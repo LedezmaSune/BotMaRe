@@ -19,8 +19,8 @@ module.exports = {
   apps: [
     {
       name: folderName,
-      script: "npx.cmd",
-      args: "tsx src/server.ts",
+      script: "pnpm",
+      args: "exec tsx src/server.ts",
       cwd: __dirname,
       instances: 1,
       autorestart: true,
