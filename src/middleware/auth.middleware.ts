@@ -29,6 +29,6 @@ export const basicAuth = (req: Request, res: Response, next: NextFunction) => {
         console.warn(`[Security] INTENTO DE ACCESO FALLIDO desde ${clientIp} - Usuario: ${login}`);
     }
 
-    res.set('WWW-Authenticate', 'Basic realm="${process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe'} Dashboard"');
+    res.set('WWW-Authenticate', `Basic realm="${process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe'} Dashboard"`);
     res.status(401).send('Authentication required.');
 };
