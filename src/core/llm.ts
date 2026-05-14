@@ -42,13 +42,18 @@ async function tryProvider(
                 setTimeout(() => reject(new Error(`Timeout after ${timeout}ms`)), timeout)
             );
 
-            const response = await Promise.race([
-                client.chat.completions.create(payload),
+            const responseWithHeaders = await Promise.race([
+                client.chat.completions.create(payload).withResponse(),
                 timeoutPromise
             ]) as any;
 
+            const remainingTokens = responseWithHeaders.response.headers.get('x-ratelimit-remaining-tokens');
+            if (remainingTokens) {
+                console.log(`[LLM] ${providerName} - Tokens restantes (Límite Diario): ${remainingTokens}`);
+            }
+
             console.log(`[LLM] ${providerName} (${config.model}) Respondió con éxito.`);
-            return response.choices[0]?.message;
+            return responseWithHeaders.data.choices[0]?.message;
         } catch (error: any) {
             console.warn(`[LLM] ${providerName} falló con una llave: ${error.message}`);
             continue; // Intentar con la siguiente llave del mismo proveedor
