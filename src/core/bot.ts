@@ -83,6 +83,7 @@ export class Bot {
             sendMessage: (jid: string, text: string) => this.messageService.sendMessage(jid, text),
             sendMedia: (jid: string, path: string, cap?: string) => this.messageService.sendMedia(jid, path, cap),
             sendRaw: (jid: string, content: any) => this.client.sendRaw(jid, content),
+            sendPresence: (jid: string, state: any) => this.client.sendPresence(jid, state),
             getGroups: () => this.client.getGroups(),
             disconnect: () => this.client.disconnect(),
             init: () => this.client.connect(),
