@@ -22,7 +22,7 @@ export class AIService {
      */
     async runAgent(jid: string, text: string, sender: string, imageBase64?: string) {
         const settings = await getSettings() as any;
-        const history = await getHistory(jid);
+        const history = await getHistory(jid, 1); // Limitado a 1 mensaje para ahorrar tokens
         
         const basePrompt = settings.system_prompt || 'Eres un asistente útil.';
         const knowledge = settings.possible_responses || '';
