@@ -129,7 +129,7 @@ export async function callLLM(
         try {
             return await tryProvider('Gemini', geminiKeys, {
                 baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
-                model: config['GEMINI_MODEL'] || "gemini-1.5-flash"
+                model: config['GEMINI_MODEL'] || "gemini-2.5-flash"
             }, cleanedMessages, tools, hasVision);
         } catch (e) {}
     }
