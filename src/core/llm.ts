@@ -55,7 +55,18 @@ async function tryProvider(
             console.log(`[LLM] ${providerName} (${config.model}) Respondió con éxito.`);
             return responseWithHeaders.data.choices[0]?.message;
         } catch (error: any) {
-            console.warn(`[LLM] ${providerName} falló con una llave: ${error.message}`);
+            let errorMsg = error.message || String(error);
+            
+            // Inyectar sugerencias inteligentes según el tipo de error
+            if (error.status === 404 || errorMsg.includes('404')) {
+                errorMsg += `\n    💡 SUGERENCIA: El modelo '${config.model}' ya no existe o está mal escrito. Busca el modelo más nuevo y actualiza el archivo .env`;
+            } else if (error.status === 429 || errorMsg.includes('429')) {
+                errorMsg += `\n    💡 SUGERENCIA: Te quedaste sin tokens diarios en esta cuenta. Añade una nueva API Key de un correo DIFERENTE en el .env`;
+            } else if (error.status === 402 || errorMsg.includes('Insufficient Balance')) {
+                errorMsg += `\n    💡 SUGERENCIA: Tu cuenta no tiene saldo suficiente o requiere recarga.`;
+            }
+
+            console.warn(`[LLM] ${providerName} falló con una llave: ${errorMsg}`);
             continue; // Intentar con la siguiente llave del mismo proveedor
         }
     }
