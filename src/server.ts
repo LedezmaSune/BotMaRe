@@ -13,6 +13,7 @@ import rateLimit from 'express-rate-limit';
 import { Bot } from './core/bot';
 import { SystemUtils } from './core/system';
 import { TunnelService } from './core/tunnel';
+import { NotificationService } from './telegram/notification.service';
 
 // Components
 import { createMainRouter } from './routes/index';
@@ -163,14 +164,7 @@ async function bootstrap() {
         console.log(`  [!] No se pudo establecer el túnel. Solo acceso local.`);
     }
 
-    console.log(`[Fase 3] Integración de IA y Herramientas...`);
-    initTools(messageService as any);
-    initTelegramBot(messageService as any, reminderService, messageService as any);
-    Scheduler.init(messageService as any, reminderService);
-    BackupService.initScheduledBackup();
-    console.log(`  ✓ Herramientas de IA, Telegram y Programadores activos.`);
-
-    console.log(`[Fase 4] Desplegando Motor y Servidor...`);
+    console.log(`[Fase 3] Desplegando Servidor y Dashboard...`);
     server.listen(Number(PORT), '0.0.0.0', async () => {
         const localIP = SystemUtils.getLocalIP();
         
@@ -182,9 +176,26 @@ async function bootstrap() {
         console.log(`🌐 RED:    http://${localIP}:${PORT}`);
         if (tunnelUrl) console.log(`🌍 WEB:    ${tunnelUrl}`);
         console.log(`=======================================================\n`);
-        
-        console.log(`[Motor] Iniciando conexión con WhatsApp...`);
+
+        console.log(`[Fase 4] Activando Servicios e IA...`);
+        initTools(messageService as any);
+        initTelegramBot(messageService as any, reminderService, messageService as any);
+        Scheduler.init(messageService as any, reminderService);
+        BackupService.initScheduledBackup();
+        console.log(`  ✓ Telegram, Programadores y Herramientas listos.`);
+
+        console.log(`\n[Fase 5] Conectando Motor de WhatsApp...`);
         await bot.start();
+
+        // Notificar a los administradores que el sistema está listo
+        const finalUrl = tunnelUrl || `http://${localIP}:${PORT}`;
+        await NotificationService.notifyAdmin(
+            `🚀 *¡Sistema Online!*\n\n` +
+            `El servidor de *${brand}* ha iniciado correctamente.\n\n` +
+            `🔗 *Dashboard:* ${finalUrl}\n` +
+            `📅 *Fecha:* ${new Date().toLocaleString('es-MX')}\n` +
+            `🛡️ *Estado:* Operativo`
+        );
     });
 }
 

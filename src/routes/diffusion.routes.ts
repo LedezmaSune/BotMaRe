@@ -6,6 +6,7 @@ export function createDiffusionRouter(controller: DiffusionController, upload: m
     const router = Router();
     
     router.post('/', upload.single('media'), controller.sendMass);
+    router.post('/cancel', controller.cancel);
     
     return router;
 }

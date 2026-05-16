@@ -4,17 +4,22 @@ import { MessageService } from './message.service';
 import { Contact } from '../../types';
 import { processVariables } from '../../utils/variables';
 import { logAudit } from '../../core/memory';
+import { globalEvents, EVENTS } from '../../core/events';
 
 export class MassDiffusionService {
     private isProcessing = false;
+    private shouldStop = false;
+    private currentProgress: { current: number, total: number, percentage: number } | null = null;
 
     constructor(private waService: MessageService) {}
 
     async sendMass(contacts: Contact[], rawMessage: string, mediaPath?: string, mediaType?: string, fileName?: string) {
         if (this.isProcessing) {
-             console.warn("[Mass] A mass diffusion is already in progress. Queueing is not yet implemented.");
+             console.warn("[Mass] A mass diffusion is already in progress. Ignoring request.");
+             return -1;
         }
 
+        this.shouldStop = false;
         // Run in background
         this.processQueue(contacts, rawMessage, mediaPath, mediaType, fileName).catch(err => {
             console.error("[Mass] Fatal error in processQueue:", err);
@@ -23,10 +28,42 @@ export class MassDiffusionService {
         return contacts.length;
     }
 
+    stopProcessing() {
+        if (this.isProcessing) {
+            this.shouldStop = true;
+            console.log("[Mass] Cancellation requested...");
+            return true;
+        }
+        return false;
+    }
+
+    getCurrentProgress() {
+        return this.currentProgress;
+    }
+
     private async processQueue(contacts: Contact[], rawMessage: string, mediaPath?: string, mediaType?: string, fileName?: string) {
         this.isProcessing = true;
+        
+        // Emitir progreso inicial (0%) para que el UI sepa que hemos empezado
+        this.currentProgress = {
+            current: 0,
+            total: contacts.length,
+            percentage: 0
+        };
+        globalEvents.emit(EVENTS.DIFFUSION_PROGRESS, this.currentProgress);
+
         const logs: any[] = [];
         for (const contact of contacts) {
+            if (this.shouldStop) {
+                console.log("[Mass] Diffusion cancelled by user.");
+                await logAudit('system', 'MASS_DIFFUSION_CANCELLED', {
+                    processed: logs.length,
+                    total: contacts.length,
+                    message: rawMessage
+                });
+                break;
+            }
+
             const logEntry = {
                 name: contact.name,
                 number: contact.number,
@@ -48,14 +85,27 @@ export class MassDiffusionService {
 
                 console.log(`[Mass] Sending to ${to}...`);
                 
-                if (mediaPath && mediaType && fs.existsSync(mediaPath)) {
-                    await this.waService.sendMedia(to, mediaPath, personalizedMessage, mediaType, fileName);
-                } else {
-                    await this.waService.sendMessage(to, personalizedMessage);
-                }
+                const sendPromise = (mediaPath && mediaType && fs.existsSync(mediaPath)) 
+                    ? this.waService.sendMedia(to, mediaPath, personalizedMessage, mediaType, fileName)
+                    : this.waService.sendMessage(to, personalizedMessage);
+
+                // Timeout de 30 segundos por mensaje para evitar bloqueos infinitos
+                await Promise.race([
+                    sendPromise,
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en envío (30s)')), 30000))
+                ]);
 
                 logEntry.status = 'success';
                 logs.push(logEntry);
+
+                // Emitir log individual para el UI
+                globalEvents.emit(EVENTS.DIFFUSION_LOG, {
+                    name: contact.name,
+                    number: contact.number,
+                    status: 'success',
+                    index: logs.length,
+                    total: contacts.length
+                });
 
                 // --- PROTECCIÓN ANTI-BAN MEJORADA ---
                 const index = logs.length;
@@ -69,6 +119,14 @@ export class MassDiffusionService {
 
                 await new Promise(r => setTimeout(r, delay));
                 // ------------------------------------
+
+                // Emitir progreso al bus global
+                this.currentProgress = {
+                    current: logs.length,
+                    total: contacts.length,
+                    percentage: Math.round((logs.length / contacts.length) * 100)
+                };
+                globalEvents.emit(EVENTS.DIFFUSION_PROGRESS, this.currentProgress);
             } catch (error: any) {
                 console.error(`[Mass] Failed to send to ${contact.number}:`, error.message);
                 logEntry.status = 'failed';
@@ -88,6 +146,12 @@ export class MassDiffusionService {
             details: logs
         });
 
+        globalEvents.emit(EVENTS.DIFFUSION_COMPLETED, {
+            total: contacts.length,
+            success: logs.filter(l => l.status === 'success').length
+        });
+
+        this.currentProgress = null;
         this.isProcessing = false;
     }
 }

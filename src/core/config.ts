@@ -40,7 +40,8 @@ export async function getAllConfig(): Promise<Record<string, string>> {
         'DEEPSEEK_MODEL',
         'AI_ENABLED',
         'ENABLE_GROUPS',
-        'ALLOWED_GROUPS'
+        'ALLOWED_GROUPS',
+        'NOTIFY_MODELS_TELEGRAM'
     ];
     
     const merged: Record<string, string> = { ...dbSettings };

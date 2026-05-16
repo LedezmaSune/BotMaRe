@@ -101,8 +101,7 @@ if defined MISSING_OUT (
 )
 
 echo [!] Iniciando en PM2...
-call npx pm2 delete BotMaRe-Unified >nul 2>&1
-call npx pm2 start "npx tsx src/server.ts" --name BotMaRe-Unified
+call pnpm run pm2:start
 echo.
 echo ✅ BotMaRe-Unified iniciado en segundo plano.
 echo ✅ Dashboard Local: http://localhost:8000
@@ -112,15 +111,15 @@ goto MENU
 :STOP_ALL
 cls
 echo [!] Deteniendo todos los procesos...
-call npx pm2 stop all
-echo ✅ Procesos detenidos.
+call pnpm run pm2:delete
+echo ✅ Procesos detenidos y eliminados de PM2.
 pause
 goto MENU
 
 :VIEW_LOGS
 cls
 echo [!] Mostrando logs (Ctrl+C para salir)...
-call npx pm2 logs
+call pnpm run pm2:logs
 goto MENU
 
 :RESET_WA

@@ -19,7 +19,7 @@ export class SystemUtils {
     }
 
     static ensureDirs() {
-        const dirs = ['data', 'data/uploads'];
+        const dirs = ['data', 'data/uploads', 'data/logs'];
         dirs.forEach(dir => {
             const fullPath = path.resolve(dir);
             if (!fs.existsSync(fullPath)) {

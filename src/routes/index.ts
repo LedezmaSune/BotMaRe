@@ -52,6 +52,11 @@ export function createMainRouter(waClient: WhatsAppClient) {
     const reminderService = new ReminderService();
     const aiService = new AIService();
     const diffusionService = new MassDiffusionService(waService as any);
+    
+    // Registrar el servicio en el adaptador para que el Bot pueda emitir su estado
+    if ((waClient as any).setDiffusionService) {
+        (waClient as any).setDiffusionService(diffusionService);
+    }
 
     // 2. Instantiate Controllers
     const waController = new WhatsAppController(waService);

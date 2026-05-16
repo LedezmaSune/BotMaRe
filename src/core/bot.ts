@@ -4,6 +4,7 @@ import { AIService } from '../modules/ai/ai.service';
 import { MessageController } from '../modules/messages/message.controller';
 import { Router } from './router';
 import { Server } from 'socket.io';
+import { globalEvents, EVENTS } from './events';
 
 /**
  * CORE LAYER - BOT ENTITY
@@ -16,6 +17,7 @@ export class Bot {
     private aiService: AIService;
     private messageController: MessageController;
     private router: Router;
+    private diffusionService: any = null;
 
     constructor(private io: Server) {
         // 1. Infraestructura
@@ -47,10 +49,33 @@ export class Bot {
             }
         };
 
+        // Al conectar un nuevo cliente, mandarle el estado actual de difusión si existe
+        this.io.on('connection', (socket) => {
+            if (this.diffusionService) {
+                const progress = this.diffusionService.getCurrentProgress();
+                if (progress) {
+                    socket.emit('diffusion_progress', progress);
+                }
+            }
+        });
+
         // Mensajes entrantes hacia el Router
         this.client.onMessage = (data) => {
             this.router.handleWhatsAppMessage(data, this.client.getSocket());
         };
+        
+        // --- EVENTOS DE DIFUSIÓN MASIVA (Hacia el Frontend) ---
+        globalEvents.on(EVENTS.DIFFUSION_PROGRESS, (data) => {
+            this.io.emit('diffusion_progress', data);
+        });
+
+        globalEvents.on(EVENTS.DIFFUSION_COMPLETED, (data) => {
+            this.io.emit('diffusion_completed', data);
+        });
+
+        globalEvents.on(EVENTS.DIFFUSION_LOG, (data) => {
+            this.io.emit('diffusion_log', data);
+        });
     }
 
     /**
@@ -87,7 +112,8 @@ export class Bot {
             getGroups: () => this.client.getGroups(),
             disconnect: () => this.client.disconnect(),
             init: () => this.client.connect(),
-            setHandler: () => {} // El nuevo bot ya maneja los eventos internamente
+            setHandler: () => {}, // El nuevo bot ya maneja los eventos internamente
+            setDiffusionService: (service: any) => { this.diffusionService = service; }
         };
     }
 }

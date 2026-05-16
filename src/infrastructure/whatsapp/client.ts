@@ -22,12 +22,21 @@ export class WhatsAppClient {
     private groupCache: any = null;
     private groupCacheTime: number = 0;
     private groupFetchPromise: Promise<any> | null = null;
+    private connectionPromise: Promise<void> | null = null;
+    private resolveConnection: (() => void) | null = null;
 
     // Callbacks para desacoplar el cliente del resto de la app
     public onStatusUpdate?: (data: { state: string, qr?: string }) => void;
     public onMessage?: (data: any) => void;
 
     async connect() {
+        if (this.state === 'connecting') return;
+        
+        // Crear una promesa que se resolverá cuando estemos conectados
+        this.connectionPromise = new Promise((resolve) => {
+            this.resolveConnection = resolve;
+        });
+
         try {
             const { state, saveCreds } = await useSQLiteAuthState(path.join('data', 'whatsapp_auth.db'));
             const { version } = await fetchLatestBaileysVersion();
@@ -64,6 +73,12 @@ export class WhatsAppClient {
                     this.state = 'connected';
                     this.qr = null;
                     this.onStatusUpdate?.({ state: 'connected' });
+                    // Resolver la promesa de conexión
+                    this.resolveConnection?.();
+                    
+                    // Sincronizar grupos y guardar la promesa
+                    console.log("[WhatsAppClient] Sincronizando lista de grupos...");
+                    this.groupFetchPromise = this.getGroups().catch(() => null);
                 } else if (connection === 'close') {
                     this.state = 'disconnected';
                     this.onStatusUpdate?.({ state: 'disconnected' });
@@ -96,10 +111,54 @@ export class WhatsAppClient {
     }
 
     async sendRaw(jid: string, content: any) {
+        // Si no estamos conectados, esperamos un máximo de 10 segundos
+        if (this.state !== 'connected') {
+            console.log(`[WhatsAppClient] Esperando conexión para enviar a ${jid}...`);
+            if (this.connectionPromise) {
+                await Promise.race([
+                    this.connectionPromise,
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout esperando conexión')), 10000))
+                ]);
+            }
+        }
+
         if (this.state !== 'connected' || !this.socket) {
             throw new Error('WhatsApp Client not connected');
         }
-        return await this.socket.sendMessage(jid, content);
+
+        // Si es un grupo, intentamos asegurar que el bot lo "conoce"
+        if (jid.endsWith('@g.us')) {
+            // Esperar a que la sincronización inicial termine si está en curso
+            if (this.groupFetchPromise) {
+                console.log(`[WhatsAppClient] Esperando fin de sincronización de grupos para ${jid}...`);
+                await this.groupFetchPromise.catch(() => null);
+            }
+
+            try {
+                // Forzar la carga de metadatos del grupo
+                await this.socket.groupMetadata(jid);
+                // Truco: Simular que "vemos" el chat antes de escribir
+                await this.socket.readMessages([{ remoteJid: jid, fromMe: false, id: '1' }]).catch(() => null);
+                await new Promise(r => setTimeout(r, 1000));
+            } catch (e: any) {
+                console.warn(`[WhatsAppClient] No se pudieron obtener metadatos para ${jid}: ${e.message}`);
+                if (e.message?.includes('403') || e.message?.includes('404')) {
+                    throw new Error('El bot no es miembro de este grupo o no tiene permisos.');
+                }
+            }
+        }
+
+        try {
+            return await this.socket.sendMessage(jid, content);
+        } catch (error: any) {
+            // Si falla con not-acceptable en un grupo, esperamos un poco y reintentamos una vez
+            if (error.message?.includes('not-acceptable') && jid.endsWith('@g.us')) {
+                console.log(`[WhatsAppClient] Reintentando envío a grupo ${jid} tras error not-acceptable...`);
+                await new Promise(r => setTimeout(r, 3000));
+                return await this.socket.sendMessage(jid, content);
+            }
+            throw error;
+        }
     }
 
     async sendPresence(jid: string, state: 'composing' | 'recording' | 'paused') {

@@ -13,7 +13,12 @@ export function parseContactList(contactsStr: string): ParsedContact[] {
     return contactsStr
         .split('\n')
         .map(line => line.trim())
-        .filter(line => line.length > 0)
+        .filter(line => {
+            // Ignorar líneas vacías o que claramente son encabezados (sin dígitos suficientes)
+            const digits = line.replace(/\D/g, '');
+            const isJid = line.endsWith('@g.us') || line.endsWith('@s.whatsapp.net') || line.endsWith('@lid');
+            return line.length > 0 && (digits.length >= 8 || isJid);
+        })
         .map(line => {
             // Case 0: WhatsApp JID (Group or User)
             if (line.endsWith('@g.us') || line.endsWith('@s.whatsapp.net') || line.endsWith('@lid')) {
@@ -26,25 +31,27 @@ export function parseContactList(contactsStr: string): ParsedContact[] {
                 const part1 = parts[0].trim();
                 const part2 = parts.slice(1).join(',').trim();
 
+                const digits1 = part1.replace(/\D/g, '');
+                const digits2 = part2.replace(/\D/g, '');
+
                 // Guess which one is the number
-                if (/\d{8,}/.test(part1) || part1.endsWith('@s.whatsapp.net') || part1.endsWith('@lid')) {
-                    return { number: part1, name: part2 };
+                if (digits1.length >= 8 || part1.endsWith('@s.whatsapp.net') || part1.endsWith('@lid')) {
+                    return { number: part1.replace(/[^\d@.uslidwatsphnet]/g, ''), name: part2 };
                 } else {
-                    return { number: part2, name: part1 };
+                    return { number: part2.replace(/[^\d@.uslidwatsphnet]/g, ''), name: part1 };
                 }
             }
 
             // Case 2: No comma, look for a number within the string
-            // Match typical phone formats: +5218181234567, 8181234567, etc.
             const numberMatch = line.match(/\+?\d{8,15}/);
             if (numberMatch) {
                 const number = numberMatch[0];
-                // Remove the number from the line to get the name
                 const name = line.replace(number, '').replace(/^[-\s]+|[-\s]+$/g, '').trim();
                 return { number, name };
             }
 
-            // Fallback: Use the whole line as number
-            return { number: line, name: '' };
-        });
+            // Fallback: Clean numeric only
+            return { number: line.replace(/\D/g, ''), name: '' };
+        })
+        .filter(c => c.number.length >= 8 || c.number.includes('@'));
 }

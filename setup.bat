@@ -26,7 +26,7 @@ if %errorlevel% neq 0 (
 
 :: 2. Instalar dependencias
 echo [1/3] Instalando dependencias del sistema...
-call npm install -g pnpm
+call npm install -g pnpm pm2
 call pnpm config set ignore-scripts false
 call pnpm install
 if %errorlevel% neq 0 (

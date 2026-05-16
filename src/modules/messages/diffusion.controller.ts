@@ -31,7 +31,19 @@ export class DiffusionController {
         const fileName = file ? file.originalname : undefined;
 
         const queuedCount = await this.diffusionService.sendMass(contacts, rawMessage, mediaPath, mediaType, fileName);
+        
+        if (queuedCount === -1) {
+            return res.status(409).json({ 
+                success: false, 
+                error: "Ya hay una difusión en curso. Por favor espera a que termine o revisa el progreso en el dashboard." 
+            });
+        }
 
         res.json({ success: true, queued: queuedCount });
+    });
+
+    cancel = asyncHandler(async (req: Request, res: Response) => {
+        const success = this.diffusionService.stopProcessing();
+        res.json({ success });
     });
 }

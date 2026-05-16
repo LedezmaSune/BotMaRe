@@ -18,7 +18,7 @@ if (fs.existsSync(envPath)) {
 module.exports = {
   apps: [
     {
-      name: folderName,
+      name: "BotMaRe-Unified",
       script: "pnpm",
       args: "exec tsx src/server.ts",
       cwd: __dirname,

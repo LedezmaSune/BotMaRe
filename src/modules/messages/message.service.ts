@@ -25,7 +25,16 @@ export class MessageService {
     private formatJid(jid: string): string {
         if (!jid) return '';
         const clean = jid.trim();
+        
+        // Si ya tiene el sufijo @, lo dejamos como está
         if (clean.includes('@')) return clean;
+
+        // Si contiene un guion, es un ID de grupo
+        if (clean.includes('-')) {
+            return `${clean}@g.us`;
+        }
+
+        // Si es solo números, lo tratamos como chat individual
         let numbers = clean.replace(/\D/g, '');
         if (numbers.length === 10) {
             numbers = `521${numbers}`;
@@ -36,11 +45,17 @@ export class MessageService {
     async sendMessage(jid: string, text: string) {
         const target = this.formatJid(jid);
         
-        // Simular escritura (Escribiendo...)
-        const typingTime = Math.min(text.length * 50, 4000); // Máximo 4 segundos de escritura
-        await this.client.sendPresence(target, 'composing');
-        await new Promise(r => setTimeout(r, 1000 + Math.random() * typingTime));
-        await this.client.sendPresence(target, 'paused');
+        // Simular escritura solo para chats individuales
+        // En grupos puede causar errores not-acceptable en sesiones nuevas
+        if (!target.endsWith('@g.us')) {
+            const typingTime = Math.min(text.length * 50, 4000);
+            await this.client.sendPresence(target, 'composing');
+            await new Promise(r => setTimeout(r, 1000 + Math.random() * typingTime));
+            await this.client.sendPresence(target, 'paused');
+        } else {
+            // Pausa mínima para no saturar
+            await new Promise(r => setTimeout(r, 500));
+        }
 
         return await this.client.sendRaw(target, { text });
     }

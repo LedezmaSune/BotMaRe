@@ -20,6 +20,8 @@ export function useBotData() {
     const [allowedGroups, setAllowedGroups] = useState<string[]>([]);
     const [prefillDate, setPrefillDate] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
+    const [diffusionProgress, setDiffusionProgress] = useState<{current: number, total: number, percentage: number} | null>(null);
+    const [diffusionLogs, setDiffusionLogs] = useState<any[]>([]);
 
     const fetchData = useCallback(async (currentTab?: TabId) => {
         try {
@@ -68,6 +70,22 @@ export function useBotData() {
             if (newStatus === 'connected') setQr(null);
         });
         socket.on('qr', (newQr: string) => setQr(newQr));
+        
+        socket.on('diffusion_progress', (data) => {
+            setDiffusionProgress(data);
+        });
+
+        socket.on('diffusion_completed', () => {
+            setTimeout(() => {
+                setDiffusionProgress(null);
+                setDiffusionLogs([]);
+            }, 5000); // Mantener 5 segundos el éxito
+        });
+
+        socket.on('diffusion_log', (log) => {
+            setDiffusionLogs(prev => [log, ...prev].slice(0, 5)); // Guardar solo los últimos 5
+        });
+
         return () => { socket.close(); };
     }, []);
 
@@ -109,6 +127,20 @@ export function useBotData() {
             alert('❌ Error al procesar el envío.');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleCancelMass = async () => {
+        try {
+            const res = await fetch(`${API_BASE}/send-mass/cancel`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                alert('⏹️ Difusión cancelada.');
+                setDiffusionProgress(null);
+                setDiffusionLogs([]);
+            }
+        } catch (e) {
+            alert('❌ Error al cancelar.');
         }
     };
 
@@ -229,6 +261,9 @@ export function useBotData() {
         handleDeleteReminder,
         handleUpdateSettings,
         handleToggleGroup,
-        handleParseEnv
+        handleParseEnv,
+        handleCancelMass,
+        diffusionProgress,
+        diffusionLogs
     };
 }

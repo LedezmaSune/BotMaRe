@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { getAllConfig } from "./config";
+import { NotificationService } from "../telegram/notification.service";
 
 /**
  * Parsea una cadena de texto con llaves separadas por coma y devuelve un array limpio.
@@ -49,10 +50,16 @@ async function tryProvider(
 
             const remainingTokens = responseWithHeaders.response.headers.get('x-ratelimit-remaining-tokens');
             if (remainingTokens) {
-                console.log(`[LLM] ${providerName} - Tokens restantes (Límite Diario): ${remainingTokens}`);
+                const logMsg = `[LLM] ${providerName} - Tokens restantes (Límite Diario): ${remainingTokens}`;
+                console.log(logMsg);
+                // Notificar si quedan pocos tokens (ej. menos de 1000)
+                if (parseInt(remainingTokens) < 1000) {
+                    NotificationService.notifyModelEvent(providerName, config.model, 'warning', `Límite diario bajo: ${remainingTokens} tokens restantes.`);
+                }
             }
 
             console.log(`[LLM] ${providerName} (${config.model}) Respondió con éxito.`);
+            NotificationService.notifyModelEvent(providerName, config.model, 'success');
             return responseWithHeaders.data.choices[0]?.message;
         } catch (error: any) {
             let errorMsg = error.message || String(error);
@@ -67,6 +74,7 @@ async function tryProvider(
             }
 
             console.warn(`[LLM] ${providerName} falló con una llave: ${errorMsg}`);
+            NotificationService.notifyModelEvent(providerName, config.model, 'fail', errorMsg);
             continue; // Intentar con la siguiente llave del mismo proveedor
         }
     }

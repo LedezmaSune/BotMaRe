@@ -8,6 +8,11 @@ import { MessageService as WhatsAppService } from "../modules/messages/message.s
 import { ReminderService } from "../modules/reminders/reminder.service";
 import { MassDiffusionService } from "../modules/messages/diffusion.service";
 import { getSettings, updateSettings, db, listReminders, deleteReminder, createReminder } from "../core/memory";
+import { getConfig } from "../core/config";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
 
 type TelegramBot = Bot & { ownerId: string };
 
@@ -44,6 +49,8 @@ export function initTelegramBot(
     { command: "masivo", description: "Enviar difusión masiva (/masivo 10 dígitos | Hola)" },
     { command: "cerebro", description: "Ver configuración del bot" },
     { command: "auditoria", description: "Ver últimos 10 movimientos" },
+    { command: "notificaciones", description: "Alternar notificaciones de modelos (ON/OFF)" },
+    { command: "pm2", description: "Control de procesos PM2" },
     { command: "borrarmemorial", description: "Borrar memoria del bot" },
   ]).catch(console.error);
 
@@ -54,9 +61,11 @@ export function initTelegramBot(
       .text("📅 Recordatorios", "menu_reminders").row()
       .text("📣 Difusión Masiva", "menu_masivo").row()
       .text("🧠 Cerebro IA", "menu_cerebro").row()
-      .text("📊 Auditoría", "menu_auditoria");
+      .text("📊 Auditoría", "menu_auditoria").row()
+      .text("🔔 Notificaciones Modelos", "menu_notificaciones").row()
+      .text("⚙️ Control PM2", "menu_pm2");
     
-    await ctx.reply("🦊 ¡Hola! Soy tu asistente maestro de *${process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe'}*.\n¿Qué te gustaría hacer hoy?", { reply_markup: keyboard, parse_mode: "Markdown" });
+    await ctx.reply(`🦊 ¡Hola! Soy tu asistente maestro de *${process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe'}*.\n¿Qué te gustaría hacer hoy?`, { reply_markup: keyboard, parse_mode: "Markdown" });
   });
 
   bot.command(["dashboard", "dashbord"], async (ctx) => {
@@ -126,6 +135,19 @@ export function initTelegramBot(
             console.error("[Telegram Audit Callback Error]", e);
             await ctx.reply(`❌ Error obteniendo auditoría: ${e.message}`);
         }
+      } else if (data === "menu_notificaciones") {
+        const isEnabled = await getConfig('NOTIFY_MODELS_TELEGRAM', 'false');
+        const newState = isEnabled === 'true' ? 'false' : 'true';
+        await updateSettings({ NOTIFY_MODELS_TELEGRAM: newState });
+        await ctx.answerCallbackQuery({ text: `Notificaciones ${newState === 'true' ? 'ACTIVADAS' : 'DESACTIVADAS'}`, show_alert: true });
+        await ctx.reply(`🔔 *Notificaciones de Modelos:* ${newState === 'true' ? '✅ ACTIVADAS' : '❌ DESACTIVADAS'}`, { parse_mode: "Markdown" });
+      } else if (data === "menu_pm2") {
+        const keyboard = new InlineKeyboard()
+          .text("📊 Estado", "pm2_status")
+          .text("🔄 Reiniciar", "pm2_restart").row()
+          .text("📜 Ver Logs", "pm2_logs")
+          .text("♻️ Limpiar Logs", "pm2_flush");
+        await ctx.reply("⚙️ *Panel de Control PM2*\nSelecciona una acción para gestionar el proceso del bot:", { reply_markup: keyboard, parse_mode: "Markdown" });
       }
       return;
     }
@@ -188,6 +210,57 @@ export function initTelegramBot(
     } else if (data === "delete_reminder") {
       await ctx.reply("Para eliminar un recordatorio, usa el botón de 'Eliminar ID' en la lista de 'Ver Activos', o usa el comando: `/delreminder ID`", { parse_mode: "Markdown" });
       await ctx.answerCallbackQuery();
+    }
+
+    // Handlers para PM2
+    if (data.startsWith("pm2_")) {
+      const action = data.replace("pm2_", "");
+      await ctx.answerCallbackQuery({ text: "Procesando comando PM2..." });
+
+      // Detectar si estamos en PM2
+      const isUnderPM2 = process.env.pm_id !== undefined || process.env.PM2_HOME !== undefined;
+      const appName = "BotMaRe-Unified";
+
+      if (!isUnderPM2 && action !== 'status') {
+         return await ctx.reply("⚠️ *Aviso de Entorno*\n\nEl sistema no parece estar corriendo bajo *PM2* (estás en modo Dev o Start directo). Esta función de control solo está activa cuando usas la opción 2 del Manager (Modo Producción).", { parse_mode: "Markdown" });
+      }
+
+      try {
+        switch (action) {
+          case "status":
+            try {
+                const { stdout: statusOut } = await execAsync(`pm2 status ${appName} --no-color`);
+                if (!statusOut.includes(appName)) {
+                    return await ctx.reply("ℹ️ *PM2 está instalado pero este proceso no está registrado.*\nPara usar el control total, inicia con `pnpm run pm2:start` o usa la opción 2 del Manager.", { parse_mode: "Markdown" });
+                }
+                return await ctx.reply(`📊 *Estado de PM2:*\n\`\`\`\n${statusOut}\n\`\`\``, { parse_mode: "Markdown" });
+            } catch (e) {
+                return await ctx.reply("❌ *PM2 no disponible*\nNo se pudo encontrar el comando `pm2` en el sistema.");
+            }
+          
+          case "restart":
+            await ctx.reply("🔄 Reiniciando el proceso... La conexión se perderá por unos segundos.");
+            // Pequeño delay para asegurar que el mensaje sale
+            setTimeout(async () => {
+                try {
+                    await execAsync(`pm2 restart ${appName}`);
+                } catch (e: any) {
+                    console.error("Error al reiniciar via PM2:", e.message);
+                }
+            }, 1000);
+            return;
+          
+          case "logs":
+            const { stdout: logsOut } = await execAsync(`pm2 logs ${appName} --lines 15 --no-colors --raw`);
+            return await ctx.reply(`📜 *Últimos Logs:*\n\`\`\`\n${logsOut}\n\`\`\``, { parse_mode: "Markdown" });
+          
+          case "flush":
+            await execAsync(`pm2 flush`);
+            return await ctx.reply("✅ Logs de PM2 limpiados.");
+        }
+      } catch (error: any) {
+        await ctx.reply(`❌ *Error de Sistema:*\n${error.message}`);
+      }
     }
   });
 
@@ -272,6 +345,22 @@ export function initTelegramBot(
         console.error("[Telegram Audit Error]", e);
         await ctx.reply(`❌ Error obteniendo auditoría: ${e.message}`);
     }
+  });
+  
+  bot.command("notificaciones", async (ctx) => {
+    const isEnabled = await getConfig('NOTIFY_MODELS_TELEGRAM', 'false');
+    const newState = isEnabled === 'true' ? 'false' : 'true';
+    await updateSettings({ NOTIFY_MODELS_TELEGRAM: newState });
+    await ctx.reply(`🔔 *Notificaciones de Modelos:* ${newState === 'true' ? '✅ ACTIVADAS' : '❌ DESACTIVADAS'}\n\n_Recibirás un mensaje cada vez que un modelo de IA responda, falle o tenga límites bajos._`, { parse_mode: "Markdown" });
+  });
+
+  bot.command("pm2", async (ctx) => {
+    const keyboard = new InlineKeyboard()
+      .text("📊 Estado", "pm2_status")
+      .text("🔄 Reiniciar", "pm2_restart").row()
+      .text("📜 Ver Logs", "pm2_logs")
+      .text("♻️ Limpiar Logs", "pm2_flush");
+    await ctx.reply("⚙️ *Panel de Control PM2*\nSelecciona una acción:", { reply_markup: keyboard, parse_mode: "Markdown" });
   });
 
   bot.command(["reset", "reiniciabot", "borrarmemorial"], async (ctx) => {
