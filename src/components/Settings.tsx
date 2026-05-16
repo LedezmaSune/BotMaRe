@@ -7,9 +7,10 @@ interface SettingsProps {
     settings: any;
     onUpdate: (settings: any) => Promise<void>;
     onParseEnv: (content: string) => Promise<boolean>;
+    onResetWhatsApp: () => Promise<void>;
 }
 
-export const Settings: React.FC<SettingsProps> = ({ settings, onUpdate, onParseEnv }) => {
+export const Settings: React.FC<SettingsProps> = ({ settings, onUpdate, onParseEnv, onResetWhatsApp }) => {
     const [localSettings, setLocalSettings] = useState<any>({});
     const [isSaving, setIsSaving] = useState(false);
     const [uploadStatus, setUploadStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -211,6 +212,14 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onUpdate, onParseE
                         >
                             <FileText size={18} />
                             Exportar Legible (TXT + Multimedia)
+                        </button>
+
+                        <button 
+                            onClick={onResetWhatsApp}
+                            className="flex items-center gap-2 bg-orange-600/20 hover:bg-orange-600/40 text-orange-400 px-6 py-3 rounded-2xl font-bold text-sm border border-orange-500/30 transition-all active:scale-95"
+                        >
+                            <RefreshCw size={18} className="animate-spin-slow" />
+                            Cerrar Sesión WhatsApp (Re-escanear)
                         </button>
 
                         <label className="flex items-center gap-2 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 px-6 py-3 rounded-2xl font-bold text-sm border border-emerald-500/30 transition-all active:scale-95 cursor-pointer">

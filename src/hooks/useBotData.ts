@@ -239,6 +239,22 @@ export function useBotData() {
         return false;
     };
 
+    const handleResetWhatsApp = async () => {
+        if (!confirm('⚠️ ¿Estás seguro de que quieres cerrar la sesión de WhatsApp? Tendrás que escanear el código QR de nuevo.')) return;
+        try {
+            const res = await fetch(`${API_BASE}/system/reset-whatsapp`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                alert('✅ Sesión cerrada. Por favor, vuelve a la pestaña de inicio para escanear el nuevo QR.');
+                window.location.reload();
+            } else {
+                alert('❌ Error: ' + data.error);
+            }
+        } catch (e) {
+            alert('❌ Error al intentar cerrar sesión.');
+        }
+    };
+
     return {
         status,
         qr,
@@ -263,6 +279,7 @@ export function useBotData() {
         handleToggleGroup,
         handleParseEnv,
         handleCancelMass,
+        handleResetWhatsApp,
         diffusionProgress,
         diffusionLogs
     };

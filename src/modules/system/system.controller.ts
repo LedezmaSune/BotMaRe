@@ -25,33 +25,36 @@ export class SystemController {
     });
 
     resetWhatsApp = asyncHandler(async (req: Request, res: Response) => {
-        console.log('[System] Resetting WhatsApp requested...');
+        console.log('[System] Resetting WhatsApp session (Full Logout)...');
         
-        // 1. Disconnect current client if possible
+        // 1. Desconectar cliente actual
         if (this.waClient) {
             try {
                 await this.waClient.disconnect();
             } catch (e) {
-                console.warn('[System] Error disconnecting client (ignoring):', e);
+                console.warn('[System] Error al desconectar cliente:', e);
             }
         }
 
-        // 2. Clear auth folder
-        const authDir = path.resolve('auth_info_baileys');
-        if (fs.existsSync(authDir)) {
-            console.log('[System] Clearing auth_info_baileys folder...');
-            fs.rmSync(authDir, { recursive: true, force: true });
-            fs.mkdirSync(authDir);
+        // 2. Eliminar base de datos de autenticación (SQLite)
+        const authDbPath = path.resolve('data/whatsapp_auth.db');
+        if (fs.existsSync(authDbPath)) {
+            console.log('[System] Eliminando base de datos de autenticación...');
+            try {
+                fs.unlinkSync(authDbPath);
+            } catch (e) {
+                console.error('[System] No se pudo eliminar el archivo. Puede que esté bloqueado:', e);
+                return res.status(500).json({ success: false, error: 'El archivo de sesión está bloqueado. Por favor, reinicia el servidor manualmente.' });
+            }
         }
 
-        // 3. Re-initialize client
+        // 3. Re-inicializar cliente (esto generará un nuevo QR)
         if (this.waClient) {
-            console.log('[System] Re-initializing WhatsApp client...');
-            // We run it asynchronously to avoid blocking the response
+            console.log('[System] Re-inicializando cliente para nuevo QR...');
             void this.waClient.init();
         }
 
-        res.json({ success: true, message: 'WhatsApp session reset initiated.' });
+        res.json({ success: true, message: 'Sesión cerrada. Escanea el nuevo QR en el dashboard.' });
     });
     checkUpdates = asyncHandler(async (req: Request, res: Response) => {
         const result = await this.updateService.checkUpdate();
