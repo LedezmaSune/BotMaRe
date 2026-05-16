@@ -51,9 +51,18 @@ export class MassDiffusionService {
             percentage: 0
         };
         globalEvents.emit(EVENTS.DIFFUSION_PROGRESS, this.currentProgress);
-
+        
         const logs: any[] = [];
         for (const contact of contacts) {
+            // --- VERIFICACIÓN DE CONEXIÓN ---
+            // Si perdemos la conexión, esperamos a que el bot se reconecte antes de seguir
+            // para evitar que toda la cola falle en cadena.
+            while (this.waService.getStatus().state !== 'connected') {
+                console.warn("[Mass] Conexión perdida. Pausando cola hasta reconexión...");
+                await new Promise(r => setTimeout(r, 10000)); // Esperar 10s antes de re-verificar
+            }
+            // --------------------------------
+
             if (this.shouldStop) {
                 console.log("[Mass] Diffusion cancelled by user.");
                 await logAudit('system', 'MASS_DIFFUSION_CANCELLED', {
