@@ -85,6 +85,11 @@ export async function useSQLiteAuthState(dbPath: string): Promise<{ state: Authe
         },
         saveCreds: async () => {
             writeData('creds', creds);
+        },
+        close: () => {
+            try {
+                db.close();
+            } catch (e) {}
         }
     };
 }

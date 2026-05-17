@@ -24,6 +24,7 @@ export class WhatsAppClient {
     private groupFetchPromise: Promise<any> | null = null;
     private connectionPromise: Promise<void> | null = null;
     private resolveConnection: (() => void) | null = null;
+    private authCloseFn: (() => void) | null = null;
 
     // Callbacks para desacoplar el cliente del resto de la app
     public onStatusUpdate?: (data: { state: string, qr?: string }) => void;
@@ -38,7 +39,8 @@ export class WhatsAppClient {
         });
 
         try {
-            const { state, saveCreds } = await useSQLiteAuthState(path.join('data', 'whatsapp_auth.db'));
+            const { state, saveCreds, close: authClose } = await useSQLiteAuthState(path.join('data', 'whatsapp_auth.db'));
+            this.authCloseFn = authClose;
             const { version } = await fetchLatestBaileysVersion();
 
             this.socket = makeWASocket({
@@ -177,8 +179,17 @@ export class WhatsAppClient {
             } catch (e) {}
             this.socket.end(undefined);
             this.socket = null;
-            this.state = 'disconnected';
         }
+
+        if (this.authCloseFn) {
+            console.log('[WhatsAppClient] Cerrando conexión de base de datos de sesión...');
+            try {
+                this.authCloseFn();
+            } catch (e) {}
+            this.authCloseFn = null;
+        }
+
+        this.state = 'disconnected';
     }
 
     async getGroups() {
