@@ -15,7 +15,7 @@ import fs from 'fs';
  * Custom SQLite provider for Baileys Authentication State.
  * This drastically improves performance on Windows by avoiding thousands of JSON files.
  */
-export async function useSQLiteAuthState(dbPath: string): Promise<{ state: AuthenticationState, saveCreds: () => Promise<void> }> {
+export async function useSQLiteAuthState(dbPath: string): Promise<{ state: AuthenticationState, saveCreds: () => Promise<void>, close: () => void }> {
     // Ensure data directory exists
     const dir = path.dirname(dbPath);
     if (!fs.existsSync(dir)) {
