@@ -40,3 +40,8 @@ npm-debug.log*
 
 # Portable Builds
 En_Desarrollo_Portable/
+
+# Batch Files and Scripts (Moved to bin/ and excluded from Git/GitHub)
+bin/
+*.bat
+

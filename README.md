@@ -27,8 +27,8 @@ Hemos optimizado el despliegue para que el bot corra impecable en cualquier sist
 ### 🪟 Instalación en Windows
 1. Clona el repositorio: `git clone https://github.com/LedezmaSune/BotMaRe.git`
 2. Entra a la carpeta: `cd BotMaRe`
-3. Dale doble clic al archivo `setup.bat`. Esto instalará pnpm y todas las dependencias automáticamente.
-4. Usa `manager.bat` para compilar y arrancar el servidor con un menú interactivo.
+3. Abre la carpeta `bin` y dale doble clic al archivo `setup.bat` (o ejecútalo como `bin\setup.bat`). Esto instalará pnpm y todas las dependencias automáticamente.
+4. Ejecuta `bin\manager.bat` (o entra a la carpeta `bin` y dale doble clic) para compilar y arrancar el servidor con un menú interactivo.
 
 ### 🐧 Instalación en Linux / 🍎 macOS
 1. Abre tu terminal y clona el proyecto:
