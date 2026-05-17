@@ -157,6 +157,72 @@ Para un despliegue serio en servidores VPS o servidores locales que requieran au
 
 ---
 
+## 🖥️ Requerimientos del Sistema (VPS / Servidores)
+
+Para desplegar **BotMaRe AI 2026** de manera exitosa y estable en un **VPS (Servidor Virtual Privado)** o una máquina física, debes considerar estos requerimientos:
+
+### 1. Requerimientos de Hardware (Especificaciones)
+El sistema tiene dos fases de consumo de recursos que determinan lo que necesitas:
+1. **Fase de Compilación (`pnpm run build`):** Es la fase más exigente. Al compilar Next.js, se requiere potencia de CPU y memoria temporal para optimizar y empaquetar todo el Dashboard en código HTML estático súper veloz.
+2. **Fase de Ejecución (Runtime 24/7):** Es sumamente ligera. Al correr con Express y SQLite, el bot solo consume entre **150 MB y 300 MB de RAM** de manera constante.
+
+#### 🔴 Requerimientos Mínimos (Para VPS Económicos / Micro-Instancias)
+*   **CPU:** 1 vCPU (1 Núcleo Virtual).
+*   **Memoria RAM:** 1 GB de RAM.
+    > [!IMPORTANT]
+    > **El truco de la memoria Swap:** Si usas un VPS económico de 1 GB de RAM, Next.js puede quedarse sin memoria y congelarse durante la compilación (`pnpm run build`). Para solucionarlo, **debes activar un archivo de Swap (Memoria Virtual de intercambio) de al menos 1 o 2 GB** en tu Linux (ver guía abajo).
+*   **Disco:** 10 GB a 15 GB SSD (se necesita espacio para Node.js, dependencias de `node_modules`, bases de datos SQLite y descargas temporales).
+*   **Red:** 10 Mbps de ancho de banda.
+
+#### 🟢 Requerimientos Recomendados (Despliegue Óptimo e Instantáneo)
+*   **CPU:** 2 vCPUs o superior (compilación ultra-rápida y excelente multitarea).
+*   **Memoria RAM:** 2 GB de RAM o superior (con esta RAM no requieres configurar memoria Swap y el bot funcionará súper holgado).
+*   **Disco:** 20 GB a 30 GB SSD o NVMe.
+*   **Red:** 100 Mbps o superior (ideal para envíos masivos veloces de archivos pesados como videos e imágenes en WhatsApp).
+
+### 2. Sistemas Operativos Compatibles
+*   **Linux (La opción recomendada para VPS):** **Ubuntu Server (22.04 LTS o 24.04 LTS)** o **Debian 12** son ideales por su estabilidad y bajo consumo de sistema operativo base.
+*   **Windows Server:** Windows Server 2019 / 2022 (o Windows 10/11 en máquina física local).
+*   **Docker:** Compatible en cualquier sistema operativo que soporte Docker Engine y Docker Compose.
+
+### 3. Software y Preparación del VPS (Ubuntu/Debian)
+Antes de instalar el bot en tu VPS Linux, ejecuta estos comandos en tu terminal para preparar todo el entorno de compilación y dependencias necesarias:
+```bash
+# 1. Actualizar repositorios del sistema
+sudo apt update && sudo apt upgrade -y
+
+# 2. Instalar herramientas esenciales de desarrollo (necesarias para compilar SQLite)
+sudo apt install build-essential python3 make g++ git curl -y
+
+# 3. Instalar Node.js v20 (LTS oficial)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# 4. Instalar pnpm y pm2 globalmente
+sudo npm install -g pnpm pm2
+```
+
+### 💡 Guía Rápida: ¿Cómo crear un archivo Swap en tu VPS Linux de 1 GB?
+Si compraste un VPS económico de 1 GB de RAM, ejecuta estos 5 comandos rápidos en tu servidor Linux antes de compilar. Esto creará un espacio de intercambio virtual en el disco de **2 GB** para que Next.js nunca tire error de memoria:
+```bash
+# 1. Crear un archivo de intercambio de 2 Gigabytes
+sudo fallocate -l 2G /swapfile
+
+# 2. Asignar los permisos correctos de seguridad
+sudo chmod 600 /swapfile
+
+# 3. Convertir el archivo en memoria de intercambio (Swap)
+sudo mkswap /swapfile
+
+# 4. Activar la memoria de intercambio
+sudo swapon /swapfile
+
+# 5. Hacer que el Swap sea permanente para que no se borre al reiniciar el VPS
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+```
+
+---
+
 ## 🆘 Solución a Problemas Frecuentes y Errores Comunes
 
 ### 1. Error de permisos en Git ("Dubious Ownership")
