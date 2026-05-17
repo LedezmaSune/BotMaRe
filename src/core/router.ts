@@ -22,6 +22,13 @@ export class Router {
         const participant = msg.key.participant || jid;
         const messageContent = msg.message;
 
+        // Verificar si el Bot de IA está desactivado globalmente (Modo Humano)
+        const aiEnabled = await getConfig('AI_ENABLED', 'true');
+        if (aiEnabled === 'false') {
+            console.log('[Router] Mensaje recibido pero ignorado porque el Bot de IA está desactivado (AI_ENABLED = false).');
+            return;
+        }
+
         // Extraer texto
         const text = messageContent.conversation
             || messageContent.extendedTextMessage?.text
