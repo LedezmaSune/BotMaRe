@@ -51,7 +51,7 @@ export class SystemController {
         // 3. Re-inicializar cliente (esto generará un nuevo QR)
         if (this.waClient) {
             console.log('[System] Re-inicializando cliente para nuevo QR...');
-            void this.waClient.init();
+            void this.waClient.connect();
         }
 
         res.json({ success: true, message: 'Sesión cerrada. Escanea el nuevo QR en el dashboard.' });
