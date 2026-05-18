@@ -1,41 +1,42 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# ═══════════════════════════════════════════════════════════════
+#  🦊 BotMaRe AI - Setup Rápido (alias del instalador maestro)
+#  Para la instalación completa usa: ./install.sh
+# ═══════════════════════════════════════════════════════════════
 
-echo "🦊 Iniciando instalacion automatica de BotMaRe Unificado..."
-echo "------------------------------------------------------------"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# 1. Verificar Node.js
-if ! command -v node &> /dev/null
-then
-    echo "❌ [ERROR] Node.js no esta instalado."
-    echo "Por favor, instalalo desde https://nodejs.org/ antes de continuar."
-    exit 1
-fi
-
-# 2. Instalar dependencias
-echo "[1/3] Instalando dependencias del sistema..."
-npm install -g pnpm
-pnpm config set ignore-scripts false
-pnpm install
-
-# 3. Configurar archivo .env
-echo "[2/3] Configurando archivo de entorno (.env)..."
-
-if [ ! -f ".env" ]; then
-    echo "Creando archivo .env desde el ejemplo..."
-    cp .env.example .env
-    echo "[!] IMPORTANTE: Se ha creado un archivo .env"
-    echo "    Por favor, abrelo y pon tus API Keys."
+if [ -f "$SCRIPT_DIR/install.sh" ]; then
+    exec bash "$SCRIPT_DIR/install.sh"
 else
-    echo "El archivo .env ya existe, saltando..."
-fi
+    echo "❌ No se encontró install.sh. Ejecutando instalación básica..."
+    echo ""
 
-# 4. Finalización
-echo "[3/3] Finalizando..."
-echo ""
-echo "------------------------------------------------------------"
-echo "✅ INSTALACION COMPLETADA CON EXITO"
-echo ""
-echo "📝 PROXIMOS PASOS:"
-echo "1. Abre el archivo .env y pon tus API Keys."
-echo "2. Ejecuta 'npm start' para iniciar el bot."
-echo "------------------------------------------------------------"
+    # Verificar Node.js
+    if ! command -v node &>/dev/null; then
+        echo "❌ Node.js no está instalado."
+        echo "   Descárgalo en: https://nodejs.org/"
+        exit 1
+    fi
+
+    # Instalar dependencias
+    echo "[1/3] Instalando dependencias..."
+    npm install -g pnpm pm2
+    pnpm config set ignore-scripts false
+    pnpm install
+
+    # Configurar .env
+    echo "[2/3] Configurando archivo .env..."
+    if [ ! -f ".env" ]; then
+        cp .env.example .env
+        echo "[!] Archivo .env creado. Edítalo con tus API Keys."
+    else
+        echo "Archivo .env ya existe."
+    fi
+
+    # Finalizar
+    echo "[3/3] ¡Listo!"
+    echo ""
+    echo "✅ Instalación completada."
+    echo "   Ejecuta 'pnpm run start' para iniciar."
+fi

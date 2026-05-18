@@ -6,24 +6,172 @@ El sistema ha sido estructurado bajo una arquitectura de **Monolito Modular** li
 
 ---
 
-## 📂 Estructura General del Proyecto (Detallada)
+## ⚡ Instalación Exprés (Una sola línea)
 
-La arquitectura modular del proyecto divide las responsabilidades claramente para facilitar el mantenimiento, la extensibilidad y el desarrollo multiplataforma:
+Pega este comando en la terminal de tu servidor Linux o macOS y **todo se instala automáticamente**:
 
-### 1. 📁 Directorio Raíz (Root)
-*   `src/` ➔ El código fuente del proyecto, el cual engloba tanto el motor backend como las vistas del frontend.
-*   `data/` ➔ Almacenamiento persistente local. Contiene bases de datos SQLite locales (`database.db`), registros de auditoría y archivos multimedia temporales. *(Ignorado en Git por seguridad)*.
-*   `backups/` ➔ Respaldos periódicos de bases de datos y configuraciones. *(Ignorado en Git)*.
-*   `.env` ➔ Configuración confidencial del sistema, claves de API, puertos y credenciales de seguridad. *(Ignorado en Git)*.
-*   `.gitignore` ➔ Reglas de exclusión para evitar la subida de datos privados, cachés o scripts locales al repositorio de GitHub.
-*   `package.json` ➔ Define las dependencias del proyecto (Next.js, Baileys, Better-SQLite3, Socket.io) y comandos de script estándar.
-*   `ecosystem.config.js` ➔ Orquestación de procesos en segundo plano a través del gestor de producción **PM2**.
-*   `Dockerfile` & `docker-compose.yml` ➔ Archivos listos para contenedorizar y desplegar la aplicación mediante Docker.
+```bash
+curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install.sh | bash
+```
+
+> [!TIP]
+> Este comando clona el repositorio, instala Node.js (si falta), instala las dependencias, crea tu archivo `.env`, configura Swap en VPS pequeños y compila el Dashboard. **Cero interacción requerida.**
+
+Después de la instalación, solo necesitas configurar tus claves:
+```bash
+cd BotMaRe
+nano .env              # Configura tus API Keys de IA
+pnpm run pm2:start     # Inicia en producción 24/7
+```
 
 ---
 
-### 2. 📁 Arquitectura del Código Fuente (`src/`)
-La lógica de negocio está dividida siguiendo estrictos principios de desacoplamiento modular:
+## 📋 Requisitos Previos
+
+| Requisito | Versión Mínima | Notas |
+|---|---|---|
+| **Node.js** | v20 LTS | [Descargar](https://nodejs.org/) — El instalador lo instala automáticamente |
+| **Git** | Cualquiera | [Descargar](https://git-scm.com/) — Requerido para clonar y actualizar |
+| **pnpm** | v9+ | Se instala automáticamente con el instalador |
+| **PM2** | v5+ | Se instala automáticamente — Gestor de procesos para producción |
+
+---
+
+## 🚀 Guía de Instalación Detallada (Paso a Paso)
+
+Si prefieres tener control total del proceso o estás en **Windows**, sigue esta guía manual:
+
+### 🐧 Linux / macOS (Interactivo)
+
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/LedezmaSune/BotMaRe.git
+cd BotMaRe
+
+# 2. Ejecutar el instalador maestro (interactivo, con preguntas)
+chmod +x install.sh
+./install.sh
+```
+
+El instalador te guiará paso a paso: verificará dependencias, instalará paquetes, configurará el `.env` con tu puerto preferido, ofrecerá crear Swap si tu VPS tiene poca RAM, compilará el Dashboard y te dará la opción de arrancar inmediatamente.
+
+### 🪟 Windows (CMD / PowerShell)
+
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/LedezmaSune/BotMaRe.git
+cd BotMaRe
+
+# 2. Ejecutar el instalador visual de Windows
+bin\setup.bat
+```
+
+> [!NOTE]
+> En Windows también puedes usar `bin\manager.bat` que incluye un panel de control completo con menú interactivo para desarrollo, producción, mantenimiento y más.
+
+### 🔧 Instalación Manual Universal
+
+Si prefieres hacerlo todo a mano en cualquier sistema operativo:
+
+```bash
+# 1. Clonar e ingresar al proyecto
+git clone https://github.com/LedezmaSune/BotMaRe.git
+cd BotMaRe
+
+# 2. Instalar dependencias
+npm install -g pnpm pm2
+pnpm config set ignore-scripts false
+pnpm install
+
+# 3. Crear archivo de configuración
+cp .env.example .env    # Linux/macOS
+copy .env.example .env  # Windows CMD
+
+# 4. Editar .env con tus claves de IA
+nano .env               # o usa tu editor preferido
+
+# 5. Compilar la interfaz
+pnpm run build
+
+# 6. Iniciar
+pnpm run pm2:start
+```
+
+---
+
+## ⚙️ Configuración del Archivo `.env`
+
+Al crear tu archivo `.env` desde la plantilla, debes configurar como mínimo:
+
+```env
+# ── SEGURIDAD DEL DASHBOARD ─────────────────────────────
+DASHBOARD_USER=tu_usuario
+DASHBOARD_PASS=tu_clave_segura
+
+# ── PUERTO DE RED ────────────────────────────────────────
+PORT=8000
+
+# ── PROVEEDORES DE IA (Mínimo 1 requerido) ──────────────
+GEMINI_API_KEY=tu_clave_aqui
+# o cualquier otro: OPENAI_API_KEY, DEEPSEEK_API_KEY, etc.
+
+# ── TELEGRAM (Opcional) ─────────────────────────────────
+TELEGRAM_BOT_TOKEN=tu_token
+TELEGRAM_ALLOWED_USER_IDS=tu_id_numerico
+```
+
+---
+
+## 🎮 Modos de Ejecución
+
+| Comando | Modo | Uso ideal |
+|---|---|---|
+| `pnpm run dev` | **Desarrollo** | Recarga en vivo al editar código. Puertos 8000 + 3000 |
+| `pnpm run start` | **Producción** | Ejecución directa, compila si es necesario |
+| `pnpm run pm2:start` | **Producción 24/7** | Auto-reinicio, logs persistentes, segundo plano |
+
+### Comandos de PM2
+
+| Comando | Descripción |
+|---|---|
+| `pnpm run pm2:logs` | Ver logs del bot en tiempo real |
+| `pnpm run pm2:stop` | Detener el bot |
+| `pnpm run pm2:restart` | Reiniciar el bot |
+| `pnpm run pm2:delete` | Eliminar procesos de PM2 |
+| `pnpm run pm2:monit` | Monitor visual de CPU y memoria |
+
+### Primer Uso — Escanear Código QR
+
+1. Abre tu navegador e ingresa a `http://localhost:8000` (o la IP de tu servidor).
+2. Inicia sesión con el usuario y contraseña del archivo `.env`.
+3. Ve a la sección de conexión WhatsApp y escanea el QR desde **WhatsApp ➔ Dispositivos vinculados**.
+
+---
+
+## 🔄 Actualización
+
+Para actualizar BotMaRe a la última versión:
+
+```bash
+# Linux / macOS
+chmod +x update.sh && ./update.sh
+
+# Windows
+bin\actualizar.bat
+```
+
+O manualmente:
+```bash
+git pull origin main
+pnpm install
+pnpm run build
+pnpm run pm2:restart
+```
+
+---
+
+## 📂 Estructura del Proyecto
+
 ```mermaid
 graph TD
     A[src/server.ts Entrypoint] --> B[src/core Engine Core]
@@ -42,188 +190,80 @@ graph TD
     D --> D2(scheduling - Auto Dispatch)
 ```
 
-*   `src/server.ts` ➔ **Punto de Entrada del Servidor**. Inicializa las variables, verifica los directorios del sistema, levanta Express con Socket.io para comunicación bidireccional en tiempo real, e inicializa el túnel de red, los planificadores y los bots de WhatsApp y Telegram.
-*   `src/app/` ➔ La interfaz de Next.js (Dashboard). Desarrollado con el nuevo paradigma de App Router.
-*   `src/core/` ➔ El núcleo del agente autónomo:
-    *   `agent.ts` ➔ Controlador del Agente de Inteligencia Artificial.
-    *   `llm.ts` ➔ Adaptador y proveedor unificado de modelos de lenguaje (OpenAI, Gemini, Claude, DeepSeek).
-    *   `memory.ts` ➔ Administrador de memoria conversacional y reducción inteligente de tokens de historial.
-    *   `tunnel.ts` ➔ Creación nativa de túneles remotos seguros con Cloudflare Tunneling.
-*   `src/modules/` ➔ Módulos independientes de negocio:
-    *   `reminders/` ➔ Sistema avanzado de avisos, alertas y recordatorios de eventos.
-    *   `scheduling/` ➔ Motor de despachado programado, control de colas y jitter para evitar bloqueos.
-    *   `templates/` ➔ Gestor de plantillas de texto y contenido multimedia.
-*   `src/infrastructure/` ➔ Adaptadores externos:
-    *   `whatsapp/client.ts` ➔ Cliente de automatización y comunicación WhatsApp construido con la librería Baileys.
-    *   `whatsapp/sqlite-auth.ts` ➔ Almacenamiento optimizado de las credenciales del QR en base de datos SQLite.
-*   `src/telegram/` ➔ Suite del bot de Telegram para administración remota y servicio de notificaciones en tiempo real.
-
----
-
-## 🚀 Pasos para la Instalación y Puesta en Marcha (Lentamente)
-
-Sigue estos pasos con atención para instalar y ejecutar el bot en cualquier sistema operativo (Windows, Linux, macOS o servidores en la nube).
-
-### 📋 Requisitos Previos
-Asegúrate de contar con lo siguiente instalado en tu máquina:
-1.  **Node.js (v20 o superior)** ➔ [Sitio Oficial](https://nodejs.org/).
-2.  **Git** (para clonar y actualizar código) ➔ [Sitio Oficial](https://git-scm.com/).
-3.  **pnpm** (gestor de paquetes ultra-rápido recomendado). Si no lo tienes, puedes instalarlo globalmente ejecutando en tu terminal:
-    ```bash
-    npm install -g pnpm
-    ```
-
----
-
-### 💻 Guía de Despliegue Estándar (Multiplataforma)
-
-#### Paso 1: Clonar el proyecto e ingresar a la carpeta
-Abre la consola o terminal de tu sistema operativo y escribe:
-```bash
-git clone https://github.com/LedezmaSune/BotMaRe.git
-cd BotMaRe
-```
-
-#### Paso 2: Instalar las dependencias
-Para que el bot pueda compilar correctamente las librerías nativas de bases de datos, debemos habilitar los scripts de compilación e instalar:
-```bash
-pnpm config set ignore-scripts false
-pnpm install
-```
-
-#### Paso 3: Configurar las Variables de Entorno (`.env`)
-Debemos crear un archivo `.env` en la raíz del proyecto para indicarle al sistema tus credenciales. 
-1.  Copia la plantilla de ejemplo:
-    *   **En Windows (CMD):**
-        ```cmd
-        copy .env.example .env
-        ```
-    *   **En Linux / macOS / PowerShell:**
-        ```bash
-        cp .env.example .env
-        ```
-2.  Abre el archivo `.env` recién creado en un editor de texto y rellena los datos importantes:
-    *   **Dashboard Security:** Define el usuario y clave para ingresar a la web:
-        ```env
-        DASHBOARD_USER=tu_usuario
-        DASHBOARD_PASS=tu_clave_segura
-        ```
-    *   **Port:** Define el puerto de red (por ejemplo, `PORT=8000`).
-    *   **Proveedores de IA:** Introduce tu API Key de tu proveedor preferido (ej: `GEMINI_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`).
-    *   **Telegram Admin (Opcional):** Si deseas control y reportes remotos, añade tu `TELEGRAM_BOT_TOKEN` y tu ID de usuario en `TELEGRAM_ALLOWED_USER_IDS`.
-
-#### Paso 4: Compilar la Interfaz de Usuario (Frontend)
-Next.js requiere construir la aplicación estática optimizada para producción:
-```bash
-pnpm run build
-```
-*(Este comando limpiará las cachés antiguas de construcción y generará una carpeta `out/` optimizada y lista para ser servida).*
-
-#### Paso 5: Arrancar el Ecosistema
-Elige el modo en el que deseas ejecutar la aplicación según tu entorno:
-
-##### A) Modo Desarrollo (Con recarga en vivo, ideal para pruebas)
-```bash
-pnpm run dev
-```
-*(Inicia concurrentemente el servidor del Backend en el puerto 8000 y el servidor del Frontend en el puerto 3000 con recarga en vivo al editar código).*
-
-##### B) Modo Producción Local
-```bash
-pnpm run start
-```
-*(Compila en caso de no haberlo hecho y levanta la aplicación unificada sirviendo los archivos estáticos en el puerto configurado en tu `.env` de forma directa y súper veloz).*
-
-##### C) Modo Producción 24/7 (Gestionado con PM2)
-Para un despliegue serio en servidores VPS o servidores locales que requieran auto-reinicio ante caídas y control en segundo plano:
-1.  Instala PM2 globalmente:
-    ```bash
-    npm install -g pm2
-    ```
-2.  Inicia la aplicación:
-    ```bash
-    pnpm run pm2:start
-    ```
-3.  **Comandos útiles de mantenimiento para PM2:**
-    *   `pnpm run pm2:logs` ➔ Muestra la salida y registros de la aplicación en tiempo real.
-    *   `pnpm run pm2:stop` ➔ Detiene de forma segura la ejecución del bot en segundo plano.
-    *   `pnpm run pm2:restart` ➔ Reinicia el motor por completo.
-    *   `pnpm run pm2:delete` ➔ Elimina los procesos del monitor de PM2.
-
-#### Paso 6: Escanear Código QR y Vincular
-1.  Abre tu navegador de preferencia e ingresa a: `http://localhost:8000` (o a la dirección IP de tu servidor).
-2.  Escribe el usuario y la contraseña configurados en tu archivo `.env`.
-3.  Dirígete a la sección de conexión de WhatsApp, espera a que se genere el código QR y escanéalo con tu dispositivo móvil desde **WhatsApp ➔ Dispositivos vinculados**.
+| Directorio / Archivo | Descripción |
+|---|---|
+| `src/server.ts` | Punto de entrada. Inicializa Express, Socket.io, túnel, planificadores y bots |
+| `src/app/` | Dashboard Next.js con App Router |
+| `src/core/agent.ts` | Controlador del Agente de IA |
+| `src/core/llm.ts` | Adaptador unificado de LLMs (OpenAI, Gemini, Claude, DeepSeek) |
+| `src/core/memory.ts` | Memoria conversacional con reducción inteligente de tokens |
+| `src/core/tunnel.ts` | Túneles remotos seguros con Cloudflare |
+| `src/modules/reminders/` | Sistema de avisos, alertas y recordatorios |
+| `src/modules/scheduling/` | Despachado programado con control de colas y jitter |
+| `src/modules/templates/` | Gestor de plantillas de texto y multimedia |
+| `src/infrastructure/whatsapp/` | Cliente WhatsApp con Baileys y auth SQLite |
+| `src/telegram/` | Bot de Telegram para admin remoto y notificaciones |
+| `data/` | Bases de datos SQLite, logs y archivos temporales *(ignorado en Git)* |
+| `backups/` | Respaldos automáticos *(ignorado en Git)* |
+| `bin/` | Scripts de utilidad para Windows (.bat) |
+| `ecosystem.config.js` | Configuración inteligente de PM2 |
+| `install.sh` | Instalador maestro para Linux/macOS (soporta `curl \| bash`) |
+| `update.sh` | Script de actualización con respaldo automático |
 
 ---
 
 ## 🖥️ Requerimientos del Sistema (VPS / Servidores)
 
-Para desplegar **BotMaRe AI 2026** de manera exitosa y estable en un **VPS (Servidor Virtual Privado)** o una máquina física, debes considerar estos requerimientos:
+### Especificaciones de Hardware
 
-### 1. Requerimientos de Hardware (Especificaciones)
-El sistema tiene dos fases de consumo de recursos que determinan lo que necesitas:
-1. **Fase de Compilación (`pnpm run build`):** Es la fase más exigente. Al compilar Next.js, se requiere potencia de CPU y memoria temporal para optimizar y empaquetar todo el Dashboard en código HTML estático súper veloz.
-2. **Fase de Ejecución (Runtime 24/7):** Es sumamente ligera. Al correr con Express y SQLite, el bot solo consume entre **150 MB y 300 MB de RAM** de manera constante.
+| | 🔴 Mínimo | 🟢 Recomendado |
+|---|---|---|
+| **CPU** | 1 vCPU | 2+ vCPUs |
+| **RAM** | 1 GB (+ Swap 2 GB) | 2+ GB |
+| **Disco** | 10-15 GB SSD | 20-30 GB SSD/NVMe |
+| **Red** | 10 Mbps | 100+ Mbps |
 
-#### 🔴 Requerimientos Mínimos (Para VPS Económicos / Micro-Instancias)
-*   **CPU:** 1 vCPU (1 Núcleo Virtual).
-*   **Memoria RAM:** 1 GB de RAM.
-    > [!IMPORTANT]
-    > **El truco de la memoria Swap:** Si usas un VPS económico de 1 GB de RAM, Next.js puede quedarse sin memoria y congelarse durante la compilación (`pnpm run build`). Para solucionarlo, **debes activar un archivo de Swap (Memoria Virtual de intercambio) de al menos 1 o 2 GB** en tu Linux (ver guía abajo).
-*   **Disco:** 10 GB a 15 GB SSD (se necesita espacio para Node.js, dependencias de `node_modules`, bases de datos SQLite y descargas temporales).
-*   **Red:** 10 Mbps de ancho de banda.
+> [!IMPORTANT]
+> **El truco de la memoria Swap:** Si usas un VPS de 1 GB de RAM, Next.js puede fallar al compilar. El instalador (`install.sh`) detecta esto automáticamente y te ofrece crear un Swap de 2 GB. Si prefieres hacerlo manualmente:
+> ```bash
+> sudo fallocate -l 2G /swapfile
+> sudo chmod 600 /swapfile
+> sudo mkswap /swapfile && sudo swapon /swapfile
+> echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+> ```
 
-#### 🟢 Requerimientos Recomendados (Despliegue Óptimo e Instantáneo)
-*   **CPU:** 2 vCPUs o superior (compilación ultra-rápida y excelente multitarea).
-*   **Memoria RAM:** 2 GB de RAM o superior (con esta RAM no requieres configurar memoria Swap y el bot funcionará súper holgado).
-*   **Disco:** 20 GB a 30 GB SSD o NVMe.
-*   **Red:** 100 Mbps o superior (ideal para envíos masivos veloces de archivos pesados como videos e imágenes en WhatsApp).
+### Sistemas Operativos Compatibles
 
-### 2. Sistemas Operativos Compatibles
-*   **Linux (La opción recomendada para VPS):** **Ubuntu Server (22.04 LTS o 24.04 LTS)** o **Debian 12** son ideales por su estabilidad y bajo consumo de sistema operativo base.
-*   **Windows Server:** Windows Server 2019 / 2022 (o Windows 10/11 en máquina física local).
-*   **Docker:** Compatible en cualquier sistema operativo que soporte Docker Engine y Docker Compose.
+| Sistema | Versiones Soportadas |
+|---|---|
+| **Linux** *(recomendado)* | Ubuntu Server 22.04/24.04 LTS, Debian 12 |
+| **Windows** | Windows 10/11, Windows Server 2019/2022 |
+| **macOS** | macOS 13+ (Ventura o superior) |
+| **Docker** | Cualquier sistema con Docker Engine + Compose |
 
-### 3. Software y Preparación del VPS (Ubuntu/Debian)
-Antes de instalar el bot en tu VPS Linux, ejecuta estos comandos en tu terminal para preparar todo el entorno de compilación y dependencias necesarias:
+### Preparación del VPS (Ubuntu/Debian)
+
+> [!NOTE]
+> Si usas la **instalación exprés** (`curl | bash`), estos pasos se ejecutan automáticamente. Solo necesitas hacerlo manualmente si prefieres control total.
+
 ```bash
-# 1. Actualizar repositorios del sistema
+# Actualizar el sistema
 sudo apt update && sudo apt upgrade -y
 
-# 2. Instalar herramientas esenciales de desarrollo (necesarias para compilar SQLite)
+# Instalar herramientas de compilación (necesarias para SQLite nativo)
 sudo apt install build-essential python3 make g++ git curl -y
 
-# 3. Instalar Node.js v20 (LTS oficial)
+# Instalar Node.js v20 LTS
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 
-# 4. Instalar pnpm y pm2 globalmente
+# Instalar pnpm y PM2
 sudo npm install -g pnpm pm2
-```
-
-### 💡 Guía Rápida: ¿Cómo crear un archivo Swap en tu VPS Linux de 1 GB?
-Si compraste un VPS económico de 1 GB de RAM, ejecuta estos 5 comandos rápidos en tu servidor Linux antes de compilar. Esto creará un espacio de intercambio virtual en el disco de **2 GB** para que Next.js nunca tire error de memoria:
-```bash
-# 1. Crear un archivo de intercambio de 2 Gigabytes
-sudo fallocate -l 2G /swapfile
-
-# 2. Asignar los permisos correctos de seguridad
-sudo chmod 600 /swapfile
-
-# 3. Convertir el archivo en memoria de intercambio (Swap)
-sudo mkswap /swapfile
-
-# 4. Activar la memoria de intercambio
-sudo swapon /swapfile
-
-# 5. Hacer que el Swap sea permanente para que no se borre al reiniciar el VPS
-echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```
 
 ---
 
-## 🆘 Solución a Problemas Frecuentes y Errores Comunes
+## 🆘 Solución a Problemas Frecuentes
 
 ### 1. Error de permisos en Git ("Dubious Ownership")
 > [!NOTE]
@@ -231,7 +271,7 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 >
 > **Solución:** Ejecuta el siguiente comando para registrar el directorio local como seguro en Git:
 > ```bash
-> git config --global --add safe.directory c:/Proyectos/wamasivos/BotMaRe-main
+> git config --global --add safe.directory /ruta/a/BotMaRe
 > ```
 
 ### 2. Error: "Interfaz no compilada" o "out/index.html no encontrado"
@@ -263,14 +303,14 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 >
 > **Solución:** 
 > *   **Opción A:** Abre tu `.env` y define otro puerto diferente, por ejemplo: `PORT=8500`.
-> *   **Opción B (Matar proceso en Windows):**
+> *   **Opción B (Linux/macOS):**
+>     ```bash
+>     kill -9 $(lsof -t -i:8000)
+>     ```
+> *   **Opción C (Windows):**
 >     ```cmd
 >     netstat -aon | findstr :8000
 >     taskkill /F /PID <PID_encontrado>
->     ```
-> *   **Opción C (Matar proceso en Linux/macOS):**
->     ```bash
->     kill -9 $(lsof -t -i:8000)
 >     ```
 
 ### 5. La sesión se quedó colgada o el QR no actualiza
@@ -282,6 +322,19 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 > pnpm run reset:wa
 > ```
 > *(Esto detendrá la sesión de Baileys de forma limpia y eliminará las bases de datos de sesión. Al refrescar el Dashboard, aparecerá un código QR nuevo y limpio).*
+
+---
+
+## 📜 Scripts Disponibles
+
+| Script | Descripción |
+|---|---|
+| `install.sh` | Instalador maestro Linux/macOS — Soporta `curl \| bash` y modo interactivo |
+| `setup.sh` | Alias que redirige a `install.sh` |
+| `update.sh` | Actualización con respaldo automático de datos y `.env` |
+| `bin/setup.bat` | Instalador visual para Windows |
+| `bin/manager.bat` | Panel de control completo para Windows (dev, producción, mantenimiento) |
+| `bin/actualizar.bat` | Actualización desde GitHub para Windows |
 
 ---
 
