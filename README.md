@@ -1,342 +1,119 @@
-# 🦊 BotMaRe AI - Ecosistema Modular Avanzado de WhatsApp 🚀
+# 🦊 BotMaRe AI - Tu Asistente Inteligente de WhatsApp 🚀
 
-¡Bienvenido a la documentación de **BotMaRe AI 2026**! Esta es la plataforma definitiva diseñada para transformar tu WhatsApp en un centro de operaciones inteligente, altamente portátil y con rendimiento de grado empresarial.
-
-El sistema ha sido estructurado bajo una arquitectura de **Monolito Modular** limpia y eficiente. Cuenta con un robusto motor backend desarrollado en Node.js/Express y una interfaz moderna (Dashboard) construida con **Next.js 16 (React 19)** y animaciones de `framer-motion`, lista para ejecutarse 24/7 de manera ininterrumpida.
+¡Hola y bienvenido a **BotMaRe AI 2026**! 🎉 
+Imagina que pudieras tener a un asistente experto trabajando para ti en WhatsApp las 24 horas del día. Eso es exactamente lo que hace este proyecto. Transforma tu número de WhatsApp en un "cerebro" automatizado.
 
 ---
 
-## ⚡ Instalación Exprés (Una sola línea)
+## 🌟 ¿Qué es BotMaRe AI?
+BotMaRe es un ecosistema que conecta la inteligencia artificial (como ChatGPT o Gemini) directamente con tu WhatsApp. Tiene dos partes principales:
+1. **El Motor (Backend):** El cerebro invisible que procesa los mensajes, lee lo que te envían y decide qué responder.
+2. **El Panel de Control (Dashboard):** Una página web muy visual y fácil de usar donde puedes ver y controlar todo el comportamiento de tu bot.
 
-Pega este comando en la terminal de tu servidor Linux o macOS y **todo se instala automáticamente**:
+---
+
+## 🚀 ¡Vamos a Instalarlo! (Guía Paso a Paso)
+
+No importa si eres un programador experto o si es tu primera vez abriendo una terminal, te llevaremos de la mano.
+
+### 🍎 Opción 1: Tienes Linux o macOS (La forma más fácil)
+Si tienes una computadora con Linux o una Mac, la instalación es casi mágica. Solo abre tu terminal (consola) y pega esta línea:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install.sh | bash
 ```
 
-> [!TIP]
-> Este comando clona el repositorio, instala Node.js (si falta), instala las dependencias, crea tu archivo `.env`, configura Swap en VPS pequeños y compila el Dashboard. **Cero interacción requerida.**
+**¿Qué hace esto?** Se encarga de todo por ti: descarga el código, instala las herramientas necesarias (como Node.js) y deja todo listo para funcionar. ¡Tú solo relájate y observa! ☕
 
-Después de la instalación, solo necesitas configurar tus claves:
-```bash
-cd BotMaRe
-nano .env              # Configura tus API Keys de IA
-pnpm run pm2:start     # Inicia en producción 24/7
-```
+### 🪟 Opción 2: Estás en Windows
 
----
+¡Sí, también funciona perfectamente en Windows! 
 
-## 📋 Requisitos Previos
+> **💡 ¿Se puede usar `curl` en Windows? ¡SÍ!**
+> Si tienes Windows 10 (actualizado) o Windows 11, la herramienta `curl` **ya viene preinstalada** de fábrica.
+> Simplemente abre el menú inicio, busca **CMD** (Símbolo del sistema) o **PowerShell**, ábrelo y ya puedes usar comandos `curl` igual que en Linux. 
+> 
+> *⚠️ Nota importante para usuarios de PowerShell:* A veces PowerShell confunde la palabra `curl` con un comando antiguo suyo (`Invoke-WebRequest`). Para evitar errores y usar el `curl` real, te recomendamos escribir **`curl.exe`** en lugar de solo `curl`.
+> Ejemplo: `curl.exe -fsSL http://ejemplo.com`
 
-| Requisito | Versión Mínima | Notas |
-|---|---|---|
-| **Node.js** | v20 LTS | [Descargar](https://nodejs.org/) — El instalador lo instala automáticamente |
-| **Git** | Cualquiera | [Descargar](https://git-scm.com/) — Requerido para clonar y actualizar |
-| **pnpm** | v9+ | Se instala automáticamente con el instalador |
-| **PM2** | v5+ | Se instala automáticamente — Gestor de procesos para producción |
+Para instalar el bot en Windows, sigue estos pasos:
 
----
-
-## 🚀 Guía de Instalación Detallada (Paso a Paso)
-
-Si prefieres tener control total del proceso o estás en **Windows**, sigue esta guía manual:
-
-### 🐧 Linux / macOS (Interactivo)
-
-```bash
-# 1. Clonar el repositorio
-git clone https://github.com/LedezmaSune/BotMaRe.git
-cd BotMaRe
-
-# 2. Ejecutar el instalador maestro (interactivo, con preguntas)
-chmod +x install.sh
-./install.sh
-```
-
-El instalador te guiará paso a paso: verificará dependencias, instalará paquetes, configurará el `.env` con tu puerto preferido, ofrecerá crear Swap si tu VPS tiene poca RAM, compilará el Dashboard y te dará la opción de arrancar inmediatamente.
-
-### 🪟 Windows (CMD / PowerShell)
-
-```bash
-# 1. Clonar el repositorio
-git clone https://github.com/LedezmaSune/BotMaRe.git
-cd BotMaRe
-
-# 2. Ejecutar el instalador visual de Windows
-bin\setup.bat
-```
-
-> [!NOTE]
-> En Windows también puedes usar `bin\manager.bat` que incluye un panel de control completo con menú interactivo para desarrollo, producción, mantenimiento y más.
-
-### 🔧 Instalación Manual Universal
-
-Si prefieres hacerlo todo a mano en cualquier sistema operativo:
-
-```bash
-# 1. Clonar e ingresar al proyecto
-git clone https://github.com/LedezmaSune/BotMaRe.git
-cd BotMaRe
-
-# 2. Instalar dependencias
-npm install -g pnpm pm2
-pnpm config set ignore-scripts false
-pnpm install
-
-# 3. Crear archivo de configuración
-cp .env.example .env    # Linux/macOS
-copy .env.example .env  # Windows CMD
-
-# 4. Editar .env con tus claves de IA
-nano .env               # o usa tu editor preferido
-
-# 5. Compilar la interfaz
-pnpm run build
-
-# 6. Iniciar
-pnpm run pm2:start
-```
+1. **Descarga el código del bot:**
+   Abre tu consola (CMD) y escribe:
+   ```cmd
+   git clone https://github.com/LedezmaSune/BotMaRe.git
+   cd BotMaRe
+   ```
+2. **Ejecuta el asistente visual de Windows:**
+   ```cmd
+   bin\setup.bat
+   ```
+   Este archivo abrirá un menú interactivo que te irá guiando paso a paso. 🤝
 
 ---
 
-## ⚙️ Configuración del Archivo `.env`
+## ⚙️ Configurando tu Bot (El archivo `.env`)
 
-Al crear tu archivo `.env` desde la plantilla, debes configurar como mínimo:
+Para que el bot funcione, necesita saber un par de secretos, como qué contraseña quieres usar para entrar a tu panel web, y cuál es tu "llave" de Inteligencia Artificial. Esto se guarda en un archivo secreto llamado `.env`.
+
+Abre (o crea) el archivo llamado `.env` en la carpeta principal de tu proyecto y asegúrate de que tenga esta información:
 
 ```env
-# ── SEGURIDAD DEL DASHBOARD ─────────────────────────────
-DASHBOARD_USER=tu_usuario
-DASHBOARD_PASS=tu_clave_segura
+# ── TUS DATOS PARA ENTRAR AL PANEL WEB ──
+DASHBOARD_USER=mi_usuario_inventado
+DASHBOARD_PASS=mi_clave_secreta
 
-# ── PUERTO DE RED ────────────────────────────────────────
+# ── EL PUERTO (El "estacionamiento" de tu web) ──
 PORT=8000
 
-# ── PROVEEDORES DE IA (Mínimo 1 requerido) ──────────────
-GEMINI_API_KEY=tu_clave_aqui
-# o cualquier otro: OPENAI_API_KEY, DEEPSEEK_API_KEY, etc.
-
-# ── TELEGRAM (Opcional) ─────────────────────────────────
-TELEGRAM_BOT_TOKEN=tu_token
-TELEGRAM_ALLOWED_USER_IDS=tu_id_numerico
+# ── TU LLAVE DE INTELIGENCIA ARTIFICIAL ──
+# ¡Elige al menos una y pon tu código real!
+GEMINI_API_KEY=pega_tu_llave_aqui_sin_comillas
 ```
 
 ---
 
-## 🎮 Modos de Ejecución
+## 🎮 ¡A Jugar! (Cómo encender tu bot)
 
-| Comando | Modo | Uso ideal |
-|---|---|---|
-| `pnpm run dev` | **Desarrollo** | Recarga en vivo al editar código. Puertos 8000 + 3000 |
-| `pnpm run start` | **Producción** | Ejecución directa, compila si es necesario |
-| `pnpm run pm2:start` | **Producción 24/7** | Auto-reinicio, logs persistentes, segundo plano |
+Una vez instalado y configurado, tienes varias formas de encenderlo dependiendo de lo que quieras hacer. Abre tu consola en la carpeta del bot y escribe uno de estos comandos:
 
-### Comandos de PM2
+*   **Para usarlo y dejarlo encendido SIEMPRE (Recomendado):**
+    ```bash
+    pnpm run pm2:start
+    ```
+    *Esto hace que el bot funcione de fondo, incluso si cierras la consola, y se reinicie solo si la computadora se apaga.*
 
-| Comando | Descripción |
-|---|---|
-| `pnpm run pm2:logs` | Ver logs del bot en tiempo real |
-| `pnpm run pm2:stop` | Detener el bot |
-| `pnpm run pm2:restart` | Reiniciar el bot |
-| `pnpm run pm2:delete` | Eliminar procesos de PM2 |
-| `pnpm run pm2:monit` | Monitor visual de CPU y memoria |
+*   **Para curiosear o modificar el código (Desarrollo):**
+    ```bash
+    pnpm run dev
+    ```
 
-### Primer Uso — Escanear Código QR
-
-1. Abre tu navegador e ingresa a `http://localhost:8000` (o la IP de tu servidor).
-2. Inicia sesión con el usuario y contraseña del archivo `.env`.
-3. Ve a la sección de conexión WhatsApp y escanea el QR desde **WhatsApp ➔ Dispositivos vinculados**.
+### 📱 El Paso Final: Conectar tu WhatsApp al Bot
+1. Abre tu navegador de internet (Chrome, Edge, Safari) y entra a esta dirección: `http://localhost:8000` (Si cambiaste el puerto en el `.env`, usa ese número).
+2. Pon el usuario y contraseña que inventaste.
+3. Ve a la sección que dice **WhatsApp**. Verás aparecer un código QR gigante.
+4. Toma tu celular, abre WhatsApp, ve a **Dispositivos Vinculados > Vincular un dispositivo** y escanea ese código. ¡Listo! Tu bot ya está escuchando. 🥳
 
 ---
 
-## 🔄 Actualización
+## 🚑 Sección de Primeros Auxilios (Errores Comunes)
 
-Para actualizar BotMaRe a la última versión:
+A veces las cosas no salen a la primera, ¡es normal! Aquí tienes las soluciones a los problemas más comunes:
 
-```bash
-# Linux / macOS
-chmod +x update.sh && ./update.sh
-
-# Windows
-bin\actualizar.bat
-```
-
-O manualmente:
-```bash
-git pull origin main
-pnpm install
-pnpm run build
-pnpm run pm2:restart
-```
+*   **Problema:** Me sale un error diciendo que "El puerto 8000 ya está en uso" (EADDRINUSE).
+    *   **Solución:** Significa que otro programa ya está usando ese espacio. Abre tu archivo `.env` y cambia `PORT=8000` por otro número, como `PORT=8500`.
+*   **Problema:** La pantalla de mi panel web se ve en blanco o dice "out/index.html no encontrado".
+    *   **Solución:** Te saltaste el paso de "construir" la página visual. Abre tu consola y escribe el comando: `pnpm run build`. Luego vuelve a encender el bot.
+*   **Problema:** El código QR no funciona, no escanea o se quedó trabado buscando.
+    *   **Solución:** A veces la memoria de WhatsApp se confunde. Apaga el bot y escribe en tu consola: `pnpm run reset:wa`. Esto borrará la sesión anterior y te dará un QR nuevecito y limpio.
 
 ---
 
-## 📂 Estructura del Proyecto
+## 📋 Requisitos para los más técnicos
+Si quieres saber los requisitos exactos de la computadora o servidor donde lo vas a instalar:
+*   Sistema operativo: Linux (recomendado), Windows, o macOS.
+*   **Node.js v20** o superior.
+*   **Git** (para poder descargar y actualizar el código).
+*   Memoria: Recomendamos al menos **2GB de RAM** para que funcione sin tirones.
 
-```mermaid
-graph TD
-    A[src/server.ts Entrypoint] --> B[src/core Engine Core]
-    A --> C[src/infrastructure Adapters]
-    A --> D[src/modules Business Modules]
-    A --> E[src/app Next.js Frontend]
-    
-    B --> B1(agent.ts - AI Orchestration)
-    B --> B2(llm.ts - LLM Integration)
-    B --> B3(memory.ts - Chat Memory)
-    
-    C --> C1(whatsapp/client.ts - Baileys WA)
-    C --> C2(api - Express Routes)
-    
-    D --> D1(reminders - Alerts Suite)
-    D --> D2(scheduling - Auto Dispatch)
-```
-
-| Directorio / Archivo | Descripción |
-|---|---|
-| `src/server.ts` | Punto de entrada. Inicializa Express, Socket.io, túnel, planificadores y bots |
-| `src/app/` | Dashboard Next.js con App Router |
-| `src/core/agent.ts` | Controlador del Agente de IA |
-| `src/core/llm.ts` | Adaptador unificado de LLMs (OpenAI, Gemini, Claude, DeepSeek) |
-| `src/core/memory.ts` | Memoria conversacional con reducción inteligente de tokens |
-| `src/core/tunnel.ts` | Túneles remotos seguros con Cloudflare |
-| `src/modules/reminders/` | Sistema de avisos, alertas y recordatorios |
-| `src/modules/scheduling/` | Despachado programado con control de colas y jitter |
-| `src/modules/templates/` | Gestor de plantillas de texto y multimedia |
-| `src/infrastructure/whatsapp/` | Cliente WhatsApp con Baileys y auth SQLite |
-| `src/telegram/` | Bot de Telegram para admin remoto y notificaciones |
-| `data/` | Bases de datos SQLite, logs y archivos temporales *(ignorado en Git)* |
-| `backups/` | Respaldos automáticos *(ignorado en Git)* |
-| `bin/` | Scripts de utilidad para Windows (.bat) |
-| `ecosystem.config.js` | Configuración inteligente de PM2 |
-| `install.sh` | Instalador maestro para Linux/macOS (soporta `curl \| bash`) |
-| `update.sh` | Script de actualización con respaldo automático |
-
----
-
-## 🖥️ Requerimientos del Sistema (VPS / Servidores)
-
-### Especificaciones de Hardware
-
-| | 🔴 Mínimo | 🟢 Recomendado |
-|---|---|---|
-| **CPU** | 1 vCPU | 2+ vCPUs |
-| **RAM** | 1 GB (+ Swap 2 GB) | 2+ GB |
-| **Disco** | 10-15 GB SSD | 20-30 GB SSD/NVMe |
-| **Red** | 10 Mbps | 100+ Mbps |
-
-> [!IMPORTANT]
-> **El truco de la memoria Swap:** Si usas un VPS de 1 GB de RAM, Next.js puede fallar al compilar. El instalador (`install.sh`) detecta esto automáticamente y te ofrece crear un Swap de 2 GB. Si prefieres hacerlo manualmente:
-> ```bash
-> sudo fallocate -l 2G /swapfile
-> sudo chmod 600 /swapfile
-> sudo mkswap /swapfile && sudo swapon /swapfile
-> echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-> ```
-
-### Sistemas Operativos Compatibles
-
-| Sistema | Versiones Soportadas |
-|---|---|
-| **Linux** *(recomendado)* | Ubuntu Server 22.04/24.04 LTS, Debian 12 |
-| **Windows** | Windows 10/11, Windows Server 2019/2022 |
-| **macOS** | macOS 13+ (Ventura o superior) |
-| **Docker** | Cualquier sistema con Docker Engine + Compose |
-
-### Preparación del VPS (Ubuntu/Debian)
-
-> [!NOTE]
-> Si usas la **instalación exprés** (`curl | bash`), estos pasos se ejecutan automáticamente. Solo necesitas hacerlo manualmente si prefieres control total.
-
-```bash
-# Actualizar el sistema
-sudo apt update && sudo apt upgrade -y
-
-# Instalar herramientas de compilación (necesarias para SQLite nativo)
-sudo apt install build-essential python3 make g++ git curl -y
-
-# Instalar Node.js v20 LTS
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs
-
-# Instalar pnpm y PM2
-sudo npm install -g pnpm pm2
-```
-
----
-
-## 🆘 Solución a Problemas Frecuentes
-
-### 1. Error de permisos en Git ("Dubious Ownership")
-> [!NOTE]
-> **Causa:** Ocurre comúnmente en Windows al clonar repositorios si el propietario del archivo difiere del usuario de la sesión de consola activa.
->
-> **Solución:** Ejecuta el siguiente comando para registrar el directorio local como seguro en Git:
-> ```bash
-> git config --global --add safe.directory /ruta/a/BotMaRe
-> ```
-
-### 2. Error: "Interfaz no compilada" o "out/index.html no encontrado"
-> [!WARNING]
-> **Causa:** Has intentado iniciar el bot en producción pero no se ha generado la carpeta de distribución del Dashboard de Next.js.
->
-> **Solución:** Ejecuta el comando de compilación estática antes de arrancar:
-> ```bash
-> pnpm run build
-> ```
-
-### 3. Error: Incompatibilidad de compilación de Better-SQLite3
-> [!TIP]
-> **Causa:** La base de datos nativa SQLite requiere compilación C++ nativa y falló al instalarse de forma automática.
->
-> **Solución:** 
-> 1. Asegúrate de configurar los scripts de instalación de paquetes de node:
->    ```bash
->    pnpm config set ignore-scripts false
->    ```
-> 2. Fuerza una reinstalación limpia:
->    ```bash
->    pnpm rebuild better-sqlite3
->    ```
-
-### 4. Error: Puerto 8000 ya está siendo utilizado ("EADDRINUSE")
-> [!IMPORTANT]
-> **Causa:** Otra aplicación o un proceso zombie del mismo bot está ocupando el puerto de red.
->
-> **Solución:** 
-> *   **Opción A:** Abre tu `.env` y define otro puerto diferente, por ejemplo: `PORT=8500`.
-> *   **Opción B (Linux/macOS):**
->     ```bash
->     kill -9 $(lsof -t -i:8000)
->     ```
-> *   **Opción C (Windows):**
->     ```cmd
->     netstat -aon | findstr :8000
->     taskkill /F /PID <PID_encontrado>
->     ```
-
-### 5. La sesión se quedó colgada o el QR no actualiza
-> [!CAUTION]
-> **Causa:** Las claves criptográficas de autenticación de WhatsApp en la base de datos local de SQLite o caché se corrompieron.
->
-> **Solución:** Ejecuta el script de limpieza rápida para reiniciar el canal de WhatsApp a su estado original de fábrica:
-> ```bash
-> pnpm run reset:wa
-> ```
-> *(Esto detendrá la sesión de Baileys de forma limpia y eliminará las bases de datos de sesión. Al refrescar el Dashboard, aparecerá un código QR nuevo y limpio).*
-
----
-
-## 📜 Scripts Disponibles
-
-| Script | Descripción |
-|---|---|
-| `install.sh` | Instalador maestro Linux/macOS — Soporta `curl \| bash` y modo interactivo |
-| `setup.sh` | Alias que redirige a `install.sh` |
-| `update.sh` | Actualización con respaldo automático de datos y `.env` |
-| `bin/setup.bat` | Instalador visual para Windows |
-| `bin/manager.bat` | Panel de control completo para Windows (dev, producción, mantenimiento) |
-| `bin/actualizar.bat` | Actualización desde GitHub para Windows |
-
----
-
-© 2026 **BotMaRe AI** - Potenciando la comunicación inteligente y la automatización del futuro.
-*Monolito Modular diseñado, optimizado y creado con ❤️ para mentes innovadoras.*
+¡Disfruta de BotMaRe AI y lleva tu comunicación al siguiente nivel! 🚀
