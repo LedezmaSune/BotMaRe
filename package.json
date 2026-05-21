@@ -1,6 +1,6 @@
 {
   "name": "botmare-unified",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "BotMaRe - Unified Modular AI WhatsApp Platform",
   "main": "src/server.ts",
   "scripts": {
@@ -20,7 +20,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "6.17.16",
+    "@whiskeysockets/baileys": "6.7.22",
     "adm-zip": "^0.5.17",
     "autoprefixer": "^10.5.0",
     "axios": "^1.16.1",

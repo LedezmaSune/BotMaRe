@@ -69,12 +69,15 @@ export class SystemController {
     downloadBackup = asyncHandler(async (req: Request, res: Response) => {
         const { BackupService } = require('./backup.service');
         try {
-            const filePath = await BackupService.createBackup(true); // Enviar a Telegram también
-            res.download(filePath, path.basename(filePath), (err) => {
-                if (err) {
-                    console.error('Error al descargar backup:', err);
-                }
-                // Limpiar el archivo local después de descargar (opcional, BackupService ya tiene limpieza cron)
+            const filePaths = await BackupService.createBackup(true); // Genera ambos y los envía a Telegram
+            
+            // Para la descarga del navegador, enviamos la PARTE 1 (Sistema) por defecto
+            // ya que el navegador no puede descargar dos archivos a la vez sin empaquetarlos,
+            // y queremos mantenerlos independientes.
+            const coreBackup = Array.isArray(filePaths) ? filePaths[0] : filePaths;
+            
+            res.download(coreBackup, path.basename(coreBackup), (err) => {
+                if (err) console.error('Error al descargar backup en navegador:', err);
             });
         } catch (error) {
             console.error('Error generando backup:', error);

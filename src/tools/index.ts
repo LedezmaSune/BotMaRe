@@ -2,19 +2,22 @@ import { timeTool } from "./time";
 import { remindersTool } from "./reminders";
 import { webBrowserTool } from "./web_browser";
 import { whatsappTools, initWhatsAppTools } from "./whatsapp";
+import { supportTool } from "./support";
 import { MessageService } from "../modules/messages/message.service";
 
 export const allTools = [
     timeTool,
     remindersTool,
     webBrowserTool,
-    whatsappTools.list_groups
+    whatsappTools.list_groups,
+    supportTool
 ];
 
 export const restrictedTools = [
     timeTool,
     webBrowserTool,
-    whatsappTools.list_groups
+    whatsappTools.list_groups,
+    supportTool
 ];
 
 export function initTools(waService: MessageService) {

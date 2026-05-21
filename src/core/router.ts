@@ -1,6 +1,6 @@
 import { WAMessage } from '@whiskeysockets/baileys';
 import { MessageController } from '../modules/messages/message.controller';
-import { getSettings } from './memory';
+import { getSettings, isChatPaused } from './memory';
 import { getConfig } from './config';
 
 /**
@@ -28,6 +28,14 @@ export class Router {
             console.log('[Router] Mensaje recibido pero ignorado porque el Bot de IA está desactivado (AI_ENABLED = false).');
             return;
         }
+
+        // Verificar si el chat específico tiene la IA pausada (Soporte Técnico Humano)
+        const isPaused = await isChatPaused(jid);
+        if (isPaused) {
+            console.log(`[Router] Mensaje de ${jid} ignorado por la IA porque está en modo soporte humano (pausado).`);
+            return;
+        }
+
 
         // Extraer texto
         const text = messageContent.conversation
@@ -69,13 +77,63 @@ export class Router {
     private async checkBotMention(text: string, messageContent: any, socket: any): Promise<boolean> {
         const settings = await getSettings() as any;
         const botName = settings.bot_name || 'BotMaRe';
-        const botJid = socket.user?.id?.split(':')[0]; // ID sin el sufijo de sesión
+        
+        // Extraemos los identificadores puros sin dominios (@s.whatsapp.net o @lid)
+        const botJid = socket.user?.id?.split(':')[0]?.split('@')[0];
+        const botLid = socket.user?.lid?.split('@')[0];
+        const whatsAppName = socket.user?.name;
         
         const mentions = messageContent.extendedTextMessage?.contextInfo?.mentionedJid || [];
         const repliedJid = messageContent.extendedTextMessage?.contextInfo?.participant;
 
-        return text.toLowerCase().includes(botName.toLowerCase()) ||
-               mentions.some((m: string) => m.includes(botJid)) ||
-               (repliedJid && repliedJid.includes(botJid));
+        const cleanText = text.toLowerCase().trim();
+
+        // 1. Menciones genéricas amigables
+        const genericTriggers = ['@bot', '@ia', '@ai', 'botmare', '@botmare'];
+        const isGenericTrigger = genericTriggers.some(trigger => cleanText.includes(trigger));
+
+        // 2. Menciones por nombre configurado o nombre de perfil de WhatsApp
+        const cleanBotName = botName.toLowerCase().trim();
+        const cleanBotNameNoSpaces = cleanBotName.replace(/\s+/g, '');
+        const isMentionedByName = 
+            cleanText.includes(cleanBotName) || 
+            cleanText.includes(cleanBotNameNoSpaces) ||
+            cleanText.includes(`@${cleanBotName}`) ||
+            cleanText.includes(`@${cleanBotNameNoSpaces}`);
+
+        // Mención por nombre del perfil de WhatsApp (si está disponible)
+        let isMentionedByProfileName = false;
+        if (whatsAppName) {
+            const cleanProfile = whatsAppName.toLowerCase().trim();
+            const cleanProfileNoSpaces = cleanProfile.replace(/\s+/g, '');
+            isMentionedByProfileName = 
+                cleanText.includes(cleanProfile) || 
+                cleanText.includes(cleanProfileNoSpaces) ||
+                cleanText.includes(`@${cleanProfile}`) ||
+                cleanText.includes(`@${cleanProfileNoSpaces}`);
+        }
+
+        // 3. Mención directa con número/LID escrito manualmente como texto (ej. @5491123456789)
+        const hasTextNumberMention = 
+            (botJid && (cleanText.includes(`@${botJid}`) || cleanText.includes(botJid))) ||
+            (botLid && (cleanText.includes(`@${botLid}`) || cleanText.includes(botLid)));
+
+        // 4. Mención nativa de WhatsApp (compara número tradicional o LID)
+        const isMentionedByJid = mentions.some((m: string) => {
+            const cleanM = m.split('@')[0];
+            return (botJid && cleanM === botJid) || (botLid && cleanM === botLid);
+        });
+
+        // 5. Respuesta (Reply) al bot (compara número tradicional o LID)
+        const isRepliedToBot = repliedJid && (
+            repliedJid.includes(botJid) || (botLid && repliedJid.includes(botLid))
+        );
+
+        return isGenericTrigger || 
+               isMentionedByName || 
+               isMentionedByProfileName || 
+               hasTextNumberMention || 
+               isMentionedByJid || 
+               isRepliedToBot;
     }
 }

@@ -117,14 +117,23 @@ export function useBotData() {
                 body: formData
             });
 
-            const data = await res.json();
+            let data;
+            const rawText = await res.text();
+            try {
+                data = JSON.parse(rawText);
+            } catch (jsonError) {
+                alert(`❌ Error del servidor (No es JSON): ${res.status} - ${rawText.substring(0, 100)}`);
+                setIsLoading(false);
+                return;
+            }
+
             if (data.success) {
                 alert(`✅ Cola iniciada. Procesando ${contactList.length} contactos.`);
             } else {
                 alert(`❌ Error: ${data.error}`);
             }
-        } catch (e) {
-            alert('❌ Error al procesar el envío.');
+        } catch (e: any) {
+            alert(`❌ Error al procesar el envío: ${e.message}`);
         } finally {
             setIsLoading(false);
         }

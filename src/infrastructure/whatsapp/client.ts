@@ -81,6 +81,25 @@ export class WhatsAppClient {
                     // Sincronizar grupos y guardar la promesa
                     console.log("[WhatsAppClient] Sincronizando lista de grupos...");
                     this.groupFetchPromise = this.getGroups().catch(() => null);
+
+                    // Sincronizar automáticamente el nombre de perfil de WhatsApp con el bot_name configurado
+                    // Agregamos un retraso de 3 segundos para asegurar que el estado de la sesión esté completamente cargado en Baileys
+                    setTimeout(() => {
+                        try {
+                            const { getSettings } = require('../../core/memory');
+                            getSettings().then((settings: any) => {
+                                const botName = settings.bot_name || 'BotMaRe';
+                                if (this.socket && typeof this.socket.updateProfileName === 'function') {
+                                    console.log(`[WhatsAppClient] Sincronizando nombre de perfil en WhatsApp con settings: ${botName}`);
+                                    this.socket.updateProfileName(botName).catch((e: any) => {
+                                        console.warn('[WhatsAppClient] No se pudo actualizar el nombre del perfil en WhatsApp:', e.message);
+                                    });
+                                }
+                            }).catch(() => null);
+                        } catch (e: any) {
+                            console.warn('[WhatsAppClient] Error al cargar getSettings para sincronizar perfil:', e.message);
+                        }
+                    }, 3000);
                 } else if (connection === 'close') {
                     this.state = 'disconnected';
                     this.onStatusUpdate?.({ state: 'disconnected' });
@@ -143,10 +162,8 @@ export class WhatsAppClient {
                 await this.socket.readMessages([{ remoteJid: jid, fromMe: false, id: '1' }]).catch(() => null);
                 await new Promise(r => setTimeout(r, 1000));
             } catch (e: any) {
-                console.warn(`[WhatsAppClient] No se pudieron obtener metadatos para ${jid}: ${e.message}`);
-                if (e.message?.includes('403') || e.message?.includes('404')) {
-                    throw new Error('El bot no es miembro de este grupo o no tiene permisos.');
-                }
+                // Hacemos que el fallo de obtención de metadatos sea no-bloqueante
+                console.warn(`[WhatsAppClient] No se pudieron obtener metadatos para ${jid}: ${e.message}. Continuando intento de envío...`);
             }
         }
 

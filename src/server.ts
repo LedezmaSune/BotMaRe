@@ -27,6 +27,15 @@ import { BackupService } from './modules/system/backup.service';
 
 dotenv.config();
 
+// Prevenir caídas del servidor por excepciones no controladas o promesas rechazadas (p.ej. fallos en Baileys/Signal)
+process.on('uncaughtException', (err) => {
+    console.error('💥 [CRÍTICO] Excepción no controlada (Uncaught Exception):', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('💥 [CRÍTICO] Promesa rechazada no controlada (Unhandled Rejection) en:', promise, 'razón:', reason);
+});
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {

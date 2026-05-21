@@ -231,6 +231,19 @@ export class BackupService {
             // 1. Extraer a carpeta temporal
             zip.extractAllTo(tempExtractPath, true);
 
+            // 2. Si el zip contiene archivos .enc (es un zip maestro), procesarlos
+            const extractedFiles = fs.readdirSync(tempExtractPath);
+            for (const file of extractedFiles) {
+                if (file.endsWith('.enc')) {
+                    const nestedEncPath = path.join(tempExtractPath, file);
+                    const nestedDecryptedPath = path.join(tempExtractPath, file.replace('.enc', ''));
+                    decryptFile(nestedEncPath, nestedDecryptedPath);
+                    const nestedZip = new AdmZip(nestedDecryptedPath);
+                    nestedZip.extractAllTo(tempExtractPath, true);
+                    fs.unlinkSync(nestedDecryptedPath);
+                }
+            }
+
             // 3. Reemplazar carpeta data (si existe en el zip)
             const extractedDataPath = path.join(tempExtractPath, 'data');
             if (fs.existsSync(extractedDataPath)) {
@@ -262,7 +275,7 @@ export class BackupService {
             
             return { 
                 success: true, 
-                message: 'Información restaurada con éxito. El bot debe reiniciarse para aplicar todos los cambios.' 
+                message: 'Información y archivos multimedia restaurados con éxito. El bot debe reiniciarse para aplicar todos los cambios.' 
             };
         } catch (error: any) {
             console.error('❌ Error en restauración:', error);

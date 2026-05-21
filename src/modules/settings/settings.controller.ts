@@ -9,6 +9,8 @@ import { getAllConfig } from '../../core/config';
 const uploadDir = path.resolve('data/uploads');
 
 export class SettingsController {
+    constructor(private waClient?: any) {}
+
     getSettings = asyncHandler(async (req: Request, res: Response) => {
         const settings = await getAllConfig();
         res.json(settings);
@@ -16,6 +18,20 @@ export class SettingsController {
 
     updateSettings = asyncHandler(async (req: Request, res: Response) => {
         await updateSettings(req.body);
+        
+        // Sincronizar el nombre del bot con el perfil de WhatsApp si está conectado
+        if (req.body.bot_name && this.waClient) {
+            try {
+                const socket = this.waClient.getSocket?.();
+                if (socket && typeof socket.updateProfileName === 'function') {
+                    console.log(`[SettingsController] Actualizando nombre de perfil de WhatsApp a: ${req.body.bot_name}`);
+                    await socket.updateProfileName(req.body.bot_name);
+                }
+            } catch (e: any) {
+                console.error('[SettingsController] Error al sincronizar el nombre de perfil de WhatsApp:', e.message);
+            }
+        }
+        
         res.json({ success: true });
     });
 

@@ -178,6 +178,16 @@ export function initTelegramBot(
       return;
     }
 
+    if (data.startsWith("reactivate_ia_")) {
+      const chatIdToReactivate = data.replace("reactivate_ia_", "");
+      const { unpauseChat } = await import("../core/memory");
+      await unpauseChat(chatIdToReactivate);
+      
+      await ctx.answerCallbackQuery({ text: "✅ IA Reactivada exitosamente.", show_alert: true });
+      await ctx.editMessageText(`✅ *IA Reactivada*\nEl bot volverá a responder automáticamente en el chat \`${chatIdToReactivate.replace('@s.whatsapp.net', '')}\`.`, { parse_mode: "Markdown" });
+      return;
+    }
+
     if (data.startsWith("del_reminder_")) {
       const id = parseInt(data.replace("del_reminder_", ""));
       if (!isNaN(id)) {

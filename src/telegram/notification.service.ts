@@ -9,7 +9,7 @@ export class NotificationService {
     /**
      * Envía un mensaje a todos los IDs permitidos en TELEGRAM_ALLOWED_USER_IDS.
      */
-    static async notifyAdmin(message: string, parseMode: 'Markdown' | 'HTML' = 'Markdown') {
+    static async notifyAdmin(message: string, options?: { parse_mode?: 'Markdown' | 'HTML', reply_markup?: any }) {
         const adminIdsStr = await getConfig('TELEGRAM_ALLOWED_USER_IDS');
         
         // Si no hay bot o no hay IDs configurados, no hacemos nada
@@ -18,13 +18,15 @@ export class NotificationService {
         }
 
         const adminIds = adminIdsStr.split(',').map(id => id.trim()).filter(Boolean);
+        const parseMode = options?.parse_mode || 'Markdown';
         
         for (const id of adminIds) {
             try {
                 // Usamos bot.api para enviar mensajes de forma asíncrona
                 await bot.api.sendMessage(id, message, { 
                     parse_mode: parseMode,
-                    link_preview_options: { is_disabled: true } 
+                    link_preview_options: { is_disabled: true },
+                    reply_markup: options?.reply_markup
                 });
             } catch (error: any) {
                 console.error(`[NotificationService] Error enviando notificación a ${id}:`, error.message);

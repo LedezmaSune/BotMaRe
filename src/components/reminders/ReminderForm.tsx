@@ -82,10 +82,10 @@ export function ReminderForm({
                     </div>
                     {templates.length > 0 && (
                         <select
+                            value=""
                             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                                 const t = templates.find(temp => temp.id === Number(e.target.value));
                                 if (t) setText(t.content);
-                                e.target.value = "";
                             }}
                             className="w-full bg-slate-100 dark:bg-slate-800/50 border border-app-border rounded-xl px-3 py-2 text-[10px] font-bold text-app-text-muted mb-2 outline-none uppercase tracking-widest"
                         >

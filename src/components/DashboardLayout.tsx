@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users, BookOpen } from 'lucide-react';
+import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users, BookOpen, ShieldAlert } from 'lucide-react';
 
 import { ConnectionOverlay } from '@/components/ConnectionOverlay';
 import { ThemeToggle, UpdateChecker, AIToggle, GlobalClock } from '@/components/StatusHeader';
@@ -19,6 +19,7 @@ const routes: Array<{ path: string; icon: any; label: string; id: TabId }> = [
     { path: '/templates', icon: LayoutIcon, label: 'Plantillas', id: 'templates' },
     { path: '/groups', icon: Users, label: 'Grupos', id: 'groups' },
     { path: '/personality', icon: Brain, label: 'Cerebro IA', id: 'personality' },
+    { path: '/support', icon: ShieldAlert, label: 'Soporte', id: 'support' as TabId },
     { path: '/settings', icon: SettingsIcon, label: 'Configuración', id: 'settings' },
     { path: '/audits', icon: History, label: 'Auditoría', id: 'audits' },
     { path: '/manual', icon: BookOpen, label: 'Manual de Uso', id: 'manual' as TabId }

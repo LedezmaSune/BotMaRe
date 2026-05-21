@@ -97,11 +97,11 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, p
 
                             {groups.length > 0 && (
                                 <select 
+                                    value=""
                                     className="bg-slate-200 dark:bg-slate-800/80 border-none rounded-md text-[9px] font-bold py-1 px-2 outline-none cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 text-app-text"
                                     onChange={(e) => {
                                         if (e.target.value) {
                                             setContacts(prev => prev + (prev ? '\n' : '') + e.target.value);
-                                            e.target.value = "";
                                         }
                                     }}
                                 >
@@ -141,10 +141,10 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, p
                         {templates.length > 0 && (
                             <div className="mb-4">
                                 <select
+                                    value=""
                                     onChange={(e) => {
                                         const t = templates.find(temp => temp.id === Number(e.target.value));
                                         if (t) setMessage(t.content);
-                                        e.target.value = "";
                                     }}
                                     className="w-full bg-slate-100 dark:bg-slate-800/50 border border-app-border rounded-xl px-4 py-2 text-[10px] font-bold text-app-text-muted outline-none transition-all uppercase tracking-widest cursor-pointer hover:border-orange-500/30"
                                 >

@@ -56,6 +56,13 @@ db.exec(`
         content TEXT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS paused_chats (
+        chatId TEXT PRIMARY KEY,
+        reason TEXT,
+        pausedUntil DATETIME,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
 `);
 
 // Database Migrations (in case table already exists without columns)
@@ -66,6 +73,7 @@ try { db.exec('ALTER TABLE reminders ADD COLUMN repeatInterval INTEGER'); } catc
 try { db.exec('ALTER TABLE reminders ADD COLUMN repeatUnit TEXT'); } catch (e) {}
 try { db.exec('ALTER TABLE reminders ADD COLUMN title TEXT'); } catch (e) {}
 try { db.exec('CREATE TABLE IF NOT EXISTS templates (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, content TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)'); } catch (e) {}
+try { db.exec('CREATE TABLE IF NOT EXISTS paused_chats (chatId TEXT PRIMARY KEY, reason TEXT, pausedUntil DATETIME, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)'); } catch (e) {}
 
 // Default Settings
 const defaultSettings = {
@@ -169,4 +177,32 @@ export async function deleteTemplate(id: number) {
 
 export async function updateTemplate(id: number, name: string, content: string) {
     db.prepare('UPDATE templates SET name = ?, content = ? WHERE id = ?').run(name, content, id);
+}
+
+// Support & Escalation API
+export async function pauseChat(chatId: string, reason: string, durationHours: number = 6) {
+    const pausedUntil = new Date(Date.now() + durationHours * 3600000).toISOString();
+    db.prepare('INSERT OR REPLACE INTO paused_chats (chatId, reason, pausedUntil) VALUES (?, ?, ?)')
+      .run(chatId, reason, pausedUntil);
+}
+
+export async function unpauseChat(chatId: string) {
+    db.prepare('DELETE FROM paused_chats WHERE chatId = ?').run(chatId);
+}
+
+export async function isChatPaused(chatId: string): Promise<boolean> {
+    const row = db.prepare('SELECT pausedUntil FROM paused_chats WHERE chatId = ?').get(chatId) as { pausedUntil: string } | undefined;
+    if (!row) return false;
+    
+    if (new Date(row.pausedUntil) > new Date()) {
+        return true;
+    } else {
+        // Cleanup expired pause
+        await unpauseChat(chatId);
+        return false;
+    }
+}
+
+export async function listPausedChats() {
+    return db.prepare('SELECT * FROM paused_chats ORDER BY timestamp DESC').all();
 }

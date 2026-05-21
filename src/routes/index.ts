@@ -27,6 +27,7 @@ import { createDiffusionRouter } from './diffusion.routes';
 import { createSettingsRouter } from './settings.routes';
 import { createSystemRouter } from './system.routes';
 import { createTemplateRouter } from './template.routes';
+import { createSupportRouter } from './support.routes';
 
 // Shared Multer Setup
 const uploadDir = path.resolve('data/uploads');
@@ -63,7 +64,7 @@ export function createMainRouter(waClient: WhatsAppClient) {
     const reminderController = new ReminderController(reminderService);
     const aiController = new AIController(aiService);
     const diffusionController = new DiffusionController(diffusionService);
-    const settingsController = new SettingsController();
+    const settingsController = new SettingsController(waClient);
     const systemController = new SystemController(waClient);
     const templateController = new TemplateController();
 
@@ -75,6 +76,7 @@ export function createMainRouter(waClient: WhatsAppClient) {
     router.use('/settings', createSettingsRouter(settingsController));
     router.use('/system', createSystemRouter(systemController));
     router.use('/templates', createTemplateRouter(templateController));
+    router.use('/support', createSupportRouter());
 
     return router;
 }
