@@ -114,8 +114,17 @@ Si vas a instalar BotMaRe en un VPS (Servidor Privado Virtual), esto es lo que n
 > [!IMPORTANT]
 > **El Truco del Swap (Muy importante):** Si tu servidor tiene solo 1 GB de RAM, la compilación de la página web podría fallar por falta de memoria. Nuestro script `install.sh` te ofrece crear "Swap" (memoria virtual) automáticamente. ¡Dile que sí!
 
-### Preparando un servidor Ubuntu/Debian desde cero
-Si vas a realizar la instalación de forma manual en Linux, estos son los pasos para preparar tu entorno:
+### ⚡ Instalación Automática (Recomendado)
+Para una instalación sin esfuerzo y completamente automatizada que prepare tu entorno Linux de principio a fin, ejecuta este comando de un solo paso:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install.sh | bash
+```
+
+---
+
+### 🛠️ Instalación Manual desde Cero
+Si prefieres realizar la preparación del sistema de manera manual, sigue estos pasos:
 
 ```bash
 sudo apt update && sudo apt upgrade -y
