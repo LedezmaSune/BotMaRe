@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users, BookOpen, ShieldAlert } from 'lucide-react';
+import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users, BookOpen, ShieldAlert, RefreshCw } from 'lucide-react';
 
 import { ConnectionOverlay } from '@/components/ConnectionOverlay';
 import { ThemeToggle, UpdateChecker, AIToggle, GlobalClock } from '@/components/StatusHeader';
@@ -22,6 +22,7 @@ const routes: Array<{ path: string; icon: any; label: string; id: TabId }> = [
     { path: '/support', icon: ShieldAlert, label: 'Soporte', id: 'support' as TabId },
     { path: '/settings', icon: SettingsIcon, label: 'Configuración', id: 'settings' },
     { path: '/audits', icon: History, label: 'Auditoría', id: 'audits' },
+    { path: '/updates', icon: RefreshCw, label: 'Actualizaciones', id: 'updates' as TabId },
     { path: '/manual', icon: BookOpen, label: 'Manual de Uso', id: 'manual' as TabId }
 ];
 
@@ -151,7 +152,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     </div>
 
                     <div className="p-6 border-t border-app-border opacity-30 text-[8px] font-bold uppercase tracking-widest text-center">
-                        Kitsune Engine v2.4
+                        Kitsune Engine K 1.2.0
                     </div>
                 </nav>
             </div>
@@ -173,12 +174,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                         </div>
                         
                         <div className="flex items-center gap-4">
-                            <div className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full">
-                                <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">v1.5-beta</span>
+                            <div className="px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.15)]">
+                                <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-widest">K 1.2.0</span>
                             </div>
-                            <div className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                <span className="text-[9px] font-bold text-amber-500 uppercase tracking-widest">En Desarrollo</span>
+                            <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">Estable</span>
                             </div>
                         </div>
 
