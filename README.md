@@ -101,6 +101,33 @@ Esto arranca el Motor de IA y el Dashboard de forma simultánea (por defecto en 
 
 ---
 
+## 🖥️ Requisitos para Servidores (Si lo subes a la nube)
+
+Si vas a instalar BotMaRe en un VPS (Servidor Privado Virtual), esto es lo que necesitas:
+
+| Recurso | 🔴 Mínimo | 🟢 Recomendado |
+|---------|-----------|----------------|
+| **CPU** | 1 vCPU | 2+ vCPUs |
+| **RAM** | 1 GB (+ 2 GB Swap) | 2+ GB de RAM |
+| **Disco** | 10 GB SSD | 20+ GB SSD/NVMe |
+
+> [!IMPORTANT]
+> **El Truco del Swap (Muy importante):** Si tu servidor tiene solo 1 GB de RAM, la compilación de la página web podría fallar por falta de memoria. Nuestro script `install.sh` te ofrece crear "Swap" (memoria virtual) automáticamente. ¡Dile que sí!
+
+### Preparando un servidor Ubuntu/Debian desde cero
+Si vas a realizar la instalación de forma manual en Linux, estos son los pasos para preparar tu entorno:
+
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install build-essential python3 make g++ git curl -y
+# Instalar Node 20
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+sudo npm install -g pnpm pm2
+```
+
+---
+
 ## 🔑 Proveedores de IA
 
 BotMaRe soporta múltiples proveedores con failover automático. Solo necesitas configurar **al menos 1**:
