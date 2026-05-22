@@ -12,21 +12,20 @@ else
     echo "❌ No se encontró install.sh. Ejecutando instalación básica..."
     echo ""
 
-    # Verificar Node.js
     if ! command -v node &>/dev/null; then
         echo "❌ Node.js no está instalado."
         echo "   Descárgalo en: https://nodejs.org/"
         exit 1
     fi
 
-    # Instalar dependencias
-    echo "[1/3] Instalando dependencias..."
+    echo "[1/3] Instalando dependencias globales..."
     npm install -g pnpm pm2
+    
+    echo "[2/3] Instalando dependencias del proyecto..."
     pnpm config set ignore-scripts false
     pnpm install
 
-    # Configurar .env
-    echo "[2/3] Configurando archivo .env..."
+    echo "[3/3] Configurando archivo .env..."
     if [ ! -f ".env" ]; then
         cp .env.example .env
         echo "[!] Archivo .env creado. Edítalo con tus API Keys."
@@ -34,8 +33,6 @@ else
         echo "Archivo .env ya existe."
     fi
 
-    # Finalizar
-    echo "[3/3] ¡Listo!"
     echo ""
     echo "✅ Instalación completada."
     echo "   Ejecuta 'pnpm run start' para iniciar."

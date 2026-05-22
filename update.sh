@@ -85,11 +85,10 @@ ok "Código fuente actualizado exitosamente."
 # 4. Instalar y actualizar dependencias
 step 3 "Actualizando librerías del sistema (pnpm install)..."
 if ! command -v pnpm &>/dev/null; then
-    warn "pnpm no está instalado. Intentando usar npm..."
-    npm install
-else
-    pnpm install
+    fail "pnpm no está instalado. Ejecuta 'npm install -g pnpm' primero."
+    exit 1
 fi
+pnpm install
 
 if [ $? -ne 0 ]; then
     fail "Fallo al instalar las dependencias."
@@ -100,11 +99,7 @@ ok "Librerías y dependencias actualizadas."
 
 # 5. Reconstruir Dashboard
 step 4 "Reconstruyendo interfaz visual del Dashboard (Next.js)..."
-if ! command -v pnpm &>/dev/null; then
-    npm run build
-else
-    pnpm run build
-fi
+pnpm run build
 
 if [ $? -ne 0 ]; then
     fail "Error al compilar el Dashboard."
@@ -137,19 +132,11 @@ echo ""
 case "$START_MODE" in
     1)
         info "Iniciando en Modo Desarrollo..."
-        if command -v pnpm &>/dev/null; then
-            exec pnpm run dev
-        else
-            exec npm run dev
-        fi
+        exec pnpm run dev
         ;;
     2)
         info "Iniciando en Modo Producción..."
-        if command -v pnpm &>/dev/null; then
-            exec pnpm run start
-        else
-            exec npm run start
-        fi
+        exec pnpm run start
         ;;
     3)
         info "Reiniciando proceso en segundo plano con PM2..."
@@ -157,11 +144,7 @@ case "$START_MODE" in
             if pm2 describe BotMaRe-Unified &>/dev/null; then
                 pm2 restart BotMaRe-Unified
             else
-                if command -v pnpm &>/dev/null; then
-                    pnpm run pm2:start
-                else
-                    npm run pm2:start
-                fi
+                pnpm run pm2:start
             fi
             ok "BotMaRe reiniciado con PM2 de forma exitosa."
             info "Puedes ver la consola ejecutando: ${BOLD}pnpm run pm2:logs${NC}"

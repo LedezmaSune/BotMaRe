@@ -1,19 +1,4 @@
 const path = require('path');
-const fs = require('fs');
-
-const folderName = path.basename(__dirname);
-
-let envPort = 8000;
-const envPath = path.join(__dirname, '.env');
-
-if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, 'utf8');
-  const portMatch = envContent.match(/^PORT\s*=\s*(\d+)/m);
-
-  if (portMatch) {
-    envPort = parseInt(portMatch[1], 10);
-  }
-}
 
 module.exports = {
   apps: [
@@ -26,10 +11,11 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: "1G",
-
+      
+      // Native PM2 env file support
+      env_file: path.join(__dirname, '.env'),
       env: {
         NODE_ENV: "production",
-        PORT: envPort
       },
 
       error_file: path.join(__dirname, "data/logs/err.log"),
