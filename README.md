@@ -137,6 +137,24 @@ sudo npm install -g pnpm pm2
 
 ---
 
+## 🔄 Actualización Segura
+
+Mantener tu bot al día es fundamental. BotMaRe incluye un actualizador inteligente (`update.sh`) que:
+1. Hace un respaldo automático de tus bases de datos (`database.db` y `whatsapp_auth.db`) y `.env`.
+2. Sincroniza el código más reciente desde GitHub.
+3. Actualiza las dependencias de forma segura utilizando `pnpm`.
+4. Reconstruye la interfaz visual.
+5. Te ofrece un menú interactivo para reiniciar tu bot (PM2 o primer plano).
+
+Para actualizar tu sistema en cualquier momento, solo ejecuta en tu terminal:
+
+```bash
+chmod +x update.sh
+./update.sh
+```
+
+---
+
 ## 🔑 Proveedores de IA
 
 BotMaRe soporta múltiples proveedores con failover automático. Solo necesitas configurar **al menos 1**:
