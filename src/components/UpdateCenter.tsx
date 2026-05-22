@@ -67,7 +67,7 @@ export function UpdateCenter() {
                 const data = await res.json();
                 setUpdateInfo(data);
             } else {
-                setUpdateInfo({ error: 'No se pudo contactar al servidor de actualizaciones.' });
+                setUpdateInfo({ error: `No se pudo contactar al servidor de actualizaciones (HTTP ${res.status}).` });
             }
         } catch (e: any) {
             setUpdateInfo({ error: e.message || 'Error en la conexión.' });
