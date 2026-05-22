@@ -28,4 +28,21 @@ export class WhatsAppController {
         const groups = await this.waService.getGroups();
         res.json(Object.values(groups));
     });
+
+    requestPairingCode = asyncHandler(async (req: Request, res: Response) => {
+        const { phoneNumber } = req.body;
+        if (!phoneNumber) {
+            return res.status(400).json({ success: false, error: "Phone number is required" });
+        }
+        
+        // Limpiar el número de cualquier caracter no numérico
+        const cleanNumber = phoneNumber.replace(/\D/g, '');
+        
+        try {
+            const code = await this.waService.requestPairingCode(cleanNumber);
+            res.json({ success: true, code });
+        } catch (error: any) {
+            res.status(500).json({ success: false, error: error.message || "Error requesting pairing code" });
+        }
+    });
 }

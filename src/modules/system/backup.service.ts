@@ -300,15 +300,21 @@ export class BackupService {
 
             // Obtener lista de archivos que SÍ están en uso por recordatorios pendientes
             const pendingReminders = await listReminders('owner');
-            const activePaths = new Set(pendingReminders.map((r: any) => r.mediaPath).filter(Boolean));
+            const activePaths = new Set(
+                pendingReminders
+                    .map((r: any) => r.mediaPath)
+                    .filter(Boolean)
+                    .map((p: string) => path.normalize(p))
+            );
 
             let deletedCount = 0;
             files.forEach(file => {
                 const filePath = path.join(uploadDir, file);
+                const normalizedFilePath = path.normalize(filePath);
                 const stats = fs.statSync(filePath);
 
                 // Si el archivo NO está en uso Y es más viejo que el umbral
-                if (!activePaths.has(filePath) && (now - stats.mtimeMs > msThreshold)) {
+                if (!activePaths.has(normalizedFilePath) && (now - stats.mtimeMs > msThreshold)) {
                     try {
                         fs.unlinkSync(filePath);
                         deletedCount++;

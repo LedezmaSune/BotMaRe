@@ -22,6 +22,10 @@ export class MessageService {
         return await this.client.getGroups();
     }
 
+    async requestPairingCode(phoneNumber: string) {
+        return await this.client.requestPairingCode(phoneNumber);
+    }
+
     private formatJid(jid: string): string {
         if (!jid) return '';
         const clean = jid.trim();

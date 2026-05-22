@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
     filename: (req: any, file: any, cb: any) => {
         // Limpiamos el nombre de caracteres especiales para evitar errores en Windows
         const cleanName = file.originalname.replace(/[\\/:*?"<>|]/g, '_');
-        cb(null, cleanName);
+        cb(null, `${Date.now()}-${cleanName}`);
     }
 });
 const upload = multer({ storage });

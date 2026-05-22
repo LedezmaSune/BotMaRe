@@ -63,6 +63,16 @@ db.exec(`
         pausedUntil DATETIME,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS autoresponders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        keyword TEXT,
+        matchType TEXT,
+        response TEXT,
+        aiAction TEXT,
+        isActive INTEGER DEFAULT 1,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
 `);
 
 // Database Migrations (in case table already exists without columns)
@@ -74,6 +84,7 @@ try { db.exec('ALTER TABLE reminders ADD COLUMN repeatUnit TEXT'); } catch (e) {
 try { db.exec('ALTER TABLE reminders ADD COLUMN title TEXT'); } catch (e) {}
 try { db.exec('CREATE TABLE IF NOT EXISTS templates (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, content TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)'); } catch (e) {}
 try { db.exec('CREATE TABLE IF NOT EXISTS paused_chats (chatId TEXT PRIMARY KEY, reason TEXT, pausedUntil DATETIME, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)'); } catch (e) {}
+try { db.exec('CREATE TABLE IF NOT EXISTS autoresponders (id INTEGER PRIMARY KEY AUTOINCREMENT, keyword TEXT, matchType TEXT, response TEXT, aiAction TEXT, isActive INTEGER DEFAULT 1, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)'); } catch (e) {}
 
 // Default Settings
 const defaultSettings = {
@@ -198,9 +209,32 @@ export async function isChatPaused(chatId: string): Promise<boolean> {
         return true;
     } else {
         // Cleanup expired pause
-        await unpauseChat(chatId);
+        db.prepare('DELETE FROM paused_chats WHERE chatId = ?').run(chatId);
         return false;
     }
+}
+
+// Autoresponders API
+export async function listAutoresponders() {
+    return db.prepare('SELECT * FROM autoresponders ORDER BY timestamp DESC').all();
+}
+
+export async function createAutoresponder(keyword: string, matchType: string, response: string, aiAction: string, isActive: boolean = true) {
+    const stmt = db.prepare('INSERT INTO autoresponders (keyword, matchType, response, aiAction, isActive) VALUES (?, ?, ?, ?, ?)');
+    return stmt.run(keyword, matchType, response, aiAction, isActive ? 1 : 0).lastInsertRowid;
+}
+
+export async function updateAutoresponder(id: number, keyword: string, matchType: string, response: string, aiAction: string, isActive: boolean) {
+    db.prepare('UPDATE autoresponders SET keyword = ?, matchType = ?, response = ?, aiAction = ?, isActive = ? WHERE id = ?')
+      .run(keyword, matchType, response, aiAction, isActive ? 1 : 0, id);
+}
+
+export async function toggleAutoresponder(id: number, isActive: boolean) {
+    db.prepare('UPDATE autoresponders SET isActive = ? WHERE id = ?').run(isActive ? 1 : 0, id);
+}
+
+export async function deleteAutoresponder(id: number) {
+    db.prepare('DELETE FROM autoresponders WHERE id = ?').run(id);
 }
 
 export async function listPausedChats() {

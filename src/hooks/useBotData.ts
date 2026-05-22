@@ -1,20 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { Audit, Reminder, Settings, Template, ConnectionState } from '../types';
+import { Audit, Reminder, Settings, Template, ConnectionState, Autoresponder } from '../types';
 import { parseContactList } from '../utils/contactParser';
 
 const API_BASE = '/api';
 const SOCKET_URL = ''; // En el monolito unificado, el socket vive en la misma URL/Puerto que la web
 
-export type TabId = 'mass' | 'scheduling' | 'calendar' | 'templates' | 'groups' | 'personality' | 'settings' | 'audits' | 'support' | 'manual' | 'updates';
+export type TabId = 'mass' | 'scheduling' | 'calendar' | 'templates' | 'groups' | 'personality' | 'settings' | 'audits' | 'support' | 'manual' | 'updates' | 'autoresponders';
 
 export function useBotData() {
     const [status, setStatus] = useState<ConnectionState>('disconnected');
     const [qr, setQr] = useState<string | null>(null);
+    const [pairingCode, setPairingCode] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<TabId>('mass');
     const [audits, setAudits] = useState<Audit[]>([]);
     const [reminders, setReminders] = useState<Reminder[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
+    const [autoresponders, setAutoresponders] = useState<Autoresponder[]>([]);
     const [groups, setGroups] = useState<any[]>([]);
     const [settings, setSettings] = useState<Settings | null>(null);
     const [allowedGroups, setAllowedGroups] = useState<string[]>([]);
@@ -25,15 +27,17 @@ export function useBotData() {
 
     const fetchData = useCallback(async (currentTab?: TabId) => {
         try {
-            const [auditsRes, remindersRes, templatesRes] = await Promise.all([
+            const [auditsRes, remindersRes, templatesRes, autorespondersRes] = await Promise.all([
                 fetch(`${API_BASE}/system/audits`),
                 fetch(`${API_BASE}/reminders`),
-                fetch(`${API_BASE}/templates`)
+                fetch(`${API_BASE}/templates`),
+                fetch(`${API_BASE}/autoresponders`)
             ]);
 
             if (auditsRes.ok) setAudits(await auditsRes.json());
             if (remindersRes.ok) setReminders(await remindersRes.json());
             if (templatesRes.ok) setTemplates(await templatesRes.json());
+            if (autorespondersRes.ok) setAutoresponders(await autorespondersRes.json());
 
             if (currentTab === 'groups' || currentTab === 'mass' || currentTab === 'scheduling') {
                 const groupsRes = await fetch(`${API_BASE}/whatsapp/groups`);
@@ -67,7 +71,10 @@ export function useBotData() {
         const socket = io(SOCKET_URL);
         socket.on('status', (newStatus: ConnectionState) => {
             setStatus(newStatus);
-            if (newStatus === 'connected') setQr(null);
+            if (newStatus === 'connected') {
+                setQr(null);
+                setPairingCode(null);
+            }
         });
         socket.on('qr', (newQr: string) => setQr(newQr));
         
@@ -249,12 +256,12 @@ export function useBotData() {
     };
 
     const handleResetWhatsApp = async () => {
-        if (!confirm('⚠️ ¿Estás seguro de que quieres cerrar la sesión de WhatsApp? Tendrás que escanear el código QR de nuevo.')) return;
+        if (!confirm('⚠️ ¿Estás seguro de que quieres cerrar la sesión de WhatsApp? Tendrás que escanear el código QR de nuevo o generar un nuevo código.')) return;
         try {
             const res = await fetch(`${API_BASE}/system/reset-whatsapp`, { method: 'POST' });
             const data = await res.json();
             if (data.success) {
-                alert('✅ Sesión cerrada. Por favor, vuelve a la pestaña de inicio para escanear el nuevo QR.');
+                alert('✅ Sesión cerrada. Por favor, vuelve a la pestaña de inicio para conectar de nuevo.');
                 window.location.reload();
             } else {
                 alert('❌ Error: ' + data.error);
@@ -264,14 +271,41 @@ export function useBotData() {
         }
     };
 
+    const handleRequestPairingCode = async (phoneNumber: string) => {
+        setIsLoading(true);
+        setPairingCode(null);
+        try {
+            const res = await fetch(`${API_BASE}/whatsapp/pairing-code`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phoneNumber })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setPairingCode(data.code);
+                return data.code;
+            } else {
+                alert(`❌ Error: ${data.error}`);
+                return null;
+            }
+        } catch (e: any) {
+            alert(`❌ Error al solicitar código: ${e.message}`);
+            return null;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return {
         status,
         qr,
+        pairingCode,
         activeTab,
         setActiveTab,
         audits,
         reminders,
         templates,
+        autoresponders,
         groups,
         allowedGroups,
         settings,
@@ -289,6 +323,7 @@ export function useBotData() {
         handleParseEnv,
         handleCancelMass,
         handleResetWhatsApp,
+        handleRequestPairingCode,
         diffusionProgress,
         diffusionLogs
     };

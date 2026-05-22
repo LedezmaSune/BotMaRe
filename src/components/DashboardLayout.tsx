@@ -17,6 +17,7 @@ const routes: Array<{ path: string; icon: any; label: string; id: TabId }> = [
     { path: '/scheduling', icon: Bell, label: 'Recordatorios', id: 'scheduling' },
     { path: '/calendar', icon: CalendarDays, label: 'Calendario', id: 'calendar' },
     { path: '/templates', icon: LayoutIcon, label: 'Plantillas', id: 'templates' },
+    { path: '/autoresponders', icon: Menu, label: 'Menús Rápidos', id: 'autoresponders' as TabId },
     { path: '/groups', icon: Users, label: 'Grupos', id: 'groups' },
     { path: '/personality', icon: Brain, label: 'Cerebro IA', id: 'personality' },
     { path: '/support', icon: ShieldAlert, label: 'Soporte', id: 'support' as TabId },
@@ -27,7 +28,7 @@ const routes: Array<{ path: string; icon: any; label: string; id: TabId }> = [
 ];
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-    const { status, qr, settings, handleCleanUploads, setActiveTab } = useGlobalBotData();
+    const { status, qr, pairingCode, handleRequestPairingCode, settings, handleCleanUploads, setActiveTab } = useGlobalBotData();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const pathname = usePathname();
     const handleTabChange = (id: TabId) => {
@@ -47,16 +48,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
     return (
         <div className="min-h-screen bg-background text-foreground font-sans selection:bg-cyan-500/30 transition-colors duration-300">
-            <ConnectionOverlay qr={qr} status={status} />
+            <ConnectionOverlay qr={qr} pairingCode={pairingCode} onRequestPairingCode={handleRequestPairingCode} status={status} />
 
-            {/* Fondos Decorativos */}
-            <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0">
-                <div className="absolute top-[-15%] left-[-15%] w-[50%] h-[50%] bg-blue-600/10 dark:bg-cyan-500/10 rounded-full blur-[140px] animate-pulse"></div>
-                <div className="absolute bottom-[5%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 dark:bg-indigo-500/10 rounded-full blur-[120px] animation-delay-2000"></div>
+            {/* Fondos Decorativos Animados */}
+            <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
+                <div className="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] bg-cyan-500/15 dark:bg-cyan-500/10 rounded-full blur-[140px] mix-blend-screen animate-pulse" style={{ animationDuration: '8s' }}></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-fuchsia-600/15 dark:bg-purple-600/15 rounded-full blur-[120px] mix-blend-screen animate-pulse" style={{ animationDuration: '12s', animationDelay: '2s' }}></div>
             </div>
 
             {/* --- HEADER SUPERIOR COMPACTO --- */}
-            <header className="fixed top-0 left-0 w-full z-[100] bg-app-card/40 backdrop-blur-3xl border-b border-app-border px-4 md:px-8 py-3 flex items-center justify-between shadow-2xl shadow-black/10">
+            <header className="fixed top-0 left-0 w-full z-[100] premium-glass border-b-0 border-app-border/30 px-4 md:px-8 py-3 flex items-center justify-between shadow-[0_4px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_40px_rgba(0,0,0,0.3)]">
                 <div className="flex items-center gap-4">
                     <button 
                         onClick={() => setIsMenuOpen(true)}
@@ -112,7 +113,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     onClick={() => setIsMenuOpen(false)}
                 />
                 
-                <nav className={`absolute top-0 left-0 h-full w-72 md:w-80 bg-app-card/95 backdrop-blur-3xl border-r border-app-border shadow-2xl transition-transform duration-500 ease-out flex flex-col ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <nav className={`absolute top-0 left-0 h-full w-72 md:w-80 premium-glass border-r border-app-border/30 shadow-2xl transition-transform duration-500 ease-out flex flex-col ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                     <div className="p-8 border-b border-app-border flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-gradient-to-tr from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
@@ -135,12 +136,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                                     onClick={() => handleTabChange(route.id)}
                                     className={`flex items-center gap-4 w-full px-5 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 relative group overflow-hidden ${
                                         isActive
-                                            ? 'text-white shadow-xl shadow-cyan-500/20 scale-[1.02]'
-                                            : 'text-app-text-muted hover:text-app-text hover:bg-app-card/50'
+                                            ? 'text-white shadow-[0_0_20px_var(--app-glow)] scale-[1.02]'
+                                            : 'text-app-text-muted hover:text-app-text hover:bg-app-card'
                                     }`}
                                 >
                                     {isActive && (
-                                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 z-0"></div>
+                                        <div className="absolute inset-0 bg-gradient-to-r from-[var(--app-accent)] to-blue-600 opacity-90 z-0 glow-border"></div>
                                     )}
                                     <div className="relative z-10 flex items-center gap-4">
                                         <route.icon size={18} strokeWidth={isActive ? 2.5 : 2} />

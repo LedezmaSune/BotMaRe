@@ -21,6 +21,16 @@ export interface Settings {
     [key: string]: string;
 }
 
+export interface Autoresponder {
+    id: number;
+    keyword: string;
+    matchType: 'exact' | 'contains';
+    response: string;
+    aiAction: 'menu_only' | 'ai_context' | 'no_response';
+    isActive: number;
+    timestamp: string;
+}
+
 export interface Audit {
     id: number;
     userId: string;

@@ -18,6 +18,7 @@ import { DiffusionController } from '../modules/messages/diffusion.controller';
 import { SettingsController } from '../modules/settings/settings.controller';
 import { SystemController } from '../modules/system/system.controller';
 import { TemplateController } from '../modules/templates/template.controller';
+import { AutoresponderController } from '../modules/autoresponders/autoresponder.controller';
 
 // Routes
 import { createWhatsAppRouter } from './whatsapp.routes';
@@ -28,6 +29,7 @@ import { createSettingsRouter } from './settings.routes';
 import { createSystemRouter } from './system.routes';
 import { createTemplateRouter } from './template.routes';
 import { createSupportRouter } from './support.routes';
+import { createAutoresponderRouter } from '../modules/autoresponders/autoresponder.routes';
 
 // Shared Multer Setup
 const uploadDir = path.resolve('data/uploads');
@@ -67,6 +69,7 @@ export function createMainRouter(waClient: WhatsAppClient) {
     const settingsController = new SettingsController(waClient);
     const systemController = new SystemController(waClient);
     const templateController = new TemplateController();
+    const autoresponderController = new AutoresponderController();
 
     // 3. Mount Routes
     router.use('/whatsapp', createWhatsAppRouter(waController));
@@ -77,6 +80,7 @@ export function createMainRouter(waClient: WhatsAppClient) {
     router.use('/system', createSystemRouter(systemController));
     router.use('/templates', createTemplateRouter(templateController));
     router.use('/support', createSupportRouter());
+    router.use('/autoresponders', createAutoresponderRouter(autoresponderController));
 
     return router;
 }

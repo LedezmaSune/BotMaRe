@@ -51,7 +51,7 @@ export class WhatsAppClient {
                 },
                 logger,
                 printQRInTerminal: false,
-                browser: [process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe', 'Chrome', '1.0.0'],
+                browser: ['Ubuntu', 'Chrome', '20.0.04'], // Requerido para Pairing Code
                 syncFullHistory: false, // No descargar todo el historial para evitar Timeouts
                 shouldSyncHistoryMessage: () => false, // No sincronizar mensajes antiguos
                 generateHighQualityLinkPreview: false, // Ahorrar recursos al no generar previsualizaciones pro
@@ -252,5 +252,25 @@ export class WhatsAppClient {
 
     getStatus() {
         return { state: this.state, qr: this.qr };
+    }
+
+    async requestPairingCode(phoneNumber: string): Promise<string> {
+        if (!this.socket) {
+            throw new Error('Socket no inicializado');
+        }
+        
+        // Esperar a que el socket esté listo para pedir el código
+        if (this.state === 'connecting') {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
+        try {
+            console.log(`[WhatsAppClient] Solicitando Pairing Code para: ${phoneNumber}`);
+            const code = await this.socket.requestPairingCode(phoneNumber);
+            return code;
+        } catch (error) {
+            console.error('[WhatsAppClient] Error al solicitar Pairing Code:', error);
+            throw error;
+        }
     }
 }

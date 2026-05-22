@@ -31,6 +31,7 @@ BotMaRe utiliza una arquitectura monolítica moderna donde el motor de Inteligen
 | 🧠 **IA Multi-Proveedor** | Groq, Gemini, OpenAI, DeepSeek, OpenRouter — con failover automático. |
 | 📱 **WhatsApp Bot** | Respuestas inteligentes, análisis de imágenes, transcripción de audio y documentos. |
 | 📢 **Difusión Masiva** | Envía mensajes personalizados a listas de contactos sin bloqueos. |
+| ⚡ **Menús Rápidos** | **[NUEVO]** Auto-respuestas por palabra clave con menús, inyección de contexto IA o ignorar. (Incluye Variables Dinámicas). |
 | 📅 **Recordatorios** | Programa mensajes en grupos o privados con lógica de repetición. |
 | 🛡️ **Centro de Soporte** | **[NUEVO]** Panel de escalado humano. Pausa la IA para clientes frustrados y alerta a asesores vía Telegram. |
 | 📦 **Respaldos Seguros** | **[NUEVO]** Exporta e importa bases de datos (Sistema) y archivos multimedia separados o juntos con un clic. |

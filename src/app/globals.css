@@ -8,6 +8,9 @@
   --app-text: #0f172a;
   --app-text-muted: #64748b;
   
+  --app-accent: #06b6d4;
+  --app-glow: rgba(6, 182, 212, 0.3);
+  
   --background: #f8fafc;
   --foreground: #0f172a;
 
@@ -17,14 +20,18 @@
   --color-app-border: var(--app-border);
   --color-app-text: var(--app-text);
   --color-app-text-muted: var(--app-text-muted);
+  --color-app-accent: var(--app-accent);
 }
 
 .dark {
-  --app-bg: #030712; /* Deep Slate */
-  --app-card: rgba(15, 23, 42, 0.6); /* Slate-900 with transparency */
-  --app-border: rgba(255, 255, 255, 0.08); /* Subtle white border */
+  --app-bg: #020617; /* Slate-950 puro */
+  --app-card: rgba(15, 23, 42, 0.4); /* Más transparente para el glassmorphism */
+  --app-border: rgba(255, 255, 255, 0.05); /* Borde sutil */
   --app-text: #f8fafc;
   --app-text-muted: #94a3b8;
+  
+  --app-accent: #22d3ee;
+  --app-glow: rgba(34, 211, 238, 0.4);
 
   --background: #030712;
   --foreground: #f8fafc;
@@ -48,6 +55,27 @@ h1, h2, h3, h4, .font-black {
   -webkit-backdrop-filter: blur(20px);
   background-color: var(--app-card);
   border: 1px solid var(--app-border);
+}
+
+.premium-glass {
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  background-color: var(--app-card);
+  border: 1px solid var(--app-border);
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.02), 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.glow-border {
+  position: relative;
+}
+.glow-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(to bottom right, var(--app-accent), transparent 60%);
+  z-index: -1;
+  opacity: 0.3;
 }
 
 /* Custom Scrollbar for a premium feel */

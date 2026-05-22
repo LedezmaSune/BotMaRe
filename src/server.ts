@@ -8,6 +8,7 @@ import fs from 'fs';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import { globalLimiter } from './middleware/security';
 
 // Core & Infrastructure
 import { Bot } from './core/bot';
@@ -70,15 +71,8 @@ app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// 2. Limitador de Peticiones
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 2000, // Aún más permisivo
-    message: 'Demasiadas peticiones.',
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-app.use('/api', limiter);
+// 2. Limitador de Peticiones Global
+app.use('/api', globalLimiter);
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));

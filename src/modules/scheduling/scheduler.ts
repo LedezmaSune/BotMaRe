@@ -216,15 +216,20 @@ export class Scheduler {
             
             // Querying pending reminders to avoid deleting active media
             const pendingReminders = db.prepare("SELECT mediaPath FROM reminders WHERE status = 'pending' AND mediaPath IS NOT NULL").all();
-            const activePaths = new Set(pendingReminders.map((r: any) => r.mediaPath));
+            const activePaths = new Set(
+                pendingReminders
+                    .map((r: any) => r.mediaPath)
+                    .map((p: string) => path.normalize(p))
+            );
             
             let deleted = 0;
             files.forEach((file: string) => {
                 const fullPath = path.join(uploadDir, file);
+                const normalizedFullPath = path.normalize(fullPath);
                 try {
                     const stats = fs.statSync(fullPath);
                     // Delete if older than 30 days and NOT currently used in a pending reminder
-                    if (!activePaths.has(fullPath) && (now - stats.mtimeMs > THIRTY_DAYS_MS)) {
+                    if (!activePaths.has(normalizedFullPath) && (now - stats.mtimeMs > THIRTY_DAYS_MS)) {
                         fs.unlinkSync(fullPath);
                         deleted++;
                     }

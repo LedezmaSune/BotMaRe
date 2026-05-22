@@ -20,6 +20,7 @@ export class Router {
 
         const jid = msg.key.remoteJid!;
         const participant = msg.key.participant || jid;
+        const pushName = msg.pushName || '';
         const messageContent = msg.message;
 
         // Verificar si el Bot de IA está desactivado globalmente (Modo Humano)
@@ -68,7 +69,7 @@ export class Router {
         }
 
         // Delegar al controlador
-        await this.messageController.handleIncoming(jid, text, participant);
+        await this.messageController.handleIncoming(jid, text, participant, pushName);
     }
 
     /**
