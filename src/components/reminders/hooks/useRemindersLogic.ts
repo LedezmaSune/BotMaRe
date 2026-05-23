@@ -15,7 +15,9 @@ export function useRemindersLogic(
         mediaPath?: string,
         mediaType?: string
     ) => Promise<void>,
-    initialTime?: string
+    initialTime?: string,
+    initialId?: number | null,
+    onClearInitialId?: () => void
 ) {
     const [mode, setMode] = useState<'single' | 'bulk'>('single');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -43,11 +45,32 @@ export function useRemindersLogic(
         if (initialTime) setTime(initialTime);
     }, [initialTime]);
 
+    useEffect(() => {
+        if (initialId && reminders.length > 0) {
+            const reminderToEdit = reminders.find(r => r.id === initialId);
+            if (reminderToEdit) {
+                // Inline handleEdit behavior
+                setEditingId(reminderToEdit.id);
+                setChatId(reminderToEdit.chatId);
+                setTitle(reminderToEdit.title || '');
+                setText(reminderToEdit.text);
+                setTime(reminderToEdit.time); 
+                setRepeat(reminderToEdit.repeat || 'none');
+                setRepeatInterval(reminderToEdit.repeatInterval || 1);
+                setRepeatUnit(reminderToEdit.repeatUnit || 'days');
+                setMode('single');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (onClearInitialId) onClearInitialId();
+            }
+        }
+    }, [initialId, reminders, onClearInitialId]);
+
     // Batch State
     const [showBatchWizard, setShowBatchWizard] = useState(false);
     const [batchChatId, setBatchChatId] = useState('');
     const [batchTime, setBatchTime] = useState('09:00');
-    const [batchText, setBatchText] = useState('Adjunto envío archivo: {ARCHIVO}');
+    const [batchText, setBatchText] = useState('Adjunto archivo: {ARCHIVO}');
+    const [batchProgress, setBatchProgress] = useState<{current: number, total: number, filename: string} | null>(null);
 
     const sortedReminders = [...reminders].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
 
@@ -173,7 +196,11 @@ export function useRemindersLogic(
 
                 const withDate = filesWithDates.filter((f: any) => f.date);
                 if (withDate.length > 0) {
+                    setBatchProgress({ current: 0, total: withDate.length, filename: 'Iniciando...' });
+                    let current = 0;
                     for (const file of withDate) {
+                        current++;
+                        setBatchProgress({ current, total: withDate.length, filename: file.name });
                         const finalTime = `${file.date}T${batchTime}`;
                         const finalText = batchText.replace('{ARCHIVO}', file.name);
                         await onAdd(batchChatId, finalText, finalTime, null, 'none', 1, 'days', file.name, file.path);
@@ -190,7 +217,37 @@ export function useRemindersLogic(
             alert('❌ Error de conexión.');
         } finally {
             setLoading(false);
+            setBatchProgress(null);
             e.target.value = '';
+        }
+    };
+
+    const handleScanFolder = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch('/api/reminders/bulk/scan-folder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    globalChatId: batchChatId,
+                    globalTime: batchTime,
+                    globalText: batchText
+                })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                alert(`✅ Escaneo completado. Se agregaron ${data.added} nuevos recordatorios desde la carpeta.`);
+                setShowBatchWizard(false);
+                // Trigger a refresh somehow, or the parent component should do it.
+                // Normally the parent refetches every minute, but we can do a window reload for now.
+                window.location.reload();
+            } else {
+                alert(`❌ Error en el escaneo: ${data.message || data.error || 'Desconocido'}`);
+            }
+        } catch (err) {
+            alert('❌ Error de conexión al escanear.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -221,6 +278,8 @@ export function useRemindersLogic(
         batchChatId, setBatchChatId,
         batchTime, setBatchTime,
         batchText, setBatchText,
-        handleBatchUploadAndProcess
+        batchProgress,
+        handleBatchUploadAndProcess,
+        handleScanFolder
     };
 }

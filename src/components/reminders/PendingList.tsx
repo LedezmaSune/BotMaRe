@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutGrid, List, Trash2, Zap, Edit3, Paperclip } from 'lucide-react';
 import { Reminder } from '../../types';
 
@@ -61,9 +62,29 @@ export function PendingList({
             </div>
 
             {viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <motion.div 
+                    className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                    initial="hidden"
+                    animate="show"
+                    variants={{
+                        hidden: { opacity: 0 },
+                        show: {
+                            opacity: 1,
+                            transition: { staggerChildren: 0.05 }
+                        }
+                    }}
+                >
+                    <AnimatePresence mode="popLayout">
                     {paginatedPending.map((r) => (
-                        <div key={r.id} className="bg-app-card border border-app-border rounded-3xl p-6 shadow-xl relative overflow-hidden group">
+                        <motion.div 
+                            key={r.id} 
+                            variants={{
+                                hidden: { opacity: 0, scale: 0.95, y: 10 },
+                                show: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+                            }}
+                            layout
+                            className="bg-app-card border border-app-border rounded-3xl p-6 shadow-xl relative overflow-hidden group"
+                        >
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-2">
                                     <span className={`px-2 py-1 text-[10px] font-black uppercase rounded-lg ${r.status === 'failed' || new Date(r.time) < new Date() ? 'bg-red-500/20 text-red-400' : 'bg-background/80 text-app-text-muted'}`}>{r.status === 'failed' ? 'Fallido' : (new Date(r.time) < new Date() ? 'Expirado' : r.status)}</span>
@@ -79,9 +100,10 @@ export function PendingList({
                                 </div>
                                 <button onClick={() => onDelete(r.id)} className="p-2 hover:bg-red-500/10 text-red-500/70 rounded-lg transition-all"><Trash2 size={16} /></button>
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
+                    </AnimatePresence>
+                </motion.div>
             ) : (
                 <div className="bg-app-card border border-app-border rounded-3xl overflow-hidden shadow-xl overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse min-w-[600px]">
@@ -93,20 +115,41 @@ export function PendingList({
                                 <th className="px-6 py-4 text-[9px] font-black text-app-text-muted uppercase tracking-widest text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-app-border">
+                        <motion.tbody 
+                            className="divide-y divide-app-border"
+                            initial="hidden"
+                            animate="show"
+                            variants={{
+                                hidden: { opacity: 0 },
+                                show: {
+                                    opacity: 1,
+                                    transition: { staggerChildren: 0.05 }
+                                }
+                            }}
+                        >
+                            <AnimatePresence mode="popLayout">
                             {paginatedPending.map((r) => {
                                 const date = new Date(r.time);
                                 const isPastOrFailed = r.status === 'failed' || date < new Date();
                                 return (
-                                    <tr key={r.id} className={`hover:bg-app-bg/30 transition-colors ${isPastOrFailed ? 'bg-red-500/5' : ''}`}>
+                                    <motion.tr 
+                                        key={r.id} 
+                                        variants={{
+                                            hidden: { opacity: 0, x: -10 },
+                                            show: { opacity: 1, x: 0 }
+                                        }}
+                                        layout
+                                        className={`hover:bg-app-bg/30 transition-colors ${isPastOrFailed ? 'bg-red-500/5' : ''}`}
+                                    >
                                         <td className="px-6 py-4"><p className={`text-xs font-black tabular-nums ${isPastOrFailed ? 'text-red-400' : 'text-app-text'}`}>{date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}</p><p className="text-[10px] text-app-text-muted font-bold">{date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</p></td>
                                         <td className="px-6 py-4"><p className="text-xs font-bold text-app-text truncate max-w-[120px]">{r.chatId}</p></td>
                                         <td className="px-6 py-4"><div className="flex items-center gap-2">{r.mediaPath && <Paperclip size={10} className="text-purple-400 shrink-0" />}<p className="text-[11px] text-app-text-muted truncate max-w-[200px]">{r.text}</p></div></td>
                                         <td className="px-6 py-4 text-right"><div className="flex items-center justify-end gap-1"><button onClick={() => onEdit(r)} className="p-2 hover:bg-cyan-500/10 text-app-text-muted hover:text-cyan-500 rounded-lg transition-all"><Edit3 size={14} /></button><button onClick={() => onSendNow(r.id)} className="p-2 hover:bg-amber-500/10 text-app-text-muted hover:text-amber-500 rounded-lg transition-all"><Zap size={14} /></button><button onClick={() => onDelete(r.id)} className="p-2 hover:bg-red-500/10 text-red-500/70 rounded-lg transition-all"><Trash2 size={14} /></button></div></td>
-                                    </tr>
+                                    </motion.tr>
                                 );
                             })}
-                        </tbody>
+                            </AnimatePresence>
+                        </motion.tbody>
                     </table>
                 </div>
             )}

@@ -7,7 +7,7 @@ import rateLimit from 'express-rate-limit';
  */
 export const globalLimiter = rateLimit({
     windowMs: 10 * 60 * 1000, // 10 minutos
-    max: 300, 
+    max: 3000, // Aumentado para desarrollo/uso local
     message: { success: false, error: 'Demasiadas peticiones desde esta IP, por favor intenta de nuevo más tarde.' },
     standardHeaders: true,
     legacyHeaders: false,

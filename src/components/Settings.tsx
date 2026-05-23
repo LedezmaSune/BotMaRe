@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Save, Upload, Key, Cpu, Shield, Globe, Terminal, Info, Brain, Download, RefreshCw, Trash2, FileText } from 'lucide-react';
 
 interface SettingsProps {
@@ -144,7 +145,11 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onUpdate, onParseE
     ];
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8 pb-12">
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-8 pb-12"
+        >
             
             {/* Header / Import Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -163,13 +168,13 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onUpdate, onParseE
                         <button 
                             onClick={handleSave}
                             disabled={isSaving}
-                            className="flex items-center gap-2 bg-white text-black px-6 py-3 rounded-2xl font-bold text-sm hover:bg-cyan-50 transition-all disabled:opacity-50"
+                            className="flex items-center gap-2 bg-white text-black px-6 py-3 rounded-2xl font-bold text-sm hover:bg-cyan-50 transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"
                         >
                             <Save size={18} />
                             {isSaving ? 'Guardando...' : 'Guardar Cambios'}
                         </button>
 
-                        <label className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm border border-app-border cursor-pointer transition-all ${
+                        <label className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm border border-app-border cursor-pointer transition-all active:scale-95 ${
                             uploadStatus === 'success' ? 'bg-green-500/20 border-green-500/50 text-green-400' : 
                             uploadStatus === 'error' ? 'bg-red-500/20 border-red-500/50 text-red-400' :
                             'bg-app-card/50 text-white hover:bg-app-card'
@@ -267,9 +272,27 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onUpdate, onParseE
             </div>
 
             {/* Config Groups */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <motion.div 
+                className="grid grid-cols-1 md:grid-cols-2 gap-8"
+                initial="hidden"
+                animate="show"
+                variants={{
+                    hidden: { opacity: 0 },
+                    show: {
+                        opacity: 1,
+                        transition: { staggerChildren: 0.1 }
+                    }
+                }}
+            >
                 {sections.map((section, sIdx) => (
-                    <div key={sIdx} className="bg-app-card/20 backdrop-blur-md border border-app-border rounded-3xl p-8 hover:border-app-border-hover transition-colors">
+                    <motion.div 
+                        key={sIdx} 
+                        variants={{
+                            hidden: { opacity: 0, scale: 0.95, y: 20 },
+                            show: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+                        }}
+                        className="bg-app-card/20 backdrop-blur-md border border-app-border rounded-3xl p-8 hover:border-app-border-hover transition-colors shadow-lg"
+                    >
                         <div className="flex items-center gap-3 mb-8">
                             <section.icon className="text-app-text-muted" size={20} />
                             <h3 className="text-sm font-black uppercase tracking-[0.2em] text-app-text-muted">{section.title}</h3>
@@ -290,21 +313,21 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onUpdate, onParseE
                                             value={localSettings[k.id] || ''}
                                             onChange={(e) => setLocalSettings({...localSettings, [k.id]: e.target.value})}
                                             placeholder={k.desc}
-                                            className="w-full bg-black/20 border border-app-border rounded-2xl py-3.5 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-cyan-500/50 focus:bg-black/40 transition-all"
+                                            className="w-full bg-black/20 border border-app-border rounded-2xl py-3.5 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/30 focus:bg-black/40 transition-all"
                                         />
                                     </div>
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </motion.div>
                 ))}
-            </div>
+            </motion.div>
 
             <div className="p-8 bg-app-card/10 border border-app-border border-dashed rounded-3xl text-center">
                 <p className="text-app-text-muted text-xs italic">
                     Toda la información sensible se almacena de forma local en tu base de datos SQLite y nunca sale de tu servidor.
                 </p>
             </div>
-        </div>
+        </motion.div>
     );
 };

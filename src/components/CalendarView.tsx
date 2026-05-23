@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, Fragment } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { CalendarDays, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { Reminder } from '../types';
 
@@ -15,9 +16,10 @@ function getISOWeekNumber(d: Date) {
 interface CalendarViewProps {
     reminders: Reminder[];
     onDateSelect?: (date: string) => void;
+    onEventSelect?: (id: number) => void;
 }
 
-export function CalendarView({ reminders, onDateSelect }: CalendarViewProps) {
+export function CalendarView({ reminders, onDateSelect, onEventSelect }: CalendarViewProps) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [currentView, setCurrentView] = useState('month');
 
@@ -177,8 +179,11 @@ export function CalendarView({ reminders, onDateSelect }: CalendarViewProps) {
                                         return (
                                             <div 
                                                 key={r.id} 
-                                                onClick={() => {
-                                                    if (onDateSelect) {
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (onEventSelect) {
+                                                        onEventSelect(r.id);
+                                                    } else if (onDateSelect) {
                                                         const tzoffset = dateObj.getTimezoneOffset() * 60000;
                                                         const localISOTime = new Date(dateObj.getTime() - tzoffset).toISOString().slice(0, 16);
                                                         onDateSelect(localISOTime);
@@ -328,7 +333,14 @@ export function CalendarView({ reminders, onDateSelect }: CalendarViewProps) {
                                                     <div 
                                                         key={r.id} 
                                                         style={{ top: `${top}px`, height: '58px' }}
-                                                        onClick={() => onDateSelect?.(new Date(rd.getTime() - rd.getTimezoneOffset() * 60000).toISOString().slice(0, 16))}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (onEventSelect) {
+                                                                onEventSelect(r.id);
+                                                            } else if (onDateSelect) {
+                                                                onDateSelect(new Date(rd.getTime() - rd.getTimezoneOffset() * 60000).toISOString().slice(0, 16));
+                                                            }
+                                                        }}
                                                         className="absolute left-1 right-1 bg-cyan-500/10 border-l-4 border-violet-500 rounded-lg p-2 overflow-hidden cursor-pointer hover:bg-cyan-500/20 transition-all z-10 shadow-lg group backdrop-blur-sm border border-cyan-500/20"
                                                     >
                                                         <div className="flex items-center justify-between mb-1">
@@ -476,8 +488,15 @@ export function CalendarView({ reminders, onDateSelect }: CalendarViewProps) {
             </div>
 
             {currentView === 'month' ? (
-
-            <div className="border border-app-border rounded-2xl overflow-hidden relative z-10 bg-app-bg dark:bg-background/50 shadow-inner">
+                <AnimatePresence mode="wait">
+                    <motion.div 
+                        key={`month-${currentDate.getFullYear()}-${currentDate.getMonth()}`}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 10 }}
+                        transition={{ duration: 0.3 }}
+                        className="border border-app-border rounded-2xl overflow-hidden relative z-10 bg-app-bg dark:bg-background/50 shadow-inner"
+                    >
                 <div className="grid grid-cols-[30px_repeat(7,minmax(0,1fr))] md:grid-cols-[40px_repeat(7,minmax(0,1fr))] border-b border-app-border bg-slate-50 dark:bg-slate-900/50">
                     <div className="border-r border-app-border flex items-center justify-center">
                         <span className="text-xs font-black text-cyan-600 dark:text-cyan-400">SEM</span>
@@ -551,7 +570,8 @@ export function CalendarView({ reminders, onDateSelect }: CalendarViewProps) {
                         );
                     })}
                 </div>
-            </div>
+                </motion.div>
+                </AnimatePresence>
             ) : currentView === 'agenda' ? (
                 renderAgendaView()
             ) : currentView === 'day' ? (

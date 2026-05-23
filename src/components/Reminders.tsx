@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import { AnimatePresence } from 'framer-motion';
 
 import { Bell, Loader2, Edit3, Zap, Save, Plus, Upload, Info } from 'lucide-react';
 import { ReminderForm } from './reminders/ReminderForm';
@@ -13,23 +14,14 @@ import { useRemindersLogic } from './reminders/hooks/useRemindersLogic';
 interface RemindersProps {
     reminders: Reminder[];
     templates: Template[];
-    onAdd: (
-        chatId: string, 
-        text: string, 
-        time: string, 
-        media: File | null, 
-        repeat?: string, 
-        repeatInterval?: number, 
-        repeatUnit?: string, 
-        title?: string,
-        mediaPath?: string,
-        mediaType?: string
-    ) => Promise<void>;
+    onAdd: (chatId: string, text: string, time: string, media: File | null, repeat?: string, repeatInterval?: number, repeatUnit?: string, title?: string, mediaPath?: string, mediaType?: string) => Promise<void>;
     onDelete: (id: number) => Promise<void>;
     initialTime?: string;
+    initialId?: number | null;
+    onClearInitialId?: () => void;
 }
 
-export function Reminders({ reminders, templates, onAdd, onDelete, initialTime }: RemindersProps) {
+export function Reminders({ reminders, templates, onAdd, onDelete, initialTime, initialId, onClearInitialId }: RemindersProps) {
     const {
         mode, setMode,
         viewMode, setViewMode,
@@ -54,12 +46,14 @@ export function Reminders({ reminders, templates, onAdd, onDelete, initialTime }
         batchChatId, setBatchChatId,
         batchTime, setBatchTime,
         batchText, setBatchText,
-        handleBatchUploadAndProcess
-    } = useRemindersLogic(reminders, onAdd, initialTime);
+        batchProgress,
+        handleBatchUploadAndProcess,
+        handleScanFolder
+    } = useRemindersLogic(reminders, onAdd, initialTime, initialId, onClearInitialId);
 
     return (
         <div className="relative min-h-screen">
-            {loading && (
+            {loading && !batchProgress && (
                 <div className="fixed inset-0 z-[999] flex items-center justify-center bg-background/60 backdrop-blur-sm">
                     <div className="flex flex-col items-center gap-4 p-8 bg-app-card border border-app-border rounded-3xl shadow-2xl animate-in zoom-in duration-300">
                         <Loader2 className="w-12 h-12 text-purple-500 animate-spin" />
@@ -68,6 +62,7 @@ export function Reminders({ reminders, templates, onAdd, onDelete, initialTime }
                 </div>
             )}
 
+            <AnimatePresence>
             {showBatchWizard && (
                 <BatchWizard
                     batchChatId={batchChatId}
@@ -79,8 +74,11 @@ export function Reminders({ reminders, templates, onAdd, onDelete, initialTime }
                     onOpenGroupModal={() => { setShowGroupModal(true); fetchGroups(); }}
                     onClose={() => setShowBatchWizard(false)}
                     onUpload={handleBatchUploadAndProcess}
+                    onScanFolder={handleScanFolder}
+                    batchProgress={batchProgress}
                 />
             )}
+            </AnimatePresence>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
                 {/* Sidebar con Modos */}

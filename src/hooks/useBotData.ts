@@ -21,6 +21,7 @@ export function useBotData() {
     const [settings, setSettings] = useState<Settings | null>(null);
     const [allowedGroups, setAllowedGroups] = useState<string[]>([]);
     const [prefillDate, setPrefillDate] = useState<string>('');
+    const [prefillReminderId, setPrefillReminderId] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [diffusionProgress, setDiffusionProgress] = useState<{current: number, total: number, percentage: number} | null>(null);
     const [diffusionLogs, setDiffusionLogs] = useState<any[]>([]);
@@ -311,6 +312,8 @@ export function useBotData() {
         settings,
         prefillDate,
         setPrefillDate,
+        prefillReminderId,
+        setPrefillReminderId,
         isLoading,
         fetchData,
         handleCleanUploads,

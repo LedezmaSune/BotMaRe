@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Autoresponder } from '../../types';
 import { Plus, Trash2, Edit2, Play, Square, Search, ToggleLeft, ToggleRight, Bot, MessageSquareOff, MessageCircle } from 'lucide-react';
 
@@ -123,9 +124,23 @@ export function AutorespondersPanel({ autoresponders, onRefresh }: Autoresponder
             </div>
 
             {/* List */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <motion.div 
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                initial="hidden"
+                animate="show"
+                variants={{
+                    hidden: { opacity: 0 },
+                    show: {
+                        opacity: 1,
+                        transition: { staggerChildren: 0.05 }
+                    }
+                }}
+            >
                 {autoresponders.length === 0 && (
-                    <div className="col-span-full premium-glass p-12 rounded-3xl flex flex-col items-center justify-center text-center">
+                    <motion.div 
+                        variants={{ hidden: { opacity: 0, scale: 0.95 }, show: { opacity: 1, scale: 1 } }}
+                        className="col-span-full premium-glass p-12 rounded-3xl flex flex-col items-center justify-center text-center"
+                    >
                         <div className="w-20 h-20 bg-app-card rounded-full flex items-center justify-center mb-4 border border-app-border">
                             <MessageCircle className="text-app-text-muted" size={32} />
                         </div>
@@ -136,11 +151,20 @@ export function AutorespondersPanel({ autoresponders, onRefresh }: Autoresponder
                         <button onClick={() => handleOpenForm()} className="btn-primary">
                             <Plus size={18} /> Crear Primera Regla
                         </button>
-                    </div>
+                    </motion.div>
                 )}
 
+                <AnimatePresence mode="popLayout">
                 {autoresponders.map((rule) => (
-                    <div key={rule.id} className={`premium-glass p-6 rounded-2xl relative overflow-hidden transition-all duration-300 border ${rule.isActive ? 'border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)]' : 'border-app-border opacity-70'}`}>
+                    <motion.div 
+                        key={rule.id} 
+                        layout
+                        variants={{
+                            hidden: { opacity: 0, scale: 0.95, y: 10 },
+                            show: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+                        }}
+                        className={`premium-glass p-6 rounded-2xl relative overflow-hidden transition-all duration-300 border ${rule.isActive ? 'border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)]' : 'border-app-border opacity-70'}`}
+                    >
                         {/* Status bar */}
                         <div className={`absolute top-0 left-0 w-full h-1 ${rule.isActive ? 'bg-gradient-to-r from-cyan-400 to-blue-500' : 'bg-app-border'}`}></div>
                         
@@ -178,9 +202,10 @@ export function AutorespondersPanel({ autoresponders, onRefresh }: Autoresponder
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 ))}
-            </div>
+                </AnimatePresence>
+            </motion.div>
 
             {/* Modal Form */}
             {isFormOpen && (

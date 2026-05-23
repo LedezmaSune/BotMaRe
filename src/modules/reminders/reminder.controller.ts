@@ -91,4 +91,72 @@ export class ReminderController {
 
         res.json({ success: true, fixed, deleted });
     });
+
+    scanFolder = asyncHandler(async (req: Request, res: Response) => {
+        const { globalChatId, globalTime, globalText } = req.body;
+        
+        const uploadsDir = path.resolve('data/uploads');
+        let fsLib;
+        try {
+            fsLib = require('fs');
+            if (!fsLib.existsSync(uploadsDir)) {
+                return res.json({ success: true, added: 0, message: 'Uploads directory does not exist' });
+            }
+        } catch (e) {
+            return res.json({ success: false, error: 'Could not access file system' });
+        }
+
+        const files = fsLib.readdirSync(uploadsDir);
+        let added = 0;
+        
+        // Expresión regular inteligente: Busca DD y MM (y opcionalmente YYYY) ignorando separadores (. - _ / espacio)
+        // Ejemplo: 15.08, 15-08, 15_08_2026, 15 08
+        const dateRegex = /^(\d{2})[.\-_\s\/]+(\d{2})(?:[.\-_\s\/]+(\d{4}|\d{2}))?\b/;
+        
+        const currentYear = new Date().getFullYear();
+
+        const insertStmt = db.prepare('INSERT INTO reminders (userId, chatId, text, time, mediaPath, mediaType, status, repeat, repeatInterval, repeatUnit) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        const checkStmt = db.prepare('SELECT id FROM reminders WHERE mediaPath = ?');
+
+        db.transaction(() => {
+            for (const file of files) {
+                const match = file.match(dateRegex);
+                if (match) {
+                    const day = match[1];
+                    const month = match[2];
+                    const yearMatch = match[3];
+                    let year = currentYear;
+                    
+                    if (yearMatch) {
+                        year = yearMatch.length === 2 ? 2000 + parseInt(yearMatch) : parseInt(yearMatch);
+                    }
+                    
+                    const timeStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${globalTime || '09:00'}`;
+                    
+                    // Asegurar ruta correcta
+                    const mediaPath = path.join(uploadsDir, file).replace(/\\/g, '/');
+                    
+                    // Verificar si ya existe un recordatorio con esta imagen
+                    const exists = checkStmt.get(mediaPath);
+                    if (!exists) {
+                        // Determinar tipo de medio
+                        let mediaType = 'document';
+                        const ext = path.extname(file).toLowerCase();
+                        if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) mediaType = 'image';
+                        else if (['.mp4', '.avi', '.mov'].includes(ext)) mediaType = 'video';
+                        else if (['.mp3', '.ogg', '.wav'].includes(ext)) mediaType = 'audio';
+
+                        // Texto personalizado o default
+                        let text = globalText || 'Adjunto archivo: {ARCHIVO}';
+                        text = text.replace('{ARCHIVO}', file);
+
+                        insertStmt.run('owner', globalChatId || '', text, timeStr, mediaPath, mediaType, 'pending', 'none', null, null);
+                        added++;
+                    }
+                }
+            }
+        })();
+
+        res.json({ success: true, added });
+    });
 }

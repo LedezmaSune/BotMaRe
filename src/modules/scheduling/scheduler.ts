@@ -89,6 +89,12 @@ export class Scheduler {
                 await this.reminderService.logAudit('system', 'REMINDER_SENT', { id: r.id, to: r.chatId, type: r.mediaPath ? 'media' : 'text' });
                 console.log(`[Scheduler] Recordatorio ${r.id} enviado con éxito.`);
 
+                // --- PROTECCIÓN ANTI-BAN (BUFFER) ---
+                // Retraso aleatorio de 3 a 6 segundos para simular envío humano
+                const delay = 3000 + Math.random() * 3000;
+                await new Promise(res => setTimeout(res, delay));
+                // ------------------------------------
+
                 // Phase 4: Repetition
                 if (r.repeat && r.repeat !== 'none') {
                     let nextTime = DateTime.fromISO(r.time, { zone: 'America/Mexico_City' });

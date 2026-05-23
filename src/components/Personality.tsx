@@ -1,7 +1,6 @@
 'use client';
-import React from 'react';
-
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Brain, Sparkles, Loader2 } from 'lucide-react';
 import { Settings as UserSettings } from '../types';
 import { siteConfig } from '../config';
@@ -23,7 +22,12 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
     };
 
     return (
-        <section className="bg-app-card border border-app-border rounded-3xl p-6 lg:p-10 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto shadow-2xl transition-all">
+        <motion.section 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-app-card border border-app-border rounded-3xl p-6 lg:p-10 backdrop-blur-xl max-w-6xl mx-auto shadow-2xl transition-all"
+        >
             <div className="flex items-center gap-5 mb-10">
                 <div className="w-16 h-16 bg-gradient-to-tr from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-purple-500/20 shrink-0">
                     <Brain size={36} />
@@ -46,7 +50,7 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                                     type="text"
                                     value={settings.bot_name}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSettings({...settings, bot_name: e.target.value})}
-                                    className="w-full bg-black/40 border border-app-border rounded-2xl px-5 py-4 text-sm focus:border-purple-500/50 focus:bg-black/60 outline-none transition-all text-white placeholder:text-white/20"
+                                    className="w-full bg-black/40 border border-app-border rounded-2xl px-5 py-4 text-sm focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/30 focus:bg-black/60 outline-none transition-all text-white placeholder:text-white/20"
                                     placeholder={siteConfig.aiPlaceholder}
                                 />
                             </div>
@@ -56,7 +60,7 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                                 <textarea
                                     value={settings.system_prompt}
                                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSettings({...settings, system_prompt: e.target.value})}
-                                    className="w-full h-64 bg-black/40 border border-app-border rounded-2xl px-5 py-4 text-sm focus:border-purple-500/50 focus:bg-black/60 outline-none resize-none transition-all text-white placeholder:text-white/20 leading-relaxed"
+                                    className="w-full h-64 bg-black/40 border border-app-border rounded-2xl px-5 py-4 text-sm focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/30 focus:bg-black/60 outline-none resize-none transition-all text-white placeholder:text-white/20 leading-relaxed"
                                     placeholder="Ej: Eres un experto asesor financiero amable y directo..."
                                 />
                                 <p className="text-[10px] text-app-text-muted mt-3 italic">Define cómo debe actuar: Tono, estilo de saludo, límites, etc.</p>
@@ -72,7 +76,7 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                                 <textarea
                                     value={settings.possible_responses}
                                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSettings({...settings, possible_responses: e.target.value})}
-                                    className="w-full h-80 bg-black/40 border border-app-border rounded-2xl px-5 py-4 text-sm focus:border-cyan-500/50 focus:bg-black/60 outline-none resize-none transition-all font-mono text-cyan-50/90 leading-relaxed scrollbar-thin"
+                                    className="w-full h-80 bg-black/40 border border-app-border rounded-2xl px-5 py-4 text-sm focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/30 focus:bg-black/60 outline-none resize-none transition-all font-mono text-cyan-50/90 leading-relaxed scrollbar-thin"
                                     placeholder="Lista aquí tus productos, precios, horarios o reglas específicas de respuesta..."
                                 />
                                 <p className="text-[10px] text-app-text-muted mt-3 italic">Información técnica que el bot usará para responder preguntas específicas.</p>
@@ -86,7 +90,7 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                                             id="learn-url-input"
                                             type="text"
                                             placeholder="https://tu-web.com/info"
-                                            className="flex-1 bg-black/40 border border-app-border rounded-xl px-4 py-3 text-xs focus:border-cyan-500/50 outline-none transition-all text-white"
+                                            className="flex-1 bg-black/40 border border-app-border rounded-xl px-4 py-3 text-xs focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/30 outline-none transition-all text-white"
                                         />
                                         <button
                                             type="button"
@@ -117,7 +121,7 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                                                     setLoading(false);
                                                 }
                                             }}
-                                            className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-cyan-500/30"
+                                            className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-cyan-500/30 active:scale-95"
                                         >
                                             Aprender
                                         </button>
@@ -129,7 +133,7 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                                         <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">📄 Cargar Documento</p>
                                         <p className="text-[9px] text-app-text-muted italic">PDF, TXT, MD</p>
                                     </div>
-                                    <label className="bg-emerald-500 hover:bg-emerald-400 text-black px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-emerald-500/20">
+                                    <label className="bg-emerald-500 hover:bg-emerald-400 text-black px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-emerald-500/20 active:scale-95">
                                         Seleccionar
                                         <input 
                                             type="file" 
@@ -198,6 +202,6 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                     {loading ? 'SINCRONIZANDO CEREBRO...' : 'ACTUALIZAR INTELIGENCIA ARTIFICIAL'}
                 </button>
             </form>
-        </section>
+        </motion.section>
     );
 }

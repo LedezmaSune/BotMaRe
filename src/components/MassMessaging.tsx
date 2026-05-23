@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Megaphone, Upload, Wand2, Loader2, Send } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
+import { Megaphone, Upload, Wand2, Loader2, Send, File, X } from 'lucide-react';
 import { VariableTextarea } from './VariableTextarea';
 import { Template } from '../types';
 
@@ -21,6 +22,8 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, p
     const [media, setMedia] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
     const [reviewing, setReviewing] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Cargar borrador al iniciar
     useEffect(() => {
@@ -58,9 +61,25 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, p
     const handleSubmit = async () => {
         setLoading(true);
         await onSend(contacts, message, media);
-        // Si el envío se inicia con éxito, podríamos querer limpiar el borrador
-        // Pero mejor dejarlo hasta que el usuario decida borrarlo manualmente o termine
         setLoading(false);
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            setMedia(e.dataTransfer.files[0]);
+        }
     };
 
     const contactCount = contacts.split(/[\n,]+/).filter(c => c.trim()).length;
@@ -164,14 +183,44 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, p
                         />
                     </div>
 
-                    <div className="bg-slate-100 dark:bg-slate-950/40 p-5 rounded-2xl border border-slate-200 dark:border-white/5 space-y-4">
-                        <label className="text-[10px] uppercase font-bold text-app-text-muted tracking-widest flex items-center gap-2 mb-2">Adjunto de Seguridad</label>
+                    <motion.div 
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        animate={{ scale: isDragging ? 1.02 : 1, borderColor: isDragging ? '#06b6d4' : 'rgba(255,255,255,0.05)' }}
+                        className={`bg-slate-100 dark:bg-slate-950/40 p-5 rounded-2xl border ${isDragging ? 'border-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.2)]' : 'border-slate-200 dark:border-white/5'} transition-all flex flex-col items-center justify-center min-h-[120px] cursor-pointer group`}
+                        onClick={() => fileInputRef.current?.click()}
+                    >
                         <input 
                             type="file" 
+                            ref={fileInputRef}
                             onChange={(e) => setMedia(e.target.files?.[0] || null)}
-                            className="block w-full text-xs text-app-text-muted file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-widest file:bg-slate-200 dark:file:bg-slate-800 file:text-slate-700 dark:file:text-slate-200 hover:file:bg-slate-300 dark:hover:file:bg-slate-700 transition-all cursor-pointer"
+                            className="hidden"
                         />
-                    </div>
+                        {media ? (
+                            <div className="flex items-center gap-4 w-full bg-white dark:bg-slate-900 p-3 rounded-xl border border-app-border">
+                                <div className="p-2 bg-purple-500/10 text-purple-500 rounded-lg"><File size={20} /></div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold text-app-text truncate">{media.name}</p>
+                                    <p className="text-[10px] text-app-text-muted">{(media.size / 1024 / 1024).toFixed(2)} MB</p>
+                                </div>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); setMedia(null); }}
+                                    className="p-1.5 hover:bg-red-500/10 text-red-500/70 hover:text-red-500 rounded-lg transition-colors"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <div className={`p-3 rounded-xl mb-2 transition-colors ${isDragging ? 'bg-cyan-500/10 text-cyan-500' : 'bg-slate-200 dark:bg-slate-800 text-app-text-muted group-hover:bg-slate-300 dark:group-hover:bg-slate-700'}`}>
+                                    <Upload size={24} />
+                                </div>
+                                <p className="text-xs font-bold text-app-text">Arrastra tu archivo aquí</p>
+                                <p className="text-[10px] text-app-text-muted mt-1">o haz clic para explorar</p>
+                            </>
+                        )}
+                    </motion.div>
 
                     {/* Barra de Progreso Animada y Premium */}
                     {progress && (
