@@ -66,6 +66,11 @@ export class SystemController {
         res.json(result);
     });
 
+    getReleases = asyncHandler(async (req: Request, res: Response) => {
+        const result = await this.updateService.fetchReleases();
+        res.json(result);
+    });
+
     downloadBackup = asyncHandler(async (req: Request, res: Response) => {
         const { BackupService } = require('./backup.service');
         try {

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { RefreshCw, ArrowUpCircle, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, Cpu, Calendar, Clock, GitBranch } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { RefreshCw, ArrowUpCircle, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, Cpu, Calendar, Clock, GitBranch, ExternalLink, Loader2 } from 'lucide-react';
 
 interface Release {
     version: string;
@@ -10,9 +10,11 @@ interface Release {
     type: 'major' | 'minor' | 'patch';
     description: string;
     features: string[];
+    url?: string;
 }
 
-const RELEASE_HISTORY: Release[] = [
+// Fallback local en caso de que la API de GitHub no responda
+const FALLBACK_RELEASES: Release[] = [
     {
         version: 'K 1.2.0',
         date: '21 Mayo 2026',
@@ -25,38 +27,134 @@ const RELEASE_HISTORY: Release[] = [
             '🔒 Motor Baileys v6.7.22: Mayor estabilidad criptográfica contra desincronización de llaves de señal (evita error 406 not-acceptable).',
             '📦 Respaldos Fraccionados: Centro de backups que divide las descargas en archivos ligeros de sistema y archivos multimedia pesados.'
         ]
-    },
-    {
-        version: 'K 1.1.0',
-        date: '15 Abril 2026',
-        title: 'Modularización e Inteligencia Unificada',
-        type: 'minor',
-        description: 'Migración a arquitectura unificada donde el motor backend (Express) y la interfaz gráfica (Next.js) se ejecutan bajo el mismo proceso de servidor.',
-        features: [
-            '🧠 Cerebro AI Multi-Proveedor: Soporte y failover automático entre Groq (Llama-3), Gemini, DeepSeek, OpenAI y OpenRouter.',
-            '🎨 Dashboard Glassmorphic: Interfaz moderna ultra fluida, telemetría y logs de consola en tiempo real.',
-            '✈️ Bot de Telegram Integrado: Alertas instantáneas y comandos interactivos como /status para reiniciar o pausar la IA remotamente.'
-        ]
-    },
-    {
-        version: 'K 1.0.0',
-        date: '01 Enero 2026',
-        title: 'Lanzamiento Inicial BotMaRe',
-        type: 'major',
-        description: 'Primera versión de producción de la plataforma de automatización de WhatsApp e IA.',
-        features: [
-            '📱 Conector Base de WhatsApp: Sincronización nativa de chats, perfiles y grupos.',
-            '📅 Planificador de Recordatorios: Envío programado de mensajes de texto y archivos multimedia recurrentes.',
-            '📊 Calendario Interactivo: Visualización mensual y semanal con capacidad de agendado inmediato.'
-        ]
     }
 ];
+
+/**
+ * Detecta el tipo de release según el tag semántico.
+ * v1.0.0 → major, v1.1.0 → minor, v1.1.1 → patch
+ */
+function detectReleaseType(tag: string): 'major' | 'minor' | 'patch' {
+    const clean = tag.replace(/^[vVkK\s]+/, '');
+    const parts = clean.split('.');
+    if (parts.length >= 3) {
+        if (parts[2] !== '0') return 'patch';
+        if (parts[1] !== '0') return 'minor';
+    }
+    return 'major';
+}
+
+/**
+ * Parsea el body markdown de un GitHub Release y lo separa en
+ * una descripción general y una lista de features.
+ */
+function parseReleaseBody(body: string): { description: string, features: string[] } {
+    if (!body || body.trim() === '') {
+        return { description: 'Sin descripción adicional.', features: [] };
+    }
+
+    const lines = body.split('\n').map(l => l.trim()).filter(Boolean);
+    const features: string[] = [];
+    const descLines: string[] = [];
+
+    for (const line of lines) {
+        // Detectar líneas que son bullet points (- item, * item, • item)
+        if (/^[-*•]\s+/.test(line)) {
+            features.push(line.replace(/^[-*•]\s+/, ''));
+        } else if (/^\d+\.\s+/.test(line)) {
+            // Listas numeradas
+            features.push(line.replace(/^\d+\.\s+/, ''));
+        } else if (!line.startsWith('#') && !line.startsWith('---')) {
+            // Texto normal (no headings ni separadores)
+            descLines.push(line);
+        }
+    }
+
+    return {
+        description: descLines.join(' ') || 'Sin descripción adicional.',
+        features
+    };
+}
+
+/**
+ * Formatea una fecha ISO a formato legible en español.
+ */
+function formatDate(isoDate: string): string {
+    try {
+        const d = new Date(isoDate);
+        const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        return `${d.getDate().toString().padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    } catch {
+        return isoDate;
+    }
+}
+
+/**
+ * Normaliza el tag de GitHub a formato "K x.y.z" para mostrar.
+ */
+function formatVersion(tag: string): string {
+    const clean = tag.replace(/^[vVkK\s]+/, '');
+    return `K ${clean}`;
+}
 
 export function UpdateCenter() {
     const [checking, setChecking] = useState(false);
     const [updating, setUpdating] = useState(false);
     const [updateInfo, setUpdateInfo] = useState<any>(null);
-    const [expandedVersion, setExpandedVersion] = useState<string | null>('K 1.2.0');
+    const [releases, setReleases] = useState<Release[]>([]);
+    const [loadingReleases, setLoadingReleases] = useState(true);
+    const [releasesError, setReleasesError] = useState<string | null>(null);
+    const [expandedVersion, setExpandedVersion] = useState<string | null>(null);
+
+    // Cargar releases al montar el componente
+    useEffect(() => {
+        fetchReleases();
+    }, []);
+
+    const fetchReleases = async () => {
+        setLoadingReleases(true);
+        setReleasesError(null);
+        try {
+            const res = await fetch('/api/system/releases');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.releases && data.releases.length > 0) {
+                    const parsed: Release[] = data.releases
+                        .filter((r: any) => !r.draft)
+                        .map((r: any) => {
+                            const { description, features } = parseReleaseBody(r.body);
+                            return {
+                                version: formatVersion(r.version),
+                                date: formatDate(r.date),
+                                title: r.title,
+                                type: detectReleaseType(r.version),
+                                description,
+                                features,
+                                url: r.url
+                            };
+                        });
+                    setReleases(parsed);
+                    // Expandir la primera (más reciente)
+                    if (parsed.length > 0) setExpandedVersion(parsed[0].version);
+                } else {
+                    // Si no hay releases en GitHub, usar fallback
+                    setReleases(FALLBACK_RELEASES);
+                    setExpandedVersion(FALLBACK_RELEASES[0].version);
+                    if (data.error) setReleasesError(data.error);
+                }
+            } else {
+                setReleases(FALLBACK_RELEASES);
+                setExpandedVersion(FALLBACK_RELEASES[0].version);
+            }
+        } catch (e: any) {
+            console.error('Error fetching releases:', e);
+            setReleases(FALLBACK_RELEASES);
+            setExpandedVersion(FALLBACK_RELEASES[0].version);
+            setReleasesError(e.message);
+        } finally {
+            setLoadingReleases(false);
+        }
+    };
 
     const handleCheckUpdate = async () => {
         setChecking(true);
@@ -98,6 +196,9 @@ export function UpdateCenter() {
         setExpandedVersion(expandedVersion === version ? null : version);
     };
 
+    const currentVersion = releases.length > 0 ? releases[0] : FALLBACK_RELEASES[0];
+    const currentDate = releases.length > 0 ? releases[0].date : FALLBACK_RELEASES[0].date;
+
     return (
         <section className="glass-effect border border-app-border rounded-3xl md:rounded-[2.5rem] p-4 md:p-6 lg:p-10 backdrop-blur-3xl animate-in fade-in slide-in-from-bottom-6 duration-700 max-w-5xl mx-auto shadow-[0_32px_64px_rgba(0,0,0,0.2)] relative overflow-hidden transition-all">
             <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
@@ -123,7 +224,7 @@ export function UpdateCenter() {
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <span className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-500 bg-cyan-500/10 px-2.5 py-1 rounded-md border border-cyan-500/20">Versión Activa</span>
-                                <h3 className="text-4xl font-black text-app-text mt-3 tracking-tighter">K 1.2.0</h3>
+                                <h3 className="text-4xl font-black text-app-text mt-3 tracking-tighter">{currentVersion.version}</h3>
                             </div>
                             <Cpu className="text-app-text-muted/30 w-10 h-10 group-hover:text-cyan-500/50 transition-colors duration-500" />
                         </div>
@@ -136,7 +237,7 @@ export function UpdateCenter() {
                         <div className="mt-8 space-y-3 pt-6 border-t border-slate-200 dark:border-white/5 text-[10px] font-bold uppercase text-app-text-muted/70 tracking-wider">
                             <div className="flex justify-between">
                                 <span className="flex items-center gap-1.5"><Calendar size={12} /> Lanzamiento:</span>
-                                <span className="text-app-text">21 Mayo 2026</span>
+                                <span className="text-app-text">{currentDate}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="flex items-center gap-1.5"><Clock size={12} /> Último Check:</span>
@@ -211,82 +312,110 @@ export function UpdateCenter() {
 
                 {/* Right side: Release Changelog Timeline */}
                 <div className="lg:col-span-2 space-y-6">
-                    <h3 className="text-lg font-black text-app-text tracking-tight flex items-center gap-3">
-                        Historial de Cambios
-                        <span className="text-[10px] uppercase font-bold text-app-text-muted tracking-widest bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded border border-app-border">
-                            {RELEASE_HISTORY.length} Versiones
-                        </span>
-                    </h3>
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-black text-app-text tracking-tight flex items-center gap-3">
+                            Historial de Cambios
+                            <span className="text-[10px] uppercase font-bold text-app-text-muted tracking-widest bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded border border-app-border">
+                                {loadingReleases ? '...' : `${releases.length} Versiones`}
+                            </span>
+                        </h3>
+                        {releasesError && (
+                            <span className="text-[9px] text-amber-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                                <AlertTriangle size={10} /> Fallback local
+                            </span>
+                        )}
+                    </div>
 
-                    <div className="relative border-l border-slate-200 dark:border-white/10 pl-6 ml-4 space-y-8 py-2">
-                        {RELEASE_HISTORY.map((release) => {
-                            const isExpanded = expandedVersion === release.version;
-                            const isLatest = release.version === 'K 1.2.0';
+                    {loadingReleases ? (
+                        <div className="flex flex-col items-center justify-center py-20 gap-4">
+                            <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
+                            <p className="text-xs font-bold text-app-text-muted uppercase tracking-widest">Cargando releases de GitHub...</p>
+                        </div>
+                    ) : (
+                        <div className="relative border-l border-slate-200 dark:border-white/10 pl-6 ml-4 space-y-8 py-2">
+                            {releases.map((release, idx) => {
+                                const isExpanded = expandedVersion === release.version;
+                                const isLatest = idx === 0;
 
-                            return (
-                                <div key={release.version} className="relative">
-                                    {/* Timeline Circle Bullet */}
-                                    <span className={`absolute -left-[31px] top-1.5 flex h-4 w-4 items-center justify-center rounded-full border-2 bg-background transition-colors ${isLatest ? 'border-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)]' : 'border-slate-400'}`}>
-                                        <span className={`h-1.5 w-1.5 rounded-full ${isLatest ? 'bg-cyan-500 animate-pulse' : 'bg-slate-400'}`} />
-                                    </span>
+                                return (
+                                    <div key={release.version} className="relative">
+                                        {/* Timeline Circle Bullet */}
+                                        <span className={`absolute -left-[31px] top-1.5 flex h-4 w-4 items-center justify-center rounded-full border-2 bg-background transition-colors ${isLatest ? 'border-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)]' : 'border-slate-400'}`}>
+                                            <span className={`h-1.5 w-1.5 rounded-full ${isLatest ? 'bg-cyan-500 animate-pulse' : 'bg-slate-400'}`} />
+                                        </span>
 
-                                    {/* Collapsible Card */}
-                                    <div className={`bg-app-card border rounded-2xl overflow-hidden transition-all duration-300 shadow-sm ${isExpanded ? 'border-cyan-500/40 ring-1 ring-cyan-500/10' : 'border-app-border hover:border-app-border-hover'}`}>
-                                        {/* Card Header Trigger */}
-                                        <div 
-                                            onClick={() => toggleVersion(release.version)}
-                                            className="p-5 flex items-center justify-between cursor-pointer select-none hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors"
-                                        >
-                                            <div className="space-y-1 pr-4">
-                                                <div className="flex items-center gap-3 flex-wrap">
-                                                    <h4 className="text-base font-black text-app-text tracking-tight uppercase">{release.version}</h4>
-                                                    <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded ${
-                                                        release.type === 'major' ? 'bg-red-500/10 text-red-500 border border-red-500/20' :
-                                                        release.type === 'minor' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' :
-                                                        'bg-slate-500/10 text-slate-400 border border-slate-500/20'
-                                                    }`}>
-                                                        {release.type === 'major' ? 'Major Release' : release.type === 'minor' ? 'Minor Update' : 'Patch'}
-                                                    </span>
-                                                    {isLatest && (
-                                                        <span className="text-[8px] font-black uppercase px-2 py-0.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded shadow-sm">
-                                                            Activa
+                                        {/* Collapsible Card */}
+                                        <div className={`bg-app-card border rounded-2xl overflow-hidden transition-all duration-300 shadow-sm ${isExpanded ? 'border-cyan-500/40 ring-1 ring-cyan-500/10' : 'border-app-border hover:border-app-border-hover'}`}>
+                                            {/* Card Header Trigger */}
+                                            <div 
+                                                onClick={() => toggleVersion(release.version)}
+                                                className="p-5 flex items-center justify-between cursor-pointer select-none hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors"
+                                            >
+                                                <div className="space-y-1 pr-4">
+                                                    <div className="flex items-center gap-3 flex-wrap">
+                                                        <h4 className="text-base font-black text-app-text tracking-tight uppercase">{release.version}</h4>
+                                                        <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded ${
+                                                            release.type === 'major' ? 'bg-red-500/10 text-red-500 border border-red-500/20' :
+                                                            release.type === 'minor' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' :
+                                                            'bg-slate-500/10 text-slate-400 border border-slate-500/20'
+                                                        }`}>
+                                                            {release.type === 'major' ? 'Major Release' : release.type === 'minor' ? 'Minor Update' : 'Patch'}
                                                         </span>
+                                                        {isLatest && (
+                                                            <span className="text-[8px] font-black uppercase px-2 py-0.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded shadow-sm">
+                                                                Activa
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-xs font-bold text-cyan-500 dark:text-cyan-400 tracking-tight leading-tight">{release.title}</p>
+                                                </div>
+
+                                                <div className="flex items-center gap-4 shrink-0 text-app-text-muted">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">{release.date}</span>
+                                                    {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                                </div>
+                                            </div>
+
+                                            {/* Collapsible Content */}
+                                            {isExpanded && (
+                                                <div className="px-5 pb-6 pt-2 border-t border-app-border bg-slate-50/20 dark:bg-slate-950/10 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                    <p className="text-xs text-app-text-muted leading-relaxed font-medium">
+                                                        {release.description}
+                                                    </p>
+                                                    
+                                                    {release.features.length > 0 && (
+                                                        <div className="space-y-2 pt-2">
+                                                            <p className="text-[9px] font-black uppercase tracking-widest text-app-text-muted/60">Lista de Ajustes & Funciones:</p>
+                                                            <ul className="space-y-2">
+                                                                {release.features.map((feat, i) => (
+                                                                    <li key={i} className="text-xs font-bold text-app-text leading-relaxed flex items-start gap-2.5">
+                                                                        <span className="text-cyan-500 mt-1 shrink-0 text-[10px]">•</span>
+                                                                        <span>{feat}</span>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+
+                                                    {release.url && (
+                                                        <a 
+                                                            href={release.url} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex items-center gap-1.5 text-[10px] font-bold text-cyan-500 hover:text-cyan-400 uppercase tracking-widest mt-2 transition-colors"
+                                                        >
+                                                            <ExternalLink size={10} />
+                                                            Ver en GitHub
+                                                        </a>
                                                     )}
                                                 </div>
-                                                <p className="text-xs font-bold text-cyan-500 dark:text-cyan-400 tracking-tight leading-tight">{release.title}</p>
-                                            </div>
-
-                                            <div className="flex items-center gap-4 shrink-0 text-app-text-muted">
-                                                <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">{release.date}</span>
-                                                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                            </div>
+                                            )}
                                         </div>
-
-                                        {/* Collapsible Content */}
-                                        {isExpanded && (
-                                            <div className="px-5 pb-6 pt-2 border-t border-app-border bg-slate-50/20 dark:bg-slate-950/10 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                <p className="text-xs text-app-text-muted leading-relaxed font-medium">
-                                                    {release.description}
-                                                </p>
-                                                
-                                                <div className="space-y-2 pt-2">
-                                                    <p className="text-[9px] font-black uppercase tracking-widest text-app-text-muted/60">Lista de Ajustes & Funciones:</p>
-                                                    <ul className="space-y-2">
-                                                        {release.features.map((feat, i) => (
-                                                            <li key={i} className="text-xs font-bold text-app-text leading-relaxed flex items-start gap-2.5">
-                                                                <span className="text-cyan-500 mt-1 shrink-0 text-[10px]">•</span>
-                                                                <span>{feat}</span>
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        )}
                                     </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
         </section>

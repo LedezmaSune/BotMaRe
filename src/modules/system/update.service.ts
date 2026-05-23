@@ -4,8 +4,13 @@ import path from 'path';
 import fs from 'fs';
 
 export class UpdateService {
-    private repoUrl = 'https://api.github.com/repos/LedezmaSune/BotMaRe/commits/main';
+    private repoOwner = 'LedezmaSune';
+    private repoName = 'BotMaRe';
+    private repoUrl = `https://api.github.com/repos/LedezmaSune/BotMaRe/commits/main`;
+    private releasesUrl = `https://api.github.com/repos/LedezmaSune/BotMaRe/releases`;
     private currentVersionFile = path.resolve('package.json');
+    private releasesCache: { data: any[] | null, timestamp: number } = { data: null, timestamp: 0 };
+    private CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
     async checkUpdate() {
         try {
@@ -44,6 +49,42 @@ export class UpdateService {
         } catch (error: any) {
             console.error('[UpdateService] Error checking for updates:', error.message);
             return { error: error.message };
+        }
+    }
+
+    async fetchReleases() {
+        try {
+            // Usar caché si es reciente
+            if (this.releasesCache.data && (Date.now() - this.releasesCache.timestamp) < this.CACHE_TTL) {
+                return { releases: this.releasesCache.data };
+            }
+
+            const headers: any = { 'Accept': 'application/vnd.github.v3+json' };
+            if (process.env.GITHUB_TOKEN) {
+                headers['Authorization'] = `token ${process.env.GITHUB_TOKEN}`;
+            }
+
+            const response = await axios.get(this.releasesUrl, {
+                timeout: 8000,
+                headers,
+                params: { per_page: 20 }
+            });
+
+            const releases = response.data.map((r: any) => ({
+                version: r.tag_name,
+                title: r.name || r.tag_name,
+                date: r.published_at,
+                body: r.body || '',
+                prerelease: r.prerelease,
+                draft: r.draft,
+                url: r.html_url
+            }));
+
+            this.releasesCache = { data: releases, timestamp: Date.now() };
+            return { releases };
+        } catch (error: any) {
+            console.error('[UpdateService] Error fetching releases:', error.message);
+            return { releases: [], error: error.message };
         }
     }
 
