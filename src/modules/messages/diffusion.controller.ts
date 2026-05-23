@@ -20,17 +20,19 @@ export class DiffusionController {
         }
 
         const rawMessage = req.body.message;
-        const file = (req as any).file;
 
         if (!Array.isArray(contacts) || contacts.length === 0 || !rawMessage) {
             return res.status(400).json({ success: false, error: "Invalid payload: contacts and message are required" });
         }
 
-        const mediaPath = file ? path.resolve(file.path) : undefined;
-        const mediaType = file ? file.mimetype : undefined;
-        const fileName = file ? file.originalname : undefined;
+        const files = (req as any).files as any[];
+        const mediaFiles = files && files.length > 0 ? files.map(file => ({
+            path: path.resolve(file.path),
+            type: file.mimetype,
+            name: file.originalname
+        })) : undefined;
 
-        const queuedCount = await this.diffusionService.sendMass(contacts, rawMessage, mediaPath, mediaType, fileName);
+        const queuedCount = await this.diffusionService.sendMass(contacts, rawMessage, mediaFiles);
         
         if (queuedCount === -1) {
             return res.status(409).json({ 

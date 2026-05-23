@@ -15,15 +15,15 @@ export class AutoresponderController {
     });
 
     create = asyncHandler(async (req: Request, res: Response) => {
-        const { keyword, matchType, response, aiAction, isActive } = req.body;
-        const id = await createAutoresponder(keyword, matchType, response, aiAction, isActive);
+        const { keyword, matchType, response, aiAction, isActive, parentId, options } = req.body;
+        const id = await createAutoresponder(keyword, matchType, response, aiAction, isActive, parentId, options);
         res.json({ success: true, id });
     });
 
     update = asyncHandler(async (req: Request, res: Response) => {
         const { id } = req.params;
-        const { keyword, matchType, response, aiAction, isActive } = req.body;
-        await updateAutoresponder(Number(id), keyword, matchType, response, aiAction, isActive);
+        const { keyword, matchType, response, aiAction, isActive, parentId, options } = req.body;
+        await updateAutoresponder(Number(id), keyword, matchType, response, aiAction, isActive, parentId, options);
         res.json({ success: true });
     });
 

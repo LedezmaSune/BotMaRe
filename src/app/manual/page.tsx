@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, Rocket, Zap, Brain, ShieldCheck, History, ArrowRight } from 'lucide-react';
+import { BookOpen, Rocket, Zap, Brain, ShieldCheck, History, ArrowRight, MessageCircle } from 'lucide-react';
 
 export default function ManualPage() {
     return (
@@ -113,6 +113,32 @@ export default function ManualPage() {
                             <li className="flex items-start gap-2">
                                 <ArrowRight size={16} className="text-pink-400 shrink-0 mt-0.5" />
                                 <span><b>Envío Inmediato:</b> Todos los recordatorios agendados tienen un botón para forzar su envío ahora mismo si urge despacharlos.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </section>
+
+                {/* Menús y Auto-Respuestas */}
+                <section className="bg-app-card border border-app-border rounded-3xl p-8 shadow-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl rounded-full -mr-10 -mt-10 transition-all group-hover:bg-blue-500/10"></div>
+                    <div className="flex items-center gap-3 mb-6">
+                        <MessageCircle className="text-blue-500" size={24} />
+                        <h2 className="text-xl font-black text-app-text tracking-tight">Menús y Auto-Respuestas</h2>
+                    </div>
+                    <div className="space-y-4 text-sm text-app-text-muted">
+                        <p>Automatiza respuestas instantáneas y menús interactivos al detectar palabras clave.</p>
+                        <ul className="space-y-3">
+                            <li className="flex items-start gap-2">
+                                <ArrowRight size={16} className="text-blue-400 shrink-0 mt-0.5" />
+                                <span><b>Acciones Híbridas:</b> Configura una regla para responder solo con texto fijo (Menú Fijo), inyectar contexto a la IA (IA + Menú), o ignorar el mensaje completamente.</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <ArrowRight size={16} className="text-blue-400 shrink-0 mt-0.5" />
+                                <span><b>Soporte en Grupos:</b> Si habilitaste el soporte de Grupos en los Ajustes, el bot también responderá a estas palabras clave si lo mencionan en un grupo.</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <ArrowRight size={16} className="text-blue-400 shrink-0 mt-0.5" />
+                                <span><b>Respaldo JSON:</b> Usa el botón de Respaldar/Importar para descargar todas tus reglas y portarlas a otras instalaciones.</span>
                             </li>
                         </ul>
                     </div>

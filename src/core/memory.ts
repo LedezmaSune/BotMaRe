@@ -85,6 +85,17 @@ try { db.exec('ALTER TABLE reminders ADD COLUMN title TEXT'); } catch (e) {}
 try { db.exec('CREATE TABLE IF NOT EXISTS templates (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, content TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)'); } catch (e) {}
 try { db.exec('CREATE TABLE IF NOT EXISTS paused_chats (chatId TEXT PRIMARY KEY, reason TEXT, pausedUntil DATETIME, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)'); } catch (e) {}
 try { db.exec('CREATE TABLE IF NOT EXISTS autoresponders (id INTEGER PRIMARY KEY AUTOINCREMENT, keyword TEXT, matchType TEXT, response TEXT, aiAction TEXT, isActive INTEGER DEFAULT 1, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)'); } catch (e) {}
+try { db.exec('ALTER TABLE autoresponders ADD COLUMN parentId INTEGER'); } catch (e) {}
+try { db.exec('ALTER TABLE autoresponders ADD COLUMN options TEXT'); } catch (e) {}
+
+try {
+    db.exec(`
+    CREATE TABLE IF NOT EXISTS user_states (
+        chatId TEXT PRIMARY KEY,
+        currentMenuId INTEGER,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+} catch (e) {}
 
 // Default Settings
 const defaultSettings = {
@@ -219,14 +230,14 @@ export async function listAutoresponders() {
     return db.prepare('SELECT * FROM autoresponders ORDER BY timestamp DESC').all();
 }
 
-export async function createAutoresponder(keyword: string, matchType: string, response: string, aiAction: string, isActive: boolean = true) {
-    const stmt = db.prepare('INSERT INTO autoresponders (keyword, matchType, response, aiAction, isActive) VALUES (?, ?, ?, ?, ?)');
-    return stmt.run(keyword, matchType, response, aiAction, isActive ? 1 : 0).lastInsertRowid;
+export async function createAutoresponder(keyword: string, matchType: string, response: string, aiAction: string, isActive: boolean = true, parentId: number | null = null, options: string | null = null) {
+    const stmt = db.prepare('INSERT INTO autoresponders (keyword, matchType, response, aiAction, isActive, parentId, options) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    return stmt.run(keyword, matchType, response, aiAction, isActive ? 1 : 0, parentId, options).lastInsertRowid;
 }
 
-export async function updateAutoresponder(id: number, keyword: string, matchType: string, response: string, aiAction: string, isActive: boolean) {
-    db.prepare('UPDATE autoresponders SET keyword = ?, matchType = ?, response = ?, aiAction = ?, isActive = ? WHERE id = ?')
-      .run(keyword, matchType, response, aiAction, isActive ? 1 : 0, id);
+export async function updateAutoresponder(id: number, keyword: string, matchType: string, response: string, aiAction: string, isActive: boolean, parentId: number | null = null, options: string | null = null) {
+    db.prepare('UPDATE autoresponders SET keyword = ?, matchType = ?, response = ?, aiAction = ?, isActive = ?, parentId = ?, options = ? WHERE id = ?')
+      .run(keyword, matchType, response, aiAction, isActive ? 1 : 0, parentId, options, id);
 }
 
 export async function toggleAutoresponder(id: number, isActive: boolean) {
@@ -239,4 +250,18 @@ export async function deleteAutoresponder(id: number) {
 
 export async function listPausedChats() {
     return db.prepare('SELECT * FROM paused_chats ORDER BY timestamp DESC').all();
+}
+
+// User States API
+export async function getUserState(chatId: string): Promise<number | null> {
+    const row = db.prepare('SELECT currentMenuId FROM user_states WHERE chatId = ?').get(chatId) as { currentMenuId: number } | undefined;
+    return row ? row.currentMenuId : null;
+}
+
+export async function setUserState(chatId: string, currentMenuId: number | null) {
+    if (currentMenuId === null) {
+        db.prepare('DELETE FROM user_states WHERE chatId = ?').run(chatId);
+    } else {
+        db.prepare('INSERT OR REPLACE INTO user_states (chatId, currentMenuId, timestamp) VALUES (?, ?, CURRENT_TIMESTAMP)').run(chatId, currentMenuId);
+    }
 }

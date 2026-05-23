@@ -29,6 +29,8 @@ export interface Autoresponder {
     aiAction: 'menu_only' | 'ai_context' | 'no_response';
     isActive: number;
     timestamp: string;
+    parentId?: number;
+    options?: string;
 }
 
 export interface Audit {

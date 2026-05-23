@@ -33,7 +33,7 @@ export class MessageController {
 
         try {
             // 0. Autoresponders
-            const autoresponderMatch = await this.autoresponderService.match(text);
+            const autoresponderMatch = await this.autoresponderService.match(text, jid);
             let extraAIContext = '';
 
             if (autoresponderMatch) {

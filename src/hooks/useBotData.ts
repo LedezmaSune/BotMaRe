@@ -111,14 +111,20 @@ export function useBotData() {
         alert('Limpieza completada.');
     };
 
-    const handleSendMass = async (contacts: string, message: string, media: File | null) => {
+    const handleSendMass = async (contacts: string, message: string, media: File[] | File | null) => {
         setIsLoading(true);
         try {
             const contactList = parseContactList(contacts);
             const formData = new FormData();
             formData.append('contacts', JSON.stringify(contactList));
             formData.append('message', message);
-            if (media) formData.append('media', media);
+            if (media) {
+                if (Array.isArray(media)) {
+                    media.forEach(f => formData.append('media', f));
+                } else {
+                    formData.append('media', media);
+                }
+            }
 
             const res = await fetch(`${API_BASE}/send-mass`, {
                 method: 'POST',

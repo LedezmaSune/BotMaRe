@@ -7,7 +7,7 @@ import { VariableTextarea } from './VariableTextarea';
 import { Template } from '../types';
 
 interface MassMessagingProps {
-    onSend: (contacts: string, message: string, media: File | null) => Promise<void>;
+    onSend: (contacts: string, message: string, media: File[]) => Promise<void>;
     onCancel: () => Promise<void>;
     onReview: (text: string) => Promise<string | null>;
     templates: Template[];
@@ -19,7 +19,7 @@ interface MassMessagingProps {
 export function MassMessaging({ onSend, onCancel, onReview, templates, groups, progress, logs = [] }: MassMessagingProps) {
     const [contacts, setContacts] = useState('');
     const [message, setMessage] = useState('');
-    const [media, setMedia] = useState<File | null>(null);
+    const [media, setMedia] = useState<File[]>([]);
     const [loading, setLoading] = useState(false);
     const [reviewing, setReviewing] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
@@ -78,7 +78,7 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, p
         e.preventDefault();
         setIsDragging(false);
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            setMedia(e.dataTransfer.files[0]);
+            setMedia(prev => [...prev, ...Array.from(e.dataTransfer.files!)]);
         }
     };
 
@@ -193,23 +193,40 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, p
                     >
                         <input 
                             type="file" 
+                            multiple
                             ref={fileInputRef}
-                            onChange={(e) => setMedia(e.target.files?.[0] || null)}
+                            onChange={(e) => {
+                                if (e.target.files) {
+                                    setMedia(prev => [...prev, ...Array.from(e.target.files!)]);
+                                }
+                            }}
                             className="hidden"
                         />
-                        {media ? (
-                            <div className="flex items-center gap-4 w-full bg-white dark:bg-slate-900 p-3 rounded-xl border border-app-border">
-                                <div className="p-2 bg-purple-500/10 text-purple-500 rounded-lg"><File size={20} /></div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-bold text-app-text truncate">{media.name}</p>
-                                    <p className="text-[10px] text-app-text-muted">{(media.size / 1024 / 1024).toFixed(2)} MB</p>
+                        {media.length > 0 ? (
+                            <div className="w-full space-y-2">
+                                {media.map((file, i) => (
+                                    <div key={i} className="flex items-center gap-4 w-full bg-white dark:bg-slate-900 p-3 rounded-xl border border-app-border">
+                                        <div className="p-2 bg-purple-500/10 text-purple-500 rounded-lg"><File size={20} /></div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-app-text truncate">{file.name}</p>
+                                            <p className="text-[10px] text-app-text-muted">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                        </div>
+                                        <button 
+                                            onClick={(e) => { 
+                                                e.stopPropagation(); 
+                                                setMedia(prev => prev.filter((_, index) => index !== i)); 
+                                            }}
+                                            className="p-1.5 hover:bg-red-500/10 text-red-500/70 hover:text-red-500 rounded-lg transition-colors"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                ))}
+                                <div className="mt-2 flex justify-center">
+                                    <p className="text-[10px] text-cyan-500 font-bold hover:underline cursor-pointer">
+                                        + Añadir más archivos
+                                    </p>
                                 </div>
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); setMedia(null); }}
-                                    className="p-1.5 hover:bg-red-500/10 text-red-500/70 hover:text-red-500 rounded-lg transition-colors"
-                                >
-                                    <X size={16} />
-                                </button>
                             </div>
                         ) : (
                             <>

@@ -13,7 +13,7 @@ export class MassDiffusionService {
 
     constructor(private waService: MessageService) {}
 
-    async sendMass(contacts: Contact[], rawMessage: string, mediaPath?: string, mediaType?: string, fileName?: string) {
+    async sendMass(contacts: Contact[], rawMessage: string, mediaFiles?: { path: string, type: string, name: string }[]) {
         if (this.isProcessing) {
              console.warn("[Mass] A mass diffusion is already in progress. Ignoring request.");
              return -1;
@@ -21,7 +21,7 @@ export class MassDiffusionService {
 
         this.shouldStop = false;
         // Run in background
-        this.processQueue(contacts, rawMessage, mediaPath, mediaType, fileName).catch(err => {
+        this.processQueue(contacts, rawMessage, mediaFiles).catch(err => {
             console.error("[Mass] Fatal error in processQueue:", err);
         });
 
@@ -41,7 +41,7 @@ export class MassDiffusionService {
         return this.currentProgress;
     }
 
-    private async processQueue(contacts: Contact[], rawMessage: string, mediaPath?: string, mediaType?: string, fileName?: string) {
+    private async processQueue(contacts: Contact[], rawMessage: string, mediaFiles?: { path: string, type: string, name: string }[]) {
         this.isProcessing = true;
         
         // Emitir progreso inicial (0%) para que el UI sepa que hemos empezado
@@ -94,15 +94,26 @@ export class MassDiffusionService {
 
                 console.log(`[Mass] Sending to ${to}...`);
                 
-                const sendPromise = (mediaPath && mediaType && fs.existsSync(mediaPath)) 
-                    ? this.waService.sendMedia(to, mediaPath, personalizedMessage, mediaType, fileName)
-                    : this.waService.sendMessage(to, personalizedMessage);
-
-                // Timeout de 30 segundos por mensaje para evitar bloqueos infinitos
-                await Promise.race([
-                    sendPromise,
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en envío (30s)')), 30000))
-                ]);
+                if (mediaFiles && mediaFiles.length > 0) {
+                    for (let i = 0; i < mediaFiles.length; i++) {
+                        const file = mediaFiles[i];
+                        if (fs.existsSync(file.path)) {
+                            // Enviar caption solo en el primer archivo
+                            const caption = i === 0 ? personalizedMessage : '';
+                            const sendPromise = this.waService.sendMedia(to, file.path, caption, file.type, file.name);
+                            await Promise.race([
+                                sendPromise,
+                                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en envío (30s)')), 30000))
+                            ]);
+                        }
+                    }
+                } else {
+                    const sendPromise = this.waService.sendMessage(to, personalizedMessage);
+                    await Promise.race([
+                        sendPromise,
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en envío (30s)')), 30000))
+                    ]);
+                }
 
                 logEntry.status = 'success';
                 logs.push(logEntry);
