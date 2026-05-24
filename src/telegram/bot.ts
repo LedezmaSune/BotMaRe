@@ -380,9 +380,9 @@ export function initTelegramBot(
         if (action === "start") {
           // Check if tmate is installed
           try {
-            await execAsync('which tmate');
+            await execAsync('command -v tmate || which tmate');
           } catch {
-            return await ctx.reply("⚠️ *tmate no está instalado.*\n\nInstálalo ejecutando:\n- Termux: `pkg install tmate`\n- Ubuntu/Debian: `sudo apt install tmate`", { parse_mode: "Markdown" });
+            return await ctx.reply("⚠️ *tmate no está instalado o no es compatible con este sistema.*\n\nInstálalo ejecutando:\n- Termux: `pkg install tmate`\n- Ubuntu/Debian: `sudo apt install tmate`\n\n_(Nota: tmate no funciona en Windows)_", { parse_mode: "Markdown" });
           }
 
           await ctx.reply("⏳ Generando sesión SSH segura...", { parse_mode: "Markdown" });
