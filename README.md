@@ -117,7 +117,7 @@ curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install-te
 ### 🛠️ Instalación Manual
 ```bash
 pkg update && pkg upgrade -y
-pkg install nodejs python make clang binutils sqlite git curl openssl -y
+pkg install nodejs python make clang binutils sqlite git curl openssl tmate tailscale -y
 npm install -g pnpm pm2
 git clone https://github.com/LedezmaSune/BotMaRe.git
 cd BotMaRe

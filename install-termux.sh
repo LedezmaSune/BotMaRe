@@ -147,7 +147,8 @@ info "Instalando paquetes necesarios..."
 # curl: descargas HTTP
 # openssl: cifrado/TLS
 # tmate: túnel SSH reverso
-pkg install nodejs python make clang binutils sqlite git curl openssl tmate -y
+# tailscale: red privada virtual (VPN)
+pkg install nodejs python make clang binutils sqlite git curl openssl tmate tailscale -y
 
 ok "Paquetes del sistema instalados."
 
