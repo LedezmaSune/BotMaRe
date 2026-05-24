@@ -34,7 +34,9 @@ BotMaRe utiliza una arquitectura monolítica moderna donde el motor de Inteligen
 - ✈️ **Telegram Bot**: Controla el sistema, reactiva bots y recibe alertas remotamente. ¡Incluye **acceso SSH reverso** integrado con `tmate`!
 - 👥 **Gestor de Grupos**: Detección de menciones mejorada y selector nativo en el dashboard.
 - 🌐 **Tunnel Automático**: Cloudflare Tunnel integrado para exponer tu bot a la web sin puertos.
-- 🎨 **Dashboard Premium**: Interfaz Next.js ultra rápida con modo oscuro, telemetría y micro-animaciones.
+- 📶 **Control de Conectividad**: Nueva tarjeta visual de "Redes y Conectividad" en la pestaña de configuración del Dashboard que permite monitorear y copiar con un clic tu acceso público vía Cloudflare Tunnel o tu IP privada segura de Tailscale VPN.
+- 📡 **Detección de IP Inteligente**: El motor analiza automáticamente los adaptadores de red de la máquina, filtrando bucles o túneles virtuales incompatibles (como WARP), y priorizando las tarjetas físicas activas (Wi-Fi o Ethernet) para ofrecer siempre la dirección IP LAN ruteable real.
+- 🎨 **Dashboard Premium**: Interfaz Next.js ultra rápida con modo oscuro, telemetría y micro-animaciones. Con políticas de seguridad relajadas para evitar bloqueos de estilos (CSS) en redes remotas.
 
 ---
 
