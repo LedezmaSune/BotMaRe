@@ -50,6 +50,8 @@ export function initTelegramBot(
     { command: "cerebro", description: "Ver configuración del bot" },
     { command: "auditoria", description: "Ver últimos 10 movimientos" },
     { command: "notificaciones", description: "Alternar notificaciones de modelos (ON/OFF)" },
+    { command: "actualizar", description: "Buscar y aplicar actualizaciones de GitHub" },
+    { command: "tunel", description: "Ver estado o reiniciar el túnel Cloudflare" },
     { command: "pm2", description: "Control de procesos PM2" },
     { command: "borrarmemorial", description: "Borrar memoria del bot" },
   ]).catch(console.error);
@@ -63,6 +65,8 @@ export function initTelegramBot(
       .text("🧠 Cerebro IA", "menu_cerebro").row()
       .text("📊 Auditoría", "menu_auditoria").row()
       .text("🔔 Notificaciones Modelos", "menu_notificaciones").row()
+      .text("🔄 Actualizaciones", "menu_actualizar")
+      .text("🌐 Túnel Cloudflare", "menu_tunel").row()
       .text("⚙️ Control PM2", "menu_pm2");
     
     await ctx.reply(`🦊 ¡Hola! Soy tu asistente maestro de *${process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe'}*.\n¿Qué te gustaría hacer hoy?`, { reply_markup: keyboard, parse_mode: "Markdown" });
@@ -148,6 +152,22 @@ export function initTelegramBot(
           .text("📜 Ver Logs", "pm2_logs")
           .text("♻️ Limpiar Logs", "pm2_flush");
         await ctx.reply("⚙️ *Panel de Control PM2*\nSelecciona una acción para gestionar el proceso del bot:", { reply_markup: keyboard, parse_mode: "Markdown" });
+      } else if (data === "menu_actualizar") {
+        const keyboard = new InlineKeyboard()
+          .text("🔍 Buscar Actualización", "update_check").row()
+          .text("⬆️ Aplicar Actualización", "update_apply");
+        await ctx.reply("🔄 *Centro de Actualizaciones*\nVerifica si hay una nueva versión disponible en GitHub.", { reply_markup: keyboard, parse_mode: "Markdown" });
+      } else if (data === "menu_tunel") {
+        const { TunnelService } = await import("../core/tunnel");
+        const tunnel = TunnelService.getInstance();
+        const currentUrl = tunnel.getUrl();
+        const statusText = currentUrl
+          ? `🟢 *Túnel Activo*\n🔗 ${currentUrl}`
+          : `🔴 *Túnel Inactivo*\nNo hay túnel en ejecución.`;
+        const keyboard = new InlineKeyboard()
+          .text("🔄 Reiniciar Túnel", "tunnel_restart").row()
+          .text("⏹️ Detener Túnel", "tunnel_stop");
+        await ctx.reply(`🌐 *Cloudflare Tunnel*\n\n${statusText}`, { reply_markup: keyboard, parse_mode: "Markdown" });
       }
       return;
     }
@@ -272,6 +292,97 @@ export function initTelegramBot(
         await ctx.reply(`❌ *Error de Sistema:*\n${error.message}`);
       }
     }
+
+    // Handlers para Actualizaciones
+    if (data.startsWith("update_")) {
+      const action = data.replace("update_", "");
+      await ctx.answerCallbackQuery({ text: "Procesando..." });
+
+      try {
+        const { UpdateService } = await import("../modules/system/update.service");
+        const updateService = new UpdateService();
+
+        if (action === "check") {
+          const result = await updateService.checkUpdate();
+          if (result.error) {
+            await ctx.reply(`❌ *Error al verificar:*\n${result.error}`, { parse_mode: "Markdown" });
+          } else if (result.updateAvailable) {
+            const keyboard = new InlineKeyboard()
+              .text("⬆️ Aplicar Actualización Ahora", "update_apply");
+            await ctx.reply(
+              `🆕 *¡Actualización Disponible!*\n\n` +
+              `📌 Versión local: \`${result.currentVersion}\`\n` +
+              `🔹 Commit local: \`${result.localCommit}\`\n` +
+              `🔸 Commit remoto: \`${result.remoteCommit}\`\n\n` +
+              `¿Deseas aplicarla?`,
+              { reply_markup: keyboard, parse_mode: "Markdown" }
+            );
+          } else {
+            await ctx.reply(`✅ *Sistema al día*\n\nVersión: \`${result.currentVersion}\`\nCommit: \`${result.localCommit}\`\n\nTu instalación coincide con la última versión de GitHub.`, { parse_mode: "Markdown" });
+          }
+        } else if (action === "apply") {
+          await ctx.reply("⏳ *Aplicando actualización...*\n\nDescargando última versión de GitHub. El sistema se reiniciará automáticamente si usa PM2.", { parse_mode: "Markdown" });
+          const result = await updateService.performUpdate();
+          if (result.success) {
+            await ctx.reply(`✅ *Actualización Aplicada*\n\n${result.message}`, { parse_mode: "Markdown" });
+          } else {
+            await ctx.reply(`❌ *Error al actualizar:*\n${result.error}`, { parse_mode: "Markdown" });
+          }
+        }
+      } catch (error: any) {
+        await ctx.reply(`❌ *Error:* ${error.message}`, { parse_mode: "Markdown" });
+      }
+      return;
+    }
+
+    // Handlers para Túnel Cloudflare
+    if (data.startsWith("tunnel_")) {
+      const action = data.replace("tunnel_", "");
+      await ctx.answerCallbackQuery({ text: "Procesando..." });
+
+      try {
+        const { TunnelService } = await import("../core/tunnel");
+        const tunnel = TunnelService.getInstance();
+        const PORT = process.env.PORT || 8000;
+
+        if (action === "restart") {
+          await ctx.reply("🔄 *Reiniciando túnel...*\nEsto puede tomar unos segundos.", { parse_mode: "Markdown" });
+          tunnel.stop();
+          try {
+            const newUrl = await tunnel.start(Number(PORT));
+            await ctx.reply(`✅ *Túnel Reiniciado*\n\n🔗 Nueva URL: ${newUrl}`, { parse_mode: "Markdown" });
+          } catch (e: any) {
+            await ctx.reply(`❌ *No se pudo iniciar el túnel*\n${e.message}\n\n_Verifica que cloudflared esté instalado._`, { parse_mode: "Markdown" });
+          }
+        } else if (action === "stop") {
+          tunnel.stop();
+          await ctx.reply("⏹️ *Túnel Detenido*\n\nEl bot seguirá funcionando en la red local.", { parse_mode: "Markdown" });
+        }
+      } catch (error: any) {
+        await ctx.reply(`❌ *Error:* ${error.message}`, { parse_mode: "Markdown" });
+      }
+      return;
+    }
+  });
+
+  bot.command(["actualizar", "update"], async (ctx) => {
+    const keyboard = new InlineKeyboard()
+      .text("🔍 Buscar Actualización", "update_check").row()
+      .text("⬆️ Aplicar Actualización", "update_apply");
+    await ctx.reply("🔄 *Centro de Actualizaciones*\nVerifica si hay una nueva versión disponible en GitHub.", { reply_markup: keyboard, parse_mode: "Markdown" });
+  });
+
+  bot.command(["tunel", "tunnel"], async (ctx) => {
+    const { TunnelService } = await import("../core/tunnel");
+    const tunnel = TunnelService.getInstance();
+    const currentUrl = tunnel.getUrl();
+    const statusText = currentUrl
+      ? `🟢 *Túnel Activo*\n🔗 ${currentUrl}`
+      : `🔴 *Túnel Inactivo*\nNo hay túnel en ejecución.`;
+    const keyboard = new InlineKeyboard()
+      .text("🔄 Reiniciar Túnel", "tunnel_restart").row()
+      .text("⏹️ Detener Túnel", "tunnel_stop");
+    await ctx.reply(`🌐 *Cloudflare Tunnel*\n\n${statusText}`, { reply_markup: keyboard, parse_mode: "Markdown" });
   });
 
   bot.command("delreminder", async (ctx) => {
