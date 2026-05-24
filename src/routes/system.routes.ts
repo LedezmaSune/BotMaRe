@@ -29,6 +29,7 @@ export function createSystemRouter(controller: SystemController) {
     router.get('/audits', controller.getAudits);
     router.delete('/clean-uploads', controller.cleanUploads);
     router.post('/reset-whatsapp', controller.resetWhatsApp);
+    router.get('/network', controller.getNetworkStatus);
     
     router.get('/check-update', controller.checkUpdates);
     router.post('/apply-update', controller.applyUpdate);

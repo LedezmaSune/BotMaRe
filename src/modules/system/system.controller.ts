@@ -24,6 +24,33 @@ export class SystemController {
         res.json({ success: true, message: 'Multimedia no utilizada eliminada con éxito.' });
     });
 
+    getNetworkStatus = asyncHandler(async (req: Request, res: Response) => {
+        const os = require('os');
+        const interfaces = os.networkInterfaces();
+        let tailscaleIp = null;
+        for (const name of Object.keys(interfaces)) {
+            for (const iface of interfaces[name]) {
+                if (iface.family === 'IPv4' && iface.address.startsWith('100.')) {
+                    tailscaleIp = iface.address;
+                    break;
+                }
+            }
+        }
+
+        const { TunnelService } = require('../../core/tunnel');
+        const cloudflareUrl = TunnelService.getInstance().getUrl();
+        const localPort = process.env.PORT || 8000;
+
+        res.json({
+            success: true,
+            network: {
+                cloudflareUrl,
+                tailscaleIp,
+                localPort
+            }
+        });
+    });
+
     resetWhatsApp = asyncHandler(async (req: Request, res: Response) => {
         console.log('[System] Resetting WhatsApp session (Full Logout)...');
         

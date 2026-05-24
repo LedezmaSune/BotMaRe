@@ -6,12 +6,13 @@ import { Save, Upload, Key, Cpu, Shield, Globe, Terminal, Info, Brain, Download,
 
 interface SettingsProps {
     settings: any;
+    networkStatus?: any;
     onUpdate: (settings: any) => Promise<void>;
     onParseEnv: (content: string) => Promise<boolean>;
     onResetWhatsApp: () => Promise<void>;
 }
 
-export const Settings: React.FC<SettingsProps> = ({ settings, onUpdate, onParseEnv, onResetWhatsApp }) => {
+export const Settings: React.FC<SettingsProps> = ({ settings, networkStatus, onUpdate, onParseEnv, onResetWhatsApp }) => {
     const [localSettings, setLocalSettings] = useState<any>({});
     const [isSaving, setIsSaving] = useState(false);
     const [uploadStatus, setUploadStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -271,6 +272,72 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onUpdate, onParseE
                     </p>
                 </div>
             </div>
+
+            {/* Network & Connectivity Card */}
+            <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-app-card/40 backdrop-blur-xl border border-app-border rounded-3xl p-8 shadow-xl mt-8"
+            >
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="p-3 bg-emerald-500/10 rounded-2xl">
+                        <Globe className="text-emerald-400" size={24} />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-white tracking-tight">Redes y Conectividad</h2>
+                        <p className="text-app-text-muted text-sm">Estado de túneles y accesos remotos.</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-black/20 border border-app-border rounded-2xl p-6">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className={`w-2 h-2 rounded-full ${networkStatus?.cloudflareUrl ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-red-500'}`}></div>
+                            <h3 className="font-bold text-white">Cloudflare Tunnel (Público)</h3>
+                        </div>
+                        {networkStatus?.cloudflareUrl ? (
+                            <div className="flex items-center gap-2 bg-black/40 p-3 rounded-xl border border-app-border/50">
+                                <code className="text-cyan-400 text-sm flex-1 truncate">{networkStatus.cloudflareUrl}</code>
+                                <button 
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(networkStatus.cloudflareUrl);
+                                        alert('URL de Cloudflare copiada al portapapeles');
+                                    }}
+                                    className="text-app-text-muted hover:text-white px-3 py-1 bg-white/5 rounded-lg text-xs"
+                                >
+                                    Copiar
+                                </button>
+                            </div>
+                        ) : (
+                            <p className="text-app-text-muted text-sm mt-2">Inactivo o no generado.</p>
+                        )}
+                    </div>
+
+                    <div className="bg-black/20 border border-app-border rounded-2xl p-6">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className={`w-2 h-2 rounded-full ${networkStatus?.tailscaleIp ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-red-500'}`}></div>
+                            <h3 className="font-bold text-white">Tailscale VPN (Privado)</h3>
+                        </div>
+                        {networkStatus?.tailscaleIp ? (
+                            <div className="flex items-center gap-2 bg-black/40 p-3 rounded-xl border border-app-border/50">
+                                <code className="text-emerald-400 text-sm flex-1 truncate">http://{networkStatus.tailscaleIp}:{networkStatus.localPort || 8000}</code>
+                                <button 
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(`http://${networkStatus.tailscaleIp}:${networkStatus.localPort || 8000}`);
+                                        alert('URL de Tailscale copiada al portapapeles');
+                                    }}
+                                    className="text-app-text-muted hover:text-white px-3 py-1 bg-white/5 rounded-lg text-xs"
+                                >
+                                    Copiar
+                                </button>
+                            </div>
+                        ) : (
+                            <p className="text-app-text-muted text-sm mt-2">Inactivo. Instala e inicia la app de Tailscale.</p>
+                        )}
+                    </div>
+                </div>
+            </motion.div>
 
             {/* Config Groups */}
             <motion.div 

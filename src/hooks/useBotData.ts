@@ -25,6 +25,7 @@ export function useBotData() {
     const [isLoading, setIsLoading] = useState(false);
     const [diffusionProgress, setDiffusionProgress] = useState<{current: number, total: number, percentage: number} | null>(null);
     const [diffusionLogs, setDiffusionLogs] = useState<any[]>([]);
+    const [networkStatus, setNetworkStatus] = useState<any>(null);
 
     const fetchData = useCallback(async (currentTab?: TabId) => {
         try {
@@ -63,10 +64,18 @@ export function useBotData() {
                     }
                 }
             }
+
+            if (currentTab === 'settings' || !networkStatus) {
+                const netRes = await fetch(`${API_BASE}/system/network`);
+                if (netRes.ok) {
+                    const n = await netRes.json();
+                    if (n.success) setNetworkStatus(n.network);
+                }
+            }
         } catch (error) {
             console.error('[useBotData] Error fetching data:', error);
         }
-    }, [settings]);
+    }, [settings, networkStatus, groups.length]);
 
     useEffect(() => {
         const socket = io(SOCKET_URL);
@@ -334,6 +343,7 @@ export function useBotData() {
         handleResetWhatsApp,
         handleRequestPairingCode,
         diffusionProgress,
-        diffusionLogs
+        diffusionLogs,
+        networkStatus
     };
 }
