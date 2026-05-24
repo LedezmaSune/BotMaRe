@@ -100,6 +100,36 @@ curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install.sh
 
 ---
 
+## 📱 Instalación en Termux (Android)
+
+¿Sin computadora? ¡BotMaRe también corre en tu celular usando **Termux**!
+
+### Requisitos
+- Android 7+ con [Termux](https://f-droid.org/packages/com.termux/) instalado desde **F-Droid** (no desde Play Store).
+- Al menos **4 GB de RAM** recomendados para compilar.
+- Desactivar la optimización de batería para Termux.
+
+### ⚡ Instalación Automática
+```bash
+curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install-termux.sh | bash
+```
+
+### 🛠️ Instalación Manual
+```bash
+pkg update && pkg upgrade -y
+pkg install nodejs python make clang binutils sqlite git curl openssl -y
+npm install -g pnpm pm2
+git clone https://github.com/LedezmaSune/BotMaRe.git
+cd BotMaRe
+cp .env.example .env
+pnpm install
+pnpm run build
+pnpm run start
+```
+
+> [!TIP]
+> Usa **tmux** para que BotMaRe siga corriendo al cerrar Termux: `pkg install tmux` → `tmux new -s botmare` → `pnpm run start` → `Ctrl+B` luego `D` para desacoplar.
+
 ## 🔄 Actualización Segura
 
 Mantener tu bot al día es fundamental. BotMaRe incluye un actualizador inteligente (`update.sh`) que realiza respaldos, actualiza dependencias y reconstruye el proyecto.

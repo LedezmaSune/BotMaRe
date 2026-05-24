@@ -1,6 +1,22 @@
-import { bin } from 'cloudflared';
 import { EventEmitter } from 'events';
-import { spawn, ChildProcess } from 'child_process';
+import { spawn, ChildProcess, execSync } from 'child_process';
+
+// Importar cloudflared de forma segura.
+// En Termux/Android el paquete npm no tiene binario, así que
+// intentamos usar el binario del sistema (pkg install cloudflared).
+let cloudflaredBin: string | null = null;
+try {
+    const { bin } = require('cloudflared');
+    cloudflaredBin = bin;
+} catch {
+    // Buscar el binario del sistema (Termux: pkg install cloudflared)
+    try {
+        const systemBin = execSync('which cloudflared 2>/dev/null || where cloudflared 2>nul').toString().trim();
+        if (systemBin) cloudflaredBin = systemBin;
+    } catch {
+        // No hay cloudflared disponible
+    }
+}
 
 export class TunnelService extends EventEmitter {
     private static instance: TunnelService;
@@ -30,10 +46,14 @@ export class TunnelService extends EventEmitter {
             console.log(`[Tunnel] Inciando Tunel Manual en puerto ${port}...`);
             
             try {
-                // Command: cloudflared.exe tunnel --url http://localhost:PORT
+                if (!cloudflaredBin) {
+                    throw new Error('cloudflared no está instalado. En Termux: pkg install cloudflared');
+                }
+
+                // Command: cloudflared tunnel --url http://localhost:PORT
                 const args = ['tunnel', '--url', `http://localhost:${port}`, '--protocol', 'http2'];
                 
-                this.tunnelProcess = spawn(bin, args);
+                this.tunnelProcess = spawn(cloudflaredBin, args);
 
                 this.tunnelProcess.stdout?.on('data', (data) => {
                     const output = data.toString();
