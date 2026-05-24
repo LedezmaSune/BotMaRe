@@ -64,7 +64,6 @@ app.use(helmet({
             connectSrc: ["'self'", "wss:", "ws:", "http://localhost:*", "https://*"], 
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             objectSrc: ["'none'"],
-            upgradeInsecureRequests: [],
         },
     },
     crossOriginEmbedderPolicy: false,
