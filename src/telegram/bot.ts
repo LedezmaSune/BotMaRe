@@ -53,6 +53,7 @@ export function initTelegramBot(
     { command: "actualizar", description: "Buscar y aplicar actualizaciones de GitHub" },
     { command: "tunel", description: "Ver estado o reiniciar el túnel Cloudflare" },
     { command: "ssh", description: "Generar túnel SSH reverso con tmate" },
+    { command: "tailscale", description: "Ver IP y estado de la red privada Tailscale" },
     { command: "pm2", description: "Control de procesos PM2" },
     { command: "borrarmemorial", description: "Borrar memoria del bot" },
   ]).catch(console.error);
@@ -69,6 +70,7 @@ export function initTelegramBot(
       .text("🔄 Actualizaciones", "menu_actualizar")
       .text("🌐 Túnel Cloudflare", "menu_tunel").row()
       .text("🧑‍💻 Acceso SSH (tmate)", "menu_ssh")
+      .text("🛡️ Red Tailscale", "menu_tailscale").row()
       .text("⚙️ Control PM2", "menu_pm2");
     
     await ctx.reply(`🦊 ¡Hola! Soy tu asistente maestro de *${process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe'}*.\n¿Qué te gustaría hacer hoy?`, { reply_markup: keyboard, parse_mode: "Markdown" });
@@ -175,6 +177,25 @@ export function initTelegramBot(
           .text("🚀 Iniciar Sesión SSH", "ssh_start").row()
           .text("⏹️ Detener Sesión", "ssh_stop");
         await ctx.reply("🧑‍💻 *Acceso SSH Remoto (tmate)*\n\nGenera un túnel SSH reverso seguro para acceder a la terminal del sistema remotamente.", { reply_markup: keyboard, parse_mode: "Markdown" });
+      } else if (data === "menu_tailscale") {
+        const os = require('os');
+        const interfaces = os.networkInterfaces();
+        let tailscaleIp = null;
+        for (const name of Object.keys(interfaces)) {
+          for (const iface of interfaces[name]!) {
+            if (iface.family === 'IPv4' && iface.address.startsWith('100.')) {
+              tailscaleIp = iface.address;
+              break;
+            }
+          }
+        }
+        
+        if (tailscaleIp) {
+            const port = process.env.PORT || 8000;
+            await ctx.reply(`🛡️ *Red Privada Activa (Tailscale)*\n\nEl dispositivo está conectado a la malla.\n\n🌐 *Enlace Directo y Seguro:*\n\`http://${tailscaleIp}:${port}\`\n\n_Solo accesible para dispositivos en tu cuenta de Tailscale._`, { parse_mode: "Markdown" });
+        } else {
+            await ctx.reply(`🔴 *Tailscale Inactivo o no detectado*\n\nNo se encontró una IP de red privada (100.x.x.x).\n\nPara configurarlo:\n1. Descarga la app **Tailscale** en este dispositivo.\n2. Inicia sesión y activa el VPN.\n3. Vuelve a tocar este botón.`, { parse_mode: "Markdown" });
+        }
       }
       return;
     }
@@ -444,6 +465,27 @@ export function initTelegramBot(
       .text("🚀 Iniciar Sesión SSH", "ssh_start").row()
       .text("⏹️ Detener Sesión", "ssh_stop");
     await ctx.reply("🧑‍💻 *Acceso SSH Remoto (tmate)*\n\nGenera un túnel SSH reverso seguro para acceder a la terminal del sistema remotamente.", { reply_markup: keyboard, parse_mode: "Markdown" });
+  });
+
+  bot.command(["tailscale", "vpn"], async (ctx) => {
+    const os = require('os');
+    const interfaces = os.networkInterfaces();
+    let tailscaleIp = null;
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name]!) {
+        if (iface.family === 'IPv4' && iface.address.startsWith('100.')) {
+          tailscaleIp = iface.address;
+          break;
+        }
+      }
+    }
+    
+    if (tailscaleIp) {
+        const port = process.env.PORT || 8000;
+        await ctx.reply(`🛡️ *Red Privada Activa (Tailscale)*\n\nEl dispositivo está conectado a la malla.\n\n🌐 *Enlace Directo y Seguro:*\n\`http://${tailscaleIp}:${port}\`\n\n_Solo accesible para dispositivos en tu cuenta de Tailscale._`, { parse_mode: "Markdown" });
+    } else {
+        await ctx.reply(`🔴 *Tailscale Inactivo o no detectado*\n\nNo se encontró una IP de red privada (100.x.x.x).\n\nPara configurarlo:\n1. Descarga la app **Tailscale** en este dispositivo.\n2. Inicia sesión y activa el VPN.\n3. Vuelve a intentar el comando.`, { parse_mode: "Markdown" });
+    }
   });
 
   bot.command("delreminder", async (ctx) => {
