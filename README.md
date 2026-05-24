@@ -31,7 +31,7 @@ BotMaRe utiliza una arquitectura monolítica moderna donde el motor de Inteligen
 - 📅 **Recordatorios**: Programa mensajes en grupos o privados con lógica de repetición.
 - 🛡️ **Centro de Soporte**: Panel de escalado humano. Pausa la IA para clientes frustrados y alerta a asesores vía Telegram.
 - 📦 **Respaldos Seguros**: Exporta e importa bases de datos (Sistema) y archivos multimedia separados o juntos con un clic.
-- ✈️ **Telegram Bot**: Controla el sistema, reactiva bots y recibe alertas remotamente.
+- ✈️ **Telegram Bot**: Controla el sistema, reactiva bots y recibe alertas remotamente. ¡Incluye **acceso SSH reverso** integrado con `tmate`!
 - 👥 **Gestor de Grupos**: Detección de menciones mejorada y selector nativo en el dashboard.
 - 🌐 **Tunnel Automático**: Cloudflare Tunnel integrado para exponer tu bot a la web sin puertos.
 - 🎨 **Dashboard Premium**: Interfaz Next.js ultra rápida con modo oscuro, telemetría y micro-animaciones.

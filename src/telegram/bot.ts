@@ -52,6 +52,7 @@ export function initTelegramBot(
     { command: "notificaciones", description: "Alternar notificaciones de modelos (ON/OFF)" },
     { command: "actualizar", description: "Buscar y aplicar actualizaciones de GitHub" },
     { command: "tunel", description: "Ver estado o reiniciar el túnel Cloudflare" },
+    { command: "ssh", description: "Generar túnel SSH reverso con tmate" },
     { command: "pm2", description: "Control de procesos PM2" },
     { command: "borrarmemorial", description: "Borrar memoria del bot" },
   ]).catch(console.error);
@@ -67,6 +68,7 @@ export function initTelegramBot(
       .text("🔔 Notificaciones Modelos", "menu_notificaciones").row()
       .text("🔄 Actualizaciones", "menu_actualizar")
       .text("🌐 Túnel Cloudflare", "menu_tunel").row()
+      .text("🧑‍💻 Acceso SSH (tmate)", "menu_ssh")
       .text("⚙️ Control PM2", "menu_pm2");
     
     await ctx.reply(`🦊 ¡Hola! Soy tu asistente maestro de *${process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe'}*.\n¿Qué te gustaría hacer hoy?`, { reply_markup: keyboard, parse_mode: "Markdown" });
@@ -168,6 +170,11 @@ export function initTelegramBot(
           .text("🔄 Reiniciar Túnel", "tunnel_restart").row()
           .text("⏹️ Detener Túnel", "tunnel_stop");
         await ctx.reply(`🌐 *Cloudflare Tunnel*\n\n${statusText}`, { reply_markup: keyboard, parse_mode: "Markdown" });
+      } else if (data === "menu_ssh") {
+        const keyboard = new InlineKeyboard()
+          .text("🚀 Iniciar Sesión SSH", "ssh_start").row()
+          .text("⏹️ Detener Sesión", "ssh_stop");
+        await ctx.reply("🧑‍💻 *Acceso SSH Remoto (tmate)*\n\nGenera un túnel SSH reverso seguro para acceder a la terminal del sistema remotamente.", { reply_markup: keyboard, parse_mode: "Markdown" });
       }
       return;
     }
@@ -363,6 +370,53 @@ export function initTelegramBot(
       }
       return;
     }
+
+    // Handlers para SSH (tmate)
+    if (data.startsWith("ssh_")) {
+      const action = data.replace("ssh_", "");
+      await ctx.answerCallbackQuery({ text: "Procesando..." });
+
+      try {
+        if (action === "start") {
+          // Check if tmate is installed
+          try {
+            await execAsync('which tmate');
+          } catch {
+            return await ctx.reply("⚠️ *tmate no está instalado.*\n\nInstálalo ejecutando:\n- Termux: `pkg install tmate`\n- Ubuntu/Debian: `sudo apt install tmate`", { parse_mode: "Markdown" });
+          }
+
+          await ctx.reply("⏳ Generando sesión SSH segura...", { parse_mode: "Markdown" });
+          
+          // Start tmate in background
+          try {
+            await execAsync('tmate -S /tmp/tmate.sock new-session -d');
+            await execAsync('tmate -S /tmp/tmate.sock wait tmate-ready');
+            const { stdout } = await execAsync("tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}'");
+            
+            const sshCommand = stdout.trim();
+            if (sshCommand) {
+              const keyboard = new InlineKeyboard().text("⏹️ Detener Sesión Segura", "ssh_stop");
+              await ctx.reply(`✅ *Sesión SSH Activa*\n\nCopia y pega este comando en cualquier terminal para conectarte:\n\n\`${sshCommand}\`\n\n⚠️ _Por seguridad, no compartas este enlace._`, { reply_markup: keyboard, parse_mode: "Markdown" });
+            } else {
+              await ctx.reply("❌ *Error:* No se pudo obtener la URL de tmate.", { parse_mode: "Markdown" });
+            }
+          } catch (e: any) {
+            await ctx.reply(`❌ *Error al iniciar tmate:* ${e.message}`, { parse_mode: "Markdown" });
+          }
+
+        } else if (action === "stop") {
+          try {
+            await execAsync('tmate -S /tmp/tmate.sock kill-server');
+            await ctx.reply("⏹️ *Sesión SSH detenida y servidor cerrado.*", { parse_mode: "Markdown" });
+          } catch {
+            await ctx.reply("ℹ️ No había ninguna sesión SSH activa.", { parse_mode: "Markdown" });
+          }
+        }
+      } catch (error: any) {
+        await ctx.reply(`❌ *Error de Sistema:* ${error.message}`, { parse_mode: "Markdown" });
+      }
+      return;
+    }
   });
 
   bot.command(["actualizar", "update"], async (ctx) => {
@@ -383,6 +437,13 @@ export function initTelegramBot(
       .text("🔄 Reiniciar Túnel", "tunnel_restart").row()
       .text("⏹️ Detener Túnel", "tunnel_stop");
     await ctx.reply(`🌐 *Cloudflare Tunnel*\n\n${statusText}`, { reply_markup: keyboard, parse_mode: "Markdown" });
+  });
+
+  bot.command(["ssh", "tmate"], async (ctx) => {
+    const keyboard = new InlineKeyboard()
+      .text("🚀 Iniciar Sesión SSH", "ssh_start").row()
+      .text("⏹️ Detener Sesión", "ssh_stop");
+    await ctx.reply("🧑‍💻 *Acceso SSH Remoto (tmate)*\n\nGenera un túnel SSH reverso seguro para acceder a la terminal del sistema remotamente.", { reply_markup: keyboard, parse_mode: "Markdown" });
   });
 
   bot.command("delreminder", async (ctx) => {

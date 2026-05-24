@@ -146,7 +146,8 @@ info "Instalando paquetes necesarios..."
 # git: control de versiones
 # curl: descargas HTTP
 # openssl: cifrado/TLS
-pkg install nodejs python make clang binutils sqlite git curl openssl -y
+# tmate: túnel SSH reverso
+pkg install nodejs python make clang binutils sqlite git curl openssl tmate -y
 
 ok "Paquetes del sistema instalados."
 
