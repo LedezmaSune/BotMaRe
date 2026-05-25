@@ -120,7 +120,10 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, p
                                     className="bg-slate-200 dark:bg-slate-800/80 border-none rounded-md text-[9px] font-bold py-1 px-2 outline-none cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 text-app-text"
                                     onChange={(e) => {
                                         if (e.target.value) {
-                                            setContacts(prev => prev + (prev ? '\n' : '') + e.target.value);
+                                            setContacts(prev => {
+                                                const trimmed = prev.trim();
+                                                return trimmed ? `${trimmed}\n${e.target.value}` : e.target.value;
+                                            });
                                         }
                                     }}
                                 >
