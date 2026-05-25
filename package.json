@@ -17,7 +17,9 @@
     "pm2:delete": "pm2 delete ecosystem.config.js",
     "pm2:logs": "pm2 logs BotMaRe-Unified",
     "pm2:monit": "pm2 monit",
-    "lint": "next lint"
+    "lint": "next lint",
+    "menu": "node bin/launcher.js",
+    "clean:logs": "node bin/clean-logs.js"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "6.7.22",

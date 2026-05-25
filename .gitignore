@@ -45,6 +45,8 @@ En_Desarrollo_Portable/
 bin/*
 !bin/check-build.js
 !bin/clean_reminders.js
+!bin/launcher.js
+!bin/clean-logs.js
 *.bat
 
 # Documentation (Kept locally, excluded from Git/GitHub)
