@@ -1,8 +1,10 @@
+import dotenv from 'dotenv';
+dotenv.config(); // Cargado en la primera línea para evitar que otros imports dependientes de variables de entorno fallen
+
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import { createProxyMiddleware } from 'http-proxy-middleware';
@@ -26,7 +28,6 @@ import { initTelegramBot } from './telegram/bot';
 import { initTools } from './tools/index';
 import { BackupService } from './modules/system/backup.service';
 
-dotenv.config();
 
 // Prevenir caídas del servidor por excepciones no controladas o promesas rechazadas (p.ej. fallos en Baileys/Signal)
 process.on('uncaughtException', (err) => {

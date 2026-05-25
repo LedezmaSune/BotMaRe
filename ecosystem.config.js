@@ -5,7 +5,9 @@ module.exports = {
     {
       name: "BotMaRe-Unified",
       script: "pnpm",
-      args: "exec tsx src/server.ts",
+      args: "run start",
+      interpreter: "bash", // Uso de bash para evitar SyntaxError y problemas en Termux/Android
+      exec_mode: "fork",   // Modo fork para máxima compatibilidad
       cwd: __dirname,
       instances: 1,
       autorestart: true,

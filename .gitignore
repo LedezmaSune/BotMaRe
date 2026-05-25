@@ -41,8 +41,10 @@ npm-debug.log*
 # Portable Builds
 En_Desarrollo_Portable/
 
-# Batch Files and Scripts (Moved to bin/ and excluded from Git/GitHub)
-bin/
+# Batch Files and Scripts (Moved to bin/ and excluded from Git/GitHub, allowing core scripts)
+bin/*
+!bin/check-build.js
+!bin/clean_reminders.js
 *.bat
 
 # Documentation (Kept locally, excluded from Git/GitHub)

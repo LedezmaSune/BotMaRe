@@ -1,21 +1,25 @@
 import { EventEmitter } from 'events';
 import { spawn, ChildProcess, execSync } from 'child_process';
+import fs from 'fs';
 
-// Importar cloudflared de forma segura.
-// En Termux/Android el paquete npm no tiene binario, así que
-// intentamos usar el binario del sistema (pkg install cloudflared).
-let cloudflaredBin: string | null = null;
-try {
-    const { bin } = require('cloudflared');
-    cloudflaredBin = bin;
-} catch {
-    // Buscar el binario del sistema (Termux: pkg install cloudflared)
+// Resolución perezosa del binario de Cloudflared
+function getCloudflaredBin(): string | null {
+    if (process.env.CLOUDFLARED_BIN) return process.env.CLOUDFLARED_BIN;
+    
+    // Intentar paquete npm
+    try {
+        const { bin } = require('cloudflared');
+        if (bin && fs.existsSync(bin)) return bin;
+    } catch (e) {}
+
+    // Intentar buscar en sistema (Termux: pkg install cloudflared)
     try {
         const systemBin = execSync('which cloudflared 2>/dev/null || where cloudflared 2>nul').toString().trim();
-        if (systemBin) cloudflaredBin = systemBin;
-    } catch {
-        // No hay cloudflared disponible
-    }
+        if (systemBin && fs.existsSync(systemBin)) return systemBin;
+        if (systemBin) return systemBin;
+    } catch (e) {}
+
+    return null;
 }
 
 export class TunnelService extends EventEmitter {
@@ -46,14 +50,15 @@ export class TunnelService extends EventEmitter {
             console.log(`[Tunnel] Inciando Tunel Manual en puerto ${port}...`);
             
             try {
-                if (!cloudflaredBin) {
+                const binPath = getCloudflaredBin();
+                if (!binPath) {
                     throw new Error('cloudflared no está instalado. En Termux: pkg install cloudflared');
                 }
 
                 // Command: cloudflared tunnel --url http://localhost:PORT
                 const args = ['tunnel', '--url', `http://localhost:${port}`, '--protocol', 'http2'];
                 
-                this.tunnelProcess = spawn(cloudflaredBin, args);
+                this.tunnelProcess = spawn(binPath, args);
 
                 this.tunnelProcess.stdout?.on('data', (data) => {
                     const output = data.toString();
