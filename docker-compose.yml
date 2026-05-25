@@ -10,7 +10,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      # Persistencia de sesiones y datos
+      # Persistencia de sesiones, datos y backups en el host
       - ./auth_info_baileys:/app/auth_info_baileys
       - ./data:/app/data
       - ./backups:/app/backups
@@ -19,3 +19,9 @@ services:
     environment:
       - PORT=8000
       - NODE_ENV=production
+    # Rotación de logs de Docker para evitar saturación de espacio en disco en servidores VPS
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
