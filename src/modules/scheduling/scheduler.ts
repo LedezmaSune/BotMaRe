@@ -3,7 +3,12 @@ import fs from 'fs';
 import path from 'path';
 import { MessageService } from '../messages/message.service';
 import { ReminderService } from '../reminders/reminder.service';
-import { db } from '../../core/memory'; 
+import { 
+    createReminder, 
+    listAllPendingReminders, 
+    listPendingMediaPaths, 
+    getReminderById 
+} from '../../core/memory'; 
 import { processVariables } from '../../utils/variables';
 import { parseContactList } from '../../utils/contactParser';
 
@@ -133,8 +138,7 @@ export class Scheduler {
 
                     if (validRepeat) {
                         const nextTimeStr = nextTime.toFormat("yyyy-MM-dd'T'HH:mm");
-                        db.prepare('INSERT INTO reminders (userId, chatId, text, time, mediaPath, mediaType, repeat, repeatInterval, repeatUnit) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-                          .run(r.userId, r.chatId, r.text, nextTimeStr, r.mediaPath, r.mediaType, r.repeat, r.repeatInterval, r.repeatUnit);
+                        await createReminder(r.userId, r.chatId, r.text, nextTimeStr, r.mediaPath, r.mediaType, r.repeat, r.repeatInterval, r.repeatUnit);
                         console.log(`[Scheduler] Recordatorio ${r.id} reprogramado para ${nextTimeStr}`);
                     }
                 }
@@ -155,7 +159,7 @@ export class Scheduler {
             const nowStr = now.toISO()?.substring(0, 16);
             
             // Detection Phase - get all pending reminders and filter in JS for robustness
-            const allPending = db.prepare("SELECT * FROM reminders WHERE status = 'pending'").all() as any[];
+            const allPending = await listAllPendingReminders();
             
             const due: any[] = [];
             for (const r of allPending) {
@@ -221,10 +225,9 @@ export class Scheduler {
             const now = Date.now();
             
             // Querying pending reminders to avoid deleting active media
-            const pendingReminders = db.prepare("SELECT mediaPath FROM reminders WHERE status = 'pending' AND mediaPath IS NOT NULL").all();
+            const mediaPaths = await listPendingMediaPaths();
             const activePaths = new Set(
-                pendingReminders
-                    .map((r: any) => r.mediaPath)
+                mediaPaths
                     .map((p: string) => path.normalize(p))
             );
             
@@ -250,7 +253,7 @@ export class Scheduler {
     }
 
     static async sendNow(reminderId: number) {
-        const reminder = db.prepare("SELECT * FROM reminders WHERE id = ?").get(reminderId) as any;
+        const reminder = await getReminderById(reminderId);
         if (!reminder) throw new Error("Recordatorio no encontrado");
         if (reminder.status === 'sent') throw new Error("Este recordatorio ya fue enviado");
 

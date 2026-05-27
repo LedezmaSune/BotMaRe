@@ -62,6 +62,7 @@ graph TD
 - 📦 **Respaldos en un Clic**: Exporta e importa bases de datos de configuración y archivos multimedia por separado o juntos desde la UI.
 - ✈️ **Soporte Remoto vía Telegram**: Controla el estado del bot, genera nuevos QRs y levanta túneles de soporte SSH remoto (`tmate`) directo desde tu chat de Telegram.
 - 👥 **Gestor de Grupos**: Selector nativo de grupos autorizados en el dashboard y detección inteligente de menciones.
+- 💾 **Base de Datos Híbrida Inteligente**: Conexión prioritaria a MongoDB Atlas en la nube con un fallback automático y resiliente a una base de datos local `lowdb` (`data/database.json`) si se produce un fallo de red o un timeout de 5 segundos.
 - 📶 **Control de Conectividad**: Tarjeta visual en el panel de configuración para ver el estado y copiar con un clic tus accesos por **Cloudflare Tunnel** (Público) y **Tailscale VPN** (Privado).
 - 📡 **IP Auto-Detección**: Filtra automáticamente adaptadores de bucle o redes virtuales incompatibles (como WARP) para mostrar tu dirección IP física real de Wi-Fi o Ethernet.
 - 🛠️ **Consola de Control Maestro**: Un lanzador interactivo multiplataforma (`pnpm run menu`) para iniciar, compilar, limpiar logs o reiniciar WhatsApp de forma completamente visual.
@@ -289,6 +290,19 @@ Personaliza tus mensajes de difusión y auto-respuestas inyectando datos del des
 | `pnpm run pm2:logs` | Abre el visor de consola en tiempo real para PM2. |
 
 ---
+
+## 💾 Sistema de Base de Datos Híbrida (XP, Niveles y Rangos)
+
+El bot cuenta con un módulo unificado de persistencia de datos híbrida (`src/core/dbManager.ts`) diseñado específicamente para soportar estadísticas de usuarios como experiencia, niveles y rangos, asegurando alta disponibilidad:
+
+1. **Prioridad en la Nube (MongoDB Atlas - Plan A):** Si configuras `MONGO_URI` en tu archivo `.env`, el bot almacenará los perfiles de tus usuarios de forma centralizada en la nube.
+2. **Fallback Local Resiliente (Lowdb - Plan B):** Si la conexión a MongoDB Atlas falla (por timeout de 5 segundos), no hay acceso a internet o la variable de entorno no está configurada, el bot conmuta en tiempo real de forma automática para guardar los datos localmente en `data/database.json`.
+
+El resto de los módulos del bot consumen esta interfaz genérica sin importar qué base de datos está operando por debajo.
+
+---
+
+
 
 <div align="center">
   <p>Desarrollado con ❤️ por <strong><a href="https://github.com/LedezmaSune">LedezmaSune</a></strong></p>

@@ -27,6 +27,7 @@ import { ReminderService } from './modules/reminders/reminder.service';
 import { initTelegramBot } from './telegram/bot';
 import { initTools } from './tools/index';
 import { BackupService } from './modules/system/backup.service';
+import { initDB } from './core/dbManager';
 
 
 // Prevenir caídas del servidor por excepciones no controladas o promesas rechazadas (p.ej. fallos en Baileys/Signal)
@@ -145,7 +146,13 @@ async function bootstrap() {
     }
 
     console.log(`[Fase 1] Inicializando Almacenamiento y Memoria...`);
-    console.log(`  ✓ SQLite y Caché de Memoria listos.`);
+    // Inicializar el sistema de Base de Datos híbrido (MongoDB Atlas + Fallback Lowdb)
+    try {
+        await initDB();
+    } catch (e: any) {
+        console.error(`  [!] Error al inicializar base de datos híbrida: ${e.message}`);
+    }
+    console.log(`  ✓ SQLite, Base de Datos Híbrida y Caché de Memoria listos.`);
 
     console.log(`[Fase 2] Conectividad y Acceso Global...`);
     const tunnel = TunnelService.getInstance();

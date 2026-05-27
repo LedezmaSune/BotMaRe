@@ -3,7 +3,13 @@ import path from 'path';
 import { ReminderService } from './reminder.service';
 import { asyncHandler } from '../../middleware/errorHandler';
 import { Scheduler } from '../scheduling/scheduler';
-import { db } from '../../core/memory';
+import { 
+    updateReminder, 
+    listPendingOrFailedReminders, 
+    deleteReminder, 
+    checkReminderExistsByMediaPath, 
+    createReminder 
+} from '../../core/memory';
 
 export class ReminderController {
     constructor(private reminderService: ReminderService) {}
@@ -52,8 +58,15 @@ export class ReminderController {
         const id = req.params.id;
         const { chatId, text, time, repeat, repeatInterval, repeatUnit, title } = req.body;
         
-        db.prepare('UPDATE reminders SET chatId = ?, text = ?, time = ?, repeat = ?, repeatInterval = ?, repeatUnit = ?, title = ? WHERE id = ?')
-          .run(chatId, text, time, repeat || 'none', repeatInterval || null, repeatUnit || null, title || null, id);
+        await updateReminder(parseInt(id as string), {
+            chatId,
+            text,
+            time,
+            repeat: repeat || 'none',
+            repeatInterval: repeatInterval ? parseInt(repeatInterval) : undefined,
+            repeatUnit: repeatUnit || undefined,
+            title: title || undefined
+        });
           
         res.json({ success: true });
     });
@@ -65,14 +78,11 @@ export class ReminderController {
     });
 
     fixDates = asyncHandler(async (req: Request, res: Response) => {
-        const reminders = db.prepare("SELECT id, time FROM reminders WHERE status IN ('pending', 'failed')").all() as { id: number, time: string }[];
+        const reminders = await listPendingOrFailedReminders();
         
         let fixed = 0;
         let deleted = 0;
         const currentYear = new Date().getFullYear().toString();
-
-        const updateStmt = db.prepare("UPDATE reminders SET time = ?, status = 'pending' WHERE id = ?");
-        const deleteStmt = db.prepare("DELETE FROM reminders WHERE id = ?");
 
         for (const r of reminders) {
             if (r.time && r.time.match(/^\d{4}-/)) {
@@ -80,10 +90,10 @@ export class ReminderController {
                 const checkDate = new Date(newTimeStrLocal);
                 
                 if (checkDate < new Date()) {
-                    deleteStmt.run(r.id);
+                    await deleteReminder(r.id);
                     deleted++;
                 } else {
-                    updateStmt.run(newTimeStrLocal, r.id);
+                    await updateReminder(r.id, { time: newTimeStrLocal, status: 'pending' });
                     fixed++;
                 }
             }
@@ -115,47 +125,42 @@ export class ReminderController {
         
         const currentYear = new Date().getFullYear();
 
-        const insertStmt = db.prepare('INSERT INTO reminders (userId, chatId, text, time, mediaPath, mediaType, status, repeat, repeatInterval, repeatUnit) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-        const checkStmt = db.prepare('SELECT id FROM reminders WHERE mediaPath = ?');
+        for (const file of files) {
+            const match = file.match(dateRegex);
+            if (match) {
+                const day = match[1];
+                const month = match[2];
+                const yearMatch = match[3];
+                let year = currentYear;
+                
+                if (yearMatch) {
+                    year = yearMatch.length === 2 ? 2000 + parseInt(yearMatch) : parseInt(yearMatch);
+                }
+                
+                const timeStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${globalTime || '09:00'}`;
+                
+                // Asegurar ruta correcta
+                const mediaPath = path.join(uploadsDir, file).replace(/\\/g, '/');
+                
+                // Verificar si ya existe un recordatorio con esta imagen
+                const exists = await checkReminderExistsByMediaPath(mediaPath);
+                if (!exists) {
+                    // Determinar tipo de medio
+                    let mediaType = 'document';
+                    const ext = path.extname(file).toLowerCase();
+                    if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) mediaType = 'image';
+                    else if (['.mp4', '.avi', '.mov'].includes(ext)) mediaType = 'video';
+                    else if (['.mp3', '.ogg', '.wav'].includes(ext)) mediaType = 'audio';
 
-        db.transaction(() => {
-            for (const file of files) {
-                const match = file.match(dateRegex);
-                if (match) {
-                    const day = match[1];
-                    const month = match[2];
-                    const yearMatch = match[3];
-                    let year = currentYear;
-                    
-                    if (yearMatch) {
-                        year = yearMatch.length === 2 ? 2000 + parseInt(yearMatch) : parseInt(yearMatch);
-                    }
-                    
-                    const timeStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${globalTime || '09:00'}`;
-                    
-                    // Asegurar ruta correcta
-                    const mediaPath = path.join(uploadsDir, file).replace(/\\/g, '/');
-                    
-                    // Verificar si ya existe un recordatorio con esta imagen
-                    const exists = checkStmt.get(mediaPath);
-                    if (!exists) {
-                        // Determinar tipo de medio
-                        let mediaType = 'document';
-                        const ext = path.extname(file).toLowerCase();
-                        if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) mediaType = 'image';
-                        else if (['.mp4', '.avi', '.mov'].includes(ext)) mediaType = 'video';
-                        else if (['.mp3', '.ogg', '.wav'].includes(ext)) mediaType = 'audio';
+                    // Texto personalizado o default
+                    let text = globalText || 'Adjunto archivo: {ARCHIVO}';
+                    text = text.replace('{ARCHIVO}', file);
 
-                        // Texto personalizado o default
-                        let text = globalText || 'Adjunto archivo: {ARCHIVO}';
-                        text = text.replace('{ARCHIVO}', file);
-
-                        insertStmt.run('owner', globalChatId || '', text, timeStr, mediaPath, mediaType, 'pending', 'none', null, null);
-                        added++;
-                    }
+                    await createReminder('owner', globalChatId || '', text, timeStr, mediaPath, mediaType, 'none', undefined, undefined, undefined, 'pending');
+                    added++;
                 }
             }
-        })();
+        }
 
         res.json({ success: true, added });
     });

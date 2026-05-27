@@ -150,7 +150,26 @@ info "Instalando paquetes necesarios..."
 # tailscale: red privada virtual (VPN)
 pkg install nodejs python make clang binutils sqlite git curl openssl tmate tailscale -y
 
-ok "Paquetes del sistema instalados."
+info "Instalando Cloudflare Tunnel (cloudflared) para Android..."
+if pkg install tur-repo -y && pkg install cloudflared -y; then
+    ok "cloudflared instalado con éxito desde el repositorio TUR."
+else
+    warn "No se pudo instalar desde el repositorio TUR. Intentando descarga directa del binario..."
+    ARCH=$(uname -m)
+    if [[ "$ARCH" == "aarch64" ]]; then
+        curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64 -o $PREFIX/bin/cloudflared && \
+        chmod +x $PREFIX/bin/cloudflared
+        ok "cloudflared (ARM64) instalado con éxito en $PREFIX/bin/."
+    elif [[ "$ARCH" == "armv7"* || "$ARCH" == "armv8"* ]]; then
+        curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm -o $PREFIX/bin/cloudflared && \
+        chmod +x $PREFIX/bin/cloudflared
+        ok "cloudflared (ARM 32-bit) instalado con éxito en $PREFIX/bin/."
+    else
+        warn "Arquitectura no soportada para descarga directa. Instala cloudflared manualmente."
+    fi
+fi
+
+ok "Paquetes del sistema y túneles instalados."
 
 # ═══════════════════════════════════════════════════════════════════
 # PASO 2: Configurar entorno de compilación para Termux
@@ -167,10 +186,14 @@ export CXX=clang++
 export LINK=clang++
 export GYP_DEFINES="OS=android"
 
+# Forzar compilación nativa desde código fuente de better-sqlite3 usando la SQLite de Termux
+export npm_config_build_from_source=true
+export npm_config_sqlite="$TERMUX_PREFIX"
+
 # Configurar npm para usar Python de Termux
 npm config set python "$TERMUX_PREFIX/bin/python3" 2>/dev/null || true
 
-ok "Entorno de compilación configurado (clang/clang++)."
+ok "Entorno de compilación configurado (clang/clang++ y SQLite nativo)."
 
 # ═══════════════════════════════════════════════════════════════════
 # PASO 3: Instalar pnpm
