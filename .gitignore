@@ -17,6 +17,8 @@
 auth_info_baileys/
 data/
 backups/
+agenda.json
+.antigravitycli/
 !data/.gitkeep
 *.db
 *.db-journal
