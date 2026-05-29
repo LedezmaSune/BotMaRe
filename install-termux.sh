@@ -84,6 +84,29 @@ if [ ! -d "/data/data/com.termux" ]; then
     exit 1
 fi
 
+# ── Verificar que no estamos en almacenamiento compartido (/sdcard o /storage) ──
+CURRENT_DIR="$(pwd)"
+if [[ "$CURRENT_DIR" == *"/sdcard"* || "$CURRENT_DIR" == *"/storage/"* ]]; then
+    echo ""
+    warn "¡ADVERTENCIA CRÍTICA DE ALMACENAMIENTO DETECTADA!"
+    warn "Estás intentando instalar BotMaRe en almacenamiento compartido (/sdcard o /storage)."
+    warn "Android impide la ejecución de binarios y la compilación en estas rutas (montadas con 'noexec')."
+    warn "¡La compilación de SQLite y Node.js fallará rotundamente aquí!"
+    warn "Debes instalar BotMaRe en el directorio HOME de Termux (~/ o /data/data/com.termux/files/home)."
+    echo ""
+    ask_yn "  ¿Deseas que el script te mueva automáticamente a tu HOME (~/) y clone allí? (s/n): " "s" MOVE_TO_HOME
+    if [[ "$MOVE_TO_HOME" =~ ^[Ss]$ ]]; then
+        cd "$HOME"
+        info "Te hemos movido a: $(pwd)"
+        FORCE_CLONE=true
+    else
+        fail "Se canceló la instalación. Por favor, ejecuta el script desde tu directorio HOME."
+        exit 1
+    fi
+else
+    FORCE_CLONE=false
+fi
+
 if $INTERACTIVE; then
     info "Modo: ${BOLD}Interactivo${NC} (terminal detectado)"
 else
@@ -96,18 +119,31 @@ echo ""
 # ═══════════════════════════════════════════════════════════════════
 # PASO 0: Clonar repositorio si no estamos dentro
 # ═══════════════════════════════════════════════════════════════════
-if [ -f "package.json" ] && grep -q "botmare-unified" package.json 2>/dev/null; then
+if [ -f "package.json" ] && grep -q "botmare-unified" package.json 2>/dev/null && [ "$FORCE_CLONE" = false ]; then
     WORK_DIR="$(pwd)"
     info "Repositorio BotMaRe detectado en: ${BOLD}${WORK_DIR}${NC}"
 else
-    step 0 "Clonando repositorio BotMaRe..."
+    step 0 "Clonando repositorio BotMaRe en el almacenamiento interno..."
 
     if ! command -v git &>/dev/null; then
         info "Instalando git..."
         pkg install git -y
     fi
 
-    if [ -d "$INSTALL_DIR" ]; then
+    # Si nos movimos a HOME, forzamos clonar en una nueva carpeta o acceder si ya existe
+    if [ "$FORCE_CLONE" = true ] && [ -d "$INSTALL_DIR" ]; then
+        warn "La carpeta '$INSTALL_DIR' ya existe en tu HOME (~/)."
+        ask_yn "  ¿Deseas borrarla y clonar de nuevo de forma limpia? (s/n): " "s" DELETE_EXISTING
+        if [[ "$DELETE_EXISTING" =~ ^[Ss]$ ]]; then
+            info "Eliminando carpeta existente..."
+            rm -rf "$INSTALL_DIR"
+            git clone "$REPO_URL" "$INSTALL_DIR"
+            cd "$INSTALL_DIR"
+        else
+            info "Usando la carpeta existente..."
+            cd "$INSTALL_DIR"
+        fi
+    elif [ -d "$INSTALL_DIR" ]; then
         warn "La carpeta '$INSTALL_DIR' ya existe."
         ask_yn "  ¿Deseas usarla? (s/n): " "s" USE_EXISTING
         if [[ "$USE_EXISTING" =~ ^[Ss]$ ]]; then
@@ -137,7 +173,7 @@ info "Actualizando repositorios de Termux..."
 pkg update -y && pkg upgrade -y
 
 info "Instalando paquetes necesarios..."
-# nodejs: runtime principal
+# nodejs-lts o nodejs: runtime principal (LTS es más estable para módulos nativos)
 # python: requerido por node-gyp para compilar módulos nativos
 # make: herramienta de build
 # clang: compilador C/C++ (Termux no tiene gcc, usa clang)
@@ -148,7 +184,13 @@ info "Instalando paquetes necesarios..."
 # openssl: cifrado/TLS
 # tmate: túnel SSH reverso
 # tailscale: red privada virtual (VPN)
-pkg install nodejs python make clang binutils sqlite git curl openssl tmate tailscale -y
+
+if pkg install nodejs-lts python make clang binutils sqlite git curl openssl tmate tailscale -y; then
+    ok "Paquetes instalados con éxito (usando Node.js LTS de soporte a largo plazo)."
+else
+    warn "No se pudo instalar nodejs-lts. Intentando con nodejs estándar..."
+    pkg install nodejs python make clang binutils sqlite git curl openssl tmate tailscale -y
+fi
 
 info "Instalando Cloudflare Tunnel (cloudflared) para Android..."
 if pkg install tur-repo -y && pkg install cloudflared -y; then
@@ -223,30 +265,47 @@ info "Este paso puede tomar varios minutos en Termux."
 info "Compilando módulos nativos (better-sqlite3, etc.)..."
 echo ""
 
-# Intentar instalar con build-from-source para better-sqlite3
+# Forzar configuración global de Python para node-gyp en esta sesión
+npm config set python "$TERMUX_PREFIX/bin/python3" 2>/dev/null || true
+
+# Configurar variables de compilación nativa Android/Clang
+export CC=clang
+export CXX=clang++
+export LINK=clang++
+export GYP_DEFINES="OS=android"
+export npm_config_build_from_source=true
+export npm_config_sqlite="$TERMUX_PREFIX"
+
+# Intentar instalar con pnpm
 pnpm install
 
 if [ $? -eq 0 ]; then
     ok "¡Todas las dependencias instaladas correctamente!"
 else
-    warn "Hubo errores. Intentando recompilar better-sqlite3..."
+    warn "Hubo errores durante 'pnpm install'. Intentando instalar y compilar 'better-sqlite3' directamente con npm..."
     
-    # Intentar compilar better-sqlite3 con la SQLite del sistema
-    cd node_modules/better-sqlite3 2>/dev/null && \
-        npx node-gyp rebuild --build-from-source \
-            --sqlite="$TERMUX_PREFIX" 2>/dev/null && \
-        cd ../..
-
-    if [ $? -eq 0 ]; then
-        ok "better-sqlite3 recompilado exitosamente."
+    # Intentar compilar better-sqlite3 de forma aislada e imperativa con npm
+    if npm install better-sqlite3 --build-from-source --sqlite="$TERMUX_PREFIX" --unsafe-perm; then
+        ok "better-sqlite3 compilado exitosamente usando npm."
+        info "Completando la instalación del resto de dependencias con pnpm..."
+        pnpm install
+        if [ $? -eq 0 ]; then
+            ok "¡Todas las dependencias instaladas correctamente!"
+        else
+            warn "pnpm install finalizó con advertencias, pero better-sqlite3 se compiló correctamente."
+        fi
     else
-        fail "Error compilando better-sqlite3."
+        fail "Error crítico compilando better-sqlite3."
         echo ""
-        warn "Intenta manualmente:"
-        echo -e "  ${CYAN}pnpm rebuild better-sqlite3 --build-from-source${NC}"
+        warn "Causas comunes del fallo de SQLite en Termux:"
+        echo -e "  ${CYAN}1.${NC} Estás corriendo en una ruta incorrecta (/sdcard). Asegúrate de estar en ~/ (HOME)."
+        echo -e "  ${CYAN}2.${NC} Falta la librería sqlite de Termux: Ejecuta ${CYAN}pkg install sqlite${NC}"
+        echo -e "  ${CYAN}3.${NC} Falta el compilador: Ejecuta ${CYAN}pkg install clang make python${NC}"
         echo ""
-        warn "Si sigue fallando, prueba:"
-        echo -e "  ${CYAN}npm install better-sqlite3 --build-from-source --sqlite=$TERMUX_PREFIX${NC}"
+        ask_yn "  ¿Deseas omitir este error y continuar con la instalación? (s/n): " "n" IGNORE_ERR
+        if [[ ! "$IGNORE_ERR" =~ ^[Ss]$ ]]; then
+            exit 1
+        fi
     fi
 fi
 

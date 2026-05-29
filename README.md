@@ -36,7 +36,7 @@ graph TD
     %% Nodos
     UI["💻 Dashboard (Next.js / React)"]:::frontend
     SRV["🦊 Servidor Principal (Express.js)"]:::backend
-    DB["💾 Bases de Datos SQLite<br>(database.db / whatsapp_auth.db)"]:::database
+    DB["💾 Almacenamiento Híbrido NoSQL y Auth<br>(MongoDB / database.json / whatsapp_auth.db)"]:::database
     WA["🟢 WhatsApp Web Link (Baileys)"]:::wa
     TG["🔵 Control / Alertas Bot (Grammy)"]:::tg
     LLM["🧠 Orquestador de IA (callLLM)"]:::ai
@@ -190,42 +190,60 @@ curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install.sh
 
 ### 📱 Opción C: Dispositivos Móviles (Android con Termux)
 
-¡Corre el bot completo directamente desde tu celular, sin computadoras ni VPS!
+¡Corre el bot completo directamente desde tu celular, sin computadoras ni VPS! El instalador está optimizado para compilar SQLite nativo y resolver el túnel de Cloudflare en entornos móviles de forma automática.
 
 #### Requisitos Previos:
 - Android 7.0 o superior.
-- Instalar la terminal **Termux** desde [F-Droid](https://f-droid.org/packages/com.termux/) (la versión de Google Play está obsoleta y causará errores).
+- Instalar la terminal **Termux** desde [F-Droid](https://f-droid.org/packages/com.termux/) (la versión de Google Play está obsoleta y causará errores de paquetes).
 - Asegúrate de tener al menos 3 GB de memoria interna libre.
-- Desactiva el ahorro de batería en los ajustes de tu celular para la aplicación Termux.
+- Desactiva la optimización de batería para la aplicación Termux en los ajustes de tu Android (evita que el sistema lo cierre en segundo plano).
+
+> [!WARNING]
+> **REGLA DE ORO DE TERMUX:** Jamás instales ni clones este repositorio dentro del almacenamiento compartido (`/sdcard` o `/storage/emulated/0/...`). Las políticas de seguridad de Android montan esta partición con `noexec`, lo que impedirá la compilación de SQLite y el arranque de Node.js. **Instala siempre en el almacenamiento interno protegido del usuario (`~/` o `$HOME`)**.
 
 #### Instalación Automática (Script Móvil):
-Abre Termux en tu celular y ejecuta el siguiente comando:
+El script de Termux valida la ruta de almacenamiento, instala automáticamente Node.js LTS, herramientas de compilación C++, Cloudflared aarch64 y compila SQLite de forma resiliente. Abre Termux y ejecuta:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install-termux.sh | bash
 ```
 
 #### Instalación Manual (Paso a Paso):
-1. **Actualiza e instala los paquetes nativos necesarios en Android:**
+Si deseas compilar todo de forma imperativa y manual, sigue estos pasos:
+
+1. **Prepara tu entorno seguro e instala dependencias (Node LTS es altamente recomendado):**
    ```bash
+   cd $HOME
    pkg update && pkg upgrade -y
-   pkg install nodejs python make clang binutils sqlite git curl openssl tmate tailscale -y
+   pkg install nodejs-lts python make clang binutils sqlite git curl openssl tmate tailscale -y
    ```
 2. **Instala los gestores de paquetes globales:**
    ```bash
    npm install -g pnpm pm2
    ```
-3. **Clona el código en la memoria interna protegida (`$HOME`):**
+3. **Clona el repositorio en el HOME interno:**
    ```bash
    git clone https://github.com/LedezmaSune/BotMaRe.git
    cd BotMaRe
    cp .env.example .env
    ```
-4. **Instala las dependencias y compila con el motor Webpack (ligero):**
+4. **Configura el entorno de compilación C++ de Android y compila SQLite:**
+   ```bash
+   export CC=clang
+   export CXX=clang++
+   export LINK=clang++
+   export GYP_DEFINES="OS=android"
+   export npm_config_build_from_source=true
+   export npm_config_sqlite="/data/data/com.termux/files/usr"
+   
+   # Compilar nativo better-sqlite3 de forma aislada
+   npm install better-sqlite3 --build-from-source --sqlite="/data/data/com.termux/files/usr" --unsafe-perm
+   ```
+5. **Instala el resto de dependencias y compila la interfaz del Dashboard:**
    ```bash
    pnpm install
    pnpm run build
    ```
-5. **Arranca el Bot:**
+6. **Arranca el Bot:**
    ```bash
    pnpm start
    ```
@@ -291,14 +309,15 @@ Personaliza tus mensajes de difusión y auto-respuestas inyectando datos del des
 
 ---
 
-## 💾 Sistema de Base de Datos Híbrida (XP, Niveles y Rangos)
+## 💾 Sistema de Base de Datos Híbrida Unificada (MongoDB Atlas / Lowdb)
 
-El bot cuenta con un módulo unificado de persistencia de datos híbrida (`src/core/dbManager.ts`) diseñado específicamente para soportar estadísticas de usuarios como experiencia, niveles y rangos, asegurando alta disponibilidad:
+Toda la persistencia de datos de la plataforma (**recordatorios, plantillas, auto-respuestas, historial de chats, auditorías, configuraciones del panel y perfiles de usuarios**) ha sido completamente migrada a una arquitectura NoSQL híbrida unificada (`src/core/dbManager.ts`):
 
-1. **Prioridad en la Nube (MongoDB Atlas - Plan A):** Si configuras `MONGO_URI` en tu archivo `.env`, el bot almacenará los perfiles de tus usuarios de forma centralizada en la nube.
-2. **Fallback Local Resiliente (Lowdb - Plan B):** Si la conexión a MongoDB Atlas falla (por timeout de 5 segundos), no hay acceso a internet o la variable de entorno no está configurada, el bot conmuta en tiempo real de forma automática para guardar los datos localmente en `data/database.json`.
+1. **Prioridad en la Nube (MongoDB Atlas - Plan A):** Si configuras `MONGO_URI` en tu archivo `.env`, el bot almacenará todos los datos de forma centralizada y segura en la nube.
+2. **Fallback Local Resiliente (Lowdb - Plan B):** Si la conexión a MongoDB Atlas falla (por timeout de 5 segundos), no hay acceso a internet o la variable de entorno no está configurada, el bot conmuta en tiempo real de forma automática para guardar y leer los datos localmente en [data/database.json](file:///c:/Proyectos/wamasivos/BotMaRe-main/data/database.json).
 
-El resto de los módulos del bot consumen esta interfaz genérica sin importar qué base de datos está operando por debajo.
+### 🤖 Migración Automática Cero-Pérdidas
+El bot cuenta con un script de migración nativo (`src/core/migrator.ts`). Al arrancar la plataforma por primera vez, detectará si cuentas con una base de datos física de SQLite previa (`data/database.db`), extraerá todos tus datos reales de forma segura y los importará con sus IDs originales al nuevo motor NoSQL activo, registrando el éxito en `data/database.db.migrated` sin alterar tu archivo original.
 
 ---
 
