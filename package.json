@@ -4,7 +4,7 @@
   "description": "BotMaRe - Unified Modular AI WhatsApp Platform",
   "main": "src/server.ts",
   "scripts": {
-    "dev": "concurrently -n \"ENGINE,UI\" -c \"bgBlue.bold,bgMagenta.bold\" \"tsx src/server.ts\" \"next dev\"",
+    "dev": "concurrently -n \"ENGINE,UI\" -c \"bgBlue.bold,bgMagenta.bold\" \"tsx src/server.ts\" \"next dev --webpack\"",
     "clean": "rimraf out .next dist",
     "build": "pnpm run clean && next build --webpack",
     "start": "node bin/check-build.js && tsx src/server.ts",

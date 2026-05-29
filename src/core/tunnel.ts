@@ -6,9 +6,13 @@ import fs from 'fs';
 function getCloudflaredBin(): string | null {
     if (process.env.CLOUDFLARED_BIN) return process.env.CLOUDFLARED_BIN;
     
+    // En Termux, buscar ruta estática absoluta para evitar que pnpm intercepte node_modules/.bin
+    const termuxBin = '/data/data/com.termux/files/usr/bin/cloudflared';
+    if (fs.existsSync(termuxBin)) return termuxBin;
+
     // Intentar buscar en sistema primero (Termux: pkg install cloudflared)
     try {
-        const systemBin = execSync('which cloudflared 2>/dev/null || where cloudflared 2>nul').toString().trim();
+        const systemBin = execSync('which cloudflared 2>/dev/null | grep -v node_modules || where cloudflared 2>nul').toString().trim();
         if (systemBin && fs.existsSync(systemBin)) return systemBin;
         if (systemBin) return systemBin;
     } catch (e) {}
