@@ -171,27 +171,54 @@ info "Directorio de trabajo: ${BOLD}${WORK_DIR}${NC}"
 # ═══════════════════════════════════════════════════════════════════
 step 1 "Instalando dependencias del sistema (Termux)..."
 
-info "Actualizando repositorios de Termux..."
-pkg update -y && pkg upgrade -y
+info "Garantizando la instalación de SQLite en el sistema..."
+SQLITE_INSTALLED=false
 
-info "Instalando paquetes necesarios..."
+for attempt in 1 2 3; do
+    if command -v sqlite3 &>/dev/null && [ -f "$PREFIX/include/sqlite3.h" ]; then
+        ok "SQLite nativo y cabeceras de compilación ya verificados y listos."
+        SQLITE_INSTALLED=true
+        break
+    fi
+    
+    info "Intento #$attempt de instalación de SQLite..."
+    pkg install sqlite -y &>/dev/null
+    
+    if [ $? -ne 0 ] || ! command -v sqlite3 &>/dev/null; then
+        warn "La instalación directa de SQLite falló. Sincronizando repositorios de Termux..."
+        pkg update -y &>/dev/null || apt update -y &>/dev/null
+    fi
+done
+
+if [ "$SQLITE_INSTALLED" = false ]; then
+    # Un último intento forzado con apt
+    apt-get install sqlite -y --fix-missing &>/dev/null
+    if command -v sqlite3 &>/dev/null && [ -f "$PREFIX/include/sqlite3.h" ]; then
+        ok "SQLite instalado con éxito en el último intento."
+        SQLITE_INSTALLED=true
+    else
+        fail "No se pudo instalar SQLite nativo en el sistema. Asegúrate de tener conexión a Internet."
+        exit 1
+    fi
+fi
+
+info "Instalando el resto de paquetes necesarios del sistema..."
 # nodejs-lts o nodejs: runtime principal (LTS es más estable para módulos nativos)
 # python: requerido por node-gyp para compilar módulos nativos
 # make: herramienta de build
 # clang: compilador C/C++ (Termux no tiene gcc, usa clang)
 # binutils: linker y herramientas binarias
-# sqlite: librería nativa de SQLite (usada por better-sqlite3)
 # git: control de versiones
 # curl: descargas HTTP
 # openssl: cifrado/TLS
 # tmate: túnel SSH reverso
 # tailscale: red privada virtual (VPN)
 
-if pkg install nodejs-lts python make clang binutils sqlite git curl openssl tmate -y; then
-    ok "Paquetes instalados con éxito (usando Node.js LTS de soporte a largo plazo)."
+if pkg install nodejs-lts python make clang binutils git curl openssl tmate -y; then
+    ok "Paquetes de sistema instalados con éxito (usando Node.js LTS)."
 else
     warn "No se pudo instalar nodejs-lts. Intentando con nodejs estándar..."
-    pkg install nodejs python make clang binutils sqlite git curl openssl tmate -y
+    pkg install nodejs python make clang binutils git curl openssl tmate -y
 fi
 
 # Intentar instalar tailscale de forma independiente (si no existe, no bloquea el resto del sistema)
