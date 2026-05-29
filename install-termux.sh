@@ -282,6 +282,12 @@ export GYP_DEFINES="OS=android"
 export npm_config_build_from_source=true
 export npm_config_sqlite="$TERMUX_PREFIX"
 
+# Garantizar que SQLite nativo y las herramientas de compilación estén realmente instaladas en el sistema
+if ! command -v sqlite3 &>/dev/null || ! command -v clang &>/dev/null; then
+    info "Asegurando herramientas de compilación y SQLite nativo a nivel de sistema..."
+    pkg install sqlite clang make python -y
+fi
+
 # Intentar instalar con pnpm ignorando scripts de ciclo de vida para evitar fallos de cloudflared/sharp
 info "Instalando módulos JS ignorando scripts de post-instalación para evitar errores con cloudflared/sharp..."
 if pnpm install --ignore-scripts; then
