@@ -214,7 +214,7 @@ Si deseas compilar todo de forma imperativa y manual, sigue estos pasos:
    ```bash
    cd $HOME
    pkg update && pkg upgrade -y
-   pkg install nodejs-lts python make clang binutils sqlite git curl openssl tmate -y
+   pkg install nodejs-lts python make clang binutils sqlite git curl openssl tmate tmux nano -y
    ```
 2. **Instala los gestores de paquetes globales:**
    ```bash

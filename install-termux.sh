@@ -212,13 +212,14 @@ info "Instalando el resto de paquetes necesarios del sistema..."
 # curl: descargas HTTP
 # openssl: cifrado/TLS
 # tmate: túnel SSH reverso
-# tailscale: red privada virtual (VPN)
+# tmux: para mantener el bot activo en segundo plano
+# nano: editor para configurar el archivo .env
 
-if pkg install nodejs-lts python make clang binutils git curl openssl tmate -y; then
+if pkg install nodejs-lts python make clang binutils git curl openssl tmate tmux nano -y; then
     ok "Paquetes de sistema instalados con éxito (usando Node.js LTS)."
 else
     warn "No se pudo instalar nodejs-lts. Intentando con nodejs estándar..."
-    pkg install nodejs python make clang binutils git curl openssl tmate -y
+    pkg install nodejs python make clang binutils git curl openssl tmate tmux nano -y
 fi
 
 # Intentar instalar tailscale de forma independiente (si no existe, no bloquea el resto del sistema)
