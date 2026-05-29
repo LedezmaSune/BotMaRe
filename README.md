@@ -231,9 +231,13 @@ Si deseas compilar todo de forma imperativa y manual, sigue estos pasos:
    export CC=clang
    export CXX=clang++
    export LINK=clang++
-   export GYP_DEFINES="OS=android"
+   export GYP_DEFINES="android_ndk_path=''"
    export npm_config_build_from_source=true
    export npm_config_sqlite="/data/data/com.termux/files/usr"
+   
+   # Crear configuración global de gyp para omitir el chequeo de NDK en Android/Termux
+   mkdir -p ~/.gyp
+   echo "{'variables':{'android_ndk_path':''}}" > ~/.gyp/include.gypi
    
    # Instalar dependencias omitiendo los scripts automáticos incompatibles
    pnpm install --ignore-scripts

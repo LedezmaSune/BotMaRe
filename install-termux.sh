@@ -260,7 +260,11 @@ TERMUX_PREFIX="/data/data/com.termux/files/usr"
 export CC=clang
 export CXX=clang++
 export LINK=clang++
-export GYP_DEFINES="OS=android"
+export GYP_DEFINES="android_ndk_path=''"
+
+# Crear configuración global de gyp para omitir el chequeo de NDK en Android/Termux
+mkdir -p ~/.gyp
+echo "{'variables':{'android_ndk_path':''}}" > ~/.gyp/include.gypi
 
 # Forzar compilación nativa desde código fuente de better-sqlite3 usando la SQLite de Termux
 export npm_config_build_from_source=true
@@ -306,7 +310,7 @@ npm config set python "$TERMUX_PREFIX/bin/python3" 2>/dev/null || true
 export CC=clang
 export CXX=clang++
 export LINK=clang++
-export GYP_DEFINES="OS=android"
+export GYP_DEFINES="android_ndk_path=''"
 export npm_config_build_from_source=true
 export npm_config_sqlite="$TERMUX_PREFIX"
 
