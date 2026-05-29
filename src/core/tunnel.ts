@@ -6,17 +6,17 @@ import fs from 'fs';
 function getCloudflaredBin(): string | null {
     if (process.env.CLOUDFLARED_BIN) return process.env.CLOUDFLARED_BIN;
     
-    // Intentar paquete npm
-    try {
-        const { bin } = require('cloudflared');
-        if (bin && fs.existsSync(bin)) return bin;
-    } catch (e) {}
-
-    // Intentar buscar en sistema (Termux: pkg install cloudflared)
+    // Intentar buscar en sistema primero (Termux: pkg install cloudflared)
     try {
         const systemBin = execSync('which cloudflared 2>/dev/null || where cloudflared 2>nul').toString().trim();
         if (systemBin && fs.existsSync(systemBin)) return systemBin;
         if (systemBin) return systemBin;
+    } catch (e) {}
+
+    // Intentar paquete npm como fallback
+    try {
+        const { bin } = require('cloudflared');
+        if (bin && fs.existsSync(bin)) return bin;
     } catch (e) {}
 
     return null;
