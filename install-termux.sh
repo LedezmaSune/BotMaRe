@@ -84,20 +84,22 @@ if [ ! -d "/data/data/com.termux" ]; then
     exit 1
 fi
 
-# ── Verificar que no estamos en almacenamiento compartido (/sdcard o /storage) ──
+# ── Verificar que estamos dentro del directorio HOME protegido de Termux (~/) ──
 CURRENT_DIR="$(pwd)"
-if [[ "$CURRENT_DIR" == *"/sdcard"* || "$CURRENT_DIR" == *"/storage/"* ]]; then
+if [[ "$CURRENT_DIR" != "$HOME"* ]]; then
     echo ""
-    warn "¡ADVERTENCIA CRÍTICA DE ALMACENAMIENTO DETECTADA!"
-    warn "Estás intentando instalar BotMaRe en almacenamiento compartido (/sdcard o /storage)."
-    warn "Android impide la ejecución de binarios y la compilación en estas rutas (montadas con 'noexec')."
-    warn "¡La compilación de SQLite y Node.js fallará rotundamente aquí!"
-    warn "Debes instalar BotMaRe en el directorio HOME de Termux (~/ o /data/data/com.termux/files/home)."
+    warn "¡ADVERTENCIA CRÍTICA DE RUTA DETECTADA!"
+    warn "No estás dentro de tu directorio HOME protegido (~/ o /data/data/com.termux/files/home)."
+    warn "Ruta actual: $CURRENT_DIR"
+    warn "Android impide la ejecución de binarios y la compilación en almacenamiento compartido"
+    warn "u otras rutas externas (montadas con 'noexec')."
+    warn "¡La compilación de SQLite y Node.js fallará rotundamente fuera del HOME!"
     echo ""
-    ask_yn "  ¿Deseas que el script te mueva automáticamente a tu HOME (~/) y clone allí? (s/n): " "s" MOVE_TO_HOME
+    ask_yn "  ¿Deseas que el script te mueva automáticamente a tu HOME (~/) y continúe allí? (s/n): " "s" MOVE_TO_HOME
     if [[ "$MOVE_TO_HOME" =~ ^[Ss]$ ]]; then
         cd "$HOME"
-        info "Te hemos movido a: $(pwd)"
+        CURRENT_DIR="$(pwd)"
+        info "Te hemos movido a tu HOME: $CURRENT_DIR"
         FORCE_CLONE=true
     else
         fail "Se canceló la instalación. Por favor, ejecuta el script desde tu directorio HOME."
