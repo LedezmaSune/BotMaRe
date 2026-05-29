@@ -185,12 +185,16 @@ info "Instalando paquetes necesarios..."
 # tmate: túnel SSH reverso
 # tailscale: red privada virtual (VPN)
 
-if pkg install nodejs-lts python make clang binutils sqlite git curl openssl tmate tailscale -y; then
+if pkg install nodejs-lts python make clang binutils sqlite git curl openssl tmate -y; then
     ok "Paquetes instalados con éxito (usando Node.js LTS de soporte a largo plazo)."
 else
     warn "No se pudo instalar nodejs-lts. Intentando con nodejs estándar..."
-    pkg install nodejs python make clang binutils sqlite git curl openssl tmate tailscale -y
+    pkg install nodejs python make clang binutils sqlite git curl openssl tmate -y
 fi
+
+# Intentar instalar tailscale de forma independiente (si no existe, no bloquea el resto del sistema)
+info "Instalando Tailscale (opcional)..."
+pkg install tailscale -y &>/dev/null || warn "No se pudo encontrar el paquete 'tailscale' en tus repositorios. Omitiendo..."
 
 info "Instalando Cloudflare Tunnel (cloudflared) para Android..."
 if pkg install tur-repo -y && pkg install cloudflared -y; then
@@ -276,37 +280,35 @@ export GYP_DEFINES="OS=android"
 export npm_config_build_from_source=true
 export npm_config_sqlite="$TERMUX_PREFIX"
 
-# Intentar instalar con pnpm
-pnpm install
-
-if [ $? -eq 0 ]; then
-    ok "¡Todas las dependencias instaladas correctamente!"
-else
-    warn "Hubo errores durante 'pnpm install'. Intentando instalar y compilar 'better-sqlite3' directamente con npm..."
+# Intentar instalar con pnpm ignorando scripts de ciclo de vida para evitar fallos de cloudflared/sharp
+info "Instalando módulos JS ignorando scripts de post-instalación para evitar errores con cloudflared/sharp..."
+if pnpm install --ignore-scripts; then
+    ok "Módulos de Node.js instalados (scripts omitidos)."
+    info "Compilando better-sqlite3 de forma nativa para Termux..."
     
-    # Intentar compilar better-sqlite3 de forma aislada e imperativa con npm
-    if npm install better-sqlite3 --build-from-source --sqlite="$TERMUX_PREFIX" --unsafe-perm; then
-        ok "better-sqlite3 compilado exitosamente usando npm."
-        info "Completando la instalación del resto de dependencias con pnpm..."
-        pnpm install
-        if [ $? -eq 0 ]; then
-            ok "¡Todas las dependencias instaladas correctamente!"
-        else
-            warn "pnpm install finalizó con advertencias, pero better-sqlite3 se compiló correctamente."
-        fi
+    if pnpm rebuild better-sqlite3; then
+        ok "¡better-sqlite3 compilado y configurado exitosamente!"
     else
-        fail "Error crítico compilando better-sqlite3."
-        echo ""
-        warn "Causas comunes del fallo de SQLite en Termux:"
-        echo -e "  ${CYAN}1.${NC} Estás corriendo en una ruta incorrecta (/sdcard). Asegúrate de estar en ~/ (HOME)."
-        echo -e "  ${CYAN}2.${NC} Falta la librería sqlite de Termux: Ejecuta ${CYAN}pkg install sqlite${NC}"
-        echo -e "  ${CYAN}3.${NC} Falta el compilador: Ejecuta ${CYAN}pkg install clang make python${NC}"
-        echo ""
-        ask_yn "  ¿Deseas omitir este error y continuar con la instalación? (s/n): " "n" IGNORE_ERR
-        if [[ ! "$IGNORE_ERR" =~ ^[Ss]$ ]]; then
-            exit 1
+        warn "Fallo al compilar better-sqlite3 con pnpm rebuild. Intentando compilación aislada con npm..."
+        if npm install better-sqlite3 --build-from-source --sqlite="$TERMUX_PREFIX" --unsafe-perm; then
+            ok "better-sqlite3 compilado exitosamente usando npm."
+        else
+            fail "Error crítico compilando better-sqlite3."
+            echo ""
+            warn "Causas comunes del fallo de SQLite en Termux:"
+            echo -e "  ${CYAN}1.${NC} Estás corriendo en una ruta incorrecta (/sdcard). Asegúrate de estar en ~/ (HOME)."
+            echo -e "  ${CYAN}2.${NC} Falta la librería sqlite de Termux: Ejecuta ${CYAN}pkg install sqlite${NC}"
+            echo -e "  ${CYAN}3.${NC} Falta el compilador: Ejecuta ${CYAN}pkg install clang make python${NC}"
+            echo ""
+            ask_yn "  ¿Deseas omitir este error y continuar con la instalación? (s/n): " "n" IGNORE_ERR
+            if [[ ! "$IGNORE_ERR" =~ ^[Ss]$ ]]; then
+                exit 1
+            fi
         fi
     fi
+else
+    fail "Fallo al ejecutar pnpm install --ignore-scripts."
+    exit 1
 fi
 
 # ═══════════════════════════════════════════════════════════════════

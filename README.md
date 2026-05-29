@@ -214,7 +214,7 @@ Si deseas compilar todo de forma imperativa y manual, sigue estos pasos:
    ```bash
    cd $HOME
    pkg update && pkg upgrade -y
-   pkg install nodejs-lts python make clang binutils sqlite git curl openssl tmate tailscale -y
+   pkg install nodejs-lts python make clang binutils sqlite git curl openssl tmate -y
    ```
 2. **Instala los gestores de paquetes globales:**
    ```bash
@@ -226,7 +226,7 @@ Si deseas compilar todo de forma imperativa y manual, sigue estos pasos:
    cd BotMaRe
    cp .env.example .env
    ```
-4. **Configura el entorno de compilación C++ de Android y compila SQLite:**
+4. **Configura el entorno de compilación e instala las dependencias de forma segura:**
    ```bash
    export CC=clang
    export CXX=clang++
@@ -235,12 +235,14 @@ Si deseas compilar todo de forma imperativa y manual, sigue estos pasos:
    export npm_config_build_from_source=true
    export npm_config_sqlite="/data/data/com.termux/files/usr"
    
-   # Compilar nativo better-sqlite3 de forma aislada
-   npm install better-sqlite3 --build-from-source --sqlite="/data/data/com.termux/files/usr" --unsafe-perm
+   # Instalar dependencias omitiendo los scripts automáticos incompatibles
+   pnpm install --ignore-scripts
+   
+   # Compilar únicamente better-sqlite3 de forma nativa para Android
+   pnpm rebuild better-sqlite3
    ```
-5. **Instala el resto de dependencias y compila la interfaz del Dashboard:**
+5. **Compila la interfaz del Dashboard:**
    ```bash
-   pnpm install
    pnpm run build
    ```
 6. **Arranca el Bot:**
