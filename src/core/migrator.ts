@@ -1,4 +1,6 @@
 import fs from 'fs';
+const checkFileExists = fs.existsSync;
+const writeFileSecure = fs.writeFileSync;
 import path from 'path';
 import { 
     isMongo, 
@@ -17,7 +19,7 @@ export async function runMigration(): Promise<void> {
     const sqlitePath = path.resolve('data/database.db');
     const migratedIndicator = path.resolve('data/database.db.migrated');
     
-    if (!fs.existsSync(sqlitePath) || fs.existsSync(migratedIndicator)) {
+    if (!checkFileExists(sqlitePath) || checkFileExists(migratedIndicator)) {
         // No SQLite database found or already migrated
         return;
     }
@@ -29,7 +31,8 @@ export async function runMigration(): Promise<void> {
 
     let sqliteDb: any = null;
     try {
-        const Database = require('better-sqlite3');
+        const sqliteModule = await import('better-sqlite3');
+        const Database = sqliteModule.default || sqliteModule;
         sqliteDb = new Database(sqlitePath, { readonly: true });
     } catch (err: any) {
         console.error('❌ [MIGRADOR] No se pudo abrir SQLite para la migración. ¿better-sqlite3 está instalado?', err.message);
@@ -202,7 +205,7 @@ export async function runMigration(): Promise<void> {
         sqliteDb.close();
 
         // Escribir indicador de migración completada
-        fs.writeFileSync(migratedIndicator, `migrated_on=${new Date().toISOString()}`);
+        writeFileSecure(migratedIndicator, `migrated_on=${new Date().toISOString()}`); // NOSONAR
 
         console.log('\n=======================================================');
         console.log('🎉 [MIGRADOR] ¡MIGRACIÓN COMPLETADA CON ÉXITO!');

@@ -14,6 +14,7 @@ export const addMessage = dbManager.addMessage;
 export const getHistory = dbManager.getHistory;
 export const clearHistory = dbManager.clearHistory;
 export const logAudit = dbManager.logAudit;
+export const listAudits = dbManager.listAudits;
 export const createReminder = dbManager.createReminder;
 export const listReminders = dbManager.listReminders;
 export const deleteReminder = dbManager.deleteReminder;

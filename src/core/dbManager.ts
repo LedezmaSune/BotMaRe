@@ -455,6 +455,26 @@ export async function logAudit(userId: string, action: string, details: any): Pr
     console.log(`[Audit Logged] ${action} for user ${userId}`);
 }
 
+export async function listAudits(limit: number = 10): Promise<any[]> {
+    if (isMongo) {
+        try {
+            return await AuditModel.find().sort({ timestamp: -1 }).limit(limit).lean();
+        } catch (error) {
+            console.error('❌ [DB] Error al obtener auditorias en MongoDB:', error);
+            return [];
+        }
+    } else {
+        try {
+            const list = ldb.get('audits').value() || [];
+            const sorted = list.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+            return sorted.slice(0, limit);
+        } catch (error) {
+            console.error('❌ [DB] Error al obtener auditorias en Lowdb:', error);
+            return [];
+        }
+    }
+}
+
 // ==========================================
 // 8. REMINDERS AND CAMPAIGNS CRUD
 // ==========================================

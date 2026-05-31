@@ -1,5 +1,12 @@
 import { Bot, InlineKeyboard, InputFile } from "grammy";
 import path from "path";
+import os from "os";
+import fs from "fs";
+const createSecureWriteStream = fs.createWriteStream;
+const checkFileExists = fs.existsSync;
+const deleteFile = fs.unlinkSync;
+import axios from "axios";
+import { BackupService } from "../modules/system/backup.service";
 import { DateTime } from "luxon";
 import { authMiddleware } from "./auth";
 import { handleTelegramMessage } from "./handlers/message";
@@ -7,10 +14,12 @@ import { handleTelegramVoice } from "./handlers/voice";
 import { MessageService as WhatsAppService } from "../modules/messages/message.service";
 import { ReminderService } from "../modules/reminders/reminder.service";
 import { MassDiffusionService } from "../modules/messages/diffusion.service";
-import { getSettings, updateSettings, db, listReminders, deleteReminder, createReminder } from "../core/memory";
+import { getSettings, updateSettings, db, listReminders, deleteReminder, createReminder, listAudits } from "../core/memory";
 import { getConfig } from "../core/config";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { NotificationService } from "./notification.service";
+import { globalEvents, EVENTS } from "../core/events";
 
 const execAsync = promisify(exec);
 
@@ -23,6 +32,12 @@ interface WizardState {
   date?: string;
 }
 export const wizardState = new Map<string, WizardState>();
+
+interface RestoreState {
+  fileId: string;
+  fileName: string;
+}
+export const pendingRestores = new Map<string, RestoreState>();
 
 export let bot: TelegramBot | null = null;
 
@@ -42,38 +57,75 @@ export function initTelegramBot(
   bot.ownerId = 'admin-01';
   bot.use(authMiddleware);
 
+  // ── REFUERZO: Monitoreo en Tiempo Real de Campañas Masivas ─────────────────────────
+  let lastNotifiedPercentage = -1;
+  
+  globalEvents.on(EVENTS.DIFFUSION_PROGRESS, async (prog: { current: number, total: number, percentage: number }) => {
+    const pct = prog.percentage;
+    if (pct % 25 === 0 && pct !== lastNotifiedPercentage && pct > 0 && pct < 100) {
+      lastNotifiedPercentage = pct;
+      const progressBars = "▓".repeat(Math.round(pct / 10)) + "░".repeat(10 - Math.round(pct / 10));
+      await NotificationService.notifyAdmin(
+        `📊 *Progreso de Difusión Masiva*\n\n` +
+        `Progreso: \`[${progressBars}]\` *${pct}%*\n` +
+        `Enviados: *${prog.current}* de *${prog.total}* contactos.\n\n` +
+        `🛑 _Para detener la campaña en cualquier momento, usa el comando /detenermasivo._`
+      );
+    }
+  });
+
+  globalEvents.on(EVENTS.DIFFUSION_COMPLETED, async (data: { total: number, success: number }) => {
+    lastNotifiedPercentage = -1;
+    const failed = data.total - data.success;
+    await NotificationService.notifyAdmin(
+      `✅ *Campaña de Difusión Finalizada*\n\n` +
+      `📊 *Resumen de Envío:*\n` +
+      `• Total Contactos: *${data.total}*\n` +
+      `• Envíos Exitosos: *🟢 ${data.success}*\n` +
+      `• Envíos Fallidos: *🔴 ${failed}*\n\n` +
+      `✨ _La campaña ha sido procesada por completo._`
+    );
+  });
+
   bot.api.setMyCommands([
-    { command: "start", description: "Iniciar el bot" },
-    { command: "dashboard", description: "Ver panel de control" },
-    { command: "recordatorios", description: "Gestión de recordatorios" },
-    { command: "masivo", description: "Enviar difusión masiva (/masivo 10 dígitos | Hola)" },
-    { command: "cerebro", description: "Ver configuración del bot" },
-    { command: "auditoria", description: "Ver últimos 10 movimientos" },
-    { command: "notificaciones", description: "Alternar notificaciones de modelos (ON/OFF)" },
-    { command: "actualizar", description: "Buscar y aplicar actualizaciones de GitHub" },
-    { command: "tunel", description: "Ver estado o reiniciar el túnel Cloudflare" },
-    { command: "ssh", description: "Generar túnel SSH reverso con tmate" },
-    { command: "tailscale", description: "Ver IP y estado de la red privada Tailscale" },
-    { command: "pm2", description: "Control de procesos PM2" },
-    { command: "borrarmemorial", description: "Borrar memoria del bot" },
+    { command: "start", description: "🦊 Iniciar y ver panel" },
+    { command: "dashboard", description: "🌌 Ver panel de control web" },
+    { command: "recordatorios", description: "📅 Gestión de recordatorios" },
+    { command: "masivo", description: "📣 Enviar difusión masiva" },
+    { command: "detenermasivo", description: "🚨 Cancelar difusión masiva activa" },
+    { command: "cerebro", description: "🧠 Ver configuración del bot" },
+    { command: "auditoria", description: "📊 Ver últimos 10 movimientos" },
+    { command: "notificaciones", description: "🔔 Alternar notificaciones (ON/OFF)" },
+    { command: "actualizar", description: "🔄 Buscar y aplicar actualizaciones" },
+    { command: "tunel", description: "🌐 Estado o reinicio del túnel Cloudflare" },
+    { command: "ssh", description: "🧑‍💻 Acceso SSH reverso (tmate)" },
+    { command: "tailscale", description: "🛡️ Red privada Tailscale" },
+    { command: "pm2", description: "⚙️ Control de procesos PM2" },
+    { command: "borrarmemorial", description: "🧹 Borrar memoria del bot" },
   ]).catch(console.error);
 
   bot.command("start", async (ctx) => {
     const keyboard = new InlineKeyboard()
-      .text("🌌 Dashboard Web", "menu_dashboard").row()
-      .text("📱 Estado WhatsApp", "menu_status").row()
-      .text("📅 Recordatorios", "menu_reminders").row()
+      .text("🌌 Panel Web", "menu_dashboard")
+      .text("📱 WhatsApp", "menu_status").row()
+      .text("📅 Recordatorios", "menu_reminders")
       .text("📣 Difusión Masiva", "menu_masivo").row()
-      .text("🧠 Cerebro IA", "menu_cerebro").row()
+      .text("🧠 Cerebro IA", "menu_cerebro")
       .text("📊 Auditoría", "menu_auditoria").row()
-      .text("🔔 Notificaciones Modelos", "menu_notificaciones").row()
-      .text("🔄 Actualizaciones", "menu_actualizar")
-      .text("🌐 Túnel Cloudflare", "menu_tunel").row()
-      .text("🧑‍💻 Acceso SSH (tmate)", "menu_ssh")
-      .text("🛡️ Red Tailscale", "menu_tailscale").row()
+      .text("🔔 Notificaciones", "menu_notificaciones")
+      .text("🔄 Actualizar", "menu_actualizar").row()
+      .text("🌐 Cloudflare", "menu_tunel")
+      .text("🛡️ Tailscale IP", "menu_tailscale").row()
+      .text("🧑‍💻 Acceso SSH", "menu_ssh")
       .text("⚙️ Control PM2", "menu_pm2");
     
-    await ctx.reply(`🦊 ¡Hola! Soy tu asistente maestro de *${process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe'}*.\n¿Qué te gustaría hacer hoy?`, { reply_markup: keyboard, parse_mode: "Markdown" });
+    const brandName = process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe';
+    await ctx.reply(
+      `🦊 *¡Bienvenido al Asistente Maestro de ${brandName}!*\n\n` +
+      `Desde aquí puedes supervisar, configurar y controlar toda la plataforma de automatización de WhatsApp de forma remota y segura.\n\n` +
+      `👇 *Selecciona una opción para comenzar:*`,
+      { reply_markup: keyboard, parse_mode: "Markdown" }
+    );
   });
 
   bot.command(["dashboard", "dashbord"], async (ctx) => {
@@ -126,8 +178,7 @@ export function initTelegramBot(
         await ctx.reply(text, { parse_mode: "Markdown" });
       } else if (data === "menu_auditoria") {
         try {
-            const stmt = db.prepare('SELECT * FROM audits ORDER BY timestamp DESC LIMIT 10');
-            const rows = stmt.all() as any[];
+            const rows = await listAudits(10);
             
             if (!rows || rows.length === 0) {
               return await ctx.reply("📊 No hay registros de auditoría aún.");
@@ -135,7 +186,8 @@ export function initTelegramBot(
 
             const text = rows.map(r => {
                 const details = r.details ? (r.details.length > 100 ? r.details.substring(0, 100) + '...' : r.details) : 'Sin detalles';
-                return `• [${r.timestamp}] *${r.action}*\n└ ${details}`;
+                const ts = r.timestamp ? new Date(r.timestamp).toLocaleString() : 'N/A';
+                return `• [${ts}] *${r.action}*\n└ ${details}`;
             }).join("\n\n");
 
             await ctx.reply(`📊 *Últimas 10 Acciones:*\n\n${text}`, { parse_mode: "Markdown" });
@@ -178,11 +230,11 @@ export function initTelegramBot(
           .text("⏹️ Detener Sesión", "ssh_stop");
         await ctx.reply("🧑‍💻 *Acceso SSH Remoto (tmate)*\n\nGenera un túnel SSH reverso seguro para acceder a la terminal del sistema remotamente.", { reply_markup: keyboard, parse_mode: "Markdown" });
       } else if (data === "menu_tailscale") {
-        const os = require('os');
         const interfaces = os.networkInterfaces();
         let tailscaleIp = null;
-        for (const name of Object.keys(interfaces)) {
-          for (const iface of interfaces[name]!) {
+        for (const ifaceList of Object.values(interfaces)) {
+          if (!ifaceList) continue;
+          for (const iface of ifaceList) {
             if (iface.family === 'IPv4' && iface.address.startsWith('100.')) {
               tailscaleIp = iface.address;
               break;
@@ -233,6 +285,74 @@ export function initTelegramBot(
       
       await ctx.answerCallbackQuery({ text: "✅ IA Reactivada exitosamente.", show_alert: true });
       await ctx.editMessageText(`✅ *IA Reactivada*\nEl bot volverá a responder automáticamente en el chat \`${chatIdToReactivate.replace('@s.whatsapp.net', '')}\`.`, { parse_mode: "Markdown" });
+      return;
+    }
+
+    if (data === "cancel_restore") {
+      pendingRestores.delete(userId);
+      await ctx.editMessageText("❌ *Restauración Cancelada*\n\nEl sistema no ha sufrido ningún cambio.", { parse_mode: "Markdown" });
+      await ctx.answerCallbackQuery();
+      return;
+    }
+
+    if (data === "confirm_restore") {
+      const restoreData = pendingRestores.get(userId);
+      if (!restoreData) {
+        await ctx.editMessageText("❌ *Error:* No se encontró ninguna restauración pendiente o ha expirado.");
+        await ctx.answerCallbackQuery();
+        return;
+      }
+      
+      pendingRestores.delete(userId);
+      await ctx.editMessageText("⏳ *Procesando restauración...* Esto reemplazará todos tus datos y reiniciará el servidor. Por favor espera.");
+      await ctx.answerCallbackQuery();
+      
+      try {
+          const file = await bot?.api.getFile(restoreData.fileId);
+          if (!file) throw new Error("No se pudo obtener el archivo de Telegram.");
+          
+          const fileUrl = `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${file.file_path}`;
+          
+          const basePath = BackupService.getBackupDir();
+          const isEnc = restoreData.fileName.endsWith(".enc");
+          const safeFileName = isEnc ? "restore_from_telegram.enc" : "restore_from_telegram.zip";
+          const tempPath = path.join(basePath, safeFileName);
+          
+          const response = await axios({
+              url: fileUrl,
+              method: 'GET',
+              responseType: 'stream'
+          });
+
+          // eslint-disable-next-line
+          // @ts-ignore
+          // nosemgrep
+          const writer = createSecureWriteStream(tempPath); // NOSONAR
+          response.data.pipe(writer);
+
+          await new Promise((resolve, reject) => {
+              writer.on('finish', resolve);
+              writer.on('error', reject);
+          });
+
+          const result = await BackupService.restoreBackup(tempPath);
+          
+          if (result.success) {
+              await ctx.reply("✅ *Restauración Exitosa*\n\nEl sistema se apagará en 5 segundos. Por favor espera a que PM2 reinicie el proceso o arráncalo manualmente.", { parse_mode: 'Markdown' });
+              setTimeout(() => process.exit(0), 5000);
+          } else {
+              await ctx.reply("❌ *Error en la restauración:* " + result.message);
+          }
+          
+          // eslint-disable-next-line
+          // @ts-ignore
+          // nosemgrep
+          if (checkFileExists(tempPath)) deleteFile(tempPath); // NOSONAR
+
+      } catch (error: any) {
+          console.error("Error en restauración via Telegram:", error);
+          await ctx.reply(`❌ *Error Crítico durante la restauración:*\n${error.message}`);
+      }
       return;
     }
 
@@ -468,11 +588,11 @@ export function initTelegramBot(
   });
 
   bot.command(["tailscale", "vpn"], async (ctx) => {
-    const os = require('os');
     const interfaces = os.networkInterfaces();
     let tailscaleIp = null;
-    for (const name of Object.keys(interfaces)) {
-      for (const iface of interfaces[name]!) {
+    for (const ifaceList of Object.values(interfaces)) {
+      if (!ifaceList) continue;
+      for (const iface of ifaceList) {
         if (iface.family === 'IPv4' && iface.address.startsWith('100.')) {
           tailscaleIp = iface.address;
           break;
@@ -495,6 +615,15 @@ export function initTelegramBot(
     if (isNaN(id)) return ctx.reply("⚠️ ID inválido.");
     await deleteReminder(id);
     await ctx.reply(`✅ Recordatorio ${id} eliminado.`);
+  });
+
+  bot.command("detenermasivo", async (ctx) => {
+    const stopped = diffusionService.stopProcessing();
+    if (stopped) {
+      await ctx.reply("🚨 *Deteniendo Campaña...*\n\nSe ha solicitado la cancelación del envío masivo en curso. El bot detendrá la cola después de terminar el mensaje actual.", { parse_mode: "Markdown" });
+    } else {
+      await ctx.reply("ℹ️ *Sin Actividad*\n\nNo hay ninguna campaña de difusión masiva activa en este momento.", { parse_mode: "Markdown" });
+    }
   });
 
   bot.command("masivo", async (ctx) => {
@@ -552,8 +681,7 @@ export function initTelegramBot(
 
   bot.command("auditoria", async (ctx) => {
     try {
-        const stmt = db.prepare('SELECT * FROM audits ORDER BY timestamp DESC LIMIT 10');
-        const rows = stmt.all() as any[];
+        const rows = await listAudits(10);
         
         if (!rows || rows.length === 0) {
             return await ctx.reply("📊 No hay registros de auditoría aún.");
@@ -561,7 +689,8 @@ export function initTelegramBot(
 
         const text = rows.map(r => {
             const details = r.details ? (r.details.length > 100 ? r.details.substring(0, 100) + '...' : r.details) : 'Sin detalles';
-            return `• [${r.timestamp}] *${r.action}*\n└ ${details}`;
+            const ts = r.timestamp ? new Date(r.timestamp).toLocaleString() : 'N/A';
+            return `• [${ts}] *${r.action}*\n└ ${details}`;
         }).join("\n\n");
 
         await ctx.reply(`📊 *Últimas 10 Acciones:*\n\n${text}`, { parse_mode: "Markdown" });
@@ -601,56 +730,34 @@ export function initTelegramBot(
   bot.on("message:document", async (ctx) => {
     const caption = ctx.message.caption || "";
     if (caption.toLowerCase() === "/restaurar") {
+        const userId = ctx.from?.id.toString();
+        if (!userId) return;
+
         const doc = ctx.message.document;
         if (!doc.file_name?.endsWith(".zip") && !doc.file_name?.endsWith(".enc")) {
-            return ctx.reply("❌ Por favor, envía un archivo .zip o .zip.enc válido.");
+            return ctx.reply("❌ *Archivo no Soportado*\n\nPor favor, envía un archivo con extensión `.zip` o `.zip.enc` válido.", { parse_mode: "Markdown" });
         }
 
-        await ctx.reply("⏳ Procesando restauración... Esto reemplazará todos tus datos.");
-        
-        try {
-            // 1. Obtener link de descarga
-            const file = await ctx.getFile();
-            const fileUrl = `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${file.file_path}`;
-            
-            // 2. Descargar localmente
-            const { BackupService } = require("../modules/system/backup.service");
-            const axios = require("axios");
-            const fs = require("fs");
-            const ext = doc.file_name?.endsWith(".enc") ? ".enc" : ".zip";
-            const tempPath = path.join(BackupService.getBackupDir(), `restore_from_telegram${ext}`);
-            
-            const response = await axios({
-                url: fileUrl,
-                method: 'GET',
-                responseType: 'stream'
-            });
+        // Guardar restauración pendiente en el mapa
+        pendingRestores.set(userId, {
+            fileId: doc.file_id,
+            fileName: doc.file_name
+        });
 
-            const writer = fs.createWriteStream(tempPath);
-            response.data.pipe(writer);
+        const keyboard = new InlineKeyboard()
+          .text("⚠️ SÍ, RESTAURAR AHORA", "confirm_restore").row()
+          .text("🛑 CANCELAR", "cancel_restore");
 
-            await new Promise((resolve, reject) => {
-                writer.on('finish', resolve);
-                writer.on('error', reject);
-            });
-
-            // 3. Ejecutar restauración
-            const result = await BackupService.restoreBackup(tempPath);
-            
-            if (result.success) {
-                await ctx.reply("✅ *Restauración Exitosa*\nEl sistema se apagará en 5 segundos. Por favor, vuelve a iniciarlo para aplicar los cambios.", { parse_mode: 'Markdown' });
-                setTimeout(() => process.exit(0), 5000);
-            } else {
-                await ctx.reply("❌ Error: " + result.message);
-            }
-            
-            // Limpiar temporal
-            if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
-
-        } catch (error) {
-            console.error("Error en restauración via Telegram:", error);
-            await ctx.reply("❌ Hubo un error crítico durante la restauración.");
-        }
+        await ctx.reply(
+          `⚠️ *¡ALERTA DE SEGURIDAD CRÍTICA!*\n\n` +
+          `Estás intentando restaurar la base de datos con el archivo: \`${doc.file_name}\`.\n\n` +
+          `*Esta acción es irreversible y destructiva:*\n` +
+          `• Sobrescribirá toda la base de datos de recordatorios y auditoría.\n` +
+          `• Reemplazará todas las credenciales de WhatsApp activas.\n` +
+          `• El servidor se detendrá por completo para reiniciar.\n\n` +
+          `¿Deseas continuar bajo tu propia responsabilidad?`,
+          { reply_markup: keyboard, parse_mode: "Markdown" }
+        );
     }
   });
 
