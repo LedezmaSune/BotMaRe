@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently -n \"ENGINE,UI\" -c \"bgBlue.bold,bgMagenta.bold\" \"tsx src/server.ts\" \"next dev --turbo\"",
     "clean": "rimraf out .next dist",
-    "build": "pnpm run clean && next build",
+    "build": "pnpm run clean && next build --webpack",
     "start": "node bin/check-build.js && tsx src/server.ts",
     "setup": "node -e \"const fs=require('fs'); if(!fs.existsSync('.env')) fs.copyFileSync('.env.example', '.env')\" && pnpm install",
     "reset:wa": "rimraf data/whatsapp_auth.db auth_info_baileys",
