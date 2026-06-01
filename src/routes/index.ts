@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { secureUpload } from '../middleware/fileUpload';
 import { WhatsAppClient } from '../infrastructure/whatsapp/client';
 
 // Services
@@ -31,20 +31,7 @@ import { createTemplateRouter } from './template.routes';
 import { createSupportRouter } from './support.routes';
 import { createAutoresponderRouter } from '../modules/autoresponders/autoresponder.routes';
 
-// Shared Multer Setup
-const uploadDir = path.resolve('data/uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-    destination: (req: Express.Request, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => cb(null, uploadDir),
-    filename: (req: Express.Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
-        // Respetar exactamente el nombre original del archivo según solicitud del usuario
-        cb(null, file.originalname);
-    }
-});
-const upload = multer({ storage });
+// Setup de Multer removido; ahora se importa secureUpload centralizado.
 
 /**
  * Route Aggregator
@@ -76,9 +63,9 @@ export function createMainRouter(waClient: WhatsAppClient) {
 
     // 3. Mount Routes
     router.use('/whatsapp', createWhatsAppRouter(waController));
-    router.use('/reminders', createReminderRouter(reminderController, upload));
+    router.use('/reminders', createReminderRouter(reminderController, secureUpload));
     router.use('/ai', createAIRouter(aiController));
-    router.use('/send-mass', createDiffusionRouter(diffusionController, upload));
+    router.use('/send-mass', createDiffusionRouter(diffusionController, secureUpload));
     router.use('/settings', createSettingsRouter(settingsController));
     router.use('/system', createSystemRouter(systemController));
     router.use('/templates', createTemplateRouter(templateController));

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users, BookOpen, ShieldAlert, RefreshCw } from 'lucide-react';
 
 import { ConnectionOverlay } from '@/components/ConnectionOverlay';
@@ -106,57 +107,77 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 </div>
             </header>
 
-            {/* --- MENÚ LATERAL (DRAWER) --- */}
-            <div className={`fixed inset-0 z-[200] transition-all duration-500 ${isMenuOpen ? 'visible' : 'invisible'}`}>
-                <div 
-                    className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-500 ${isMenuOpen ? 'opacity-100' : 'opacity-0'}`}
-                    onClick={() => setIsMenuOpen(false)}
-                />
-                
-                <nav className={`absolute top-0 left-0 h-full w-72 md:w-80 premium-glass border-r border-app-border/30 shadow-2xl transition-transform duration-500 ease-out flex flex-col ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                    <div className="p-8 border-b border-app-border flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-gradient-to-tr from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
-                                <span className="text-white text-lg font-black italic">{siteConfig.name.charAt(0)}</span>
-                            </div>
-                            <span className="font-black text-xl tracking-tighter">{siteConfig.name}</span>
-                        </div>
-                        <button onClick={() => setIsMenuOpen(false)} className="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-all">
-                            <X size={20} />
-                        </button>
-                    </div>
-
-                    <div className="flex-1 p-4 space-y-1.5 overflow-y-auto custom-scrollbar">
-                        {routes.map((route) => {
-                            const isActive = pathname === route.path || (pathname.startsWith(route.path) && route.path !== '/');
-                            return (
-                                <Link
-                                    key={route.path}
-                                    href={route.path}
-                                    onClick={() => handleTabChange(route.id)}
-                                    className={`flex items-center gap-4 w-full px-5 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 relative group overflow-hidden ${
-                                        isActive
-                                            ? 'text-white shadow-[0_0_20px_var(--app-glow)] scale-[1.02]'
-                                            : 'text-app-text-muted hover:text-app-text hover:bg-app-card'
-                                    }`}
-                                >
-                                    {isActive && (
-                                        <div className="absolute inset-0 bg-gradient-to-r from-[var(--app-accent)] to-blue-600 opacity-90 z-0 glow-border"></div>
-                                    )}
-                                    <div className="relative z-10 flex items-center gap-4">
-                                        <route.icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-                                        <span>{route.label}</span>
+            {/* --- MENÚ LATERAL (DRAWER) CON FRAMER MOTION --- */}
+            <AnimatePresence>
+                {isMenuOpen && (
+                    <div className="fixed inset-0 z-[200]">
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                            onClick={() => setIsMenuOpen(false)}
+                        />
+                        
+                        <motion.nav 
+                            initial={{ x: '-100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '-100%' }}
+                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                            className="absolute top-0 left-0 h-full w-72 md:w-80 premium-glass border-r border-app-border/30 shadow-2xl flex flex-col"
+                        >
+                            <div className="p-8 border-b border-app-border flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-gradient-to-tr from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
+                                        <span className="text-white text-lg font-black italic">{siteConfig.name.charAt(0)}</span>
                                     </div>
-                                </Link>
-                            );
-                        })}
-                    </div>
+                                    <span className="font-black text-xl tracking-tighter">{siteConfig.name}</span>
+                                </div>
+                                <button onClick={() => setIsMenuOpen(false)} className="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-all active:scale-90">
+                                    <X size={20} />
+                                </button>
+                            </div>
 
-                    <div className="p-6 border-t border-app-border opacity-30 text-[8px] font-bold uppercase tracking-widest text-center">
-                        Kitsune Engine K 1.2.0
+                            <div className="flex-1 p-4 space-y-1.5 overflow-y-auto custom-scrollbar">
+                                {routes.map((route, i) => {
+                                    const isActive = pathname === route.path || (pathname.startsWith(route.path) && route.path !== '/');
+                                    return (
+                                        <motion.div
+                                            key={route.path}
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: i * 0.04, ease: "easeOut" }}
+                                        >
+                                            <Link
+                                                href={route.path}
+                                                onClick={() => handleTabChange(route.id)}
+                                                className={`flex items-center gap-4 w-full px-5 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 relative group overflow-hidden ${
+                                                    isActive
+                                                        ? 'text-white shadow-[0_0_20px_var(--app-glow)] scale-[1.02]'
+                                                        : 'text-app-text-muted hover:text-app-text hover:bg-app-card'
+                                                }`}
+                                            >
+                                                {isActive && (
+                                                    <div className="absolute inset-0 bg-gradient-to-r from-[var(--app-accent)] to-blue-600 opacity-90 z-0 glow-border"></div>
+                                                )}
+                                                <div className="relative z-10 flex items-center gap-4">
+                                                    <route.icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                                                    <span>{route.label}</span>
+                                                </div>
+                                            </Link>
+                                        </motion.div>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="p-6 border-t border-app-border opacity-30 text-[8px] font-bold uppercase tracking-widest text-center">
+                                Kitsune Engine K 1.2.0
+                            </div>
+                        </motion.nav>
                     </div>
-                </nav>
-            </div>
+                )}
+            </AnimatePresence>
 
             {/* --- CONTENIDO PRINCIPAL --- */}
             <main className="relative z-10 pt-24 pb-4 px-4 sm:pt-28 sm:pb-8 sm:px-8 md:pt-32 md:pb-12 md:px-12 max-w-[1400px] mx-auto w-full min-h-screen flex flex-col">

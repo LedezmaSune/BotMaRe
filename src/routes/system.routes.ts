@@ -1,27 +1,10 @@
 import { Router } from 'express';
 import { SystemController } from '../modules/system/system.controller';
-import multer from 'multer';
-
+import { secureUpload } from '../middleware/fileUpload';
 import fs from 'fs';
 import path from 'path';
 
-const uploadDir = path.resolve('backups/temp_uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-    destination: (req: any, file: any, cb: any) => {
-        const dir = path.resolve('data/uploads');
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        cb(null, dir);
-    },
-    filename: (req: any, file: any, cb: any) => {
-        // Respetar el nombre original
-        cb(null, file.originalname);
-    }
-});
-const upload = multer({ storage });
+// Configuración de multer local removida en favor de secureUpload global
 
 export function createSystemRouter(controller: SystemController) {
     const router = Router();
@@ -37,7 +20,7 @@ export function createSystemRouter(controller: SystemController) {
     router.get('/backup', controller.downloadBackup);
     router.get('/export-readable', controller.exportReadable);
     
-    router.post('/upload-multiple', upload.any(), (req, res) => {
+    router.post('/upload-multiple', secureUpload.any(), (req, res) => {
         const reqFiles = (req.files as any[]) || [];
         if (reqFiles.length === 0) {
             return res.status(400).json({ success: false, error: 'No se recibieron archivos. Asegúrate de seleccionar archivos válidos.' });
@@ -55,7 +38,7 @@ export function createSystemRouter(controller: SystemController) {
         });
     });
     
-    router.post('/restore', upload.single('backup'), controller.restoreBackup);
+    router.post('/restore', secureUpload.single('backup'), controller.restoreBackup);
     
     return router;
 }

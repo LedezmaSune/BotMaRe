@@ -62,10 +62,10 @@ graph TD
 - 📦 **Respaldos en un Clic**: Exporta e importa bases de datos de configuración y archivos multimedia por separado o juntos desde la UI.
 - ✈️ **Soporte Remoto vía Telegram**: Controla el estado del bot, genera nuevos QRs y levanta túneles de soporte SSH remoto (`tmate`) directo desde tu chat de Telegram.
 - 👥 **Gestor de Grupos**: Selector nativo de grupos autorizados en el dashboard y detección inteligente de menciones.
-- 💾 **Base de Datos Híbrida Inteligente**: Conexión prioritaria a MongoDB Atlas en la nube con un fallback automático y resiliente a una base de datos local `lowdb` (`data/database.json`) si se produce un fallo de red o un timeout de 5 segundos.
+- 💾 **Base de Datos con Patrón Estrategia**: Arquitectura sólida y modular (`MongoAdapter` y `LowdbAdapter`) que permite escalar el almacenamiento sin tocar la lógica central.
 - 📶 **Control de Conectividad**: Tarjeta visual en el panel de configuración para ver el estado y copiar con un clic tus accesos por **Cloudflare Tunnel** (Público) y **Tailscale VPN** (Privado).
-- 📡 **IP Auto-Detección**: Filtra automáticamente adaptadores de bucle o redes virtuales incompatibles (como WARP) para mostrar tu dirección IP física real de Wi-Fi o Ethernet.
-- 🛠️ **Consola de Control Maestro**: Un lanzador interactivo multiplataforma (`pnpm run menu`) para iniciar, compilar, limpiar logs o reiniciar WhatsApp de forma completamente visual.
+- 🚀 **Compilación Ultrarrápida**: Integración con **Turbopack** y optimización nativa de librerías para arranques y builds hasta 700x más rápidos.
+- 🎨 **Experiencia Premium UI/UX**: Animaciones fluidas nativas en el dashboard gracias a **Framer Motion** y una **Terminal Visual** con spinners ANSI y arte ASCII para las fases de arranque.
 
 ---
 

@@ -1,6 +1,5 @@
 const { spawn } = require('child_process');
 const readline = require('readline');
-const fs = require('fs');
 const path = require('path');
 
 const rl = readline.createInterface({
@@ -8,37 +7,48 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 
+const c = {
+    reset: "\x1b[0m", dim: "\x1b[2m", bright: "\x1b[1m",
+    cyan: "\x1b[36m", magenta: "\x1b[35m", green: "\x1b[32m",
+    yellow: "\x1b[33m", red: "\x1b[31m", blue: "\x1b[34m"
+};
+
 function showBanner() {
     console.clear();
-    console.log('\x1b[36m%s\x1b[0m', '=======================================================');
-    console.log('\x1b[35m%s\x1b[0m', '      🦊 BOTMARE AI - MENÚ DE CONTROL MAESTRO');
-    console.log('\x1b[36m%s\x1b[0m', '=======================================================');
-    console.log(` Sistema Operativo Detectado: \x1b[33m${process.platform.toUpperCase()}\x1b[0m`);
-    console.log(` Directorio Base: \x1b[33m${path.resolve(__dirname, '..')}\x1b[0m`);
-    console.log('\x1b[36m%s\x1b[0m', '=======================================================');
+    console.log(c.cyan + `
+    ██████╗  ██████╗ ████████╗███╗   ███╗███████╗██████╗ 
+    ██╔══██╗██╔═══██╗╚══██╔══╝████╗ ████║██╔════╝██╔══██╗
+    ██████╦╝██║   ██║   ██║   ██╔████╔██║█████╗  ██████╔╝
+    ██╔══██╗██║   ██║   ██║   ██║╚██╔╝██║██╔══╝  ██╔══██╗
+    ██████╦╝╚██████╔╝   ██║   ██║ ╚═╝ ██║███████╗██║  ██║
+    ╚═════╝  ╚═════╝    ╚═╝   ╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝
+    ` + c.reset);
+    console.log(c.magenta + "                  » Control Maestro «" + c.reset);
+    console.log(c.dim + "===========================================================" + c.reset);
+    console.log(` ${c.cyan}OS:${c.reset} \x1b[33m${process.platform.toUpperCase()}\x1b[0m  |  ${c.cyan}DIR:${c.reset} \x1b[33m${path.resolve(__dirname, '..')}\x1b[0m`);
+    console.log(c.dim + "===========================================================\n" + c.reset);
 }
 
 function showMenu() {
     showBanner();
-    console.log(' \x1b[32m1.\x1b[0m 🚀 Iniciar Bot (Modo Producción - Recomendado)');
-    console.log(' \x1b[32m2.\x1b[0m ⚡ Iniciar Bot + UI (Modo Desarrollo/Recarga Activa)');
-    console.log(' \x1b[32m3.\x1b[0m 📦 Compilar Frontend (Build - Obligatorio para VPS/Termux)');
-    console.log(' \x1b[32m4.\x1b[0m 🧹 Limpiar Cachés y Carpetas Temporales (Clean)');
-    console.log(' \x1b[32m5.\x1b[0m 💾 Optimizar Espacio en Disco y Vaciar Logs (Vacuum)');
-    console.log(' \x1b[32m6.\x1b[0m 🔑 Cerrar Sesión de WhatsApp (Forzar nuevo QR)');
-    console.log(' \x1b[32m7.\x1b[0m 📥 Instalar/Actualizar Dependencias (pnpm install)');
-    console.log(' \x1b[31m8.\x1b[0m ❌ Salir');
-    console.log('\x1b[36m%s\x1b[0m', '=======================================================');
+    console.log(`  ${c.green}[1]${c.reset} 🚀 Iniciar Servidor ${c.dim}(Modo Producción)${c.reset}`);
+    console.log(`  ${c.green}[2]${c.reset} ⚡ Iniciar Desarrollo ${c.dim}(Live Reload + Turbopack)${c.reset}`);
+    console.log(`  ${c.green}[3]${c.reset} 📦 Compilar Frontend ${c.dim}(Build Next.js)${c.reset}`);
+    console.log(`  ${c.green}[4]${c.reset} 🧹 Limpiar Cachés y .next ${c.dim}(Clean)${c.reset}`);
+    console.log(`  ${c.green}[5]${c.reset} 💾 Optimizar Disco y Logs ${c.dim}(Vacuum)${c.reset}`);
+    console.log(`  ${c.green}[6]${c.reset} 🔑 Forzar Nuevo QR ${c.dim}(Cerrar Sesión WA)${c.reset}`);
+    console.log(`  ${c.green}[7]${c.reset} 📥 Actualizar Dependencias ${c.dim}(pnpm install)${c.reset}`);
+    console.log(`  ${c.red}[8]${c.reset} ❌ Salir del Sistema`);
+    console.log(c.dim + "\n===========================================================" + c.reset);
     
-    rl.question('Selecciona una opción [1-8]: ', (choice) => {
+    rl.question(`\n  ${c.cyan}➤ Selecciona una acción [1-8]:${c.reset} `, (choice) => {
         handleChoice(choice.trim());
     });
 }
 
 function runCmd(command, args, callback) {
-    console.log('\x1b[36m%s\x1b[0m', `\n[Ejecutando] ${command} ${args.join(' ')}...\n`);
+    console.log(`\n  ${c.blue}🔄 Ejecutando: ${command} ${args.join(' ')}...${c.reset}\n`);
     
-    // Usar shell para compatibilidad multiplataforma absoluta (Windows cmd, Linux/macOS/Android bash/sh)
     const proc = spawn(command, args, { 
         stdio: 'inherit',
         shell: true,
@@ -46,11 +56,15 @@ function runCmd(command, args, callback) {
     });
     
     proc.on('close', (code) => {
-        console.log('\x1b[36m%s\x1b[0m', `\n-------------------------------------------------------`);
-        console.log(`[Terminado] Proceso finalizado con código: ${code}`);
-        console.log('\x1b[36m%s\x1b[0m', `-------------------------------------------------------`);
+        console.log(c.dim + `\n-------------------------------------------------------` + c.reset);
+        if (code === 0) {
+            console.log(`  ${c.green}✔ Proceso finalizado con éxito.${c.reset}`);
+        } else {
+            console.log(`  ${c.red}✖ Proceso terminado con código de error: ${code}${c.reset}`);
+        }
+        console.log(c.dim + `-------------------------------------------------------` + c.reset);
         
-        rl.question('\nPresiona ENTER para volver al menú principal...', () => {
+        rl.question(`\n  ${c.cyan}Presiona ENTER para volver al menú...${c.reset}`, () => {
             callback();
         });
     });
@@ -59,28 +73,22 @@ function runCmd(command, args, callback) {
 function handleChoice(choice) {
     switch (choice) {
         case '1':
-            // start
             runCmd('pnpm', ['run', 'start'], showMenu);
             break;
         case '2':
-            // dev
             runCmd('pnpm', ['run', 'dev'], showMenu);
             break;
         case '3':
-            // build
             runCmd('pnpm', ['run', 'build'], showMenu);
             break;
         case '4':
-            // clean
             runCmd('pnpm', ['run', 'clean'], showMenu);
             break;
         case '5':
-            // clean:logs
             runCmd('node', ['bin/clean-logs.js'], showMenu);
             break;
         case '6':
-            // reset:wa
-            rl.question('\x1b[31m¿Estás seguro de que quieres cerrar la sesión de WhatsApp y eliminar las credenciales? (s/n): \x1b[0m', (ans) => {
+            rl.question(`\n  ${c.red}⚠ ¿Seguro que quieres eliminar la sesión de WhatsApp? (s/n): ${c.reset}`, (ans) => {
                 if (ans.toLowerCase() === 's' || ans.toLowerCase() === 'si' || ans.toLowerCase() === 'y') {
                     runCmd('pnpm', ['run', 'reset:wa'], showMenu);
                 } else {
@@ -89,20 +97,18 @@ function handleChoice(choice) {
             });
             break;
         case '7':
-            // pnpm install
             runCmd('pnpm', ['install'], showMenu);
             break;
         case '8':
-            console.log('\x1b[35m%s\x1b[0m', '\n🦊 ¡Gracias por usar BotMaRe AI! Saliendo...\n');
+            console.log(`\n  ${c.magenta}🦊 ¡Sistema Desconectado! Hasta pronto.${c.reset}\n`);
             rl.close();
             process.exit(0);
             break;
         default:
-            console.log('\x1b[31mOpción inválida. Selecciona un número del 1 al 8.\x1b[0m');
-            setTimeout(showMenu, 1500);
+            console.log(`\n  ${c.red}✖ Opción inválida.${c.reset}`);
+            setTimeout(showMenu, 1200);
             break;
     }
 }
 
-// Iniciar el lanzador interactivo
 showMenu();

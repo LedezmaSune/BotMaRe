@@ -267,6 +267,11 @@ if ! command -v node &>/dev/null; then
 fi
 
 NODE_VERSION=$(node -v | sed 's/v//' | cut -d. -f1)
+if ! [[ "$NODE_VERSION" =~ ^[0-9]+$ ]]; then
+    fail "No se pudo determinar la versión de Node.js de forma segura. Detectado: '$NODE_VERSION'"
+    exit 1
+fi
+
 if [ "$NODE_VERSION" -lt 18 ]; then
     fail "Node.js v$NODE_VERSION detectado. Se requiere v18 o superior (v20 recomendado)."
     exit 1
@@ -378,17 +383,26 @@ if [[ "$OS" != "macos" ]] && [[ "$OS" != "unknown" ]]; then
                     warn "Ya existe un /swapfile. Saltando creación."
                 else
                     info "Creando archivo Swap de 2 GB..."
-                    sudo fallocate -l 2G /swapfile
-                    sudo chmod 600 /swapfile
-                    sudo mkswap /swapfile
-                    sudo swapon /swapfile
+                    if sudo fallocate -l 2G /swapfile 2>/dev/null; then
+                        sudo chmod 600 /swapfile
+                        sudo mkswap /swapfile
+                        sudo swapon /swapfile
+                        ok "Swap de 2 GB creado con fallocate."
+                    else
+                        info "fallocate falló, intentando con dd (esto puede tardar unos segundos)..."
+                        sudo dd if=/dev/zero of=/swapfile bs=1M count=2048 status=progress
+                        sudo chmod 600 /swapfile
+                        sudo mkswap /swapfile
+                        sudo swapon /swapfile
+                        ok "Swap de 2 GB creado con dd."
+                    fi
 
                     # Hacer permanente
                     if ! grep -q '/swapfile' /etc/fstab; then
                         echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab >/dev/null
                     fi
 
-                    ok "Swap de 2 GB creado y activado permanentemente."
+                    ok "Swap de 2 GB activado permanentemente."
                 fi
             else
                 info "Swap no creado. Puedes hacerlo manualmente si lo necesitas."

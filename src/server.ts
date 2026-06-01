@@ -11,6 +11,7 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { globalLimiter } from './middleware/security';
+import { Spinner, drawBanner, colors } from './utils/cli';
 
 // Core & Infrastructure
 import { Bot } from './core/bot';
@@ -22,6 +23,7 @@ import { NotificationService } from './telegram/notification.service';
 import { createMainRouter } from './routes/index';
 import { errorHandler } from './middleware/errorHandler';
 import { basicAuth } from './middleware/auth.middleware';
+import { loggingMiddleware } from './middleware/logger';
 import { Scheduler } from './modules/scheduling/scheduler';
 import { ReminderService } from './modules/reminders/reminder.service';
 import { initTelegramBot } from './telegram/bot';
@@ -57,7 +59,15 @@ app.set('trust proxy', 1);
 
 // 1. Seguridad de Cabeceras (Configuración Pro-Dashboard)
 app.use(helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "blob:", "https:"],
+            connectSrc: ["'self'", "wss:", "ws:", "http:", "https:"],
+        },
+    },
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
@@ -67,6 +77,9 @@ app.use('/api', globalLimiter);
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// --- LOGGING ---
+app.use(loggingMiddleware);
 
 // --- NUEVA ARQUITECTURA MODULAR ---
 const bot = new Bot(io);
@@ -103,19 +116,21 @@ if (!(process.env.NODE_ENV === 'development' && !isPkg)) {
     app.get(/.*/, (req: any, res: any) => {
         if (!req.path.startsWith('/api')) {
             // Soporte para deep-linking en export estático de Next.js
-            const potentialHtmlPath = path.join(frontendPath, req.path === '/' ? 'index.html' : `${req.path}.html`);
+            const safePath = req.path.replace(/^(\.\.(\/|\\|$))+/, '');
+            const targetFile = safePath === '/' ? 'index.html' : `${safePath}.html`;
             
-            if (fs.existsSync(potentialHtmlPath)) {
-                return res.sendFile(potentialHtmlPath);
-            }
-
-            // Fallback a index.html para rutas no encontradas (SPA mode)
-            const indexPath = path.join(frontendPath, 'index.html');
-            if (fs.existsSync(indexPath)) {
-                res.sendFile(indexPath);
-            } else {
-                res.status(404).send('Dashboard files not found in: ' + frontendPath);
-            }
+            // Usamos la opción 'root' nativa de Express que bloquea Path Traversal
+            // por defecto y evitamos construir la ruta manualmente para el linter.
+            res.sendFile(targetFile, { root: frontendPath }, (err: any) => {
+                if (err) {
+                    // Fallback a index.html para rutas no encontradas (SPA mode)
+                    res.sendFile('index.html', { root: frontendPath }, (err2: any) => {
+                        if (err2) {
+                            res.status(404).send('No se encontraron los archivos del Dashboard.');
+                        }
+                    });
+                }
+            });
         }
     });
 }
@@ -135,59 +150,69 @@ const PORT = process.env.PORT || 8000;
  * Bootstrap Application
  */
 async function bootstrap() {
-    console.log(`\n[Fase 0] Validando Entorno...`);
+    drawBanner();
+    
+    const s0 = new Spinner("Validando Entorno...");
+    s0.start();
     try {
         SystemUtils.ensureDirs();
         SystemUtils.validateEnv();
-        console.log(`  ✓ Carpetas del sistema y .env validados.`);
+        s0.succeed("Carpetas del sistema y .env validados.");
     } catch (e: any) {
-        console.error(`  [!] Error de validación: ${e.message}`);
+        s0.fail(`Error de validación: ${e.message}`);
         process.exit(1);
     }
 
-    console.log(`[Fase 1] Inicializando Almacenamiento y Memoria...`);
-    // Inicializar el sistema de Base de Datos híbrido (MongoDB Atlas + Fallback Lowdb)
+    const s1 = new Spinner("Inicializando Almacenamiento y Memoria...");
+    s1.start();
     try {
         await initDB();
+        s1.succeed("Base de Datos y Caché listos.");
     } catch (e: any) {
-        console.error(`  [!] Error al inicializar base de datos híbrida: ${e.message}`);
+        s1.fail(`Error al inicializar base de datos: ${e.message}`);
     }
-    console.log(`  ✓ SQLite, Base de Datos Híbrida y Caché de Memoria listos.`);
 
-    console.log(`[Fase 2] Conectividad y Acceso Global...`);
+    const s2 = new Spinner("Verificando Conectividad y Acceso Global...");
+    s2.start();
     const tunnel = TunnelService.getInstance();
     let tunnelUrl = null;
     try {
         tunnelUrl = await tunnel.start(Number(PORT));
-        if (tunnelUrl) console.log(`  🌍 TÚNEL: ${tunnelUrl}`);
+        if (tunnelUrl) s2.succeed(`Túnel establecido.`);
+        else s2.info(`Solo acceso local disponible.`);
     } catch (e) {
-        console.log(`  [!] No se pudo establecer el túnel. Solo acceso local.`);
+        s2.info(`No se pudo establecer el túnel. Solo acceso local.`);
     }
 
-    console.log(`[Fase 3] Desplegando Servidor y Dashboard...`);
+    const s3 = new Spinner("Desplegando Servidor y Dashboard...");
+    s3.start();
     server.listen(Number(PORT), '0.0.0.0', async () => {
+        s3.succeed("Servidor HTTP Online.");
         const localIP = SystemUtils.getLocalIP();
         
-        console.log(`\n=======================================================`);
+        console.log(`\n${colors.dim}=======================================================${colors.reset}`);
         const brand = process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe';
-        console.log(`🦊 MOTOR ${brand.toUpperCase()} ACTIVADO`);
-        console.log(`=======================================================`);
-        console.log(`🏠 LOCAL:  http://localhost:${PORT}`);
-        console.log(`🌐 RED:    http://${localIP}:${PORT}`);
-        if (tunnelUrl) console.log(`🌍 WEB:    ${tunnelUrl}`);
-        console.log(`=======================================================\n`);
+        console.log(`🦊 ${colors.fg.cyan}MOTOR ${brand.toUpperCase()} ACTIVADO${colors.reset}`);
+        console.log(`${colors.dim}=======================================================${colors.reset}`);
+        console.log(`🏠 ${colors.fg.yellow}LOCAL:${colors.reset}  http://localhost:${PORT}`);
+        console.log(`🌐 ${colors.fg.yellow}RED:${colors.reset}    http://${localIP}:${PORT}`);
+        if (tunnelUrl) console.log(`🌍 ${colors.fg.yellow}WEB:${colors.reset}    ${tunnelUrl}`);
+        console.log(`${colors.dim}=======================================================\n${colors.reset}`);
 
-        console.log(`[Fase 4] Activando Servicios e IA...`);
+        const s4 = new Spinner("Activando Servicios y Motor IA...");
+        s4.start();
         initTools(messageService as any);
         initTelegramBot(messageService as any, reminderService, messageService as any);
         Scheduler.init(messageService as any, reminderService);
         BackupService.initScheduledBackup();
-        console.log(`  ✓ Telegram, Programadores y Herramientas listos.`);
+        s4.succeed("Telegram, Programadores y Herramientas listos.");
 
-        console.log(`\n[Fase 5] Conectando Motor de WhatsApp...`);
+        const s5 = new Spinner("Conectando Motor de WhatsApp...");
+        s5.start();
         await bot.start();
+        s5.succeed("Motor Baileys Activo y Escuchando.");
 
-        // Notificar a los administradores que el sistema está listo
+        // Notificar a los administradores
         const finalUrl = tunnelUrl || `http://${localIP}:${PORT}`;
         await NotificationService.notifyAdmin(
             `🚀 *¡Sistema Online!*\n\n` +

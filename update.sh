@@ -33,6 +33,18 @@ banner "          Mantén tu sistema al día con total seguridad"
 divider
 echo ""
 
+detect_os() {
+    OS="unknown"
+    if [ -d "/data/data/com.termux" ]; then
+        OS="termux"
+    elif [[ "${OSTYPE:-linux}" == "linux-gnu"* ]] || [ -f /etc/os-release ]; then
+        OS="linux"
+    elif [[ "${OSTYPE:-}" == "darwin"* ]]; then
+        OS="macos"
+    fi
+}
+detect_os
+
 # 1. Verificar si estamos en un repositorio Git
 if [ ! -d ".git" ]; then
     fail "Error: No se detectó un repositorio Git activo. Este script requiere Git."
@@ -44,20 +56,12 @@ step 1 "Creando respaldo de seguridad preventivo..."
 BACKUP_DIR="backups/pre-update-$(date +%F_%H-%M-%S)"
 mkdir -p "$BACKUP_DIR"
 
-# Respaldar base de datos del sistema
-if [ -f "data/database.db" ]; then
-    cp "data/database.db" "$BACKUP_DIR/" 2>/dev/null
-    info "Base de datos del sistema respaldada."
+# Respaldar carpeta data completa en un archivo comprimido
+if [ -d "data" ]; then
+    tar -czf "$BACKUP_DIR/data_backup.tar.gz" data/ 2>/dev/null
+    info "Carpeta de datos completa respaldada en data_backup.tar.gz."
 else
-    warn "No se encontró base de datos del sistema (database.db) para respaldar."
-fi
-
-# Respaldar sesiones activas de WhatsApp
-if [ -f "data/whatsapp_auth.db" ]; then
-    cp "data/whatsapp_auth.db" "$BACKUP_DIR/" 2>/dev/null
-    info "Sesiones de WhatsApp (whatsapp_auth.db) respaldadas."
-else
-    info "No hay sesiones activas de WhatsApp para respaldar."
+    warn "No se encontró la carpeta 'data' para respaldar."
 fi
 
 # Respaldar variables de entorno
@@ -70,15 +74,33 @@ ok "Respaldo preventivo guardado en: ${BOLD}${BACKUP_DIR}/${NC}"
 
 # 3. Descargar cambios de GitHub
 step 2 "Sincronizando código con GitHub..."
-info "Limpiando posibles conflictos de código local..."
-git reset --hard HEAD
+info "Protegiendo cambios locales antes de actualizar..."
+# Guardar cambios locales que no han sido commiteados
+STASH_RESULT=$(git stash 2>&1)
+if [[ "$STASH_RESULT" != *"No local changes to save"* && "$STASH_RESULT" != *"No hay cambios locales"* ]]; then
+    warn "Se detectaron cambios locales. Se han guardado en 'git stash'."
+    HAS_STASH=true
+else
+    HAS_STASH=false
+fi
+
 info "Trayendo actualizaciones desde la rama principal..."
-git pull origin main
+git pull --rebase origin main
 
 if [ $? -ne 0 ]; then
     fail "Error al descargar las actualizaciones de GitHub."
-    warn "Por favor verifica tu conexión a Internet o los permisos del repositorio."
+    warn "Intentando restaurar estado anterior..."
+    git rebase --abort 2>/dev/null
+    [ "$HAS_STASH" = true ] && git stash pop
     exit 1
+fi
+
+if [ "$HAS_STASH" = true ]; then
+    info "Restaurando tus cambios locales..."
+    if ! git stash pop; then
+        warn "Hubo conflictos al restaurar tus cambios locales."
+        warn "Por favor resuelve los conflictos de Git manualmente."
+    fi
 fi
 ok "Código fuente actualizado exitosamente."
 
@@ -99,6 +121,44 @@ ok "Librerías y dependencias actualizadas."
 
 # 5. Reconstruir Dashboard
 step 4 "Reconstruyendo interfaz visual del Dashboard (Next.js)..."
+
+if [[ "$OS" != "macos" ]] && [[ "$OS" != "termux" ]]; then
+    TOTAL_RAM_MB=$(free -m 2>/dev/null | awk '/^Mem:/{print $2}' || echo "0")
+    SWAP_SIZE=$(free -m 2>/dev/null | awk '/^Swap:/{print $2}' || echo "0")
+
+    if [ "$TOTAL_RAM_MB" -gt 0 ] 2>/dev/null; then
+        if [ "$TOTAL_RAM_MB" -le 1500 ] && [ "$SWAP_SIZE" -le 512 ]; then
+            warn "Tu servidor tiene poca RAM (${TOTAL_RAM_MB} MB) y poco Swap."
+            warn "Next.js puede fallar durante la compilación."
+            read -p "  ¿Deseas crear un archivo Swap de 2 GB? (s/n): " -n 1 -r CREATE_SWAP
+            echo ""
+            if [[ "$CREATE_SWAP" =~ ^[Ss]$ ]]; then
+                if [ -f "/swapfile" ]; then
+                    warn "Ya existe un /swapfile."
+                else
+                    info "Creando archivo Swap de 2 GB..."
+                    if sudo fallocate -l 2G /swapfile 2>/dev/null; then
+                        sudo chmod 600 /swapfile
+                        sudo mkswap /swapfile
+                        sudo swapon /swapfile
+                        ok "Swap de 2 GB creado con fallocate."
+                    else
+                        info "fallocate falló, intentando con dd (esto puede tardar unos segundos)..."
+                        sudo dd if=/dev/zero of=/swapfile bs=1M count=2048 status=progress
+                        sudo chmod 600 /swapfile
+                        sudo mkswap /swapfile
+                        sudo swapon /swapfile
+                        ok "Swap de 2 GB creado con dd."
+                    fi
+                    if ! grep -q '/swapfile' /etc/fstab; then
+                        echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab >/dev/null
+                    fi
+                fi
+            fi
+        fi
+    fi
+fi
+
 pnpm run build
 
 if [ $? -ne 0 ]; then

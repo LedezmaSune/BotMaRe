@@ -45,8 +45,8 @@ export function createSupportRouter() {
     // GET /api/support/logs
     // We fetch logs from the audits table to provide recent activity without reading large PM2 logs
     router.get('/logs', asyncHandler(async (req: Request, res: Response) => {
-        const { db } = require('../core/memory');
-        const audits = db.prepare('SELECT * FROM audits ORDER BY timestamp DESC LIMIT 50').all();
+        const { listAudits } = require('../core/dbManager');
+        const audits = await listAudits(50);
         res.json(audits);
     }));
 

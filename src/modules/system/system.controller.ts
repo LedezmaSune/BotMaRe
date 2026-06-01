@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { db, listReminders } from '../../core/memory';
+import { listAudits } from '../../core/dbManager';
 import { asyncHandler } from '../../middleware/errorHandler';
 import { UpdateService } from './update.service';
 
@@ -12,9 +12,7 @@ export class SystemController {
     constructor(private waClient?: any) {}
 
     getAudits = asyncHandler(async (req: Request, res: Response) => {
-        const audits = db
-            .prepare('SELECT id, userId, action, details, timestamp FROM audits ORDER BY timestamp DESC LIMIT 50')
-            .all();
+        const audits = await listAudits(50);
         res.json(audits);
     });
 
