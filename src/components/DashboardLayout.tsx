@@ -197,7 +197,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                         
                         <div className="flex items-center gap-4">
                             <div className="px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.15)]">
-                                <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-widest">K 1.2.0</span>
+                                <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-widest">K 1.3.0</span>
                             </div>
                             <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />

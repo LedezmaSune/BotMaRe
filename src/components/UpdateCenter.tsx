@@ -16,6 +16,19 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'K 1.3.0',
+        date: '31 Mayo 2026',
+        title: 'Arquitectura Híbrida & Experiencia Premium',
+        type: 'minor',
+        description: 'Reconstrucción del motor de base de datos a un patrón de estrategia, integración de compilador Turbopack y rediseño completo de la experiencia de usuario en consola y web.',
+        features: [
+            '💾 Patrón Estrategia para Base de Datos: Transición limpia entre MongoDB Atlas en la nube y Lowdb en local de forma dinámica sin tocar los controladores.',
+            '🚀 Integración con Turbopack: Tiempos de compilación y recarga en caliente hiper-optimizados en Next.js, reduciendo demoras drásticamente.',
+            '🎨 Experiencia Premium UI: Animaciones súper fluidas impulsadas por Framer Motion, menús laterales dinámicos y efecto Glassmorphism expandido.',
+            '🛠️ Terminal Visual Renacida: Spinners ANSI nativos que colorean cada fase del arranque, logs limpios y un nuevo panel interactivo en el Control Maestro.'
+        ]
+    },
+    {
         version: 'K 1.2.0',
         date: '21 Mayo 2026',
         title: 'Actualización de Resiliencia & Soporte Humano',
