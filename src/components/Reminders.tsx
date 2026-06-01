@@ -14,7 +14,7 @@ import { useRemindersLogic } from './reminders/hooks/useRemindersLogic';
 interface RemindersProps {
     reminders: Reminder[];
     templates: Template[];
-    onAdd: (chatId: string, text: string, time: string, media: File | null, repeat?: string, repeatInterval?: number, repeatUnit?: string, title?: string, mediaPath?: string, mediaType?: string) => Promise<void>;
+    onAdd: (chatId: string, text: string, time: string, media: File[] | File | null, repeat?: string, repeatInterval?: number, repeatUnit?: string, title?: string, mediaPath?: string, mediaType?: string) => Promise<void>;
     onDelete: (id: number) => Promise<void>;
     initialTime?: string;
     initialId?: number | null;

@@ -7,7 +7,7 @@ export function useRemindersLogic(
         chatId: string, 
         text: string, 
         time: string, 
-        media: File | null, 
+        media: File[] | File | null, 
         repeat?: string, 
         repeatInterval?: number, 
         repeatUnit?: string, 
@@ -34,7 +34,7 @@ export function useRemindersLogic(
     const [title, setTitle] = useState('');
     const [text, setText] = useState('');
     const [time, setTime] = useState(initialTime || '');
-    const [media, setMedia] = useState<File | null>(null);
+    const [media, setMedia] = useState<File[] | null>(null);
     const [loading, setLoading] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [repeat, setRepeat] = useState('none');

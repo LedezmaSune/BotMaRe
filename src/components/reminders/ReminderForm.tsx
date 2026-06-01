@@ -12,7 +12,8 @@ interface ReminderFormProps {
     setText: (val: string) => void;
     time: string;
     setTime: (val: string) => void;
-    setMedia: (val: File | null) => void;
+    setMedia: (val: File[] | null) => void;
+    media: File[] | null;
     
     editingId: number | null;
     setEditingId: (val: number | null) => void;
@@ -29,7 +30,7 @@ export function ReminderForm({
     chatId, setChatId,
     text, setText,
     time, setTime,
-    setMedia,
+    media, setMedia,
     editingId, setEditingId,
     loading,
     templates,
@@ -115,9 +116,22 @@ export function ReminderForm({
                     <label className="text-[10px] uppercase font-bold text-app-text-muted mb-1 block tracking-widest">Multimedia</label>
                     <input
                         type="file"
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMedia(e.target.files?.[0] || null)}
+                        multiple
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const files = e.target.files;
+                            if (files && files.length > 0) {
+                                setMedia(Array.from(files));
+                            } else {
+                                setMedia(null);
+                            }
+                        }}
                         className="block w-full text-xs text-app-text-muted file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-slate-200 dark:file:bg-slate-800 file:text-slate-700 dark:file:text-slate-200"
                     />
+                    {media && media.length > 0 && (
+                        <div className="mt-2 pl-1">
+                            <span className="text-[10px] text-cyan-500 font-bold uppercase tracking-widest">{media.length} archivo(s) seleccionado(s)</span>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="flex gap-2 pt-4">

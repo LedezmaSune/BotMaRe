@@ -27,19 +27,35 @@ export class ReminderController {
 
     createWithMedia = asyncHandler(async (req: Request, res: Response) => {
         const { chatId, text, time, repeat, repeatInterval, repeatUnit, title } = req.body;
-        const file = req.file;
+        const files = req.files as Express.Multer.File[];
 
-        let mediaType;
-        if (file) {
+        if (!files || files.length === 0) {
+            const id = await this.reminderService.create('owner', chatId, text, time, undefined, undefined, repeat, repeatInterval ? parseInt(repeatInterval) : undefined, repeatUnit, title);
+            return res.json({ success: true, id });
+        }
+
+        const createdIds = [];
+        const mediaPaths = [];
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            let mediaType;
             if (file.mimetype.startsWith('image/')) mediaType = 'image';
             else if (file.mimetype.startsWith('video/')) mediaType = 'video';
             else if (file.mimetype.startsWith('audio/')) mediaType = 'audio';
             else mediaType = 'document';
+
+            const mediaPath = path.resolve(file.path);
+            
+            // Solo adjuntamos el texto (caption) al primer archivo para evitar spam si suben muchas fotos
+            const textForThisFile = i === 0 ? text : '';
+            
+            const id = await this.reminderService.create('owner', chatId, textForThisFile, time, mediaPath, mediaType, repeat, repeatInterval ? parseInt(repeatInterval) : undefined, repeatUnit, title);
+            createdIds.push(id);
+            mediaPaths.push(mediaPath);
         }
 
-        const mediaPath = file ? path.resolve(file.path) : undefined;
-        const id = await this.reminderService.create('owner', chatId, text, time, mediaPath, mediaType, repeat, repeatInterval ? parseInt(repeatInterval) : undefined, repeatUnit, title);
-        res.json({ success: true, id, mediaPath });
+        res.json({ success: true, ids: createdIds, mediaPaths });
     });
 
     delete = asyncHandler(async (req: Request, res: Response) => {

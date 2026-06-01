@@ -190,7 +190,7 @@ export function useBotData() {
         }
     };
 
-    const handleAddReminder = async (chatId: string, text: string, time: string, media: File | null, repeat?: string, repeatInterval?: number, repeatUnit?: string, title?: string, mediaPath?: string, mediaType?: string) => {
+    const handleAddReminder = async (chatId: string, text: string, time: string, media: File[] | File | null, repeat?: string, repeatInterval?: number, repeatUnit?: string, title?: string, mediaPath?: string, mediaType?: string) => {
         setIsLoading(true);
         try {
             const formData = new FormData();
@@ -198,7 +198,13 @@ export function useBotData() {
             formData.append('text', text);
             formData.append('time', time);
             if (title) formData.append('title', title);
-            if (media) formData.append('media', media);
+            if (media) {
+                if (Array.isArray(media)) {
+                    media.forEach(f => formData.append('media', f));
+                } else {
+                    formData.append('media', media);
+                }
+            }
             if (repeat) formData.append('repeat', repeat);
             if (repeatInterval) formData.append('repeatInterval', repeatInterval.toString());
             if (repeatUnit) formData.append('repeatUnit', repeatUnit);
