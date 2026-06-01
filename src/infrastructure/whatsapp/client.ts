@@ -8,7 +8,7 @@ import { useSQLiteAuthState } from './sqlite-auth';
 import path from 'path';
 import pino from 'pino';
 
-const logger = pino({ level: 'error' });
+const logger = pino({ level: 'silent' });
 
 /**
  * INFRASTRUCTURE LAYER

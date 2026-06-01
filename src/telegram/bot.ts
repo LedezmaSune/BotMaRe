@@ -187,7 +187,7 @@ export function initTelegramBot(
             const text = rows.map(r => {
                 const details = r.details ? (r.details.length > 100 ? r.details.substring(0, 100) + '...' : r.details) : 'Sin detalles';
                 const ts = r.timestamp ? new Date(r.timestamp).toLocaleString() : 'N/A';
-                return `• [${ts}] *${r.action}*\n└ ${details}`;
+                return `• [${ts}] *${r.action}*\n└ \`${details}\``;
             }).join("\n\n");
 
             await ctx.reply(`📊 *Últimas 10 Acciones:*\n\n${text}`, { parse_mode: "Markdown" });
@@ -690,7 +690,7 @@ export function initTelegramBot(
         const text = rows.map(r => {
             const details = r.details ? (r.details.length > 100 ? r.details.substring(0, 100) + '...' : r.details) : 'Sin detalles';
             const ts = r.timestamp ? new Date(r.timestamp).toLocaleString() : 'N/A';
-            return `• [${ts}] *${r.action}*\n└ ${details}`;
+            return `• [${ts}] *${r.action}*\n└ \`${details}\``;
         }).join("\n\n");
 
         await ctx.reply(`📊 *Últimas 10 Acciones:*\n\n${text}`, { parse_mode: "Markdown" });
