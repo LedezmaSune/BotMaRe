@@ -11,8 +11,7 @@
   </p>
 
   <p>
-    <a href="MANUAL_DE_USUARIO.md">📘 Manual de Usuario</a> | 
-    <a href="ACTUALIZACIONES.md">🔄 Registro de Actualizaciones (Changelog)</a>
+    <a href="MANUAL_DE_USUARIO.md">📘 Manual de Usuario</a>
   </p>
 </div>
 
@@ -322,12 +321,17 @@ Personaliza tus mensajes de difusión y auto-respuestas inyectando datos del des
 | Variable | Descripción | Ejemplo Visual |
 |---|---|---|
 | `{NOMBRE}` | Nombre completo guardado en agenda | Juan Carlos Pérez |
-| `{NOMBRE_PILA}` | Primer nombre únicamente | Juan |
-| `{APELLIDO}` | Apellidos únicamente | Pérez |
-| `{FECHA}` | Fecha actual del servidor | 25/05/2026 |
+| `{NOMBRE_PILA}` o `{NOMBRE_PILA}` | Primer nombre únicamente | Juan |
+| `{APELLIDO}` o `{LAST_NAME}` | Apellidos únicamente | Pérez |
+| `{SALUDO}` | Saludo dinámico inteligente según horario | Buenos días / Buenas tardes / Buenas noches |
+| `{EMOJI_SALUDO}` | Emoji de saludo aleatorio | 👋, 😊, 🤝, 🙌, ✨, 🌟 |
+| `{EMOJI_ATENCION}` | Emoji de llamada a la acción aleatorio | 💡, 📢, ⚠️, 🎯, 📌 |
+| `{EMOJI_ALEATORIO}` | Emoji positivo general aleatorio | 🎉, 🚀, 🔥, ✅, 😎 |
+| `{FECHA}` o `{DATE}` | Fecha actual del servidor | 04/06/2026 |
 | `{HORA_12}` | Hora actual en formato de 12 horas | 3:45 PM |
 | `{HORA_24}` | Hora actual en formato de 24 horas | 15:45 |
-| `{DIA_SEMANA}` | Día de la semana en curso | Lunes |
+| `{DIA_SEMANA}` | Día de la semana en curso | Jueves |
+| `{NUMERO_ALEATORIO}` | Número aleatorio para forzar diferencias | 487219 |
 
 ---
 
@@ -356,6 +360,19 @@ Toda la persistencia de datos de la plataforma (**recordatorios, plantillas, aut
 
 ### 🤖 Migración Automática Cero-Pérdidas
 El bot cuenta con un script de migración nativo (`src/core/migrator.ts`). Al arrancar la plataforma por primera vez, detectará si cuentas con una base de datos física de SQLite previa (`data/database.db`), extraerá todos tus datos reales de forma segura y los importará con sus IDs originales al nuevo motor NoSQL activo, registrando el éxito en `data/database.db.migrated` sin alterar tu archivo original.
+
+---
+
+## 🔄 Historial de Actualizaciones (Changelog)
+
+### [1.4.0] - 2026-06-04
+*   **Motor de Spintax (Giro de Texto) Integrado:** Variación dinámica de mensajes en campañas masivas usando `{opción A|opción B|opción C}` para eludir filtros de spam de WhatsApp.
+*   **Asistente IA de Spintax:** Botón en la interfaz (color púrpura) que reescribe tus textos automáticamente aplicando Spintax y emojis temáticos específicos de tu sector comercial.
+*   **Zona Protegida de Variaciones:** Posibilidad de envolver entre llaves `{}` tus propias frases personalizadas (ej. `{nuestra promoción}`) para que el asistente de IA varíe **únicamente** esas secciones, dejando el resto del mensaje completamente idéntico.
+*   **Nuevas Variables de Emojis y Saludos:** Incorporación de `{SALUDO}` (Buenos días/tardes/noches de forma automática) y etiquetas de emojis aleatorios `{EMOJI_SALUDO}`, `{EMOJI_ATENCION}` y `{EMOJI_ALEATORIO}`.
+*   **Simulación de Presencia Multimedia:** El bot muestra *"Grabando audio..."* (para notas de voz) o *"Escribiendo..."* (para fotos y videos) durante unos segundos antes de entregar el archivo.
+*   **Retardo Caótico Proporcional:** Intervalos dinámicos entre envíos masivos basados en la longitud de caracteres del mensaje para imitar redacción humana.
+*   **Corrección de Compilación:** Reparado un fallo de TypeScript en `Reminders.tsx` relacionado con la propiedad `media`.
 
 ---
 
