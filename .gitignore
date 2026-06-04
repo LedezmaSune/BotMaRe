@@ -53,4 +53,4 @@ bin/*
 
 # Documentation (Kept locally, excluded from Git/GitHub)
 MANUAL_DE_USUARIO.md
-PROJECT_MASTER_PROMPT.md
+ia.md

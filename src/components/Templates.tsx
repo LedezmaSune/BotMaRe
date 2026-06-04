@@ -9,23 +9,23 @@ import { VariableTextarea } from './VariableTextarea';
 interface TemplatesProps {
     templates: Template[];
     onRefresh: () => void;
-    onReview: (text: string) => Promise<string | null>;
+    onReview: (text: string, mode?: 'standard' | 'spintax') => Promise<string | null>;
 }
 
 export function Templates({ templates, onRefresh, onReview }: TemplatesProps) {
     const [name, setName] = useState('');
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(false);
-    const [reviewing, setReviewing] = useState(false);
+    const [reviewingMode, setReviewingMode] = useState<'standard' | 'spintax' | null>(null);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [showForm, setShowForm] = useState(false);
 
-    const handleReview = async () => {
+    const handleReview = async (mode: 'standard' | 'spintax' = 'standard') => {
         if (!content) return;
-        setReviewing(true);
-        const corrected = await onReview(content);
+        setReviewingMode(mode);
+        const corrected = await onReview(content, mode);
         if (corrected) setContent(corrected);
-        setReviewing(false);
+        setReviewingMode(null);
     };
 
     const handleEdit = (t: Template) => {
@@ -170,15 +170,26 @@ export function Templates({ templates, onRefresh, onReview }: TemplatesProps) {
                         <div>
                             <div className="flex items-center justify-between mb-1">
                                 <label className="text-[10px] uppercase font-black text-app-text-muted tracking-widest">Contenido del Mensaje</label>
-                                <button
-                                    type="button"
-                                    onClick={handleReview}
-                                    disabled={reviewing || !content}
-                                    className="flex items-center gap-2 px-3 py-1.5 border border-indigo-500/30 rounded-lg text-[9px] font-black text-indigo-500 hover:bg-indigo-500/10 hover:border-indigo-500/60 transition-all uppercase tracking-widest disabled:opacity-30 group"
-                                >
-                                    {reviewing ? <Loader2 size={12} className="animate-spin" /> : <Wand2 size={12} className="group-hover:rotate-12 transition-transform" />}
-                                    {reviewing ? 'Revisando...' : 'Perfeccionar con IA'}
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleReview('standard')}
+                                        disabled={!!reviewingMode || !content}
+                                        className="flex items-center gap-2 px-3 py-1.5 border border-indigo-500/30 rounded-lg text-[9px] font-black text-indigo-500 hover:bg-indigo-500/10 hover:border-indigo-500/60 transition-all uppercase tracking-widest disabled:opacity-30 group"
+                                    >
+                                        {reviewingMode === 'standard' ? <Loader2 size={12} className="animate-spin" /> : <Wand2 size={12} className="group-hover:rotate-12 transition-transform" />}
+                                        {reviewingMode === 'standard' ? 'Revisando...' : 'Perfeccionar con IA'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleReview('spintax')}
+                                        disabled={!!reviewingMode || !content}
+                                        className="flex items-center gap-2 px-3 py-1.5 border border-purple-500/30 rounded-lg text-[9px] font-black text-purple-500 hover:bg-purple-500/10 hover:border-purple-500/60 transition-all uppercase tracking-widest disabled:opacity-30 group"
+                                    >
+                                        {reviewingMode === 'spintax' ? <Loader2 size={12} className="animate-spin" /> : <Wand2 size={12} className="group-hover:rotate-12 transition-transform" />}
+                                        {reviewingMode === 'spintax' ? 'Generando...' : 'Generar Spintax'}
+                                    </button>
+                                </div>
                             </div>
                             <VariableTextarea
                                 value={content}

@@ -114,6 +114,7 @@ export function Reminders({ reminders, templates, onAdd, onDelete, initialTime, 
                                 chatId={chatId} setChatId={setChatId}
                                 text={text} setText={setText}
                                 time={time} setTime={setTime}
+                                media={media}
                                 setMedia={setMedia}
                                 editingId={editingId} setEditingId={setEditingId}
                                 loading={loading}

@@ -9,6 +9,11 @@
     <img src="https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white" alt="TypeScript"/>
     <img src="https://img.shields.io/badge/License-ISC-blue" alt="License"/>
   </p>
+
+  <p>
+    <a href="MANUAL_DE_USUARIO.md">📘 Manual de Usuario</a> | 
+    <a href="ACTUALIZACIONES.md">🔄 Registro de Actualizaciones (Changelog)</a>
+  </p>
 </div>
 
 ---
@@ -55,10 +60,11 @@ graph TD
 
 - 🧠 **IA Multi-Proveedor con Failover**: Groq, Gemini, OpenAI, DeepSeek, OpenRouter y Nvidia. Si un proveedor falla, la IA escala automáticamente al siguiente en milisegundos.
 - 📱 **WhatsApp Agent**: Respuestas inteligentes, comprensión de imágenes (Visión), transcripción de audio (Whisper) y soporte de documentos.
-- 📢 **Difusión Masiva**: Envía campañas personalizadas a listas de contactos desde la interfaz sin riesgo de bloqueos. ¡Soporta múltiples archivos multimedia adjuntos!
-- ⚡ **Menús Rápidos**: Auto-respuestas por palabras clave con inyección de contexto de IA, menús de flujo e ignorado automático de chats.
-- 📅 **Recordatorios Inteligentes**: Programa recordatorios en chats privados o grupales con frecuencias de repetición personalizadas.
-- 🛡️ **Centro de Soporte Humano**: Detén la IA en cualquier chat de forma temporal si un cliente requiere atención humana. Centraliza las alertas en Telegram.
+- 📢 **Difusión Masiva con Spintax**: Envía campañas personalizadas a listas de contactos desde la interfaz con soporte nativo de **Giro de Texto (Spintax)**. El asistente IA te permite generar variaciones y emojis de forma temática con un clic.
+- ⚡ **Menús Rápidos e IA**: Auto-respuestas por palabras clave con soporte de variables dinámicas e inyección de contexto de IA.
+- 📅 **Recordatorios Inteligentes**: Programa recordatorios en chats privados o grupales con frecuencias de repetición y soporte de carga masiva.
+- 🛡️ **Blindaje Anti-Ban Activo**: Retardos aleatorios proporcionalmente dinámicos al largo del mensaje (Jitter), pausas de seguridad (Burst Protection) y simulación humana de carga de archivos (presencia de "Escribiendo..." y "Grabando audio...").
+- 👤 **Soporte Humano Dinámico**: Detén la IA en cualquier chat de forma temporal si un cliente requiere atención humana. Centraliza las alertas en Telegram.
 - 📦 **Respaldos en un Clic**: Exporta e importa bases de datos de configuración y archivos multimedia por separado o juntos desde la UI.
 - ✈️ **Soporte Remoto vía Telegram**: Controla el estado del bot, genera nuevos QRs y levanta túneles de soporte SSH remoto (`tmate`) directo desde tu chat de Telegram.
 - 👥 **Gestor de Grupos**: Selector nativo de grupos autorizados en el dashboard y detección inteligente de menciones.
@@ -103,6 +109,32 @@ flowchart TD
     P5 -- "Falla o Límite" --> P6
     P6 -- "Éxito" --> Done
     P6 -- "Falla o Límite" --> Fail
+```
+
+---
+
+## 🤖 Modelos Recomendados (Bajo Costo y Gratuitos)
+
+Para obtener el máximo rendimiento sin gastar de más, recomendamos la siguiente configuración en tu archivo `.env`. Esta combinación aprovecha las capas gratuitas y los modelos más costo-eficientes del mercado:
+
+```env
+# Groq es 100% gratuito por ahora y súper rápido. Llama 3.1 70B es su mejor opción.
+GROQ_MODEL="llama-3.1-70b-versatile"
+
+# OpenRouter: Google Gemma 2 9B (Gratis), alternativo Llama 3 8B
+OPENROUTER_MODEL="google/gemma-2-9b-it:free"
+
+# Gemini: El modelo Flash tiene una capa gratuita mensual muy generosa y es rapidísimo.
+GEMINI_MODEL="gemini-2.5-flash"
+
+# DeepSeek: Súper económico, "deepseek-chat" es su modelo insignia.
+DEEPSEEK_MODEL="deepseek-chat"
+
+# OpenAI: No tiene capa gratuita, pero 4o-mini es extremadamente barato y capaz.
+OPENAI_MODEL="gpt-4o-mini"
+
+# NVIDIA NIM: Dan créditos gratis iniciales.
+NVIDIA_MODEL="deepseek-ai/deepseek-v4-pro"
 ```
 
 ---

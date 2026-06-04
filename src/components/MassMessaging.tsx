@@ -9,7 +9,7 @@ import { Template } from '../types';
 interface MassMessagingProps {
     onSend: (contacts: string, message: string, media: File[]) => Promise<void>;
     onCancel: () => Promise<void>;
-    onReview: (text: string) => Promise<string | null>;
+    onReview: (text: string, mode?: 'standard' | 'spintax') => Promise<string | null>;
     templates: Template[];
     groups: any[];
     progress?: { current: number, total: number, percentage: number } | null;
@@ -21,7 +21,7 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, p
     const [message, setMessage] = useState('');
     const [media, setMedia] = useState<File[]>([]);
     const [loading, setLoading] = useState(false);
-    const [reviewing, setReviewing] = useState(false);
+    const [reviewingMode, setReviewingMode] = useState<'standard' | 'spintax' | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -50,12 +50,12 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, p
         reader.readAsText(file);
     };
 
-    const handleReview = async () => {
+    const handleReview = async (mode: 'standard' | 'spintax' = 'standard') => {
         if (!message) return;
-        setReviewing(true);
-        const corrected = await onReview(message);
+        setReviewingMode(mode);
+        const corrected = await onReview(message, mode);
         if (corrected) setMessage(corrected);
-        setReviewing(false);
+        setReviewingMode(null);
     };
 
     const handleSubmit = async () => {
@@ -150,14 +150,24 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, p
                     <div>
                         <div className="flex justify-between items-center mb-2">
                             <label className="text-[10px] uppercase font-bold text-app-text-muted tracking-widest">Cuerpo del Mensaje</label>
-                            <button 
-                                onClick={handleReview}
-                                disabled={reviewing || !message}
-                                className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-[10px] font-bold uppercase tracking-widest bg-cyan-500/10 px-3 py-1.5 rounded-lg border border-cyan-500/20 transition-all hover:bg-cyan-500/20 disabled:opacity-30 active:scale-95"
-                            >
-                                {reviewing ? <Loader2 className="animate-spin" size={12} /> : <Wand2 size={12} />}
-                                Perfeccionar con IA
-                            </button>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={() => handleReview('standard')}
+                                    disabled={!!reviewingMode || !message}
+                                    className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-[10px] font-bold uppercase tracking-widest bg-cyan-500/10 px-3.5 py-1.5 rounded-lg border border-cyan-500/20 transition-all hover:bg-cyan-500/20 disabled:opacity-30 active:scale-95"
+                                >
+                                    {reviewingMode === 'standard' ? <Loader2 className="animate-spin" size={12} /> : <Wand2 size={12} />}
+                                    {reviewingMode === 'standard' ? 'Revisando...' : 'Perfeccionar con IA'}
+                                </button>
+                                <button 
+                                    onClick={() => handleReview('spintax')}
+                                    disabled={!!reviewingMode || !message}
+                                    className="flex items-center gap-2 text-purple-400 hover:text-purple-300 text-[10px] font-bold uppercase tracking-widest bg-purple-500/10 px-3.5 py-1.5 rounded-lg border border-purple-500/20 transition-all hover:bg-purple-500/20 disabled:opacity-30 active:scale-95"
+                                >
+                                    {reviewingMode === 'spintax' ? <Loader2 className="animate-spin" size={12} /> : <Wand2 size={12} />}
+                                    {reviewingMode === 'spintax' ? 'Generando...' : 'Generar Spintax'}
+                                </button>
+                            </div>
                         </div>
 
                         {templates.length > 0 && (

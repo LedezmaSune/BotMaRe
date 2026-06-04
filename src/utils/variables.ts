@@ -1,5 +1,13 @@
 import { DateTime } from 'luxon';
 
+const GREETING_EMOJIS = ['👋', '😊', '🤝', '🙌', '✨', '🌟'];
+const ATTENTION_EMOJIS = ['💡', '📢', '🔔', '📌', '⚠️', '🎯'];
+const RANDOM_EMOJIS = ['😊', '👍', '🎉', '🚀', '🔥', '✅', '✨', '⭐', '😎', '👋', '💡', '📌'];
+
+function getRandomElement<T>(arr: T[]): T {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
 export function processVariables(text: string, contactName: string = ''): string {
     if (!text) return text;
     
@@ -12,12 +20,29 @@ export function processVariables(text: string, contactName: string = ''): string
     const firstName = nameParts[0];
     const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
+    // Saludo dinámico según la hora
+    let greeting = 'Hola';
+    const hour = now.hour;
+    if (hour >= 6 && hour < 12) {
+        greeting = 'Buenos días';
+    } else if (hour >= 12 && hour < 19) {
+        greeting = 'Buenas tardes';
+    } else {
+        greeting = 'Buenas noches';
+    }
+
     const replacements: Record<string, string> = {
         '{NOMBRE}': name,
         '{FIRST_NAME}': firstName,
         '{NOMBRE_PILA}': firstName,
         '{APELLIDO}': lastName,
         '{LAST_NAME}': lastName,
+        
+        // Saludos y Emojis Dinámicos
+        '{SALUDO}': greeting,
+        '{EMOJI_SALUDO}': getRandomElement(GREETING_EMOJIS),
+        '{EMOJI_ATENCION}': getRandomElement(ATTENTION_EMOJIS),
+        '{EMOJI_ALEATORIO}': getRandomElement(RANDOM_EMOJIS),
         
         // Tiempo
         '{HORA_12}': now.toFormat('hh:mm a'),
@@ -56,10 +81,27 @@ export function processVariables(text: string, contactName: string = ''): string
         '{UBICACION_DIRECCION}': 'No disponible'
     };
 
+    // 1. Reemplazar variables exactas predefinidas
     for (const [variable, value] of Object.entries(replacements)) {
-        // Usa una expresión regular global para reemplazar todas las ocurrencias
         const regex = new RegExp(variable, 'gi');
         result = result.replace(regex, value);
+    }
+
+    // 2. Procesar Spintax (Giro de texto / Emojis)
+    // Patrón para capturar {opcion1|opcion2|...} asegurando que tenga al menos un pipe
+    const spintaxPattern = /\{([^{}|]+(?:\|[^{}|]*)+)\}/g;
+    let matchesFound = true;
+    let iterations = 0;
+    
+    while (matchesFound && iterations < 10) {
+        const previousResult = result;
+        result = result.replace(spintaxPattern, (match, choicesStr) => {
+            const choices = choicesStr.split('|');
+            const randomChoice = choices[Math.floor(Math.random() * choices.length)];
+            return randomChoice;
+        });
+        matchesFound = result !== previousResult;
+        iterations++;
     }
 
     return result;

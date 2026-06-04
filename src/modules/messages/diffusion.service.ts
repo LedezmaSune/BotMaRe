@@ -127,9 +127,14 @@ export class MassDiffusionService {
                     total: contacts.length
                 });
 
-                // --- PROTECCIÓN ANTI-BAN MEJORADA ---
+                // --- PROTECCIÓN ANTI-BAN MEJORADA CON VARIACIÓN CAÓTICA Y PROPORCIONAL ---
                 const index = logs.length;
-                let delay = 5000 + Math.random() * 5000; // 5-10 segundos base
+                let delay = 4000 + Math.random() * 4000; // 4-8 segundos base
+                
+                // Retraso adicional proporcional a la longitud del mensaje (simula tiempo de redacción)
+                const charCount = personalizedMessage?.length || 0;
+                const writingJitter = Math.min(charCount * 15, 6000); // Máximo 6 segundos extra
+                delay += writingJitter;
                 
                 // Pausa larga cada 10 mensajes (simular descanso humano)
                 if (index % 10 === 0) {
@@ -137,8 +142,9 @@ export class MassDiffusionService {
                     delay += 15000 + Math.random() * 10000; // +15-25 segundos extra
                 }
 
+                console.log(`[Mass] Esperando ${Math.round(delay / 1000)}s antes de continuar...`);
                 await new Promise(r => setTimeout(r, delay));
-                // ------------------------------------
+                // -------------------------------------------------------------------------
 
                 // Emitir progreso al bus global
                 this.currentProgress = {

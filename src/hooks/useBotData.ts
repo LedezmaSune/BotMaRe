@@ -176,12 +176,12 @@ export function useBotData() {
         }
     };
 
-    const handleAIGeneration = async (text: string) => {
+    const handleAIGeneration = async (text: string, mode: 'standard' | 'spintax' = 'standard') => {
         try {
             const res = await fetch(`${API_BASE}/ai/review-message`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text })
+                body: JSON.stringify({ text, mode })
             });
             const data = await res.json();
             return data.success ? data.corrected : null;

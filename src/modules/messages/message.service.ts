@@ -75,6 +75,7 @@ export class MessageService {
         const ext = path.extname(filePath).toLowerCase();
         const buffer = fs.readFileSync(filePath);
         const message: any = { caption };
+        let isAudio = false;
 
         if (['.jpg', '.jpeg', '.png', '.gif'].includes(ext) || (mimeType && mimeType.startsWith('image/'))) {
             message.image = buffer;
@@ -85,10 +86,25 @@ export class MessageService {
             message.mimetype = mimeType || (ext === '.ogg' ? 'audio/ogg; codecs=opus' : 'audio/mpeg');
             message.ptt = true;
             delete message.caption;
+            isAudio = true;
         } else {
             message.document = buffer;
             message.mimetype = mimeType || 'application/octet-stream';
             message.fileName = fileName || path.basename(filePath);
+        }
+
+        // Simular presencia de carga para chats individuales
+        if (!target.endsWith('@g.us')) {
+            if (isAudio) {
+                // Simular "Grabando audio..." por 2 a 4 segundos
+                await this.client.sendPresence(target, 'recording');
+                await new Promise(r => setTimeout(r, 2000 + Math.random() * 2000));
+            } else {
+                // Simular "Escribiendo..." por 1.5 a 3 segundos
+                await this.client.sendPresence(target, 'composing');
+                await new Promise(r => setTimeout(r, 1500 + Math.random() * 1500));
+            }
+            await this.client.sendPresence(target, 'paused');
         }
 
         return await this.client.sendRaw(target, message);
