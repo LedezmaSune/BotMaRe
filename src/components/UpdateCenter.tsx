@@ -16,6 +16,19 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'K 1.4.0',
+        date: '04 Junio 2026',
+        title: 'Giro de Texto (Spintax) & Emojis Inteligentes',
+        type: 'minor',
+        description: 'Implementación de variaciones automáticas en campañas, asistente IA de Spintax por temática de negocio, simulación avanzada de estados en WhatsApp y retardos caóticos adaptativos.',
+        features: [
+            '🔄 Giro de Texto (Spintax) Nativo: Soporte para formato {opción A|opción B} que aleatoriza cada envío de manera segura.',
+            '🔮 Asistente IA de Spintax: Botón en la interfaz que analiza el contexto (Finanzas, Ventas, Salud, etc.) e inserta emojis y variaciones temáticas.',
+            '🎙️ Simulación de Medios Avanzada: Muestra "Grabando audio..." o "Escribiendo..." de forma natural antes de entregar notas de voz o archivos.',
+            '⏳ Retardos Caóticos Proporcionales: Jitter de envío masivo calculado dinámicamente según la longitud del texto (evita detección de patrones).'
+        ]
+    },
+    {
         version: 'K 1.3.0',
         date: '31 Mayo 2026',
         title: 'Arquitectura Híbrida & Experiencia Premium',
