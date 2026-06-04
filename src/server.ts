@@ -66,6 +66,7 @@ app.use(helmet({
             styleSrc: ["'self'", "'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "blob:", "https:"],
             connectSrc: ["'self'", "wss:", "ws:", "http:", "https:"],
+            upgradeInsecureRequests: null,
         },
     },
     crossOriginEmbedderPolicy: false,
@@ -152,6 +153,12 @@ const PORT = process.env.PORT || 8000;
 async function bootstrap() {
     drawBanner();
     
+    if (!fs.existsSync(path.join(process.cwd(), '.env'))) {
+        const { startSetupServer } = await import('../setup-web/server');
+        await startSetupServer();
+        return;
+    }
+
     const s0 = new Spinner("Validando Entorno...");
     s0.start();
     try {
@@ -229,3 +236,37 @@ bootstrap().catch(err => {
     console.error(err);
     process.exit(1);
 });
+
+// Manejo de apagado seguro (Graceful Shutdown)
+let isShuttingDown = false;
+async function gracefulShutdown(signal: string) {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+    console.log(`\n[SYSTEM] Recibida señal ${signal}. Iniciando apagado seguro...`);
+    
+    try {
+        const brand = process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe';
+        await NotificationService.notifyAdmin(
+            `⚠️ *¡Alerta de Sistema!*\n\n` +
+            `El servidor de *${brand}* se está apagando o reiniciando.\n\n` +
+            `🛑 *Estado:* Offline\n` +
+            `📅 *Fecha:* ${new Date().toLocaleString('es-MX')}`
+        );
+        console.log(`[SYSTEM] Notificación de apagado enviada por Telegram.`);
+    } catch (e) {
+        console.error("[SYSTEM] Error enviando notificación de apagado:", e);
+    }
+
+    try {
+        const tunnel = TunnelService.getInstance();
+        if (tunnel) await tunnel.stop();
+    } catch(e) {}
+    
+    setTimeout(() => {
+        console.log(`[SYSTEM] Apagado completado. Adios.`);
+        process.exit(0);
+    }, 1500); // Dar 1.5s extra a Baileys para guardar la sesión
+}
+
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));

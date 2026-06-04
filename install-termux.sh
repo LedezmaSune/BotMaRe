@@ -352,29 +352,38 @@ else
 fi
 
 # ═══════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════
 # PASO 5: Configurar .env
 # ═══════════════════════════════════════════════════════════════════
 step 5 "Configurando variables de entorno..."
 
-USER_PORT="8000"
-
 if [ ! -f ".env" ]; then
-    cp .env.example .env
-    
-    ask "  ¿En qué puerto ejecutar BotMaRe? (Enter = 8000): " "8000" USER_PORT
-    
-    sed -i "s/PORT=8000/PORT=${USER_PORT}/" .env
-    sed -i "s/localhost:8000/localhost:${USER_PORT}/" .env
-
-    ok "Archivo .env creado con puerto ${USER_PORT}."
     echo ""
-    echo -e "${YELLOW}  ╔════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${YELLOW}  ║  ${BOLD}¡IMPORTANTE!${NC}${YELLOW} Edita .env con tus claves de API:        ║${NC}"
-    echo -e "${YELLOW}  ║                                                        ║${NC}"
-    echo -e "${YELLOW}  ║  • DASHBOARD_USER / DASHBOARD_PASS                     ║${NC}"
-    echo -e "${YELLOW}  ║  • Al menos 1 API Key de IA (GEMINI, GROQ, etc.)       ║${NC}"
-    echo -e "${YELLOW}  ║  • TELEGRAM_BOT_TOKEN (opcional)                       ║${NC}"
-    echo -e "${YELLOW}  ╚════════════════════════════════════════════════════════╝${NC}"
+    ask_yn "  ¿Deseas usar el Asistente Web visual para configurar (s), o hacerlo por Terminal (n)? (s/n): " "s" USE_WEB_SETUP
+
+    if [[ "$USE_WEB_SETUP" =~ ^[Ss]$ ]]; then
+        info "La configuración inicial se realizará visualmente desde el navegador."
+        info "Al iniciar el bot por primera vez, se levantará el Asistente Web."
+        USER_PORT="8000"
+    else
+        info "Creando archivo .env desde plantilla..."
+        cp .env.example .env
+        
+        ask "  ¿En qué puerto ejecutar BotMaRe? (Enter = 8000): " "8000" USER_PORT
+        
+        sed -i "s/PORT=8000/PORT=${USER_PORT}/" .env
+        sed -i "s/localhost:8000/localhost:${USER_PORT}/" .env
+
+        ok "Archivo .env creado con puerto ${USER_PORT}."
+        echo ""
+        echo -e "${YELLOW}  ╔════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${YELLOW}  ║  ${BOLD}¡IMPORTANTE!${NC}${YELLOW} Edita .env con tus claves de API:        ║${NC}"
+        echo -e "${YELLOW}  ║                                                        ║${NC}"
+        echo -e "${YELLOW}  ║  • DASHBOARD_USER / DASHBOARD_PASS                     ║${NC}"
+        echo -e "${YELLOW}  ║  • Al menos 1 API Key de IA (GEMINI, GROQ, etc.)       ║${NC}"
+        echo -e "${YELLOW}  ║  • TELEGRAM_BOT_TOKEN (opcional)                       ║${NC}"
+        echo -e "${YELLOW}  ╚════════════════════════════════════════════════════════╝${NC}"
+    fi
 else
     ok "Archivo .env ya existe."
     USER_PORT=$(grep -m1 '^PORT=' .env 2>/dev/null | cut -d= -f2 || echo "8000")

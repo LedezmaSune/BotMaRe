@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración Inicial - BotMaRe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            900: '#134e4a',
+                            950: '#042f2e'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0f172a;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,0.2) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,0.2) 0, transparent 50%);
+            background-attachment: fixed;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="text-slate-200 min-h-screen flex items-center justify-center p-4 antialiased">
+
+    <main class="w-full max-w-lg">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-white tracking-tight flex items-center justify-center gap-3">
+                <svg class="w-8 h-8 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                Configuración Inicial
+            </h1>
+            <p class="text-slate-400 mt-2 text-sm">Bienvenido a BotMaRe. Configura tu entorno para comenzar.</p>
+        </div>
+
+        <form id="setupForm" class="glass-panel rounded-2xl p-6 shadow-2xl relative overflow-hidden transition-all duration-300">
+            <!-- Loading Overlay -->
+            <div id="loadingOverlay" class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-10 hidden flex-col items-center justify-center opacity-0 transition-opacity duration-300">
+                <svg class="animate-spin h-10 w-10 text-brand-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p id="loadingText" class="text-white font-medium text-lg">Guardando configuración...</p>
+            </div>
+
+            <!-- Success Overlay -->
+            <div id="successOverlay" class="absolute inset-0 bg-slate-900/90 backdrop-blur-md z-20 hidden flex-col items-center justify-center text-center p-6 opacity-0 transition-opacity duration-300">
+                <div class="w-16 h-16 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-2">¡Todo Listo!</h2>
+                <p class="text-slate-300 text-sm mb-6">La configuración se ha guardado correctamente. El archivo .env ha sido generado.</p>
+                <div class="bg-slate-800 border border-slate-700 rounded-lg p-4 w-full">
+                    <p class="text-brand-400 font-semibold mb-1 flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Acción Requerida
+                    </p>
+                    <p class="text-slate-400 text-sm">El servidor web temporal se ha apagado. Por favor, <strong>reinicia tu bot</strong> en la terminal para aplicar los cambios.</p>
+                </div>
+            </div>
+
+            <!-- Form Content -->
+            <div class="space-y-6">
+                <!-- Warning Cloud -->
+                <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                    <div class="flex gap-3">
+                        <svg class="w-6 h-6 text-yellow-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <div>
+                            <h3 class="text-sm font-semibold text-yellow-500">Aviso sobre Alojamiento en la Nube</h3>
+                            <p class="text-xs text-yellow-200/70 mt-1">Si alojas tu bot en plataformas gratuitas "efímeras" (como Heroku, Render) o en contenedores Docker sin volúmenes persistentes, los archivos locales se borran al reiniciar. En esos entornos, la configuración debe hacerse por variables de entorno desde su propio panel de control. Si estás en Termux o Windows local, ignora este aviso.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security PIN (Siempre requerido) -->
+                <div class="bg-brand-500/10 border border-brand-500/20 rounded-lg p-4">
+                    <label class="block text-sm font-semibold text-brand-400 mb-1" for="securityPin">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                            PIN de Seguridad (Requerido)
+                        </span>
+                    </label>
+                    <p class="text-xs text-slate-400 mb-3">Revisa la terminal/consola de tu bot para ver el código de 6 dígitos.</p>
+                    <input type="text" id="securityPin" name="securityPin" required placeholder="Ej: 123456" maxlength="6"
+                        class="w-full bg-slate-900/80 border border-brand-500/50 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors text-center text-xl tracking-widest font-mono shadow-inner">
+                </div>
+
+                <!-- Setup Mode Toggle -->
+                <div class="flex p-1 space-x-1 bg-slate-900/80 rounded-xl border border-slate-700">
+                    <button type="button" id="btnModeManual" class="flex-1 py-2.5 text-sm font-medium rounded-lg bg-brand-600 text-white shadow transition-all">Llenar Formulario</button>
+                    <button type="button" id="btnModeUpload" class="flex-1 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all">Subir Archivo .env</button>
+                </div>
+
+                <!-- Restore Backup (HIDDEN BY DEFAULT) -->
+                <div id="sectionUpload" class="hidden">
+                    <h3 class="text-sm font-semibold text-brand-400 uppercase tracking-wider mb-3">Restaurar Respaldo (.env)</h3>
+                    <div class="bg-slate-900/50 border border-slate-700 border-dashed rounded-lg p-8 text-center transition-colors hover:border-brand-500/50">
+                        <svg class="w-10 h-10 text-slate-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        <p class="text-sm text-slate-300 mb-4">¿Ya tienes un archivo .env de una instalación anterior?</p>
+                        <input type="file" id="envUpload" accept=".env,text/plain" class="hidden" />
+                        
+                        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                            <label for="envUpload" class="cursor-pointer inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium py-2.5 px-5 rounded-lg transition-colors shadow-sm w-full sm:w-auto">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                Seleccionar Archivo
+                            </label>
+                            
+                            <a href="https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/.env.example" target="_blank" class="inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium py-2.5 px-5 rounded-lg transition-colors border border-slate-600 shadow-sm w-full sm:w-auto">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Descargar Plantilla
+                            </a>
+                        </div>
+
+                        <p id="uploadStatus" class="text-xs text-brand-400 mt-4 hidden font-medium flex items-center justify-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Archivo cargado listo para guardar.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Section Manual Container -->
+                <div id="sectionManual" class="space-y-6">
+
+                <!-- Dashboard Security -->
+                <div>
+                    <h3 class="text-sm font-semibold text-brand-400 uppercase tracking-wider mb-3">Seguridad del Panel</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1" for="username">Usuario Administrador</label>
+                            <input type="text" id="username" name="username" required value="admin"
+                                class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1" for="password">Contraseña Segura</label>
+                            <input type="password" id="password" name="password" required placeholder="Ingresa una contraseña fuerte"
+                                class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-colors">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="h-px bg-slate-700/50"></div>
+
+                <!-- AI Provider -->
+                <div>
+                    <h3 class="text-sm font-semibold text-brand-400 uppercase tracking-wider mb-3">Inteligencia Artificial</h3>
+                    <p class="text-xs text-slate-400 mb-4">Selecciona tu proveedor principal para las respuestas del bot.</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1" for="aiProvider">Proveedor Preferido</label>
+                            <select id="aiProvider" name="aiProvider" 
+                                class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-colors appearance-none cursor-pointer">
+                                <option value="groq">Groq (Recomendado, Gratis y Rápido)</option>
+                                <option value="gemini">Google Gemini</option>
+                                <option value="openai">OpenAI (ChatGPT)</option>
+                                <option value="deepseek">DeepSeek</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1" for="apiKey">API Key <span class="text-brand-500">*</span></label>
+                            <input type="text" id="apiKey" name="apiKey" required placeholder="Pega aquí tu token o API Key"
+                                class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-colors">
+                            <p id="apiKeyHelp" class="text-xs text-slate-400 mt-2">Consíguela en console.groq.com</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="h-px bg-slate-700/50"></div>
+
+                <!-- Telegram (Optional) -->
+                <div>
+                    <h3 class="text-sm font-semibold text-brand-400 uppercase tracking-wider mb-3">Telegram (Opcional)</h3>
+                    <p class="text-xs text-slate-400 mb-4">Para notificaciones y control remoto del bot.</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1" for="telegramToken">Bot Token</label>
+                            <input type="text" id="telegramToken" name="telegramToken" placeholder="Ej: 123456789:ABCdefGHI..."
+                                class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1" for="telegramUsers">IDs Permitidos</label>
+                            <input type="text" id="telegramUsers" name="telegramUsers" placeholder="Ej: 12345678, 87654321"
+                                class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-colors">
+                            <p class="text-xs text-slate-400 mt-2">Separa los IDs con comas. Déjalo vacío para permitir a cualquiera.</p>
+                        </div>
+                    </div>
+                </div> 
+                </div> <!-- End Section Manual -->
+
+                <div class="pt-4">
+                    <button type="submit" 
+                        class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium py-3 px-4 rounded-lg shadow-lg shadow-brand-500/20 transform transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-slate-900">
+                        Guardar Configuración e Iniciar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </main>
+
+    <script>
+        const providerSelect = document.getElementById('aiProvider');
+        const helpText = document.getElementById('apiKeyHelp');
+        let rawEnvFileContent = null;
+
+        const helpTexts = {
+            'groq': 'Consíguela en console.groq.com',
+            'gemini': 'Consíguela en aistudio.google.com',
+            'openai': 'Consíguela en platform.openai.com',
+            'deepseek': 'Consíguela en platform.deepseek.com'
+        };
+
+        providerSelect.addEventListener('change', (e) => {
+            helpText.textContent = helpTexts[e.target.value] || '';
+        });
+
+        const btnManual = document.getElementById('btnModeManual');
+        const btnUpload = document.getElementById('btnModeUpload');
+        const sectionManual = document.getElementById('sectionManual');
+        const sectionUpload = document.getElementById('sectionUpload');
+
+        btnManual.addEventListener('click', () => {
+            btnManual.className = 'flex-1 py-2.5 text-sm font-medium rounded-lg bg-brand-600 text-white shadow transition-all';
+            btnUpload.className = 'flex-1 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all';
+            sectionManual.classList.remove('hidden');
+            sectionUpload.classList.add('hidden');
+            
+            document.getElementById('username').required = true;
+            document.getElementById('password').required = true;
+            document.getElementById('apiKey').required = true;
+            
+            rawEnvFileContent = null;
+            document.getElementById('uploadStatus').classList.add('hidden');
+        });
+
+        btnUpload.addEventListener('click', () => {
+            btnUpload.className = 'flex-1 py-2.5 text-sm font-medium rounded-lg bg-brand-600 text-white shadow transition-all';
+            btnManual.className = 'flex-1 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all';
+            sectionUpload.classList.remove('hidden');
+            sectionManual.classList.add('hidden');
+            
+            document.getElementById('username').required = false;
+            document.getElementById('password').required = false;
+            document.getElementById('apiKey').required = false;
+        });
+
+        document.getElementById('envUpload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                rawEnvFileContent = event.target.result;
+                document.getElementById('uploadStatus').classList.remove('hidden');
+                
+                // Deshabilitar la validación obligatoria si se subió un archivo
+                document.getElementById('username').required = false;
+                document.getElementById('password').required = false;
+                document.getElementById('apiKey').required = false;
+            };
+            reader.readAsText(file);
+        });
+
+        document.getElementById('setupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            if (rawEnvFileContent) {
+                data.rawEnvContent = rawEnvFileContent;
+            }
+
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.remove('hidden');
+            // Small delay to allow display:block to apply before changing opacity
+            setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+
+            try {
+                const response = await fetch('/api/setup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    overlay.classList.add('opacity-0');
+                    setTimeout(() => overlay.classList.add('hidden'), 300);
+                    
+                    const success = document.getElementById('successOverlay');
+                    success.classList.remove('hidden');
+                    setTimeout(() => success.classList.remove('opacity-0'), 10);
+                } else {
+                    throw new Error(result.error || 'Error al guardar la configuración');
+                }
+            } catch (error) {
+                alert(error.message);
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        });
+    </script>
+</body>
+</html>

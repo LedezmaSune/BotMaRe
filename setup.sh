@@ -27,8 +27,7 @@ else
 
     echo "[3/3] Configurando archivo .env..."
     if [ ! -f ".env" ]; then
-        cp .env.example .env
-        echo "[!] Archivo .env creado. Edítalo con tus API Keys."
+        echo "[!] No hay .env. Se configurará visualmente al iniciar el bot."
     else
         echo "Archivo .env ya existe."
     fi

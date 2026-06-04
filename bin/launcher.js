@@ -38,12 +38,115 @@ function showMenu() {
     console.log(`  ${c.green}[5]${c.reset} 💾 Optimizar Disco y Logs ${c.dim}(Vacuum)${c.reset}`);
     console.log(`  ${c.green}[6]${c.reset} 🔑 Forzar Nuevo QR ${c.dim}(Cerrar Sesión WA)${c.reset}`);
     console.log(`  ${c.green}[7]${c.reset} 📥 Actualizar Dependencias ${c.dim}(pnpm install)${c.reset}`);
-    console.log(`  ${c.red}[8]${c.reset} ❌ Salir del Sistema`);
+    console.log(`  ${c.cyan}[8]${c.reset} ⚙️ Gestión de PM2 ${c.dim}(Segundo Plano)${c.reset}`);
+    console.log(`  ${c.blue}[9]${c.reset} 📁 Explorador de Carpetas ${c.dim}(Abrir localmente)${c.reset}`);
+    console.log(`  ${c.red}[10]${c.reset} ❌ Salir del Sistema`);
     console.log(c.dim + "\n===========================================================" + c.reset);
     
-    rl.question(`\n  ${c.cyan}➤ Selecciona una acción [1-8]:${c.reset} `, (choice) => {
+    rl.question(`\n  ${c.cyan}➤ Selecciona una acción [1-10]:${c.reset} `, (choice) => {
         handleChoice(choice.trim());
     });
+}
+
+function showFoldersMenu() {
+    console.clear();
+    console.log(c.blue + `
+    ███████╗██╗██╗     ███████╗███████╗
+    ██╔════╝██║██║     ██╔════╝██╔════╝
+    █████╗  ██║██║     █████╗  ███████╗
+    ██╔══╝  ██║██║     ██╔══╝  ╚════██║
+    ██║     ██║███████╗███████╗███████║
+    ╚═╝     ╚═╝╚══════╝╚══════╝╚══════╝
+    ` + c.reset);
+    console.log(c.magenta + "              » Explorador de Carpetas «" + c.reset);
+    console.log(c.dim + "===========================================================" + c.reset);
+    console.log(`  ${c.blue}[1]${c.reset} 📁 Carpeta Raíz del Proyecto`);
+    console.log(`  ${c.blue}[2]${c.reset} 📁 Carpeta de Base de Datos y Logs (data/)`);
+    console.log(`  ${c.blue}[3]${c.reset} 📁 Carpeta de Backups (backups/)`);
+    console.log(`  ${c.blue}[4]${c.reset} 📁 Sesión de WhatsApp (auth_info_baileys/)`);
+    console.log(`  ${c.blue}[5]${c.reset} 📁 Archivos Multimedia Descargados (data/media)`);
+    console.log(`  ${c.cyan}[0]${c.reset} ⬅ Volver al Menú Principal`);
+    console.log(c.dim + "===========================================================" + c.reset);
+    
+    rl.question(`\n  ${c.cyan}➤ Selecciona la carpeta a abrir [0-5]:${c.reset} `, (choice) => {
+        handleFoldersChoice(choice.trim());
+    });
+}
+
+const { exec } = require('child_process');
+
+function openFolder(folderName) {
+    const p = path.resolve(__dirname, '..', folderName);
+    console.log(`\n  ${c.green}📂 Abriendo: ${p}${c.reset}`);
+    let cmd;
+    switch (process.platform) {
+        case 'darwin': cmd = `open "${p}"`; break;
+        case 'win32': cmd = `start "" "${p}"`; break;
+        default: cmd = `xdg-open "${p}"`; break;
+    }
+    exec(cmd, (err) => {
+        if (err) {
+            console.log(`  ${c.red}✖ El sistema no pudo abrir la ventana automáticamente.${c.reset}`);
+        }
+        setTimeout(showFoldersMenu, 1500);
+    });
+}
+
+function handleFoldersChoice(choice) {
+    switch (choice) {
+        case '1': openFolder(''); break;
+        case '2': openFolder('data'); break;
+        case '3': openFolder('backups'); break;
+        case '4': openFolder('auth_info_baileys'); break;
+        case '5': openFolder('data/media'); break;
+        case '0': showMenu(); break;
+        default:
+            console.log(`\n  ${c.red}✖ Opción inválida.${c.reset}`);
+            setTimeout(showFoldersMenu, 1200);
+            break;
+    }
+}
+
+function showPM2Menu() {
+    console.clear();
+    console.log(c.cyan + `
+    ██████╗ ███╗   ███╗██████╗ 
+    ██╔══██╗████╗ ████║╚════██╗
+    ██████╔╝██╔████╔██║ █████╔╝
+    ██╔═══╝ ██║╚██╔╝██║██╔═══╝ 
+    ██║     ██║ ╚═╝ ██║███████╗
+    ╚═╝     ╚═╝     ╚═╝╚══════╝
+    ` + c.reset);
+    console.log(c.magenta + "                  » Gestión de PM2 «" + c.reset);
+    console.log(c.dim + "===========================================================" + c.reset);
+    console.log(`  ${c.green}[1]${c.reset} ▶ Iniciar en Segundo Plano ${c.dim}(pm2:start)${c.reset}`);
+    console.log(`  ${c.yellow}[2]${c.reset} 🔄 Reiniciar Bot ${c.dim}(pm2:restart)${c.reset}`);
+    console.log(`  ${c.red}[3]${c.reset} ⏹ Detener Bot ${c.dim}(pm2:stop)${c.reset}`);
+    console.log(`  ${c.cyan}[4]${c.reset} 📋 Ver Logs en Vivo ${c.dim}(pm2:logs)${c.reset}`);
+    console.log(`  ${c.cyan}[5]${c.reset} 📊 Monitor de Recursos ${c.dim}(pm2:monit)${c.reset}`);
+    console.log(`  ${c.red}[6]${c.reset} 🗑 Eliminar Proceso de PM2 ${c.dim}(pm2:delete)${c.reset}`);
+    console.log(`  ${c.blue}[0]${c.reset} ⬅ Volver al Menú Principal`);
+    console.log(c.dim + "===========================================================" + c.reset);
+    
+    rl.question(`\n  ${c.cyan}➤ Selecciona una acción [0-6]:${c.reset} `, (choice) => {
+        handlePM2Choice(choice.trim());
+    });
+}
+
+function handlePM2Choice(choice) {
+    switch (choice) {
+        case '1': runCmd('pnpm', ['run', 'pm2:start'], showPM2Menu); break;
+        case '2': runCmd('pnpm', ['run', 'pm2:restart'], showPM2Menu); break;
+        case '3': runCmd('pnpm', ['run', 'pm2:stop'], showPM2Menu); break;
+        case '4': runCmd('pnpm', ['run', 'pm2:logs'], showPM2Menu); break;
+        case '5': runCmd('pnpm', ['run', 'pm2:monit'], showPM2Menu); break;
+        case '6': runCmd('pnpm', ['run', 'pm2:delete'], showPM2Menu); break;
+        case '0': showMenu(); break;
+        default:
+            console.log(`\n  ${c.red}✖ Opción inválida.${c.reset}`);
+            setTimeout(showPM2Menu, 1200);
+            break;
+    }
 }
 
 function runCmd(command, args, callback) {
@@ -100,6 +203,12 @@ function handleChoice(choice) {
             runCmd('pnpm', ['install'], showMenu);
             break;
         case '8':
+            showPM2Menu();
+            break;
+        case '9':
+            showFoldersMenu();
+            break;
+        case '10':
             console.log(`\n  ${c.magenta}🦊 ¡Sistema Desconectado! Hasta pronto.${c.reset}\n`);
             rl.close();
             process.exit(0);

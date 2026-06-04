@@ -322,34 +322,41 @@ fi
 # ═══════════════════════════════════════════════════════════════════
 step 5 "Configurando variables de entorno (.env)..."
 
-USER_PORT="8000"
-
 if [ ! -f ".env" ]; then
-    info "Archivo .env no encontrado. Creando desde plantilla..."
-    cp .env.example .env
-
-    # Preguntar puerto
     echo ""
-    ask "  ¿En qué puerto deseas ejecutar BotMaRe? (Enter = 8000): " "8000" USER_PORT
+    ask_yn "  ¿Deseas usar el Asistente Web visual para configurar (s), o hacerlo por Terminal (n)? (s/n): " "s" USE_WEB_SETUP
 
-    # Aplicar puerto al .env (compatible con macOS y Linux)
-    if [[ "$OS" == "macos" ]]; then
-        sed -i '' "s/PORT=8000/PORT=${USER_PORT}/" .env
-        sed -i '' "s/localhost:8000/localhost:${USER_PORT}/" .env
+    if [[ "$USE_WEB_SETUP" =~ ^[Ss]$ ]]; then
+        info "La configuración inicial se realizará visualmente desde el navegador."
+        info "Al iniciar el bot por primera vez, se levantará el Asistente Web."
+        USER_PORT="8000"
     else
-        sed -i "s/PORT=8000/PORT=${USER_PORT}/" .env
-        sed -i "s/localhost:8000/localhost:${USER_PORT}/" .env
-    fi
+        info "Creando archivo .env desde plantilla..."
+        cp .env.example .env
 
-    ok "Archivo .env creado con puerto ${USER_PORT}."
-    echo ""
-    echo -e "${YELLOW}  ╔════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${YELLOW}  ║  ${BOLD}¡IMPORTANTE!${NC}${YELLOW} Abre el archivo .env y configura:        ║${NC}"
-    echo -e "${YELLOW}  ║                                                        ║${NC}"
-    echo -e "${YELLOW}  ║  • DASHBOARD_USER / DASHBOARD_PASS (seguridad web)     ║${NC}"
-    echo -e "${YELLOW}  ║  • Al menos 1 API Key de IA (GEMINI, OPENAI, etc.)     ║${NC}"
-    echo -e "${YELLOW}  ║  • TELEGRAM_BOT_TOKEN (opcional, para control remoto)  ║${NC}"
-    echo -e "${YELLOW}  ╚════════════════════════════════════════════════════════╝${NC}"
+        # Preguntar puerto
+        echo ""
+        ask "  ¿En qué puerto deseas ejecutar BotMaRe? (Enter = 8000): " "8000" USER_PORT
+
+        # Aplicar puerto al .env (compatible con macOS y Linux)
+        if [[ "$OS" == "macos" ]]; then
+            sed -i '' "s/PORT=8000/PORT=${USER_PORT}/" .env
+            sed -i '' "s/localhost:8000/localhost:${USER_PORT}/" .env
+        else
+            sed -i "s/PORT=8000/PORT=${USER_PORT}/" .env
+            sed -i "s/localhost:8000/localhost:${USER_PORT}/" .env
+        fi
+
+        ok "Archivo .env creado con puerto ${USER_PORT}."
+        echo ""
+        echo -e "${YELLOW}  ╔════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${YELLOW}  ║  ${BOLD}¡IMPORTANTE!${NC}${YELLOW} Abre el archivo .env y configura:        ║${NC}"
+        echo -e "${YELLOW}  ║                                                        ║${NC}"
+        echo -e "${YELLOW}  ║  • DASHBOARD_USER / DASHBOARD_PASS (seguridad web)     ║${NC}"
+        echo -e "${YELLOW}  ║  • Al menos 1 API Key de IA (GEMINI, OPENAI, etc.)     ║${NC}"
+        echo -e "${YELLOW}  ║  • TELEGRAM_BOT_TOKEN (opcional, para control remoto)  ║${NC}"
+        echo -e "${YELLOW}  ╚════════════════════════════════════════════════════════╝${NC}"
+    fi
 else
     ok "Archivo .env ya existe. Respetando configuración actual."
     # Leer el puerto actual del .env existente
