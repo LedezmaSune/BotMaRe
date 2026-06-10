@@ -16,6 +16,19 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'K 1.4.1',
+        date: '10 Junio 2026',
+        title: 'Actualización y Optimización de Dependencias',
+        type: 'patch',
+        description: 'Revisión general del árbol de dependencias, actualización segura de librerías esenciales (Next.js, React, Axios, Framer Motion, Mongoose) y depuración del archivo de bloqueo pnpm.',
+        features: [
+            '📦 Actualización Segura de Dependencias: Incremento de parches y versiones menores de Axios, Framer Motion, Grammy, Mongoose, OpenAI, Lucide-react y types de React y Node.',
+            '⚡ Next.js & React: Actualización a Next.js 16.2.9 y React/React-dom 19.2.7 para mayor estabilidad.',
+            '🔒 Control de Versión Mayor: Bloqueo de actualizaciones mayores para lowdb y Baileys para mitigar roturas de API y asegurar compatibilidad heredada.',
+            '🏗️ Verificación de Compilación: Asegurado el correcto despliegue mediante compilación limpia verificada en TypeScript.'
+        ]
+    },
+    {
         version: 'K 1.4.0',
         date: '04 Junio 2026',
         title: 'Giro de Texto (Spintax) & Emojis Inteligentes',
