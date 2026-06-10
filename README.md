@@ -365,6 +365,11 @@ El bot cuenta con un script de migración nativo (`src/core/migrator.ts`). Al ar
 
 ## 🔄 Historial de Actualizaciones (Changelog)
 
+### [1.4.1] - 2026-06-10
+*   **Actualización de Seguridad de Dependencias:** Revisión completa de librerías obsoletas y actualización de Next.js (`16.2.9`), React (`19.2.7`), Axios (`1.17.0`), Framer Motion (`12.40.0`), Mongoose (`9.7.0`), OpenAI (`6.42.0`), entre otras.
+*   **Control de Actualizaciones Mayores:** Bloqueo explícito de actualizaciones mayores para `lowdb` y `@whiskeysockets/baileys` para prevenir fallos por incompatibilidad de API o ESM.
+*   **Verificación de Construcción:** Confirmación del despliegue exitoso mediante compilación limpia en TypeScript.
+
 ### [1.4.0] - 2026-06-04
 *   **Motor de Spintax (Giro de Texto) Integrado:** Variación dinámica de mensajes en campañas masivas usando `{opción A|opción B|opción C}` para eludir filtros de spam de WhatsApp.
 *   **Asistente IA de Spintax:** Botón en la interfaz (color púrpura) que reescribe tus textos automáticamente aplicando Spintax y emojis temáticos específicos de tu sector comercial.
