@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -17,11 +17,22 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: siteConfig.title,
   description: siteConfig.description,
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "BotMaRe",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0ea5e9",
 };
 
 import { BotDataProvider } from "./BotDataProvider";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { NavigationProgressBar } from "@/components/NavigationProgressBar";
+import { PwaRegister } from "@/components/PwaRegister";
 
 export default function RootLayout({
   children,
@@ -35,6 +46,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-screen flex flex-col overflow-x-hidden" suppressHydrationWarning>
+        <PwaRegister />
         <Suspense fallback={null}>
             <NavigationProgressBar />
         </Suspense>

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#06b6d4" />
+      <stop offset="1" stop-color="#4f46e5" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="15" stdDeviation="20" flood-opacity="0.3" />
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)" />
+  <g filter="url(#shadow)">
+    <!-- Bot/Fox Minimalist Face -->
+    <path d="M140 320 C140 380 200 420 256 420 C312 420 372 380 372 320 L400 180 L300 240 L256 260 L212 240 L112 180 Z" fill="#ffffff" />
+    <!-- Fox Ears inside -->
+    <path d="M140 210 L160 260 L120 280 Z" fill="#4f46e5" opacity="0.5" />
+    <path d="M372 210 L352 260 L392 280 Z" fill="#4f46e5" opacity="0.5" />
+    <!-- Fox Eyes -->
+    <circle cx="210" cy="320" r="20" fill="#06b6d4" />
+    <circle cx="302" cy="320" r="20" fill="#06b6d4" />
+    <!-- Nose -->
+    <path d="M256 360 L246 345 L266 345 Z" fill="#4f46e5" />
+  </g>
+</svg>
