@@ -365,6 +365,11 @@ El bot cuenta con un script de migración nativo (`src/core/migrator.ts`). Al ar
 
 ## 🔄 Historial de Actualizaciones (Changelog)
 
+### [1.4.2] - 2026-06-11
+*   **Nuevo Menú de Actualizaciones:** Opción `[10]` añadida al menú de la terminal para gestionar actualizaciones directamente desde GitHub (permite elegir entre Versión Estable por Tags o Versión en Desarrollo por rama main).
+*   **Migración de Core DB a Lowdb v7:** Reescribimos la lógica de `lowdb.adapter.ts` de CJS síncrono a la nueva API nativa asíncrona (ESM) para mayor robustez de archivos.
+*   **Librería WhatsApp Actualizada:** Subida exitosa a `@whiskeysockets/baileys@7.0.0-rc13`.
+
 ### [1.4.1] - 2026-06-10
 *   **Actualización de Seguridad de Dependencias:** Revisión completa de librerías obsoletas y actualización de Next.js (`16.2.9`), React (`19.2.7`), Axios (`1.17.0`), Framer Motion (`12.40.0`), Mongoose (`9.7.0`), OpenAI (`6.42.0`), entre otras.
 *   **Control de Actualizaciones Mayores:** Bloqueo explícito de actualizaciones mayores para `lowdb` y `@whiskeysockets/baileys` para prevenir fallos por incompatibilidad de API o ESM.

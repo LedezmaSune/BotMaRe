@@ -6,27 +6,40 @@ import {
     AutoresponderData, UserStateData, MessageRow 
 } from './interfaces';
 
-// lowdb v1 is CommonJS
-const low = require('lowdb');
-const FileSync = require('lowdb/adapters/FileSync');
+import { JSONFile } from 'lowdb/node';
+import { Low } from 'lowdb';
+
+type Schema = {
+    users: UserData[];
+    settings: {key: string, value: string}[];
+    reminders: ReminderData[];
+    messages: any[];
+    audits: any[];
+    templates: any[];
+    paused_chats: PausedChatData[];
+    autoresponders: AutoresponderData[];
+    user_states: any[];
+};
 
 function generateNumericId(): number {
     return Date.now() + Math.floor(Math.random() * 1000);
 }
 
 export class LowdbAdapter implements IDatabaseAdapter {
-    private ldb: any = null;
+    private ldb!: Low<Schema>;
 
     async initDB(): Promise<void> {
         try {
             const dbPath = path.resolve('data/database.json');
-            const adapter = new FileSync(dbPath);
-            this.ldb = low(adapter);
-            
-            this.ldb.defaults({
+            const adapter = new JSONFile<Schema>(dbPath);
+            const defaultData: Schema = {
                 users: [], settings: [], reminders: [], messages: [], 
                 audits: [], templates: [], paused_chats: [], autoresponders: [], user_states: []
-            }).write();
+            };
+            this.ldb = new Low<Schema>(adapter, defaultData);
+            
+            await this.ldb.read();
+            await this.ldb.write();
             
             console.log('✅ [DB] Base de datos local Lowdb inicializada correctamente en data/database.json.');
         } catch (err) {
@@ -35,16 +48,15 @@ export class LowdbAdapter implements IDatabaseAdapter {
         }
     }
 
-    // Expose the raw lowdb instance for the migrator
     getRawDb() {
         return this.ldb;
     }
 
     async saveUser(id: string, data: Partial<UserData>): Promise<UserData | null> {
         try {
-            const user = this.ldb.get('users').find({ id }).value();
+            let user = this.ldb.data.users.find(u => u.id === id);
             if (user) {
-                this.ldb.get('users').find({ id }).assign(data).write();
+                Object.assign(user, data);
             } else {
                 const newUser: UserData = {
                     id, nombre: data.nombre || 'Sin Nombre',
@@ -52,10 +64,12 @@ export class LowdbAdapter implements IDatabaseAdapter {
                     nivel: data.nivel !== undefined ? data.nivel : 1,
                     rango: data.rango || 'Novato',
                     ...data
-                };
-                this.ldb.get('users').push(newUser).write();
+                } as UserData;
+                this.ldb.data.users.push(newUser);
+                user = newUser;
             }
-            return this.ldb.get('users').find({ id }).value() as UserData;
+            await this.ldb.write();
+            return user;
         } catch (error) {
             console.error(`❌ [DB] Error al guardar usuario ${id} en Lowdb:`, error);
             return null;
@@ -64,8 +78,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async getUser(id: string): Promise<UserData | null> {
         try {
-            const user = this.ldb.get('users').find({ id }).value();
-            return (user as UserData) || null;
+            const user = this.ldb.data.users.find(u => u.id === id);
+            return user || null;
         } catch (error) {
             console.error(`❌ [DB] Error al obtener usuario ${id} de Lowdb:`, error);
             return null;
@@ -76,11 +90,11 @@ export class LowdbAdapter implements IDatabaseAdapter {
         const defaultSettings: Record<string, string> = {
             bot_name: "GravityBot",
             system_prompt: "Eres un asistente inteligente y servicial. Responde de forma amable y profesional.",
-            possible_responses: "1. Si preguntan precio: Dile que consulte la web.\n2. Si saludan: Saluda cordialmente.",
+            possible_responses: "1. Si preguntan precio: Dile que consulte la web.\\n2. Si saludan: Saluda cordialmente.",
             AI_ENABLED: "true"
         };
         try {
-            const rows = this.ldb.get('settings').value() || [];
+            const rows = this.ldb.data.settings || [];
             const loaded = rows.reduce((acc: any, row: any) => ({ ...acc, [row.key]: row.value }), {});
             return { ...defaultSettings, ...loaded };
         } catch (error) {
@@ -91,13 +105,14 @@ export class LowdbAdapter implements IDatabaseAdapter {
     async updateSettings(settings: Record<string, string>): Promise<void> {
         try {
             Object.entries(settings).forEach(([key, value]) => {
-                const exists = this.ldb.get('settings').find({ key }).value();
+                const exists = this.ldb.data.settings.find(s => s.key === key);
                 if (exists) {
-                    this.ldb.get('settings').find({ key }).assign({ value }).write();
+                    exists.value = value;
                 } else {
-                    this.ldb.get('settings').push({ key, value }).write();
+                    this.ldb.data.settings.push({ key, value });
                 }
             });
+            await this.ldb.write();
         } catch (error) {
             console.error('❌ [DB] Error al actualizar configuraciones en Lowdb:', error);
         }
@@ -105,7 +120,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async addMessage(userId: string, role: string, content: string): Promise<void> {
         try {
-            this.ldb.get('messages').push({ userId, role, content, timestamp: new Date() }).write();
+            this.ldb.data.messages.push({ userId, role, content, timestamp: new Date() });
+            await this.ldb.write();
         } catch (error) {
             console.error('❌ [DB] Error al guardar mensaje en Lowdb:', error);
         }
@@ -113,7 +129,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async getHistory(userId: string, limit: number = 50): Promise<MessageRow[]> {
         try {
-            const all = this.ldb.get('messages').filter({ userId }).value() || [];
+            const all = this.ldb.data.messages.filter(m => m.userId === userId) || [];
             const sorted = all.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
             const sliced = sorted.slice(0, limit);
             return sliced.reverse().map((row: any) => ({
@@ -126,7 +142,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async clearHistory(userId: string): Promise<void> {
         try {
-            this.ldb.get('messages').remove({ userId }).write();
+            this.ldb.data.messages = this.ldb.data.messages.filter(m => m.userId !== userId);
+            await this.ldb.write();
         } catch (error) {
             console.error('❌ [DB] Error al vaciar historial en Lowdb:', error);
         }
@@ -135,7 +152,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
     async logAudit(userId: string, action: string, details: any): Promise<void> {
         const detailsStr = JSON.stringify(details);
         try {
-            this.ldb.get('audits').push({ userId, action, details: detailsStr, timestamp: new Date() }).write();
+            this.ldb.data.audits.push({ userId, action, details: detailsStr, timestamp: new Date() });
+            await this.ldb.write();
         } catch (error) {
             console.error('❌ [DB] Error al registrar auditoría en Lowdb:', error);
         }
@@ -144,7 +162,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async listAudits(limit: number = 10): Promise<any[]> {
         try {
-            const list = this.ldb.get('audits').value() || [];
+            const list = [...this.ldb.data.audits];
             const sorted = list.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
             return sorted.slice(0, limit);
         } catch (error) {
@@ -165,7 +183,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             status, repeat, repeatInterval, repeatUnit, timestamp: new Date()
         };
         try {
-            this.ldb.get('reminders').push(payload).write();
+            this.ldb.data.reminders.push(payload);
+            await this.ldb.write();
             return id;
         } catch (error) {
             console.error('❌ [DB] Error al crear recordatorio en Lowdb:', error);
@@ -175,7 +194,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async listReminders(userId: string, includeProcessed: boolean = false): Promise<any[]> {
         try {
-            let list = this.ldb.get('reminders').filter({ userId }).value() || [];
+            let list = this.ldb.data.reminders.filter(r => r.userId === userId);
             if (!includeProcessed) {
                 list = list.filter((r: any) => r.status === 'pending');
             }
@@ -191,7 +210,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async deleteReminder(id: number): Promise<void> {
         try {
-            this.ldb.get('reminders').remove({ id }).write();
+            this.ldb.data.reminders = this.ldb.data.reminders.filter(r => r.id !== id);
+            await this.ldb.write();
         } catch (error) {
             console.error('❌ [DB] Error al eliminar recordatorio en Lowdb:', error);
         }
@@ -199,7 +219,11 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async updateReminderStatus(id: number, status: 'pending' | 'processing' | 'sent' | 'failed'): Promise<void> {
         try {
-            this.ldb.get('reminders').find({ id }).assign({ status }).write();
+            const r = this.ldb.data.reminders.find(rem => rem.id === id);
+            if (r) {
+                r.status = status;
+                await this.ldb.write();
+            }
         } catch (error) {
             console.error('❌ [DB] Error al actualizar estado de recordatorio en Lowdb:', error);
         }
@@ -207,10 +231,13 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async deleteRemindersBulk(userId: string, type: 'all' | 'pending' | 'sent'): Promise<void> {
         try {
-            let filterFn = (r: any) => r.userId === userId;
-            if (type === 'pending') filterFn = (r: any) => r.userId === userId && r.status !== 'sent';
-            else if (type === 'sent') filterFn = (r: any) => r.userId === userId && r.status === 'sent';
-            this.ldb.get('reminders').remove(filterFn).write();
+            this.ldb.data.reminders = this.ldb.data.reminders.filter(r => {
+                if (r.userId !== userId) return true; // keep others
+                if (type === 'pending' && r.status === 'sent') return true; // keep sent
+                if (type === 'sent' && r.status !== 'sent') return true; // keep pending
+                return false; // delete
+            });
+            await this.ldb.write();
         } catch (error) {
             console.error('❌ [DB] Error en eliminación masiva en Lowdb:', error);
         }
@@ -218,7 +245,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async getReminderById(id: number): Promise<any | null> {
         try {
-            return this.ldb.get('reminders').find({ id }).value() || null;
+            return this.ldb.data.reminders.find(r => r.id === id) || null;
         } catch (error) {
             return null;
         }
@@ -226,7 +253,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async listAllPendingReminders(): Promise<any[]> {
         try {
-            return this.ldb.get('reminders').filter({ status: 'pending' }).value() || [];
+            return this.ldb.data.reminders.filter(r => r.status === 'pending');
         } catch (error) {
             return [];
         }
@@ -234,7 +261,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async listPendingMediaPaths(): Promise<string[]> {
         try {
-            const list = this.ldb.get('reminders').filter({ status: 'pending' }).value() || [];
+            const list = this.ldb.data.reminders.filter(r => r.status === 'pending');
             return list.map((r: any) => r.mediaPath).filter(Boolean);
         } catch (error) {
             return [];
@@ -243,7 +270,11 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async updateReminder(id: number, data: Partial<ReminderData>): Promise<void> {
         try {
-            this.ldb.get('reminders').find({ id }).assign(data).write();
+            const r = this.ldb.data.reminders.find(rem => rem.id === id);
+            if (r) {
+                Object.assign(r, data);
+                await this.ldb.write();
+            }
         } catch (error) {
             console.error('❌ [DB] Error al actualizar recordatorio en Lowdb:', error);
         }
@@ -251,8 +282,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async listPendingOrFailedReminders(): Promise<any[]> {
         try {
-            const list = this.ldb.get('reminders').value() || [];
-            return list.filter((r: any) => ['pending', 'failed'].includes(r.status));
+            return this.ldb.data.reminders.filter(r => ['pending', 'failed'].includes(r.status));
         } catch (error) {
             return [];
         }
@@ -260,8 +290,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async checkReminderExistsByMediaPath(mediaPath: string): Promise<boolean> {
         try {
-            const exists = this.ldb.get('reminders').find({ mediaPath }).value();
-            return !!exists;
+            return !!this.ldb.data.reminders.find(r => r.mediaPath === mediaPath);
         } catch (error) {
             return false;
         }
@@ -269,7 +298,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async listTemplates(): Promise<any[]> {
         try {
-            const list = this.ldb.get('templates').value() || [];
+            const list = [...this.ldb.data.templates];
             return list.sort((a: any, b: any) => a.name.localeCompare(b.name));
         } catch (error) {
             return [];
@@ -279,7 +308,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
     async createTemplate(name: string, content: string): Promise<number> {
         const id = generateNumericId();
         try {
-            this.ldb.get('templates').push({ id, name, content, timestamp: new Date() }).write();
+            this.ldb.data.templates.push({ id, name, content, timestamp: new Date() });
+            await this.ldb.write();
             return id;
         } catch (error) {
             console.error('❌ [DB] Error al crear plantilla en Lowdb:', error);
@@ -289,7 +319,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async deleteTemplate(id: number): Promise<void> {
         try {
-            this.ldb.get('templates').remove({ id }).write();
+            this.ldb.data.templates = this.ldb.data.templates.filter(t => t.id !== id);
+            await this.ldb.write();
         } catch (error) {
             console.error('❌ [DB] Error al eliminar plantilla en Lowdb:', error);
         }
@@ -297,7 +328,12 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async updateTemplate(id: number, name: string, content: string): Promise<void> {
         try {
-            this.ldb.get('templates').find({ id }).assign({ name, content }).write();
+            const t = this.ldb.data.templates.find(temp => temp.id === id);
+            if (t) {
+                t.name = name;
+                t.content = content;
+                await this.ldb.write();
+            }
         } catch (error) {
             console.error('❌ [DB] Error al actualizar plantilla en Lowdb:', error);
         }
@@ -307,12 +343,13 @@ export class LowdbAdapter implements IDatabaseAdapter {
         const pausedUntil = new Date(Date.now() + durationHours * 3600000).toISOString();
         try {
             const payload: PausedChatData = { chatId, reason, pausedUntil, timestamp: new Date() };
-            const exists = this.ldb.get('paused_chats').find({ chatId }).value();
+            const exists = this.ldb.data.paused_chats.find(p => p.chatId === chatId);
             if (exists) {
-                this.ldb.get('paused_chats').find({ chatId }).assign(payload).write();
+                Object.assign(exists, payload);
             } else {
-                this.ldb.get('paused_chats').push(payload).write();
+                this.ldb.data.paused_chats.push(payload);
             }
+            await this.ldb.write();
         } catch (error) {
             console.error('❌ [DB] Error al pausar chat en Lowdb:', error);
         }
@@ -320,7 +357,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async unpauseChat(chatId: string): Promise<void> {
         try {
-            this.ldb.get('paused_chats').remove({ chatId }).write();
+            this.ldb.data.paused_chats = this.ldb.data.paused_chats.filter(p => p.chatId !== chatId);
+            await this.ldb.write();
         } catch (error) {
             console.error('❌ [DB] Error al despausar chat en Lowdb:', error);
         }
@@ -328,13 +366,14 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async isChatPaused(chatId: string): Promise<boolean> {
         try {
-            const row = this.ldb.get('paused_chats').find({ chatId }).value();
+            const row = this.ldb.data.paused_chats.find(p => p.chatId === chatId);
             if (!row) return false;
             
             if (new Date(row.pausedUntil) > new Date()) {
                 return true;
             } else {
-                this.ldb.get('paused_chats').remove({ chatId }).write();
+                this.ldb.data.paused_chats = this.ldb.data.paused_chats.filter(p => p.chatId !== chatId);
+                await this.ldb.write();
                 return false;
             }
         } catch (error) {
@@ -344,7 +383,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async listPausedChats(): Promise<any[]> {
         try {
-            const list = this.ldb.get('paused_chats').value() || [];
+            const list = [...this.ldb.data.paused_chats];
             return list.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         } catch (error) {
             return [];
@@ -353,7 +392,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async listAutoresponders(): Promise<any[]> {
         try {
-            const list = this.ldb.get('autoresponders').value() || [];
+            const list = [...this.ldb.data.autoresponders];
             return list.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         } catch (error) {
             return [];
@@ -370,7 +409,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
                 id, keyword, matchType, response, aiAction,
                 isActive: isActive ? 1 : 0, parentId: parentId || undefined, options: options || undefined, timestamp: new Date()
             };
-            this.ldb.get('autoresponders').push(payload).write();
+            this.ldb.data.autoresponders.push(payload);
+            await this.ldb.write();
             return id;
         } catch (error) {
             console.error('❌ [DB] Error al crear autorespondedor en Lowdb:', error);
@@ -383,10 +423,14 @@ export class LowdbAdapter implements IDatabaseAdapter {
         aiAction: string, isActive: boolean, parentId: number | null = null, options: string | null = null
     ): Promise<void> {
         try {
-            this.ldb.get('autoresponders').find({ id }).assign({
-                keyword, matchType, response, aiAction,
-                isActive: isActive ? 1 : 0, parentId: parentId || undefined, options: options || undefined
-            }).write();
+            const ar = this.ldb.data.autoresponders.find(a => a.id === id);
+            if (ar) {
+                Object.assign(ar, {
+                    keyword, matchType, response, aiAction,
+                    isActive: isActive ? 1 : 0, parentId: parentId || undefined, options: options || undefined
+                });
+                await this.ldb.write();
+            }
         } catch (error) {
             console.error('❌ [DB] Error al actualizar autorespondedor en Lowdb:', error);
         }
@@ -394,7 +438,11 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async toggleAutoresponder(id: number, isActive: boolean): Promise<void> {
         try {
-            this.ldb.get('autoresponders').find({ id }).assign({ isActive: isActive ? 1 : 0 }).write();
+            const ar = this.ldb.data.autoresponders.find(a => a.id === id);
+            if (ar) {
+                ar.isActive = isActive ? 1 : 0;
+                await this.ldb.write();
+            }
         } catch (error) {
             console.error('❌ [DB] Error al alternar autorespondedor en Lowdb:', error);
         }
@@ -402,7 +450,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async deleteAutoresponder(id: number): Promise<void> {
         try {
-            this.ldb.get('autoresponders').remove({ id }).write();
+            this.ldb.data.autoresponders = this.ldb.data.autoresponders.filter(a => a.id !== id);
+            await this.ldb.write();
         } catch (error) {
             console.error('❌ [DB] Error al eliminar autorespondedor en Lowdb:', error);
         }
@@ -410,7 +459,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async getUserState(chatId: string): Promise<number | null> {
         try {
-            const row = this.ldb.get('user_states').find({ chatId }).value();
+            const row = this.ldb.data.user_states.find(s => s.chatId === chatId);
             return row ? (row.currentMenuId ?? null) : null;
         } catch (error) {
             return null;
@@ -420,15 +469,17 @@ export class LowdbAdapter implements IDatabaseAdapter {
     async setUserState(chatId: string, currentMenuId: number | null): Promise<void> {
         try {
             if (currentMenuId === null) {
-                this.ldb.get('user_states').remove({ chatId }).write();
+                this.ldb.data.user_states = this.ldb.data.user_states.filter(s => s.chatId !== chatId);
             } else {
-                const exists = this.ldb.get('user_states').find({ chatId }).value();
+                const exists = this.ldb.data.user_states.find(s => s.chatId === chatId);
                 if (exists) {
-                    this.ldb.get('user_states').find({ chatId }).assign({ currentMenuId, timestamp: new Date() }).write();
+                    exists.currentMenuId = currentMenuId;
+                    exists.timestamp = new Date();
                 } else {
-                    this.ldb.get('user_states').push({ chatId, currentMenuId, timestamp: new Date() }).write();
+                    this.ldb.data.user_states.push({ chatId, currentMenuId, timestamp: new Date() });
                 }
             }
+            await this.ldb.write();
         } catch (error) {
             console.error('❌ [DB] Error al guardar estado en Lowdb:', error);
         }

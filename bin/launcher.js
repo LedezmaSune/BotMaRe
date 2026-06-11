@@ -40,10 +40,11 @@ function showMenu() {
     console.log(`  ${c.green}[7]${c.reset} 📥 Actualizar Dependencias ${c.dim}(pnpm install)${c.reset}`);
     console.log(`  ${c.cyan}[8]${c.reset} ⚙️ Gestión de PM2 ${c.dim}(Segundo Plano)${c.reset}`);
     console.log(`  ${c.blue}[9]${c.reset} 📁 Explorador de Carpetas ${c.dim}(Abrir localmente)${c.reset}`);
-    console.log(`  ${c.red}[10]${c.reset} ❌ Salir del Sistema`);
+    console.log(`  ${c.yellow}[10]${c.reset} 📥 Actualización desde GitHub ${c.dim}(Versiones)${c.reset}`);
+    console.log(`  ${c.red}[11]${c.reset} ❌ Salir del Sistema`);
     console.log(c.dim + "\n===========================================================" + c.reset);
     
-    rl.question(`\n  ${c.cyan}➤ Selecciona una acción [1-10]:${c.reset} `, (choice) => {
+    rl.question(`\n  ${c.cyan}➤ Selecciona una acción [1-11]:${c.reset} `, (choice) => {
         handleChoice(choice.trim());
     });
 }
@@ -73,7 +74,29 @@ function showFoldersMenu() {
     });
 }
 
-const { exec } = require('child_process');
+function showUpdateMenu() {
+    console.clear();
+    console.log(c.yellow + `
+    ██╗   ██╗██████╗ ██████╗  █████╗ ████████╗███████╗
+    ██║   ██║██╔══██╗██╔══██╗██╔══██╗╚══██╔══╝██╔════╝
+    ██║   ██║██████╔╝██║  ██║███████║   ██║   █████╗  
+    ██║   ██║██╔═══╝ ██║  ██║██╔══██║   ██║   ██╔══╝  
+    ╚██████╔╝██║     ██████╔╝██║  ██║   ██║   ███████╗
+     ╚═════╝ ╚═╝     ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝
+    ` + c.reset);
+    console.log(c.magenta + "              » Actualización desde GitHub «" + c.reset);
+    console.log(c.dim + "===========================================================" + c.reset);
+    console.log(`  ${c.green}[1]${c.reset} 🌟 Actualizar a Última Versión Estable ${c.dim}(Recomendado)${c.reset}`);
+    console.log(`  ${c.yellow}[2]${c.reset} 🚀 Actualizar a Versión en Desarrollo ${c.dim}(Últimos cambios / main)${c.reset}`);
+    console.log(`  ${c.cyan}[0]${c.reset} ⬅ Volver al Menú Principal`);
+    console.log(c.dim + "===========================================================" + c.reset);
+    
+    rl.question(`\n  ${c.cyan}➤ Selecciona una acción [0-2]:${c.reset} `, (choice) => {
+        handleUpdateChoice(choice.trim());
+    });
+}
+
+const { exec, execSync } = require('child_process');
 
 function openFolder(folderName) {
     const p = path.resolve(__dirname, '..', folderName);
@@ -103,6 +126,36 @@ function handleFoldersChoice(choice) {
         default:
             console.log(`\n  ${c.red}✖ Opción inválida.${c.reset}`);
             setTimeout(showFoldersMenu, 1200);
+            break;
+    }
+}
+
+function handleUpdateChoice(choice) {
+    switch (choice) {
+        case '1':
+            try {
+                console.log(`\n  ${c.yellow}Buscando la última versión estable (Tag)...${c.reset}`);
+                execSync('git fetch --tags', { stdio: 'inherit', cwd: path.resolve(__dirname, '..') });
+                const tags = execSync('git tag --sort=-v:refname', { cwd: path.resolve(__dirname, '..') }).toString().trim().split('\\n');
+                const latestTag = tags[0];
+                if (!latestTag) throw new Error("No tags");
+                console.log(`  ${c.green}✔ Versión encontrada: ${latestTag}${c.reset}`);
+                runCmd('git', ['checkout', latestTag], showUpdateMenu);
+            } catch (e) {
+                console.log(`  ${c.red}✖ No se encontró ninguna versión estable (Tag) o falló la conexión.${c.reset}`);
+                setTimeout(showUpdateMenu, 3000);
+            }
+            break;
+        case '2':
+            console.log(`\n  ${c.yellow}Actualizando a la última versión en desarrollo (Rama main)...${c.reset}`);
+            runCmd('git', ['checkout', 'main'], () => {
+                runCmd('git', ['pull', 'origin', 'main'], showUpdateMenu);
+            });
+            break;
+        case '0': showMenu(); break;
+        default:
+            console.log(`\n  ${c.red}✖ Opción inválida.${c.reset}`);
+            setTimeout(showUpdateMenu, 1200);
             break;
     }
 }
@@ -209,6 +262,9 @@ function handleChoice(choice) {
             showFoldersMenu();
             break;
         case '10':
+            showUpdateMenu();
+            break;
+        case '11':
             console.log(`\n  ${c.magenta}🦊 ¡Sistema Desconectado! Hasta pronto.${c.reset}\n`);
             rl.close();
             process.exit(0);

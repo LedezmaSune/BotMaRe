@@ -16,6 +16,19 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'K 1.4.2',
+        date: '11 Junio 2026',
+        title: 'Gestor de Versiones y Refactorización Core',
+        type: 'patch',
+        description: 'Implementación del nuevo gestor de actualizaciones por consola y migración completa del motor de base de datos a Lowdb v7 y Baileys v7.',
+        features: [
+            '📥 Gestor de Actualizaciones: Nuevo menú interactivo en consola (Opción 10) para cambiar entre la última versión Estable (Tag) y la versión en Desarrollo (main).',
+            '💾 Migración a Lowdb v7: Reescribimos el adaptador de base de datos local para soportar la arquitectura asíncrona de Lowdb v7.',
+            '📱 Baileys v7: Actualización a la versión candidata v7.0.0-rc13 para mayor estabilidad y soporte en conexiones de WhatsApp.',
+            '✨ Terminal: Mejoras en la interfaz del CLI y soporte de rollback automático.'
+        ]
+    },
+    {
         version: 'K 1.4.1',
         date: '10 Junio 2026',
         title: 'Actualización y Optimización de Dependencias',

@@ -22,7 +22,7 @@
     "clean:logs": "node bin/clean-logs.js"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "6.7.22",
+    "@whiskeysockets/baileys": "7.0.0-rc13",
     "adm-zip": "^0.5.17",
     "autoprefixer": "^10.5.0",
     "axios": "^1.17.0",
@@ -38,7 +38,7 @@
     "grammy": "^1.43.0",
     "helmet": "^8.2.0",
     "http-proxy-middleware": "^4.1.0",
-    "lowdb": "1.0.0",
+    "lowdb": "7.0.1",
     "lucide-react": "^1.17.0",
     "luxon": "^3.7.2",
     "mongoose": "^9.7.0",
@@ -64,17 +64,22 @@
     "@types/express": "^5.0.6",
     "@types/luxon": "^3.7.1",
     "@types/multer": "^2.1.0",
-    "@types/node": "^25.9.2",
+    "@types/node": "^25.9.3",
     "@types/node-cron": "^3.0.11",
     "@types/nprogress": "^0.2.3",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "concurrently": "^9.2.1",
+    "concurrently": "^10.0.3",
     "postcss": "^8.5.15",
     "rimraf": "^6.1.3",
     "tailwindcss": "^4.3.0",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   },
-  "packageManager": "pnpm@10.32.1+sha512.a706938f0e89ac1456b6563eab4edf1d1faf3368d1191fc5c59790e96dc918e4456ab2e67d613de1043d2e8c81f87303e6b40d4ffeca9df15ef1ad567348f2be"
+  "packageManager": "pnpm@10.32.1+sha512.a706938f0e89ac1456b6563eab4edf1d1faf3368d1191fc5c59790e96dc918e4456ab2e67d613de1043d2e8c81f87303e6b40d4ffeca9df15ef1ad567348f2be",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@whiskeysockets/baileys"
+    ]
+  }
 }
