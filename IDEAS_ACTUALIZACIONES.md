@@ -39,7 +39,7 @@ Este documento sirve como un registro central para almacenar conceptos arquitect
 **Concepto:** Permitir que los usuarios administren sus auto-respuestas, palabras clave y mensajes directamente desde una hoja de cálculo de Google (Google Sheets).
 
 ### ¿Cómo funcionaría?
-- **Sincronización:** En el Dashboard se añadiría una opción para "Vincular Hoja de Cálculo". El usuario proporciona el enlace de su Google Sheet o la vincula vía OAuth de Google.
+- **Sincronización (Vía OAuth 2.0 - Opción C):** En el Dashboard se añadiría un botón de "Iniciar sesión con Google". El usuario no toca código ni JSONs; Google emite un token de forma segura para que el bot acceda a sus hojas privadas. (Requiere configuración maestra de pantalla de consentimiento en GCP por parte del administrador).
 - **Estructura Simple:** El bot leería la primera pestaña (Hoja 1) asumiendo una estructura de dos columnas principales: `Palabra Clave` (Columna A) y `Respuesta` (Columna B).
 - **Caché y Sincronización Automática:** 
   - Para no exceder los límites de la API de Google y mantener respuestas en milisegundos, el bot descargaría (sincronizaría) la hoja de cálculo localmente a la base de datos de auto-respuestas cada cierto tiempo (ej. cada 15 minutos o bajo demanda manual).
