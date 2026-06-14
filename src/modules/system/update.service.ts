@@ -26,7 +26,7 @@ export class UpdateService {
             }
 
             const response = await axios.get(this.repoUrl, {
-                timeout: 5000,
+                timeout: 15000,
                 headers
             });
 
@@ -65,7 +65,7 @@ export class UpdateService {
             }
 
             const response = await axios.get(this.releasesUrl, {
-                timeout: 8000,
+                timeout: 15000,
                 headers,
                 params: { per_page: 20 }
             });
