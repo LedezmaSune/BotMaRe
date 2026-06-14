@@ -11,6 +11,7 @@ import {
 } from '../../core/memory'; 
 import { processVariables } from '../../utils/variables';
 import { parseContactList } from '../../utils/contactParser';
+import { GoogleSheetsService } from '../autoresponders/sheets.service';
 
 export class Scheduler {
     private static waService: MessageService;
@@ -30,6 +31,9 @@ export class Scheduler {
         // Background file cleanup (runs daily)
         setInterval(() => this.checkUploadCleanup(), 24 * 60 * 60 * 1000);
         setTimeout(() => this.checkUploadCleanup(), 5000); // Also run on startup after 5 secs
+        
+        // Background Google Sheets Sync (evaluated every 1 minute)
+        setInterval(() => this.checkSheetsSync(), 60 * 1000);
     }
 
     static stop() {
@@ -249,6 +253,36 @@ export class Scheduler {
             }
         } catch (error) {
             console.error("[Scheduler] Error in cleanup cycle:", error);
+        }
+    }
+
+    private static async checkSheetsSync() {
+        try {
+            const dbManager = require('../../core/dbManager');
+            const settings = await dbManager.getSheetSyncSettings();
+            if (!settings || !settings.isActive || settings.syncInterval === 'manual') return;
+
+            const now = new Date();
+            const lastSync = settings.lastSyncTime ? new Date(settings.lastSyncTime) : new Date(0);
+            const diffMinutes = (now.getTime() - lastSync.getTime()) / 60000;
+
+            let shouldSync = false;
+            if (settings.syncInterval === '15m' && diffMinutes >= 15) shouldSync = true;
+            if (settings.syncInterval === '1h' && diffMinutes >= 60) shouldSync = true;
+            if (settings.syncInterval === '12h' && diffMinutes >= 720) shouldSync = true;
+
+            if (shouldSync) {
+                console.log("[Scheduler] Ejecutando sincronización automática de Google Sheets...");
+                const service = new GoogleSheetsService();
+                const result = await service.syncNow();
+                if (result.success) {
+                    console.log(`[Scheduler] Sincronización Google Sheets exitosa. Importadas: ${result.count}`);
+                } else {
+                    console.error(`[Scheduler] Fallo sincronización Google Sheets: ${result.message}`);
+                }
+            }
+        } catch (error) {
+            console.error("[Scheduler] Error en el job the Google Sheets Sync:", error);
         }
     }
 

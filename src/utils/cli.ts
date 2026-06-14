@@ -75,15 +75,37 @@ export class Spinner {
     }
 }
 
-export function drawBanner() {
-    console.log(colors.fg.cyan + `
-    ██████╗  ██████╗ ████████╗███╗   ███╗███████╗██████╗ 
-    ██╔══██╗██╔═══██╗╚══██╔══╝████╗ ████║██╔════╝██╔══██╗
-    ██████╦╝██║   ██║   ██║   ██╔████╔██║█████╗  ██████╔╝
-    ██╔══██╗██║   ██║   ██║   ██║╚██╔╝██║██╔══╝  ██╔══██╗
-    ██████╦╝╚██████╔╝   ██║   ██║ ╚═╝ ██║███████╗██║  ██║
-    ╚═════╝  ╚═════╝    ╚═╝   ╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝
-    ` + colors.reset);
-    console.log(colors.fg.magenta + "                  » Unified Modular Engine «" + colors.reset);
-    console.log(colors.dim + "===========================================================" + colors.reset);
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+let hasAnimatedLogo = false;
+
+export async function drawBanner() {
+    console.clear();
+    const logoLines = [
+        colors.fg.cyan + "    ██████╗  ██████╗ ████████╗███╗   ███╗███████╗██████╗ " + colors.reset,
+        colors.fg.cyan + "    ██╔══██╗██╔═══██╗╚══██╔══╝████╗ ████║██╔════╝██╔══██╗" + colors.reset,
+        colors.fg.cyan + "    ██████╦╝██║   ██║   ██║   ██╔████╔██║█████╗  ██████╔╝" + colors.reset,
+        colors.fg.cyan + "    ██╔══██╗██║   ██║   ██║   ██║╚██╔╝██║██╔══╝  ██╔══██╗" + colors.reset,
+        colors.fg.cyan + "    ██████╦╝╚██████╔╝   ██║   ██║ ╚═╝ ██║███████╗██║  ██║" + colors.reset,
+        colors.fg.cyan + "    ╚═════╝  ╚═════╝    ╚═╝   ╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝" + colors.reset
+    ];
+
+    if (!hasAnimatedLogo) {
+        for (const line of logoLines) {
+            console.log(line);
+            await sleep(80);
+        }
+        hasAnimatedLogo = true;
+    } else {
+        for (const line of logoLines) {
+            console.log(line);
+        }
+    }
+
+    const title = "Unified Modular Engine";
+    const titleSpace = " ".repeat(Math.max(0, (55 - title.length) / 2));
+    
+    console.log(`\n${colors.fg.magenta}    ╭───────────────────────────────────────────────────────╮${colors.reset}`);
+    console.log(`${colors.fg.magenta}    │${titleSpace}${colors.bright}${title}${colors.reset}${titleSpace}  ${colors.fg.magenta}│${colors.reset}`);
+    console.log(`${colors.fg.magenta}    ╰───────────────────────────────────────────────────────╯${colors.reset}\n`);
 }

@@ -16,6 +16,19 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'K 1.4.3',
+        date: '13 Junio 2026',
+        title: 'Integración Multi-Autenticación Google Sheets',
+        type: 'minor',
+        description: 'La herramienta de Google Sheets se ha migrado a una página dedicada con tres modalidades de conexión para mayor flexibilidad y seguridad.',
+        features: [
+            '📊 Página Dedicada: Nuevo panel de sincronización completo en el dashboard.',
+            '🔓 Opción Pública: Sincronización rápida sin autenticación mediante el uso de enlaces públicos (CSV).',
+            '🔑 Cuenta de Servicio (Service Account): Opción de autenticación segura orientada a servidores subiendo el credentials.json.',
+            '🛡️ Flujo de errores mitigado: Inicialización dinámica de clientes OAuth para evitar el error "invalid_request".'
+        ]
+    },
+    {
         version: 'K 1.4.2',
         date: '11 Junio 2026',
         title: 'Gestor de Versiones y Refactorización Core',

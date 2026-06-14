@@ -365,6 +365,18 @@ El bot cuenta con un script de migración nativo (`src/core/migrator.ts`). Al ar
 
 ## 🔄 Historial de Actualizaciones (Changelog)
 
+### [1.5.0] - 2026-06-14
+*   **Rediseño de Terminal CLI (Control Maestro):** El script `launcher.js` (`pnpm run menu`) fue reescrito completamente con una interfaz visual basada en cajitas, spinners ANSI, y arte ASCII para una experiencia de usuario más inmersiva durante el arranque.
+*   **Sincronización Avanzada de Google Sheets (3 Columnas):** El parser CSV ahora procesa estrictamente 3 columnas (A: Palabra Clave, B: Respuesta, C: Regla de Coincidencia [1=Exacta, 2=Contiene]), aumentando el límite de lectura a 200 filas.
+*   **Visor de Datos Expandido:** El panel de previsualización en la web ahora soporta la visualización de 50 respuestas simultáneas distribuidas en las 3 columnas, permitiendo auditar la base de datos de manera más clara.
+*   **Gestión Remota desde Telegram:** Añadido un nuevo botón interactivo `📊 Google Sheets` en el menú `/start` del bot de Telegram para forzar la sincronización remota de autorespondedores sin necesidad de abrir el dashboard web.
+
+### [1.4.3] - 2026-06-13
+*   **Integración Multi-Autenticación Google Sheets:** La herramienta de Google Sheets se ha migrado a una página dedicada con tres modalidades de conexión para mayor flexibilidad y seguridad.
+*   **Opción Pública:** Sincronización rápida sin autenticación mediante el uso de enlaces públicos (CSV).
+*   **Cuenta de Servicio (Service Account):** Opción de autenticación segura orientada a servidores subiendo el `credentials.json`.
+*   **Flujo de errores mitigado:** Inicialización dinámica de clientes OAuth para evitar el error "invalid_request".
+
 ### [1.4.2] - 2026-06-11
 *   **Nuevo Menú de Actualizaciones:** Opción `[10]` añadida al menú de la terminal para gestionar actualizaciones directamente desde GitHub (permite elegir entre Versión Estable por Tags o Versión en Desarrollo por rama main).
 *   **Migración de Core DB a Lowdb v7:** Reescribimos la lógica de `lowdb.adapter.ts` de CJS síncrono a la nueva API nativa asíncrona (ESM) para mayor robustez de archivos.

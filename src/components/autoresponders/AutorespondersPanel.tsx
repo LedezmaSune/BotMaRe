@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Autoresponder } from '../../types';
-import { Plus, Trash2, Edit2, Play, Square, Search, ToggleLeft, ToggleRight, Bot, MessageSquareOff, MessageCircle, Download, Upload, Zap } from 'lucide-react';
+import { Plus, Trash2, Edit2, Play, Square, Search, ToggleLeft, ToggleRight, Bot, MessageSquareOff, MessageCircle, Download, Upload, Zap, Database } from 'lucide-react';
 import { useGlobalBotData } from '@/app/BotDataProvider';
+
 
 interface AutorespondersPanelProps {
     autoresponders: Autoresponder[];
@@ -489,6 +490,7 @@ export function AutorespondersPanel({ autoresponders, onRefresh }: Autoresponder
                     </div>
                 </div>
             )}
+
         </div>
     );
 }

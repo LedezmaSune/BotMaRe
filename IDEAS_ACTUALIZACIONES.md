@@ -35,15 +35,13 @@ Este documento sirve como un registro central para almacenar conceptos arquitect
 
 ---
 
-## 📊 4. Integración Directa con Google Sheets (Auto-respuestas por Hoja de Cálculo)
+## ✅ 4. Integración Directa con Google Sheets (IMPLEMENTADO en K 1.4.3)
 **Concepto:** Permitir que los usuarios administren sus auto-respuestas, palabras clave y mensajes directamente desde una hoja de cálculo de Google (Google Sheets).
 
-### ¿Cómo funcionaría?
-- **Sincronización (Vía OAuth 2.0 - Opción C):** En el Dashboard se añadiría un botón de "Iniciar sesión con Google". El usuario no toca código ni JSONs; Google emite un token de forma segura para que el bot acceda a sus hojas privadas. (Requiere configuración maestra de pantalla de consentimiento en GCP por parte del administrador).
-- **Estructura Simple:** El bot leería la primera pestaña (Hoja 1) asumiendo una estructura de dos columnas principales: `Palabra Clave` (Columna A) y `Respuesta` (Columna B).
-- **Caché y Sincronización Automática:** 
-  - Para no exceder los límites de la API de Google y mantener respuestas en milisegundos, el bot descargaría (sincronizaría) la hoja de cálculo localmente a la base de datos de auto-respuestas cada cierto tiempo (ej. cada 15 minutos o bajo demanda manual).
-- **Ventajas:** Los clientes que no son técnicos pueden actualizar sus respuestas desde su celular usando la app de Google Sheets sin siquiera tener que abrir el Dashboard del bot.
+### ¿Cómo funciona actualmente?
+- **Página Dedicada:** Accesible desde el Dashboard con tres opciones de conexión: Pública (CSV), Cuenta de Servicio (JSON) y OAuth 2.0.
+- **Sincronización Inteligente:** El bot borra solo las respuestas sincronizadas por Sheets previamente y carga las nuevas sin afectar a las creadas manualmente.
+- **Automatización:** El scheduler se encarga de revisar los intervalos configurados (15m, 1h, 12h) y actualiza automáticamente los datos locales sin intervención.
 
 ---
 

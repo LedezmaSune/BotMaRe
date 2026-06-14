@@ -151,7 +151,7 @@ const PORT = process.env.PORT || 8000;
  * Bootstrap Application
  */
 async function bootstrap() {
-    drawBanner();
+    await drawBanner();
     
     if (!fs.existsSync(path.join(process.cwd(), '.env'))) {
         const { startSetupServer } = await import('../setup-web/server');

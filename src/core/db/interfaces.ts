@@ -77,3 +77,12 @@ export interface MessageRow {
     role: "system" | "user" | "assistant" | "tool";
     content: string;
 }
+
+export interface SheetSyncSettings {
+    spreadsheetId: string;
+    refreshToken: string;
+    syncInterval: '15m' | '1h' | '12h' | 'manual';
+    lastSyncTime?: Date;
+    isActive: boolean;
+    authMethod?: 'public' | 'service_account' | 'oauth';
+}

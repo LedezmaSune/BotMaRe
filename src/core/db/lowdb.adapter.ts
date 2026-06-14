@@ -3,7 +3,7 @@ import { IDatabaseAdapter } from './db.adapter';
 import { 
     UserData, SettingsData, MessageData, AuditData, 
     ReminderData, TemplateData, PausedChatData, 
-    AutoresponderData, UserStateData, MessageRow 
+    AutoresponderData, UserStateData, MessageRow, SheetSyncSettings
 } from './interfaces';
 
 import { JSONFile } from 'lowdb/node';
@@ -19,6 +19,7 @@ type Schema = {
     paused_chats: PausedChatData[];
     autoresponders: AutoresponderData[];
     user_states: any[];
+    sheet_sync_settings: SheetSyncSettings | null;
 };
 
 function generateNumericId(): number {
@@ -34,7 +35,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
             const adapter = new JSONFile<Schema>(dbPath);
             const defaultData: Schema = {
                 users: [], settings: [], reminders: [], messages: [], 
-                audits: [], templates: [], paused_chats: [], autoresponders: [], user_states: []
+                audits: [], templates: [], paused_chats: [], autoresponders: [], user_states: [], sheet_sync_settings: null
             };
             this.ldb = new Low<Schema>(adapter, defaultData);
             
@@ -487,5 +488,22 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     getActiveEngine(): 'mongodb' | 'lowdb' | 'none' {
         return 'lowdb';
+    }
+
+    async getSheetSyncSettings(): Promise<SheetSyncSettings | null> {
+        try {
+            return this.ldb.data.sheet_sync_settings || null;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    async saveSheetSyncSettings(settings: SheetSyncSettings): Promise<void> {
+        try {
+            this.ldb.data.sheet_sync_settings = settings;
+            await this.ldb.write();
+        } catch (error) {
+            console.error('❌ [DB] Error al guardar configuracion de Google Sheets en Lowdb:', error);
+        }
     }
 }

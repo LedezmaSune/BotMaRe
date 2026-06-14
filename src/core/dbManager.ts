@@ -104,4 +104,7 @@ export const deleteAutoresponder = (id: number) => adapter.deleteAutoresponder(i
 export const getUserState = (chatId: string) => adapter.getUserState(chatId);
 export const setUserState = (chatId: string, currentMenuId: number | null) => adapter.setUserState(chatId, currentMenuId);
 
+export const getSheetSyncSettings = () => adapter.getSheetSyncSettings();
+export const saveSheetSyncSettings = (settings: any) => adapter.saveSheetSyncSettings(settings);
+
 export const getActiveEngine = () => adapter.getActiveEngine();

@@ -3,7 +3,7 @@ import { IDatabaseAdapter } from './db.adapter';
 import { 
     UserData, SettingsData, MessageData, AuditData, 
     ReminderData, TemplateData, PausedChatData, 
-    AutoresponderData, UserStateData, MessageRow 
+    AutoresponderData, UserStateData, MessageRow, SheetSyncSettings 
 } from './interfaces';
 import {
     UserModel, SettingsModel, MessageModel, AuditModel,
@@ -405,5 +405,14 @@ export class MongoAdapter implements IDatabaseAdapter {
 
     getActiveEngine(): 'mongodb' | 'lowdb' | 'none' {
         return 'mongodb';
+    }
+
+    async getSheetSyncSettings(): Promise<SheetSyncSettings | null> {
+        console.warn('⚠️ [DB] SheetSyncSettings no está implementado nativamente en MongoDB Atlas aún.');
+        return null;
+    }
+
+    async saveSheetSyncSettings(settings: SheetSyncSettings): Promise<void> {
+        console.warn('⚠️ [DB] SheetSyncSettings no está implementado nativamente en MongoDB Atlas aún.');
     }
 }

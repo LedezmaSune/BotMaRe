@@ -47,13 +47,13 @@ export default function RootLayout({
     >
       <body className="min-h-screen flex flex-col overflow-x-hidden" suppressHydrationWarning>
         <PwaRegister />
-        <Suspense fallback={null}>
-            <NavigationProgressBar />
-        </Suspense>
         <BotDataProvider>
+          <Suspense fallback={<div className="p-8 text-center text-cyan-400">Cargando interfaz del Bot...</div>}>
+            <NavigationProgressBar />
             <DashboardLayout>
                 {children}
             </DashboardLayout>
+          </Suspense>
         </BotDataProvider>
       </body>
     </html>

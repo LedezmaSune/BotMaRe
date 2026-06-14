@@ -111,8 +111,9 @@ export function initTelegramBot(
       .text("📅 Recordatorios", "menu_reminders")
       .text("📣 Difusión Masiva", "menu_masivo").row()
       .text("🧠 Cerebro IA", "menu_cerebro")
-      .text("📊 Auditoría", "menu_auditoria").row()
-      .text("🔔 Notificaciones", "menu_notificaciones")
+      .text("📊 Google Sheets", "menu_sheets").row()
+      .text("📋 Auditoría", "menu_auditoria")
+      .text("🔔 Notificaciones", "menu_notificaciones").row()
       .text("🔄 Actualizar", "menu_actualizar").row()
       .text("🌐 Cloudflare", "menu_tunel")
       .text("🛡️ Tailscale IP", "menu_tailscale").row()
@@ -176,6 +177,10 @@ export function initTelegramBot(
         const settings = await getSettings() as any;
         const text = `🧠 *Cerebro Actual*\n\n*Nombre:* ${settings.bot_name}\n\n*Prompt:*\n_${settings.system_prompt}_\n\n*Reglas:*\n_${settings.possible_responses}_\n\n💡 _Para editar, usa:_ \`/setname\`, \`/setprompt\`, \`/setrules\``;
         await ctx.reply(text, { parse_mode: "Markdown" });
+      } else if (data === "menu_sheets") {
+        const keyboard = new InlineKeyboard()
+          .text("🔄 Sincronizar Ahora", "sheets_sync").row();
+        await ctx.reply("📊 *Google Sheets*\n\nSincroniza tus autorespondedores desde tu hoja de cálculo configurada de forma remota.", { reply_markup: keyboard, parse_mode: "Markdown" });
       } else if (data === "menu_auditoria") {
         try {
             const rows = await listAudits(10);
@@ -248,6 +253,26 @@ export function initTelegramBot(
         } else {
             await ctx.reply(`🔴 *Tailscale Inactivo o no detectado*\n\nNo se encontró una IP de red privada (100.x.x.x).\n\nPara configurarlo:\n1. Descarga la app **Tailscale** en este dispositivo.\n2. Inicia sesión y activa el VPN.\n3. Vuelve a tocar este botón.`, { parse_mode: "Markdown" });
         }
+      }
+      return;
+    }
+
+    if (data === "sheets_sync") {
+      await ctx.answerCallbackQuery({ text: "Sincronizando desde Sheets..." });
+      const msg = await ctx.reply("⏳ Sincronizando con Google Sheets...");
+      
+      try {
+          const { GoogleSheetsService } = await import("../modules/autoresponders/sheets.service");
+          const sheetsService = new GoogleSheetsService();
+          const result = await sheetsService.syncNow();
+          
+          if (result.success) {
+             await ctx.api.editMessageText(ctx.chat!.id, msg.message_id, `✅ *Sincronización Exitosa*\n\n${result.message}`, { parse_mode: "Markdown" });
+          } else {
+             await ctx.api.editMessageText(ctx.chat!.id, msg.message_id, `❌ *Error en Sincronización*\n\n${result.message}`, { parse_mode: "Markdown" });
+          }
+      } catch (e: any) {
+          await ctx.api.editMessageText(ctx.chat!.id, msg.message_id, `❌ *Error Crítico*\n\nNo se pudo sincronizar: ${e.message}`, { parse_mode: "Markdown" });
       }
       return;
     }

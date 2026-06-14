@@ -6,7 +6,8 @@ import {
     TemplateData, 
     PausedChatData, 
     AutoresponderData, 
-    UserStateData 
+    UserStateData,
+    SheetSyncSettings
 } from './interfaces';
 
 export interface IDatabaseAdapter {
@@ -67,5 +68,8 @@ export interface IDatabaseAdapter {
     getUserState(chatId: string): Promise<number | null>;
     setUserState(chatId: string, currentMenuId: number | null): Promise<void>;
     
+    getSheetSyncSettings(): Promise<SheetSyncSettings | null>;
+    saveSheetSyncSettings(settings: SheetSyncSettings): Promise<void>;
+
     getActiveEngine(): 'mongodb' | 'lowdb' | 'none';
 }
