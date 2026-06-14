@@ -16,6 +16,19 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'K 1.5.0',
+        date: '14 Junio 2026',
+        title: 'Rediseño CLI y Google Sheets Avanzado',
+        type: 'minor',
+        description: 'Rediseño completo de la interfaz de consola, sincronización de Google Sheets con 3 columnas y gestión remota por Telegram.',
+        features: [
+            '💻 Rediseño CLI: Interfaz visual en consola (launcher.js) con arte ASCII y spinners ANSI.',
+            '📊 Sincronización Avanzada Sheets: Soporte para 3 columnas (A: Palabra Clave, B: Respuesta, C: Regla [Exacta/Contiene]) con límite de 200 filas.',
+            '🔍 Visor Expandido: Previsualización de 50 respuestas simultáneas en el panel.',
+            '📱 Control en Telegram: Sincronización de Sheets remoto directo desde el menú /start.'
+        ]
+    },
+    {
         version: 'K 1.4.3',
         date: '13 Junio 2026',
         title: 'Integración Multi-Autenticación Google Sheets',
