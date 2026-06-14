@@ -159,7 +159,7 @@ function handleUpdateChoice(choice) {
             console.log(`\n    ${c.bgYellow}${c.bright} 🌟 BUSCANDO ACTUALIZACIÓN ${c.reset}`);
             try {
                 execSync('git fetch --tags', { stdio: 'inherit', cwd: path.resolve(__dirname, '..') });
-                const tags = execSync('git tag --sort=-v:refname', { cwd: path.resolve(__dirname, '..') }).toString().trim().split('\\n');
+                const tags = execSync('git tag --sort=-v:refname', { cwd: path.resolve(__dirname, '..') }).toString().trim().split(/\r?\n/);
                 if (!tags[0]) throw new Error("No tags");
                 console.log(`    ${c.green}✔ Tag estable: ${tags[0]}${c.reset}`);
                 runCmd('git', ['checkout', tags[0]], showUpdateMenu);
