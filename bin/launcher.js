@@ -1,6 +1,9 @@
 const { spawn, exec, execSync } = require('child_process');
 const readline = require('readline');
 const path = require('path');
+const fs = require('fs');
+
+const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf8'));
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -47,8 +50,12 @@ async function showBanner(title = "Control Maestro") {
     
     console.log(`\n${c.magenta}    ╭───────────────────────────────────────────────────────╮${c.reset}`);
     console.log(`${c.magenta}    │${titleSpace}${c.bright}${title}${c.reset}${titleSpace}  ${c.magenta}│${c.reset}`);
+    const osStr = process.platform.toUpperCase().padEnd(10);
+    const verStr = pkg.version.padEnd(7);
+    const dirStr = path.basename(path.resolve(__dirname, '..')).substring(0,20).padEnd(20);
+
     console.log(`${c.magenta}    ├───────────────────────────────────────────────────────┤${c.reset}`);
-    console.log(`${c.magenta}    │${c.reset}  ${c.cyan}OS:${c.reset} \x1b[33m${process.platform.toUpperCase().padEnd(10)}\x1b[0m ${c.cyan}DIR:${c.reset} \x1b[33m${path.basename(path.resolve(__dirname, '..')).substring(0,25).padEnd(25)}\x1b[0m ${c.magenta}│${c.reset}`);
+    console.log(`${c.magenta}    │${c.reset}  ${c.cyan}OS:${c.reset} \x1b[33m${osStr}\x1b[0m ${c.cyan}VER:${c.reset} \x1b[33m${verStr}\x1b[0m ${c.cyan}DIR:${c.reset} \x1b[33m${dirStr}\x1b[0m${c.magenta}│${c.reset}`);
     console.log(`${c.magenta}    ╰───────────────────────────────────────────────────────╯${c.reset}\n`);
 }
 
