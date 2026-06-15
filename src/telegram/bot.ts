@@ -102,6 +102,7 @@ export function initTelegramBot(
     { command: "tailscale", description: "🛡️ Red privada Tailscale" },
     { command: "pm2", description: "⚙️ Control de procesos PM2" },
     { command: "borrarmemorial", description: "🧹 Borrar memoria del bot" },
+    { command: "ayuda", description: "❓ Ver la guía de comandos" },
   ]).catch(console.error);
 
   bot.command("start", async (ctx) => {
@@ -127,6 +128,31 @@ export function initTelegramBot(
       `👇 *Selecciona una opción para comenzar:*`,
       { reply_markup: keyboard, parse_mode: "Markdown" }
     );
+  });
+
+  bot.command(["ayuda", "comandos", "help"], async (ctx) => {
+    const guide = `🦊 *Guía de Comandos y Uso de BotMaRe*\n\n` +
+      `¡Hola! Soy tu asistente maestro. Puedes conversar conmigo de forma natural para pedirme cosas, enviarme audios, o usar los siguientes comandos rápidos:\n\n` +
+      `*Comandos Principales:*\n` +
+      `👉 /start - Abre el menú principal con botones.\n` +
+      `👉 /ayuda - Muestra esta guía de comandos.\n` +
+      `👉 /dashboard - Obtener link de acceso al Panel Web.\n` +
+      `👉 /recordatorios - Gestionar o ver tus recordatorios.\n` +
+      `👉 /masivo - Iniciar una campaña de difusión por WhatsApp.\n` +
+      `👉 /detenermasivo - Cancelar una difusión en curso.\n` +
+      `👉 /cerebro - Ajustar parámetros de la IA y reglas.\n` +
+      `👉 /auditoria - Ver últimos movimientos y errores.\n` +
+      `👉 /notificaciones - Activar/desactivar alertas en Telegram.\n\n` +
+      `*Mantenimiento y Servidor:*\n` +
+      `👉 /actualizar - Buscar nuevas versiones en GitHub.\n` +
+      `👉 /tunel - Ver o reiniciar la URL pública (Cloudflare).\n` +
+      `👉 /ssh - Abrir terminal remota (Tmate) para soporte.\n` +
+      `👉 /tailscale - Ver estado de red privada VPN.\n` +
+      `👉 /pm2 - Controlar los procesos en segundo plano.\n` +
+      `👉 /borrarmemorial - Limpiar mi memoria conversacional.\n\n` +
+      `💡 *Tip:* Si estás desde el celular, simplemente escribe "/" en el chat para que Telegram te despliegue la lista automática de comandos interactivos.`;
+    
+    await ctx.reply(guide, { parse_mode: "Markdown" });
   });
 
   bot.command(["dashboard", "dashbord"], async (ctx) => {
