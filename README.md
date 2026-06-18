@@ -140,50 +140,124 @@ NVIDIA_MODEL="deepseek-ai/deepseek-v4-pro"
 
 ## 🚀 Guías de Instalación Paso a Paso
 
-### 💻 Opción A: Servidor Local (Windows / macOS / Linux)
+### 💻 Opción A: Servidor Local en Windows (Paso a Paso Detallado)
 
-Ideal para computadoras de escritorio de uso diario o laptops locales.
+Esta guía te guiará para configurar BotMaRe localmente en tu computadora con Windows.
 
-#### Requisitos Previos:
-- **Node.js**: v18 o superior ([Descargar](https://nodejs.org/)).
-- **pnpm**: Gestor de paquetes ultrarrápido. Instálalo abriendo tu terminal y ejecutando:
-  ```bash
-  npm install -g pnpm
+#### 🛠️ ¿Qué se ocupa antes de instalar? (Requisitos Previos)
+
+1. **Git para Windows**:
+   - Necesario para descargar y actualizar el código del bot de forma sencilla.
+   - **Descarga:** [git-scm.com](https://git-scm.com/) (descarga el instalador de 64 bits para Windows).
+   - *Nota de instalación:* Deja todas las opciones por defecto durante la instalación.
+
+2. **Node.js (Versión LTS)**:
+   - Entorno de ejecución de JavaScript para arrancar el servidor.
+   - **Descarga:** [nodejs.org](https://nodejs.org/) (descarga la versión recomendada **LTS**, por ejemplo, v20 o v22).
+   - *Importante:* Al instalar, marca la casilla que dice *"Automatically install the necessary tools"* (esto instalará herramientas adicionales como Python y C++ Build Tools, muy útiles para compilar ciertas bases de datos locales si fuese necesario).
+
+3. **pnpm (Gestor de Paquetes)**:
+   - Una alternativa ultrarrápida a `npm` que gestiona de manera eficiente las librerías del bot.
+   - **Cómo instalarlo:** Abre la terminal de Windows (PowerShell o CMD) y escribe:
+     ```cmd
+     npm install -g pnpm
+     ```
+
+4. **Cuenta de WhatsApp Activa**:
+   - Tu teléfono con WhatsApp y conexión a internet estable para escanear el código QR inicial.
+
+5. **Proveedores de Inteligencia Artificial (Opcional, pero recomendado)**:
+   - Para que el bot automatice conversaciones inteligentemente, requerirás claves de API. Te recomendamos registrarte en:
+     - [Groq Console](https://console.groq.com/) (Gratuito, extremadamente veloz).
+     - [Google AI Studio](https://aistudio.google.com/) (Capa gratuita generosa para Gemini Flash).
+     - [OpenRouter](https://openrouter.ai/) (Ideal para modelos de código abierto y variados).
+
+---
+
+#### 🏁 Paso a Paso de la Instalación:
+
+##### Paso 1: Obtener el Código del Bot
+Puedes elegir **uno** de los siguientes métodos:
+* **Método A (Recomendado - Git):** Abre la terminal (PowerShell o Símbolo del Sistema) y escribe:
+  ```powershell
+  git clone https://github.com/LedezmaSune/BotMaRe.git
+  cd BotMaRe
   ```
+* **Método B (Alternativa sin Git):** Descarga el archivo ZIP del proyecto desde el botón verde **Code** arriba en esta página. Descomprímelo en tu disco (ej. en `C:\BotMaRe`). Abre la carpeta, mantén presionado `Shift`, haz clic derecho en cualquier área libre y selecciona **"Abrir en la terminal"** o **"Abrir ventana de PowerShell aquí"**.
 
-#### Paso a Paso:
+##### Paso 2: Habilitar Permisos de Ejecución en PowerShell (Si es necesario)
+Si al intentar ejecutar comandos más adelante te aparece un error que dice que los scripts están deshabilitados en este sistema, abre PowerShell como **Administrador** y ejecuta:
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+Escribe `S` y presiona Enter para confirmar. Luego cierra esa ventana y continúa en tu terminal normal del proyecto.
 
-1. **Clona el repositorio oficial de GitHub:**
+##### Paso 3: Configurar las Variables de Entorno (`.env`)
+1. Crea tu archivo de configuración ejecutando este comando en la terminal de la carpeta del proyecto:
+   ```powershell
+   copy .env.example .env
+   ```
+2. Abre el archivo `.env` recién creado con el Bloc de notas o VS Code.
+3. Modifica tus credenciales de acceso para el dashboard web (por defecto son `ADMIN_USER=admin` y `ADMIN_PASS=admin123`):
+   ```env
+   ADMIN_USER="tu_usuario"
+   ADMIN_PASS="tu_contraseña"
+   ```
+4. Agrega tus API Keys de Inteligencia Artificial. Por ejemplo:
+   ```env
+   GROQ_API_KEY="gsk_..."
+   GEMINI_API_KEY="AIzaSy..."
+   ```
+5. Guarda y cierra el archivo.
+
+##### Paso 4: Instalar las Dependencias
+Con la terminal abierta dentro de la carpeta del proyecto (`BotMaRe`), ejecuta:
+```powershell
+pnpm install
+```
+*Este proceso descargará todas las librerías necesarias. Tardará unos segundos.*
+
+##### Paso 5: Compilar el Panel Web (Frontend)
+El panel gráfico de administración está desarrollado con Next.js y React, por lo que requiere una compilación inicial optimizada:
+```powershell
+pnpm run build
+```
+*Espera a que finalice la compilación sin errores.*
+
+##### Paso 6: Arrancar la Plataforma
+Inicia el lanzador de comandos visual escribiendo:
+```powershell
+pnpm run menu
+```
+1. La consola abrirá una interfaz interactiva estilo menú.
+2. Escribe **`1`** y presiona Enter para iniciar el bot en **Modo Producción**.
+3. Verás en consola las direcciones IP locales asignadas para entrar al panel. Por defecto, abre en tu navegador de internet:
+   `http://localhost:8000`
+4. Inicia sesión con el usuario y contraseña que configuraste en tu archivo `.env`.
+
+##### Paso 7: Vincular WhatsApp
+1. Dentro del panel de administración web, dirígete a la pestaña **WhatsApp**.
+2. Verás que se genera un código QR en pantalla.
+3. Abre WhatsApp en tu teléfono celular, ve a **Configuración / Dispositivos vinculados**, presiona **Vincular un dispositivo** y escanea el código QR del navegador.
+4. Una vez vinculado, el panel mostrará el estado de la conexión en verde y el bot estará operativo.
+
+---
+
+### 🍎 Opción B: Servidor Local en macOS o Linux
+Si estás utilizando macOS o Linux, abre tu terminal y ejecuta:
+1. **Requisitos:** Node.js v18+, Git, y pnpm instalado globalmente (`npm i -g pnpm`).
+2. **Clonar e instalar:**
    ```bash
    git clone https://github.com/LedezmaSune/BotMaRe.git
    cd BotMaRe
-   ```
-
-2. **Prepara tu archivo de variables de entorno:**
-   * **En Windows (CMD/PowerShell):**
-     ```powershell
-     copy .env.example .env
-     ```
-   * **En Linux o macOS:**
-     ```bash
-     cp .env.example .env
-     ```
-
-3. **Instala todas las dependencias del proyecto:**
-   ```bash
+   cp .env.example .env
    pnpm install
    ```
-
-4. **Compila la interfaz de Next.js para producción:**
+3. **Compilar y Arrancar:**
    ```bash
    pnpm run build
-   ```
-
-5. **Inicia el menú interactivo para controlar tu bot de forma visual:**
-   ```bash
    pnpm run menu
    ```
-   *Selecciona la opción **1** para iniciar en Modo Producción. Tu consola mostrará las direcciones locales, privadas e IPs físicas para acceder al Dashboard (por defecto: `http://localhost:8000`). Accede con tu usuario (`admin`) y contraseña (`admin123`).*
 
 ---
 
