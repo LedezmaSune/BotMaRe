@@ -57,6 +57,15 @@ async function showBanner(title = "Control Maestro") {
     console.log(`${c.magenta}    ├───────────────────────────────────────────────────────┤${c.reset}`);
     console.log(`${c.magenta}    │${c.reset}  ${c.cyan}OS:${c.reset} \x1b[33m${osStr}\x1b[0m ${c.cyan}VER:${c.reset} \x1b[33m${verStr}\x1b[0m ${c.cyan}DIR:${c.reset} \x1b[33m${dirStr}\x1b[0m${c.magenta}│${c.reset}`);
     console.log(`${c.magenta}    ╰───────────────────────────────────────────────────────╯${c.reset}\n`);
+
+    // Alerta de compatibilidad con Node 24 (EPERM / Access Violation)
+    if (process.versions.node.startsWith('24.')) {
+        console.log(`    ${c.bgRed}${c.bright} ⚠️ ADVERTENCIA DE COMPATIBILIDAD (NODE.JS v24 DETECTADO) ${c.reset}`);
+        console.log(`    ${c.red}Estás usando Node.js v${process.versions.node}. Esta versión causa errores EPERM${c.reset}`);
+        console.log(`    ${c.red}y Access Violation al compilar dependencias nativas en Windows.${c.reset}`);
+        console.log(`    ${c.yellow}👉 Solución recomendada: Instala Node.js v22 LTS.${c.reset}`);
+        console.log(`    ${c.yellow}👉 Más info en: TROUBLESHOOTING.md${c.reset}\n`);
+    }
 }
 
 async function showMenu() {
