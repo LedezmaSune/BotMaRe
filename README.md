@@ -224,9 +224,10 @@ Si estás utilizando macOS o Linux, abre tu terminal y ejecuta:
 3. **Compilar y Arrancar:**
    ```bash
    pnpm run build
-   pnpm run menu
+   chmod +x start.sh
+   ./start.sh
    ```
-
+   
 ---
 
 ### ☁️ Opción B: Servidor en la Nube (VPS Linux Ubuntu/Debian)
