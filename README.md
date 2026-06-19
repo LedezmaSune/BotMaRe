@@ -439,6 +439,10 @@ El bot cuenta con un script de migración nativo (`src/core/migrator.ts`). Al ar
 
 ## 🔄 Historial de Actualizaciones (Changelog)
 
+### [1.5.4] - 2026-06-18
+*   **Actualización General de Dependencias:** Se actualizaron paquetes clave a sus últimas versiones (`axios`, `better-sqlite3`, `grammy`, `openai`, `tailwindcss`, entre otros).
+*   **Fix de Compilación con PNPM v10:** Se solucionó el error crítico de dependencias nativas faltantes (`Could not locate the bindings file`) agregando permisos explícitos en `onlyBuiltDependencies` dentro del `package.json`. Esto permite que librerías como `better-sqlite3` se instalen y compilen correctamente.
+
 ### [1.5.0] - 2026-06-14
 *   **Rediseño de Terminal CLI (Control Maestro):** El script `launcher.js` (`pnpm run menu`) fue reescrito completamente con una interfaz visual basada en cajitas, spinners ANSI, y arte ASCII para una experiencia de usuario más inmersiva durante el arranque.
 *   **Sincronización Avanzada de Google Sheets (3 Columnas):** El parser CSV ahora procesa estrictamente 3 columnas (A: Palabra Clave, B: Respuesta, C: Regla de Coincidencia [1=Exacta, 2=Contiene]), aumentando el límite de lectura a 200 filas.
