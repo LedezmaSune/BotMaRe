@@ -81,6 +81,18 @@ async function showMenu() {
     console.log(`    ${c.yellow}╰────────────────────────────────────────${c.reset}\n`);
 
     console.log(`    ${c.red}[11] ❌ Salir del Sistema${c.reset}\n`);
+
+    const envExists = fs.existsSync(path.resolve(__dirname, '../.env'));
+    const nextExists = fs.existsSync(path.resolve(__dirname, '../.next'));
+    
+    if (!envExists || !nextExists) {
+        console.log(`    ${c.bgYellow}${c.red}${c.bright} 🌟 ¡BIENVENIDO A BOTMARE! (PASOS DE PRIMERA VEZ) 🌟 ${c.reset}`);
+        if (!envExists) console.log(`    ${c.yellow}👉 1. Configura tu archivo .env con tus contraseñas y API Keys.${c.reset}`);
+        if (!nextExists) console.log(`    ${c.yellow}👉 2. Presiona [3] para Compilar el Frontend.${c.reset}`);
+        console.log(`    ${c.yellow}👉 3. Presiona [1] para Iniciar el Servidor.${c.reset}\n`);
+    } else {
+        console.log(`    ${c.cyan}💡 Tip: Si acabas de instalar o actualizar, presiona [3] para compilar.${c.reset}\n`);
+    }
     
     rl.question(`    ${c.cyan}${c.bright}➤ Selecciona una acción [1-11]:${c.reset} `, (choice) => {
         handleChoice(choice.trim());
