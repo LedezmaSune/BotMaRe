@@ -222,6 +222,21 @@ else
     pkg install nodejs python make clang binutils git curl openssl tmate tmux nano -y
 fi
 
+# Advertencia de Node 24 (EPERM / Access Violation)
+if command -v node &>/dev/null; then
+    NODE_VER=$(node -v)
+    if [[ "$NODE_VER" == v24* ]]; then
+        echo ""
+        warn "¡ADVERTENCIA CRÍTICA DE COMPATIBILIDAD!"
+        warn "Termux instaló Node.js $NODE_VER."
+        warn "Next.js y módulos nativos tienen problemas conocidos (Access Violation / Error de Segmentación)"
+        warn "en compilaciones pesadas con Node.js v24."
+        warn "Si el script falla o la consola se cierra de golpe en el paso 6, deberás instalar nodejs-lts."
+        echo ""
+        sleep 5
+    fi
+fi
+
 # Intentar instalar tailscale de forma independiente (si no existe, no bloquea el resto del sistema)
 info "Instalando Tailscale (opcional)..."
 pkg install tailscale -y &>/dev/null || warn "No se pudo encontrar el paquete 'tailscale' en tus repositorios. Omitiendo..."
