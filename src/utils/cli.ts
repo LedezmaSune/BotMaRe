@@ -102,10 +102,12 @@ export async function drawBanner() {
         }
     }
 
-    const title = "Unified Modular Engine";
+    const title = "🚀 UNIFIED MODULAR ENGINE 🦊";
     const titleSpace = " ".repeat(Math.max(0, (55 - title.length) / 2));
     
-    console.log(`\n${colors.fg.magenta}    ╭───────────────────────────────────────────────────────╮${colors.reset}`);
-    console.log(`${colors.fg.magenta}    │${titleSpace}${colors.bright}${title}${colors.reset}${titleSpace}  ${colors.fg.magenta}│${colors.reset}`);
-    console.log(`${colors.fg.magenta}    ╰───────────────────────────────────────────────────────╯${colors.reset}\n`);
+    console.log(`\n${colors.fg.magenta}    ╔═══════════════════════════════════════════════════════╗${colors.reset}`);
+    console.log(`${colors.fg.magenta}    ║${titleSpace}${colors.bright}${colors.fg.cyan}${title}${colors.reset}${titleSpace}║${colors.reset}`);
+    console.log(`${colors.fg.magenta}    ╠───────────────────────────────────────────────────────╣${colors.reset}`);
+    console.log(`${colors.fg.magenta}    ║${colors.reset}  ${colors.fg.yellow}Estado:${colors.reset} ${colors.bright}Online${colors.reset}   ${colors.fg.yellow}Módulos:${colors.reset} ${colors.bright}Activados${colors.reset}   ${colors.fg.yellow}Core:${colors.reset} ${colors.bright}Estable${colors.reset}  ${colors.fg.magenta}║${colors.reset}`);
+    console.log(`${colors.fg.magenta}    ╚═══════════════════════════════════════════════════════╝${colors.reset}\n`);
 }
