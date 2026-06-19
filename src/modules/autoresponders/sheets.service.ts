@@ -20,12 +20,13 @@ export class GoogleSheetsService {
       if (authMethod === 'public') {
         // Option A: Public Sheet using CSV Export
         const url = `https://docs.google.com/spreadsheets/d/${cleanSpreadsheetId}/export?format=csv`;
-        const fetch = require('node-fetch'); // Ensure fetch is available or use native fetch in Node 18+
-        const res = await (global.fetch ? global.fetch(url) : fetch(url));
-        if (!res.ok) {
-           return { success: false, message: `No se pudo acceder a la hoja pública. Código HTTP: ${res.status}. Verifica que el ID sea correcto y el enlace sea público.` };
+        const axios = require('axios');
+        const axiosRes = await axios.get(url, { responseType: 'text', validateStatus: () => true });
+        
+        if (axiosRes.status !== 200) {
+           return { success: false, message: `No se pudo acceder a la hoja pública. Código HTTP: ${axiosRes.status}. Verifica que el ID sea correcto y el enlace sea público.` };
         }
-        const text = await res.text();
+        const text = axiosRes.data;
         
         // CSV Parser robusto para soportar saltos de línea y comas dentro del texto
         const parsedRows: string[][] = [];
