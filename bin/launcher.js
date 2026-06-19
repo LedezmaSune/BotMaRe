@@ -78,6 +78,7 @@ async function showMenu() {
     console.log(`    ${c.dim}│${c.reset} ${c.yellow}[8]${c.reset} ⚙️ Gestión de PM2       ${c.dim}(Ejecución 24/7)${c.reset}`);
     console.log(`    ${c.dim}│${c.reset} ${c.yellow}[9]${c.reset} 📁 Explorador           ${c.dim}(Abrir carpetas locales)${c.reset}`);
     console.log(`    ${c.dim}│${c.reset} ${c.yellow}[10]${c.reset} 📥 Git Update        ${c.dim}(Actualización remota)${c.reset}`);
+    console.log(`    ${c.dim}│${c.reset} ${c.yellow}[12]${c.reset} 🔧 Reparar Nativos   ${c.dim}(Fix SQLite y Cloudflared)${c.reset}`);
     console.log(`    ${c.yellow}╰────────────────────────────────────────${c.reset}\n`);
 
     console.log(`    ${c.red}[11] ❌ Salir del Sistema${c.reset}\n`);
@@ -89,12 +90,13 @@ async function showMenu() {
         console.log(`    ${c.bgYellow}${c.red}${c.bright} 🌟 ¡BIENVENIDO A BOTMARE! (PASOS DE PRIMERA VEZ) 🌟 ${c.reset}`);
         if (!envExists) console.log(`    ${c.yellow}👉 1. Configura tu archivo .env con tus contraseñas y API Keys.${c.reset}`);
         if (!nextExists) console.log(`    ${c.yellow}👉 2. Presiona [3] para Compilar el Frontend.${c.reset}`);
-        console.log(`    ${c.yellow}👉 3. Presiona [1] para Iniciar el Servidor.${c.reset}\n`);
+        console.log(`    ${c.yellow}👉 3. Presiona [1] para Iniciar el Servidor.${c.reset}`);
+        console.log(`    ${c.red}⚠️  Nota: Si ves errores de SQLite al iniciar, usa la opción [12].${c.reset}\n`);
     } else {
-        console.log(`    ${c.cyan}💡 Tip: Si acabas de instalar o actualizar, presiona [3] para compilar.${c.reset}\n`);
+        console.log(`    ${c.cyan}💡 Tip: Si acabas de actualizar o tienes errores de base de datos, presiona [12].${c.reset}\n`);
     }
     
-    rl.question(`    ${c.cyan}${c.bright}➤ Selecciona una acción [1-11]:${c.reset} `, (choice) => {
+    rl.question(`    ${c.cyan}${c.bright}➤ Selecciona una acción [1-12]:${c.reset} `, (choice) => {
         handleChoice(choice.trim());
     });
 }
@@ -262,6 +264,12 @@ function handleChoice(choice) {
             console.log(`\n    ${c.bgMagenta}${c.bright} 🦊 ¡Sistema Desconectado! Hasta la próxima. ${c.reset}\n`);
             rl.close();
             process.exit(0);
+            break;
+        case '12':
+            console.log(`\n    ${c.bgYellow}${c.bright} 🔧 REPARANDO DEPENDENCIAS NATIVAS (SQLITE / TUNNEL) ${c.reset}\n`);
+            runCmd('pnpm', ['rebuild', 'better-sqlite3'], () => {
+                runCmd('pnpm', ['rebuild', 'cloudflared'], showMenu);
+            });
             break;
         default: invalidChoice(showMenu); break;
     }
