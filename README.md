@@ -332,6 +332,8 @@ Si deseas compilar todo de forma imperativa y manual, sigue estos pasos:
 
 ## ⚠️ Solución a Errores Comunes de Instalación (Troubleshooting)
 
+**¿Tienes errores `EPERM` o `Access Violation (3221225477)` al compilar con Windows?** 👉 **[Lee nuestra Guía de Diagnóstico Avanzado (TROUBLESHOOTING.md)](./TROUBLESHOOTING.md)**.
+
 Si vienes de versiones anteriores o has actualizado tu gestor de paquetes (`pnpm`) a la versión 10 o superior, es posible que te hayas topado con alguno de los siguientes errores de compilación. **A partir de la versión 1.5.5 estos errores ya están parchados de forma nativa**, pero aquí te explicamos por qué ocurrían para fines didácticos:
 
 ### 1. Error de Base de Datos: `Could not locate the bindings file`

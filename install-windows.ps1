@@ -15,6 +15,13 @@ Write-Host "[1/5] Verificando Node.js..." -ForegroundColor $cyan
 if (Get-Command "node" -ErrorAction SilentlyContinue) {
     $nodeVer = node -v
     Write-Host " ✔ Node.js detectado: $nodeVer" -ForegroundColor $green
+    
+    if ($nodeVer -match "^v24\.") {
+        Write-Host " ⚠ ADVERTENCIA: Estás usando Node.js v24." -ForegroundColor $red
+        Write-Host " Next.js y algunas librerías (como esbuild/sharp) tienen problemas conocidos de compatibilidad (Access Violation / EPERM) en Windows con esta versión." -ForegroundColor $yellow
+        Write-Host " 👉 Se recomienda encarecidamente desinstalarla e instalar Node.js v22 LTS si falla la instalación." -ForegroundColor $yellow
+        Start-Sleep -Seconds 5
+    }
 } else {
     Write-Host " ❌ Node.js NO está instalado. Es necesario para continuar." -ForegroundColor $red
     Write-Host " 👉 Descárgalo de: https://nodejs.org/ (Versión LTS)" -ForegroundColor $yellow
