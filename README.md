@@ -361,6 +361,26 @@ Si deseas compilar todo de forma imperativa y manual, sigue estos pasos:
 
 ---
 
+## ⚠️ Solución a Errores Comunes de Instalación (Troubleshooting)
+
+Si vienes de versiones anteriores o has actualizado tu gestor de paquetes (`pnpm`) a la versión 10 o superior, es posible que te hayas topado con alguno de los siguientes errores de compilación. **A partir de la versión 1.5.5 estos errores ya están parchados de forma nativa**, pero aquí te explicamos por qué ocurrían para fines didácticos:
+
+### 1. Error de Base de Datos: `Could not locate the bindings file`
+**¿Por qué pasa?** El bot utiliza una base de datos ultrarrápida llamada `better-sqlite3`, la cual está programada parcialmente en C++ (lenguaje nativo) y requiere descargar o compilar un archivo especial (`.node`) para conectarse con Windows/Linux/macOS. Las versiones modernas de `pnpm` (v10+) **bloquean por seguridad** cualquier script automático de instalación que descargue archivos externos.
+**¿Cómo se soluciona?** Agregamos explícitamente el paquete a la lista de confianza `onlyBuiltDependencies` dentro del archivo `package.json`. Si alguna vez te vuelve a pasar, solo asegúrate de tener los permisos en el archivo y ejecuta:
+```bash
+pnpm rebuild better-sqlite3
+```
+
+### 2. Error de Red: `cloudflared no está instalado`
+**¿Por qué pasa?** Similar al error anterior, el ejecutable de `cloudflared` (que genera la URL pública de internet) es bloqueado por pnpm, impidiendo su descarga inicial. Además, en Windows, la lectura de rutas de directorios que usan retrocesos (`\`) entraba en conflicto con reglas de seguridad (SonarQube) estrictas en el código.
+**¿Cómo se soluciona?** Autorizando el paquete `cloudflared` en el `package.json` y simplificando la función de validación de rutas en el archivo `tunnel.ts`. Si alguna vez el túnel no enciende, puedes forzar su instalación con:
+```bash
+pnpm rebuild cloudflared
+```
+
+---
+
 ## 📶 Gestión de Redes y Conectividad
 
 BotMaRe te ofrece tres formas perfectamente integradas para ver y compartir el panel de control:
@@ -439,7 +459,7 @@ El bot cuenta con un script de migración nativo (`src/core/migrator.ts`). Al ar
 
 ## 🔄 Historial de Actualizaciones (Changelog)
 
-### [1.5.4] - 2026-06-18
+### [1.5.5] - 2026-06-18
 *   **Actualización General de Dependencias:** Se actualizaron paquetes clave a sus últimas versiones (`axios`, `better-sqlite3`, `grammy`, `openai`, `tailwindcss`, entre otros).
 *   **Fix de Compilación con PNPM v10:** Se solucionó el error crítico de dependencias nativas faltantes (`Could not locate the bindings file`) agregando permisos explícitos en `onlyBuiltDependencies` dentro del `package.json`. Esto permite que librerías como `better-sqlite3` se instalen y compilen correctamente.
 
