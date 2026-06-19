@@ -39,20 +39,8 @@ function getCloudflaredBin(): string | null {
 
     // Intentar paquete npm como fallback
     try {
-        if (npmBin) {
-            const basePath = path.resolve('/');
-            const joinedPath = path.join(basePath, npmBin.replace(/^([a-zA-Z]:|\/+)/, ''));
-            const fullPath = path.normalize(joinedPath);
-            if (!fullPath.startsWith(basePath)) {
-                console.log("Invalid path specified!");
-                return null;
-            }
-            // eslint-disable-next-line
-            // @ts-ignore
-            // nosemgrep
-            if (checkFileExists(fullPath)) { // NOSONAR
-                return fullPath;
-            }
+        if (npmBin && checkFileExists(npmBin)) {
+            return npmBin;
         }
     } catch (e) {}
 

@@ -430,9 +430,12 @@ El bot cuenta con un script de migración nativo (`src/core/migrator.ts`). Al ar
 
 ## 🔄 Historial de Actualizaciones (Changelog)
 
-### [1.5.5] - 2026-06-18
+### [1.5.6] - 2026-06-18
 *   **Actualización General de Dependencias:** Se actualizaron paquetes clave a sus últimas versiones (`axios`, `better-sqlite3`, `grammy`, `openai`, `tailwindcss`, entre otros).
 *   **Fix de Compilación con PNPM v10:** Se solucionó el error crítico de dependencias nativas faltantes (`Could not locate the bindings file`) agregando permisos explícitos en `onlyBuiltDependencies` dentro del `package.json`. Esto permite que librerías como `better-sqlite3` se instalen y compilen correctamente.
+*   **Instaladores Mágicos:** Se añadieron scripts nativos para Windows (`install-windows.bat`) y Termux que omiten errores de administrador e instalan las dependencias automáticamente, incluyendo advertencias proactivas si se detecta Node.js v24.
+*   **Guía de Diagnóstico:** Se añadió `TROUBLESHOOTING.md` para mitigar bloqueos EPERM en Windows y PNPM.
+*   **Reparación Nativa de Túneles:** Arreglo a la lectura de rutas en `tunnel.ts` en Windows para evitar bloqueos del binario de Cloudflared, junto con una nueva Opción [12] en el menú para auto-reparar dependencias.
 
 ### [1.5.0] - 2026-06-14
 *   **Rediseño de Terminal CLI (Control Maestro):** El script `launcher.js` (`pnpm run menu`) fue reescrito completamente con una interfaz visual basada en cajitas, spinners ANSI, y arte ASCII para una experiencia de usuario más inmersiva durante el arranque.
