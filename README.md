@@ -185,47 +185,16 @@ Puedes elegir **uno** de los siguientes métodos:
   ```
 * **Método B (Alternativa sin Git):** Descarga el archivo ZIP del proyecto desde el botón verde **Code** arriba en esta página. Descomprímelo en tu disco (ej. en `C:\BotMaRe`). Abre la carpeta, mantén presionado `Shift`, haz clic derecho en cualquier área libre y selecciona **"Abrir en la terminal"** o **"Abrir ventana de PowerShell aquí"**.
 
-##### Paso 2: Habilitar Permisos de Ejecución en PowerShell (Si es necesario)
-Si al intentar ejecutar comandos más adelante te aparece un error que dice que los scripts están deshabilitados en este sistema, abre PowerShell como **Administrador** y ejecuta:
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-```
-Escribe `S` y presiona Enter para confirmar. Luego cierra esa ventana y continúa en tu terminal normal del proyecto.
+##### Paso 2: Ejecutar el Instalador Mágico de Windows 🪄
+Acabamos de añadir un instalador automático para Windows que no requiere permisos de administrador y hace todo el trabajo aburrido por ti. 
 
-##### Paso 3: Configurar las Variables de Entorno (`.env`)
-1. Crea tu archivo de configuración ejecutando este comando en la terminal de la carpeta del proyecto:
-   ```powershell
-   copy .env.example .env
-   ```
-2. Abre el archivo `.env` recién creado con el Bloc de notas o VS Code.
-3. Modifica tus credenciales de acceso para el dashboard web (por defecto son `ADMIN_USER=admin` y `ADMIN_PASS=admin123`):
-   ```env
-   ADMIN_USER="tu_usuario"
-   ADMIN_PASS="tu_contraseña"
-   ```
-4. Agrega tus API Keys de Inteligencia Artificial. Por ejemplo:
-   ```env
-   GROQ_API_KEY="gsk_..."
-   GEMINI_API_KEY="AIzaSy..."
-   ```
-5. Guarda y cierra el archivo.
+1. Ve a la carpeta `BotMaRe` que acabas de clonar/descargar.
+2. Haz doble clic en el archivo **`install-windows.bat`**.
+3. Verás una consola azul muy bonita que verificará tu Node.js, instalará `pnpm` si no lo tienes, creará tu `.env` base, descargará las dependencias y compilará el panel automáticamente.
+4. Una vez que termine (dirá "INSTALACIÓN COMPLETADA CON ÉXITO"), abre el archivo `.env` con el Bloc de notas y pon tus contraseñas y API Keys.
 
-##### Paso 4: Instalar las Dependencias
-Con la terminal abierta dentro de la carpeta del proyecto (`BotMaRe`), ejecuta:
-```powershell
-pnpm install
-```
-*Este proceso descargará todas las librerías necesarias. Tardará unos segundos.*
-
-##### Paso 5: Compilar el Panel Web (Frontend)
-El panel gráfico de administración está desarrollado con Next.js y React, por lo que requiere una compilación inicial optimizada:
-```powershell
-pnpm run build
-```
-*Espera a que finalice la compilación sin errores.*
-
-##### Paso 6: Arrancar la Plataforma
-Inicia el lanzador de comandos visual escribiendo:
+##### Paso 3: Arrancar la Plataforma
+Inicia el lanzador de comandos escribiendo en la consola de esa carpeta (o dando doble clic al archivo `menu.bat` si existe, o usando la terminal):
 ```powershell
 pnpm run menu
 ```
