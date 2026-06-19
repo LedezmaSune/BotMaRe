@@ -194,10 +194,9 @@ Acabamos de añadir un instalador automático para Windows que no requiere permi
 4. Una vez que termine (dirá "INSTALACIÓN COMPLETADA CON ÉXITO"), abre el archivo `.env` con el Bloc de notas y pon tus contraseñas y API Keys.
 
 ##### Paso 3: Arrancar la Plataforma
-Inicia el lanzador de comandos escribiendo en la consola de esa carpeta (o dando doble clic al archivo `menu.bat` si existe, o usando la terminal):
-```powershell
-pnpm run menu
-```
+¡Se acabó la consola! Ya no necesitas escribir comandos extraños.
+Simplemente haz **doble clic en el archivo `START.bat`** que se encuentra en tu carpeta. 
+Esto abrirá automáticamente el **Control Maestro Principal** de BotMaRe donde podrás iniciar el servidor o compilar con solo escribir un número.
 1. La consola abrirá una interfaz interactiva estilo menú.
 2. Escribe **`1`** y presiona Enter para iniciar el bot en **Modo Producción**.
 3. Verás en consola las direcciones IP locales asignadas para entrar al panel. Por defecto, abre en tu navegador de internet:
