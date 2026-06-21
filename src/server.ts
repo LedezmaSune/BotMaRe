@@ -153,10 +153,18 @@ const PORT = process.env.PORT || 8000;
 async function bootstrap() {
     await drawBanner();
     
-    if (!fs.existsSync(path.join(process.cwd(), '.env'))) {
-        const { startSetupServer } = await import('../setup-web/server');
-        await startSetupServer();
-        return;
+    // En Docker el archivo físico .env no se copia dentro del contenedor, sino que se inyecta en memoria.
+    // Comprobamos si NO hay archivo físico Y TAMPOCO hay variables de IA inyectadas en memoria.
+    if (!fs.existsSync(path.join(process.cwd(), '.env')) && !process.env.GROQ_MODEL && !process.env.GEMINI_MODEL && !process.env.OPENAI_MODEL) {
+        try {
+            const { startSetupServer } = await import('../setup-web/server');
+            await startSetupServer();
+            return;
+        } catch (e) {
+            console.error("\n[FATAL] No se detectó un archivo .env ni variables de entorno configuradas.");
+            console.error("-> Si usas Docker, asegúrate de tener tu archivo .env junto al docker-compose.yml.");
+            process.exit(1);
+        }
     }
 
     const s0 = new Spinner("Validando Entorno...");

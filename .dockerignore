@@ -1,0 +1,10 @@
+node_modules
+.next
+out
+dist
+data
+backups
+auth_info_baileys
+*.log
+.env
+.git
