@@ -30,7 +30,8 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Instalar herramientas necesarias para ejecución (pnpm y tsx)
+# Instalar certificados SSL (necesarios para Cloudflared) y herramientas de ejecución
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 RUN npm install -g pnpm tsx
 
 # Copiar solo los artefactos y archivos necesarios de la etapa anterior
