@@ -94,7 +94,8 @@ export class TunnelService extends EventEmitter {
                     const output = data.toString();
                     
                     // Look for the URL in stderr (cloudflared logs there)
-                    const urlMatch = output.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/i);
+                    // Ignoramos 'api.trycloudflare.com' que aparece en los logs de error
+                    const urlMatch = output.match(/https:\/\/(?!api\.)[a-z0-9-]+\.trycloudflare\.com/i);
                     if (urlMatch && !this.publicUrl) {
                         const url = urlMatch[0];
                         this.publicUrl = url;
