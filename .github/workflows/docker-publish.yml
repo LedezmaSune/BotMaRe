@@ -1,0 +1,52 @@
+name: Build and Publish Docker Image
+
+on:
+  # Se ejecutará automáticamente cada vez que hagas un push a la rama principal (main)
+  push:
+    branches:
+      - main
+  # También te permite ejecutarlo manualmente con un botón desde la página de GitHub
+  workflow_dispatch:
+
+env:
+  # Usaremos el registro de contenedores de GitHub, que es gratis y no requiere crear cuentas externas
+  REGISTRY: ghcr.io
+  # Toma tu nombre de usuario y el nombre del repo automáticamente (ej. LedezmaSune/BotMaRe)
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    
+    # Permisos necesarios para que GitHub pueda guardar la imagen en tu cuenta
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 📥 Descargar código
+        uses: actions/checkout@v4
+
+      - name: 🔑 Iniciar sesión en GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }} # Este token lo genera GitHub de forma segura y automática
+
+      - name: 🏷️ Generar etiquetas para la imagen
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # Siempre le pondrá la etiqueta "latest" (la más reciente)
+          tags: |
+            type=raw,value=latest
+
+      - name: 🚀 Construir y subir la imagen Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

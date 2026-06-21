@@ -140,195 +140,40 @@ NVIDIA_MODEL="deepseek-ai/deepseek-v4-pro"
 
 ## 🚀 Guías de Instalación Paso a Paso
 
-### 💻 Opción A: Servidor Local en Windows (Paso a Paso Detallado)
+> [!NOTE]
+> **¿Eres desarrollador?** Si deseas compilar el código fuente tú mismo, usar PM2 o configurar MongoDB, consulta la 👨‍💻 **[GUIA_DESARROLLADOR.md](./GUIA_DESARROLLADOR.md)**.
 
-Esta guía te guiará para configurar BotMaRe localmente en tu computadora con Windows.
-
-#### 🛠️ ¿Qué se ocupa antes de instalar? (Requisitos Previos)
-
-1. **Git para Windows**:
-   - Necesario para descargar y actualizar el código del bot de forma sencilla.
-   - **Descarga:** [git-scm.com](https://git-scm.com/) (descarga el instalador de 64 bits para Windows).
-   - *Nota de instalación:* Deja todas las opciones por defecto durante la instalación.
-
-2. **Node.js (Versión LTS)**:
-   - Entorno de ejecución de JavaScript para arrancar el servidor.
-   - **Descarga:** [nodejs.org](https://nodejs.org/) (descarga la versión recomendada **LTS**, por ejemplo, v20 o v22).
-   - *Importante:* Al instalar, marca la casilla que dice *"Automatically install the necessary tools"* (esto instalará herramientas adicionales como Python y C++ Build Tools, muy útiles para compilar ciertas bases de datos locales si fuese necesario).
-
-3. **pnpm (Gestor de Paquetes)**:
-   - Una alternativa ultrarrápida a `npm` que gestiona de manera eficiente las librerías del bot.
-   - **Cómo instalarlo:** Abre la terminal de Windows (PowerShell o CMD) y escribe:
-     ```cmd
-     npm install -g pnpm
-     ```
-
-4. **Cuenta de WhatsApp Activa**:
-   - Tu teléfono con WhatsApp y conexión a internet estable para escanear el código QR inicial.
-
-5. **Proveedores de Inteligencia Artificial (Opcional, pero recomendado)**:
-   - Para que el bot automatice conversaciones inteligentemente, requerirás claves de API. Te recomendamos registrarte en:
-     - [Groq Console](https://console.groq.com/) (Gratuito, extremadamente veloz).
-     - [Google AI Studio](https://aistudio.google.com/) (Capa gratuita generosa para Gemini Flash).
-     - [OpenRouter](https://openrouter.ai/) (Ideal para modelos de código abierto y variados).
-
----
-
-#### 🏁 Paso a Paso de la Instalación:
-
-##### Paso 1: Obtener el Código del Bot
-Puedes elegir **uno** de los siguientes métodos:
-* **Método A (Recomendado - Git):** Abre la terminal (PowerShell o Símbolo del Sistema) y escribe:
-  ```powershell
-  git clone https://github.com/LedezmaSune/BotMaRe.git
-  cd BotMaRe
-  ```
-* **Método B (Alternativa sin Git):** Descarga el archivo ZIP del proyecto desde el botón verde **Code** arriba en esta página. Descomprímelo en tu disco (ej. en `C:\BotMaRe`). Abre la carpeta, mantén presionado `Shift`, haz clic derecho en cualquier área libre y selecciona **"Abrir en la terminal"** o **"Abrir ventana de PowerShell aquí"**.
-
-##### Paso 2: Ejecutar el Instalador Mágico de Windows 🪄
-Acabamos de añadir un instalador automático para Windows que no requiere permisos de administrador y hace todo el trabajo aburrido por ti. 
-
-1. Ve a la carpeta `BotMaRe` que acabas de clonar/descargar.
-2. Haz doble clic en el archivo **`install-windows.bat`**.
-3. Verás una consola azul muy bonita que verificará tu Node.js, instalará `pnpm` si no lo tienes, creará tu `.env` base, descargará las dependencias y compilará el panel automáticamente.
-4. Una vez que termine (dirá "INSTALACIÓN COMPLETADA CON ÉXITO"), abre el archivo `.env` con el Bloc de notas y pon tus contraseñas y API Keys.
-
-##### Paso 3: Arrancar la Plataforma
-¡Se acabó la consola! Ya no necesitas escribir comandos extraños.
-Simplemente haz **doble clic en el archivo `START.bat`** que se encuentra en tu carpeta. 
-Esto abrirá automáticamente el **Control Maestro Principal** de BotMaRe donde podrás iniciar el servidor o compilar con solo escribir un número.
-1. La consola abrirá una interfaz interactiva estilo menú.
-2. Escribe **`1`** y presiona Enter para iniciar el bot en **Modo Producción**.
-3. Verás en consola las direcciones IP locales asignadas para entrar al panel. Por defecto, abre en tu navegador de internet:
-   `http://localhost:8000`
-4. Inicia sesión con el usuario y contraseña que configuraste en tu archivo `.env`.
-
-##### Paso 7: Vincular WhatsApp
-1. Dentro del panel de administración web, dirígete a la pestaña **WhatsApp**.
-2. Verás que se genera un código QR en pantalla.
-3. Abre WhatsApp en tu teléfono celular, ve a **Configuración / Dispositivos vinculados**, presiona **Vincular un dispositivo** y escanea el código QR del navegador.
-4. Una vez vinculado, el panel mostrará el estado de la conexión en verde y el bot estará operativo.
-
----
-
-### 🍎 Opción B: Servidor Local en macOS o Linux
-Si estás utilizando macOS o Linux, abre tu terminal y ejecuta:
-1. **Requisitos:** Node.js v18+, Git, y pnpm instalado globalmente (`npm i -g pnpm`).
-2. **Clonar e instalar:**
-   ```bash
-   git clone https://github.com/LedezmaSune/BotMaRe.git
-   cd BotMaRe
-   cp .env.example .env
-   pnpm install
-   ```
-3. **Compilar y Arrancar:**
-   ```bash
-   pnpm run build
-   chmod +x start.sh
-   ./start.sh
-   ```
-   
----
-
-### ☁️ Opción B: Servidor en la Nube (VPS Linux Ubuntu/Debian)
-
-Ideal para mantener el bot operativo 24 horas al día, 7 días a la semana sin depender de tu computadora personal.
-
-#### Requisitos de Hardware mínimos:
-- **CPU**: 1 vCPU o superior.
-- **RAM**: 1 GB mínimo. **IMPORTANTE:** Si tu VPS tiene solo 1 GB de RAM, la compilación del frontend puede quedarse sin memoria. Activa la memoria virtual (Swap) cuando el instalador te lo pregunte.
-
-#### Instalación en Un Solo Paso (Script Automático):
-Conéctate a tu VPS mediante SSH y ejecuta este comando maestro:
-```bash
-curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install.sh | bash
-```
-*Este instalador actualizará tu sistema operativo, instalará Node.js, pnpm, PM2, clonará el proyecto, creará la memoria Swap y dejará el bot compilado y listo para iniciar.*
-
-#### Gestión en Segundo Plano con PM2:
-* **Iniciar el Bot 24/7:**
-  ```bash
-  pnpm run pm2:start
-  ```
-* **Monitorear Consola en Vivo:**
-  ```bash
-  pnpm run pm2:logs
-  ```
-* **Guardar persistencia ante reinicios del VPS:**
-  ```bash
-  pm2 save
-  pm2 startup
-  ```
-
----
-
-### 📱 Opción C: Dispositivos Móviles (Android con Termux)
-
-¡Corre el bot completo directamente desde tu celular, sin computadoras ni VPS! El instalador está optimizado para compilar SQLite nativo y resolver el túnel de Cloudflare en entornos móviles de forma automática.
+### 💻 Opción A: Instalación Automática (Windows / Mac / Linux / VPS)
+Esta es la forma más rápida, sencilla y recomendada de instalar BotMaRe para usuarios finales, ya que no necesitas tocar nada de código fuente.
 
 #### Requisitos Previos:
-- Android 7.0 o superior.
-- Instalar la terminal **Termux** desde [F-Droid](https://f-droid.org/packages/com.termux/) (la versión de Google Play está obsoleta y causará errores de paquetes).
-- Asegúrate de tener al menos 3 GB de memoria interna libre.
-- Desactiva la optimización de batería para la aplicación Termux en los ajustes de tu Android (evita que el sistema lo cierre en segundo plano).
+- Instalar **Docker Desktop** (en Windows/Mac) o **Docker** (en Linux).
 
-> [!WARNING]
-> **REGLA DE ORO DE TERMUX:** Jamás instales ni clones este repositorio dentro del almacenamiento compartido (`/sdcard` o `/storage/emulated/0/...`). Las políticas de seguridad de Android montan esta partición con `noexec`, lo que impedirá la compilación de SQLite y el arranque de Node.js. **Instala siempre en el almacenamiento interno protegido del usuario (`~/` o `$HOME`)**.
+#### Paso a Paso (Automático):
 
-#### Instalación Automática (Script Móvil):
-El script de Termux valida la ruta de almacenamiento, instala automáticamente Node.js LTS, herramientas de compilación C++, Cloudflared aarch64 y compila SQLite de forma resiliente. Abre Termux y ejecuta:
-```bash
-curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install-termux.sh | bash
+Abre la terminal de tu computadora y pega el siguiente comando según tu sistema operativo. Este comando creará la carpeta y descargará los archivos automáticamente:
+
+**Si usas Windows (PowerShell):**
+```powershell
+mkdir BotMaRe; cd BotMaRe; Invoke-WebRequest -Uri "https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/ejemplo_cliente/docker-compose.yml" -OutFile "docker-compose.yml"; Invoke-WebRequest -Uri "https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/.env.example" -OutFile ".env"
 ```
 
-#### Instalación Manual (Paso a Paso):
-Si deseas compilar todo de forma imperativa y manual, sigue estos pasos:
+**Si usas Mac o Linux (Terminal):**
+```bash
+mkdir BotMaRe && cd BotMaRe && curl -O https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/ejemplo_cliente/docker-compose.yml && curl -o .env https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/.env.example
+```
 
-1. **Prepara tu entorno seguro e instala dependencias (Node LTS es altamente recomendado):**
+**Siguientes pasos:**
+1. Abre la carpeta `BotMaRe` que se acaba de crear y edita el archivo `.env` colocando tus contraseñas y API Keys.
+2. Una vez guardado el archivo, ejecuta en la misma terminal:
    ```bash
-   cd $HOME
-   pkg update && pkg upgrade -y
-   pkg install nodejs-lts python make clang binutils sqlite git curl openssl tmate tmux nano -y
+   docker compose up -d
    ```
-2. **Instala los gestores de paquetes globales:**
-   ```bash
-   npm install -g pnpm pm2
-   ```
-3. **Clona el repositorio en el HOME interno:**
-   ```bash
-   git clone https://github.com/LedezmaSune/BotMaRe.git
-   cd BotMaRe
-   cp .env.example .env
-   ```
-4. **Configura el entorno de compilación e instala las dependencias de forma segura:**
-   ```bash
-   export CC=clang
-   export CXX=clang++
-   export LINK=clang++
-   export GYP_DEFINES="android_ndk_path=''"
-   export npm_config_build_from_source=true
-   export npm_config_sqlite="/data/data/com.termux/files/usr"
-   
-   # Crear configuración global de gyp para omitir el chequeo de NDK en Android/Termux
-   mkdir -p ~/.gyp
-   echo "{'variables':{'android_ndk_path':''}}" > ~/.gyp/include.gypi
-   
-   # Instalar dependencias omitiendo los scripts automáticos incompatibles
-   pnpm install --ignore-scripts
-   
-   # Compilar únicamente better-sqlite3 de forma nativa para Android
-   pnpm rebuild better-sqlite3
-   ```
-5. **Compila la interfaz del Dashboard:**
-   ```bash
-   pnpm run build
-   ```
-6. **Arranca el Bot:**
-   ```bash
-   pnpm start
-   ```
+3. ¡Listo! Abre `http://localhost:8000` en tu navegador. Tu bot ya está corriendo en segundo plano de manera segura.
 
 ---
+
+
 
 ## ⚠️ Solución a Errores Comunes de Instalación (Troubleshooting)
 
@@ -357,7 +202,7 @@ pnpm rebuild cloudflared
 BotMaRe te ofrece tres formas perfectamente integradas para ver y compartir el panel de control:
 
 1. **🌐 RED LOCAL (Wi-Fi/Ethernet):**
-   * **¿Qué es?** La dirección IP física de tu computadora en tu módem (ej: `http://10.31.17.53:8000`).
+   * **¿Qué es?** La dirección IP física de tu computadora en tu módem (ej: `http://xxx.xxx.xxx.xxx:8000`).
    * **¿Para qué sirve?** Para abrir el panel desde cualquier celular, tableta o laptop que esté conectada al mismo Wi-Fi de tu casa u oficina.
 2. **🔒 RED PRIVADA (Tailscale VPN):**
    * **¿Qué es?** Una VPN privada y segura autogestionada (IP que inicia en `100.x.x.x`).

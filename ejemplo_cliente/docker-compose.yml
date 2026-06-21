@@ -1,0 +1,32 @@
+version: '3.8'
+
+# ═══════════════════════════════════════════════════════════════════
+#  🦊 BotMaRe AI - Archivo para Clientes / Producción
+#  Instrucciones para el cliente:
+#  1. Coloca este archivo y tu '.env' en una carpeta vacía.
+#  2. Ejecuta: docker compose up -d
+# ═══════════════════════════════════════════════════════════════════
+
+services:
+  botmare:
+    # Descarga la imagen compilada y lista para usar desde GitHub
+    image: ghcr.io/ledezmasune/botmare:latest
+    container_name: botmare-unified
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Las carpetas se crearán automáticamente en el equipo del cliente
+      - ./auth_info_baileys:/app/auth_info_baileys
+      - ./data:/app/data
+      - ./backups:/app/backups
+    env_file:
+      - .env
+    environment:
+      - PORT=8000
+      - NODE_ENV=production
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
