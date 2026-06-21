@@ -143,33 +143,34 @@ NVIDIA_MODEL="deepseek-ai/deepseek-v4-pro"
 > [!NOTE]
 > **¿Eres desarrollador?** Si deseas compilar el código fuente tú mismo, usar PM2 o configurar MongoDB, consulta la 👨‍💻 **[GUIA_DESARROLLADOR.md](./GUIA_DESARROLLADOR.md)**.
 
-### 💻 Opción A: Instalación Automática (Windows / Mac / Linux / VPS)
-Esta es la forma más rápida, sencilla y recomendada de instalar BotMaRe para usuarios finales, ya que no necesitas tocar nada de código fuente.
+### 💻 Instalación Automática para Clientes (Recomendado)
+Esta es la forma más rápida y sencilla de instalar BotMaRe. No necesitas descargar código, ni programar nada.
 
-#### Requisitos Previos:
-- Instalar **Docker Desktop** (en Windows/Mac) o **Docker** (en Linux).
+**Paso 1: Preparación**
+Descarga e instala [Docker Desktop](https://www.docker.com/products/docker-desktop/) en tu computadora. Cuando termine de instalarse, ábrelo y déjalo minimizado.
 
-#### Paso a Paso (Automático):
+**Paso 2: Descargar los archivos mágicos**
+Abre tu terminal (**PowerShell** en Windows, o **Terminal** en Mac/Linux), copia este comando largo y presiona Enter:
 
-Abre la terminal de tu computadora y pega el siguiente comando según tu sistema operativo. Este comando creará la carpeta y descargará los archivos automáticamente:
-
-**Si usas Windows (PowerShell):**
+*Si usas Windows:*
 ```powershell
 mkdir BotMaRe; cd BotMaRe; Invoke-WebRequest -Uri "https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/ejemplo_cliente/docker-compose.yml" -OutFile "docker-compose.yml"; Invoke-WebRequest -Uri "https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/.env.example" -OutFile ".env"
 ```
 
-**Si usas Mac o Linux (Terminal):**
+*Si usas Mac o Linux:*
 ```bash
 mkdir BotMaRe && cd BotMaRe && curl -O https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/ejemplo_cliente/docker-compose.yml && curl -o .env https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/.env.example
 ```
 
-**Siguientes pasos:**
-1. Abre la carpeta `BotMaRe` que se acaba de crear y edita el archivo `.env` colocando tus contraseñas y API Keys.
-2. Una vez guardado el archivo, ejecuta en la misma terminal:
-   ```bash
-   docker compose up -d
-   ```
-3. ¡Listo! Abre `http://localhost:8000` en tu navegador. Tu bot ya está corriendo en segundo plano de manera segura.
+**Paso 3: Pon tu contraseña**
+Ve a la nueva carpeta `BotMaRe` que se acaba de crear en tu computadora. Verás que hay un archivo llamado `.env`. Ábrelo con el Bloc de notas, borra las claves de ejemplo y **pon la contraseña que tú quieras usar** para proteger tu bot y tus API Keys de la Inteligencia Artificial. Cuando termines, guárdalo y ciérralo. *(¡Ojo! Jamás modifiques el archivo que se llama `docker-compose.yml`)*.
+
+**Paso 4: ¡Encender el Bot!**
+Regresa a tu ventanita negra de PowerShell/Terminal y pega este último comando:
+```bash
+docker compose up -d
+```
+Espera unos segundos a que descargue el sistema y... ¡Listo! Abre tu navegador de internet y entra a `http://localhost:8000`. Inicia sesión con la contraseña que pusiste en tu archivo `.env`.
 
 ---
 
