@@ -154,12 +154,18 @@ Abre tu terminal (**PowerShell** en Windows, o **Terminal** en Mac/Linux), copia
 
 *Si usas Windows:*
 ```powershell
-mkdir BotMaRe; cd BotMaRe; Invoke-WebRequest -Uri "https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/ejemplo_cliente/docker-compose.yml" -OutFile "docker-compose.yml"; Invoke-WebRequest -Uri "https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/.env.example" -OutFile ".env"
+mkdir BotMaRe
+cd BotMaRe
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/ejemplo_cliente/docker-compose.yml" -OutFile "docker-compose.yml"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/.env.example" -OutFile ".env"
 ```
 
 *Si usas Mac o Linux:*
 ```bash
-mkdir BotMaRe && cd BotMaRe && curl -O https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/ejemplo_cliente/docker-compose.yml && curl -o .env https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/.env.example
+mkdir BotMaRe
+cd BotMaRe
+curl -O https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/ejemplo_cliente/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/.env.example
 ```
 
 **Paso 3: Pon tu contraseña**
