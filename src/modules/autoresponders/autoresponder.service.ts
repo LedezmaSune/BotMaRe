@@ -12,9 +12,16 @@ export class AutoresponderService {
         if (currentStateId) {
             for (const rule of rules) {
                 if (!rule.isActive || rule.parentId !== currentStateId) continue;
-                const keyword = rule.keyword.toLowerCase().trim();
-                if ((rule.matchType === 'exact' && cleanText === keyword) || 
-                    (rule.matchType === 'contains' && cleanText.includes(keyword))) {
+                const keywords = rule.keyword.toLowerCase().split(',').map((k: string) => k.trim());
+                let isMatch = false;
+                for (const k of keywords) {
+                    if ((rule.matchType === 'exact' && cleanText === k) || 
+                        (rule.matchType === 'contains' && cleanText.includes(k))) {
+                        isMatch = true;
+                        break;
+                    }
+                }
+                if (isMatch) {
                     matchedRule = rule;
                     break;
                 }
@@ -25,9 +32,16 @@ export class AutoresponderService {
         if (!matchedRule) {
             for (const rule of rules) {
                 if (!rule.isActive || rule.parentId != null) continue;
-                const keyword = rule.keyword.toLowerCase().trim();
-                if ((rule.matchType === 'exact' && cleanText === keyword) || 
-                    (rule.matchType === 'contains' && cleanText.includes(keyword))) {
+                const keywords = rule.keyword.toLowerCase().split(',').map((k: string) => k.trim());
+                let isMatch = false;
+                for (const k of keywords) {
+                    if ((rule.matchType === 'exact' && cleanText === k) || 
+                        (rule.matchType === 'contains' && cleanText.includes(k))) {
+                        isMatch = true;
+                        break;
+                    }
+                }
+                if (isMatch) {
                     matchedRule = rule;
                     break;
                 }

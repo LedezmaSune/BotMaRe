@@ -171,6 +171,9 @@ info "Directorio de trabajo: ${BOLD}${WORK_DIR}${NC}"
 # ═══════════════════════════════════════════════════════════════════
 step 1 "Instalando dependencias del sistema (Termux)..."
 
+info "Actualizando repositorios y paquetes base de Termux para evitar fallos..."
+pkg update -y && pkg upgrade -y
+
 info "Garantizando la instalación de SQLite en el sistema..."
 SQLITE_INSTALLED=false
 

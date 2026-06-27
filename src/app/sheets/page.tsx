@@ -91,7 +91,7 @@ export default function SheetsPage() {
             if (data.success) {
                 alert(`¡Sincronización exitosa! Se importaron ${data.count} auto-respuestas.`);
             } else {
-                alert(`Error al sincronizar: ${data.message}`);
+                alert(`Error al sincronizar: ${data.message || data.error || 'Error desconocido del servidor'}`);
             }
         } catch (error) {
             alert('Error de conexión al sincronizar.');

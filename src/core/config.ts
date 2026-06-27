@@ -3,13 +3,13 @@ import { getSettings } from './memory';
 export async function getConfig(key: string, defaultValue: string = ''): Promise<string> {
     const dbSettings = await getSettings() as any;
     
-    // 1. Check Database
-    if (dbSettings[key]) {
+    // 1. Check Database (usar !== undefined para permitir strings vacíos "")
+    if (dbSettings[key] !== undefined) {
         return dbSettings[key];
     }
     
     // 2. Check Process Env
-    if (process.env[key]) {
+    if (process.env[key] !== undefined) {
         return process.env[key] || defaultValue;
     }
     

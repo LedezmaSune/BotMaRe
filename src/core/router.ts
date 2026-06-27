@@ -39,7 +39,7 @@ export class Router {
 
 
         // Extraer texto
-        const text = messageContent.conversation
+        let text = messageContent.conversation
             || messageContent.extendedTextMessage?.text
             || messageContent.listResponseMessage?.singleSelectReply?.selectedRowId
             || messageContent.buttonsResponseMessage?.selectedButtonId
@@ -66,6 +66,30 @@ export class Router {
 
             const isMentioned = await this.checkBotMention(text, messageContent, socket);
             if (!isMentioned) return;
+
+            // Limpiar la etiqueta del bot para que el texto puro llegue a la IA y a los Autorespondedores
+            const genericTriggers = ['@bot', '@ia', '@ai', 'botmare', '@botmare'];
+            let cleanText = text;
+            for (const trigger of genericTriggers) {
+                cleanText = cleanText.replace(new RegExp(trigger, 'gi'), '');
+            }
+            // Limpiar menciones nativas (@numero)
+            const mentions = messageContent.extendedTextMessage?.contextInfo?.mentionedJid || [];
+            mentions.forEach((m: string) => {
+                const num = m.split('@')[0];
+                cleanText = cleanText.replace(new RegExp(`@${num}`, 'gi'), '');
+            });
+            
+            text = cleanText.trim() || text;
+        }
+
+        // Reaccionar de forma aleatoria para confirmar que el bot está procesando la solicitud
+        try {
+            const reactions = ['👍', '🤖', '👀', '💡', '✨', '⚙️', '🔍', '🚀', '✅', '⚡'];
+            const randomReaction = reactions[Math.floor(Math.random() * reactions.length)];
+            await socket.sendMessage(jid, { react: { text: randomReaction, key: msg.key } });
+        } catch (err) {
+            console.error('[Router] No se pudo enviar la reacción:', err);
         }
 
         // Delegar al controlador
