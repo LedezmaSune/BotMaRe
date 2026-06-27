@@ -9,11 +9,35 @@
     <img src="https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white" alt="TypeScript"/>
     <img src="https://img.shields.io/badge/License-ISC-blue" alt="License"/>
   </p>
-
-  <p>
-    <a href="MANUAL_DE_USUARIO.md">📘 Manual de Usuario</a>
-  </p>
 </div>
+
+---
+
+## 📑 Tabla de Contenidos
+
+1. [¿Qué es BotMaRe?](#-qué-es-botmare)
+2. [Arquitectura y Flujo de Datos](#-arquitectura-y-flujo-de-datos)
+3. [Características Principales](#-características-principales)
+4. [Manual de Usuario (Dashboard y Funciones)](#-manual-de-usuario-dashboard-y-funciones)
+   - [El Asistente Inteligente (Carga Masiva)](#el-asistente-inteligente-carga-masiva)
+   - [Difusiones y el Motor Spintax](#difusiones-y-el-motor-spintax)
+   - [Cerebro IA, Personalidad y Variables Dinámicas](#cerebro-ia-personalidad-y-variables-dinámicas)
+   - [Blindaje Anti-Ban Activo](#blindaje-anti-ban-activo-transmisión-segura)
+   - [Grupos y Auditoría](#grupos-y-auditoría)
+   - [Sincronización con Google Sheets](#sincronización-con-google-sheets-autorespondedores)
+5. [Modelos de IA y Orquestación](#-orquestador-de-ia-y-failover-automático)
+6. [Guía de Instalación y Despliegue](#-guías-de-instalación-paso-a-paso)
+   - [Instalación Automática (Recomendada)](#instalación-automática-para-clientes-recomendado)
+   - [Compilación Manual (Sin Docker)](#compilación-manual-sin-docker)
+   - [Dispositivos Móviles (Termux Android)](#dispositivos-móviles-android-con-termux)
+   - [Despliegue Automatizado (CI/CD)](#despliegue-automatizado-cicd-con-github-actions)
+7. [Gestión Avanzada y Mantenimiento](#-gestión-avanzada-con-pm2)
+   - [Comandos de Emergencia](#comandos-de-emergencia-windows)
+   - [Mantenimiento y Optimización](#mantenimiento-del-servidor-y-optimización)
+   - [Troubleshooting](#-solución-a-errores-comunes-de-instalación-troubleshooting)
+8. [Redes y Conectividad](#-gestión-de-redes-y-conectividad)
+9. [Base de Datos](#-sistema-de-base-de-datos-híbrida-unificada-mongodb-atlas--lowdb)
+10. [Historial de Actualizaciones (Changelog)](#-historial-de-actualizaciones-changelog)
 
 ---
 
@@ -59,24 +83,79 @@ graph TD
 
 - 🧠 **IA Multi-Proveedor con Failover**: Groq, Gemini, OpenAI, DeepSeek, OpenRouter y Nvidia. Si un proveedor falla, la IA escala automáticamente al siguiente en milisegundos.
 - 📱 **WhatsApp Agent**: Respuestas inteligentes, comprensión de imágenes (Visión), transcripción de audio (Whisper) y soporte de documentos.
-- 📢 **Difusión Masiva con Spintax**: Envía campañas personalizadas a listas de contactos desde la interfaz con soporte nativo de **Giro de Texto (Spintax)**. El asistente IA te permite generar variaciones y emojis de forma temática con un clic.
+- 📢 **Difusión Masiva con Spintax**: Envía campañas personalizadas a listas de contactos desde la interfaz con soporte nativo de **Giro de Texto (Spintax)**.
 - ⚡ **Menús Rápidos e IA**: Auto-respuestas por palabras clave con soporte de variables dinámicas e inyección de contexto de IA.
 - 📅 **Recordatorios Inteligentes**: Programa recordatorios en chats privados o grupales con frecuencias de repetición y soporte de carga masiva.
-- 🛡️ **Blindaje Anti-Ban Activo**: Retardos aleatorios proporcionalmente dinámicos al largo del mensaje (Jitter), pausas de seguridad (Burst Protection) y simulación humana de carga de archivos (presencia de "Escribiendo..." y "Grabando audio...").
-- 👤 **Soporte Humano Dinámico**: Detén la IA en cualquier chat de forma temporal si un cliente requiere atención humana. Centraliza las alertas en Telegram.
-- 📦 **Respaldos en un Clic**: Exporta e importa bases de datos de configuración y archivos multimedia por separado o juntos desde la UI.
-- ✈️ **Soporte Remoto vía Telegram**: Controla el estado del bot, genera nuevos QRs y levanta túneles de soporte SSH remoto (`tmate`) directo desde tu chat de Telegram.
-- 👥 **Gestor de Grupos**: Selector nativo de grupos autorizados en el dashboard y detección inteligente de menciones.
-- 💾 **Base de Datos con Patrón Estrategia**: Arquitectura sólida y modular (`MongoAdapter` y `LowdbAdapter`) que permite escalar el almacenamiento sin tocar la lógica central.
-- 📶 **Control de Conectividad**: Tarjeta visual en el panel de configuración para ver el estado y copiar con un clic tus accesos por **Cloudflare Tunnel** (Público) y **Tailscale VPN** (Privado).
-- 🚀 **Compilación Ultrarrápida**: Integración con **Turbopack** y optimización nativa de librerías para arranques y builds hasta 700x más rápidos.
-- 🎨 **Experiencia Premium UI/UX**: Animaciones fluidas nativas en el dashboard gracias a **Framer Motion** y una **Terminal Visual** con spinners ANSI y arte ASCII para las fases de arranque.
+- 🛡️ **Blindaje Anti-Ban Activo**: Retardos aleatorios proporcionalmente dinámicos, pausas de seguridad y simulación humana de carga de archivos ("Escribiendo..." y "Grabando audio...").
+- 👤 **Soporte Humano Dinámico**: Detén la IA en cualquier chat de forma temporal. Centraliza alertas en Telegram.
+- 📦 **Respaldos en un Clic**: Exporta e importa bases de datos de configuración y multimedia.
+- ✈️ **Soporte Remoto vía Telegram**: Controla el estado del bot, genera nuevos QRs y levanta túneles de soporte SSH remoto directo desde Telegram.
+
+---
+
+## 📘 Manual de Usuario (Dashboard y Funciones)
+
+Este apartado está diseñado para capacitarte en el uso avanzado de la plataforma desde tu panel web.
+
+### El Asistente Inteligente (Carga Masiva)
+La joya de la corona para ahorrar horas de trabajo manual. Si necesitas enviar decenas de archivos multimedia programados a diferentes fechas, este módulo lo hace por ti.
+
+**¿Cómo Funciona?**
+1. Ve a la pestaña de **Recordatorios / Programación** y haz clic en **Carga Masiva**.
+2. **Configura la Campaña Global:**
+   - Selecciona el grupo o contacto destinatario.
+   - Decide a qué hora del día (por ejemplo, `09:00 AM`) se enviará.
+   - Usa la variable mágica `{ARCHIVO}` en el mensaje (ej: *"Aquí tienes el reporte: {ARCHIVO}"*).
+3. **Magia en el Nombre del Archivo:** Nombra tus archivos con la fecha deseada (ej. `1105.jpg` para el 11 de Mayo, o `11-05-2026.jpg`).
+4. **Sube y Relájate:** El sistema procesará todos los archivos, agendándolos ordenadamente en tu panel de *Pendientes*.
+
+### Difusiones y el Motor Spintax
+Para evitar baneos al enviar el mismo mensaje a cientos de personas, BotMaRe incluye un **Motor de Spintax** nativo. Permite agrupar variaciones dentro de llaves `{}` separadas por `|`. El bot seleccionará aleatoriamente una opción.
+* Ejemplo: `{Hola|Qué tal} {NOMBRE}, {Te escribo|Nos comunicamos} para...`
+
+**Botones de IA en Campañas:**
+- **Perfeccionar con IA:** Corrige ortografía y mejora la redacción.
+- **Generar Spintax (Púrpura):** Reescribe el mensaje usando Spintax avanzado y emojis temáticos específicos de tu sector. Puedes proteger partes específicas usando llaves `{nuestra promoción}` para que la IA no las altere.
+
+### Cerebro IA, Personalidad y Variables Dinámicas
+En la pestaña **Configuración del Agente**, controlas cómo piensa el bot.
+* **IA ON (Verde):** El bot responde automáticamente a los clientes según el Cerebro IA.
+* **IA OFF (Naranja):** El bot "se duerme". Usa este modo cuando un humano necesite intervenir.
+
+**Variables Mágicas:**
+| Variable | Descripción |
+|---|---|
+| `{NOMBRE}` | Nombre completo guardado en agenda |
+| `{NOMBRE_PILA}` o `{FIRST_NAME}` | Primer nombre únicamente |
+| `{SALUDO}` | Saludo automático según hora (Buenos días/tardes/noches) |
+| `{EMOJI_SALUDO}` / `{EMOJI_ATENCION}` / `{EMOJI_ALEATORIO}` | Emojis variados para evitar detección de spam |
+| `{HORA_12}` / `{HORA_24}` | Hora actual del servidor |
+| `{DIA_SEMANA}` / `{FECHA}` | Día y fecha actuales |
+| `{NUMERO_ALEATORIO}` | Número aleatorio para forzar diferencias |
+
+### Blindaje Anti-Ban Activo (Transmisión Segura)
+BotMaRe protege tu cuenta mediante:
+1. **Simulación de Escritura y Grabación:** Muestra "Escribiendo..." o "Grabando audio..." proporcionalmente al peso o longitud del mensaje.
+2. **Retardos Caóticos Proporcionales (Jitter):** Calcula pausas basadas en la longitud de caracteres.
+3. **Burst Protection:** Cada 10 envíos masivos, realiza una pausa larga (15-25s) imitando un descanso humano.
+
+### Grupos y Auditoría
+- **Grupos:** Visualiza grupos y copia sus "ID Internos" de WhatsApp.
+- **Historial:** Revisa multimedia entregada con éxito.
+- **Auditoría (Logs):** Diagnostica exactamente a qué hora y por qué ocurrió un evento técnico.
+
+### Sincronización con Google Sheets (Autorespondedores)
+Usa Google Sheets como base de datos externa para respuestas rápidas.
+1. **Columna A:** Palabra Clave.
+2. **Columna B:** Respuesta.
+3. **Columna C:** Tipo de Coincidencia (`1` para Exacta, `2` para Parcial).
+Puedes forzar la sincronización en el dashboard web o tocando **📊 Google Sheets** en el bot de Telegram.
 
 ---
 
 ## 🧠 Orquestador de IA y Failover Automático
 
-La función `callLLM` actúa como un despachador inteligente. Si una API Key se queda sin saldo o el servidor de un proveedor sufre un límite de peticiones (Error 429), el orquestador fluye de manera descendente para asegurar que el bot nunca deje de responder:
+La función `callLLM` actúa como despachador. Si una API falla (ej. Error 429), fluye hacia el siguiente proveedor para asegurar respuestas continuas:
 
 ```mermaid
 flowchart TD
@@ -98,41 +177,21 @@ flowchart TD
     Start --> P1
     P1 -- "Éxito" --> Done
     P1 -- "Falla o Límite" --> P2
-    P2 -- "Éxito" --> Done
     P2 -- "Falla o Límite" --> P3
-    P3 -- "Éxito" --> Done
     P3 -- "Falla o Límite" --> P4
-    P4 -- "Éxito" --> Done
     P4 -- "Falla o Límite" --> P5
-    P5 -- "Éxito" --> Done
     P5 -- "Falla o Límite" --> P6
     P6 -- "Éxito" --> Done
-    P6 -- "Falla o Límite" --> Fail
+    P6 -- "Falla" --> Fail
 ```
 
----
-
-## 🤖 Modelos Recomendados (Bajo Costo y Gratuitos)
-
-Para obtener el máximo rendimiento sin gastar de más, recomendamos la siguiente configuración en tu archivo `.env`. Esta combinación aprovecha las capas gratuitas y los modelos más costo-eficientes del mercado:
-
+**Modelos Recomendados (Bajo Costo/Gratis):**
 ```env
-# Groq es 100% gratuito por ahora y súper rápido. Llama 3.1 70B es su mejor opción.
 GROQ_MODEL="llama-3.1-70b-versatile"
-
-# OpenRouter: Google Gemma 2 9B (Gratis), alternativo Llama 3 8B
 OPENROUTER_MODEL="google/gemma-2-9b-it:free"
-
-# Gemini: El modelo Flash tiene una capa gratuita mensual muy generosa y es rapidísimo.
 GEMINI_MODEL="gemini-2.5-flash"
-
-# DeepSeek: Súper económico, "deepseek-chat" es su modelo insignia.
 DEEPSEEK_MODEL="deepseek-chat"
-
-# OpenAI: No tiene capa gratuita, pero 4o-mini es extremadamente barato y capaz.
 OPENAI_MODEL="gpt-4o-mini"
-
-# NVIDIA NIM: Dan créditos gratis iniciales.
 NVIDIA_MODEL="deepseek-ai/deepseek-v4-pro"
 ```
 
@@ -140,189 +199,126 @@ NVIDIA_MODEL="deepseek-ai/deepseek-v4-pro"
 
 ## 🚀 Guías de Instalación Paso a Paso
 
-> [!NOTE]
-> **¿Eres desarrollador?** Si deseas compilar el código fuente tú mismo, usar PM2 o configurar MongoDB, consulta la 👨‍💻 **[GUIA_DESARROLLADOR.md](./GUIA_DESARROLLADOR.md)**.
-
 ### 💻 Instalación Automática para Clientes (Recomendado)
-Esta es la forma más rápida y sencilla de instalar BotMaRe. No necesitas descargar código, ni programar nada.
-
-**Paso 1: Preparación**
-Descarga e instala [Docker Desktop](https://www.docker.com/products/docker-desktop/) en tu computadora. Cuando termine de instalarse, ábrelo y déjalo minimizado.
-
-**Paso 2: Descargar los archivos mágicos**
-Abre tu terminal (**PowerShell** en Windows, o **Terminal** en Mac/Linux), copia este comando largo y presiona Enter:
-
-*Si usas Windows:*
+Requiere [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+*Windows:*
 ```powershell
-mkdir BotMaRe
-cd BotMaRe
+mkdir BotMaRe; cd BotMaRe
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/ejemplo_cliente/docker-compose.yml" -OutFile "docker-compose.yml"
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/.env.example" -OutFile ".env"
 ```
-
-*Si usas Mac o Linux:*
+*Mac/Linux:*
 ```bash
-mkdir BotMaRe
-cd BotMaRe
+mkdir BotMaRe; cd BotMaRe
 curl -O https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/ejemplo_cliente/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/.env.example
 ```
+1. Edita el `.env` con tu propia contraseña.
+2. Ejecuta: `docker compose up -d`
+3. Entra a `http://localhost:8000`
 
-**Paso 3: Pon tu contraseña**
-Ve a la nueva carpeta `BotMaRe` que se acaba de crear en tu computadora. Verás que hay un archivo llamado `.env`. Ábrelo con el Bloc de notas, borra las claves de ejemplo y **pon la contraseña que tú quieras usar** para proteger tu bot y tus API Keys de la Inteligencia Artificial. Cuando termines, guárdalo y ciérralo. *(¡Ojo! Jamás modifiques el archivo que se llama `docker-compose.yml`)*.
+### 💻 Compilación Manual (Sin Docker)
+**Opción A: Servidor Local en Windows**
+1. Instala Node.js (v20+ LTS), Git y pnpm (`npm install -g pnpm`).
+2. Clona el repo: `git clone https://github.com/LedezmaSune/BotMaRe.git`
+3. Ejecuta `install-windows.bat`.
+4. Inicia con `START.bat` (Opción 1) o `pnpm run dev`.
 
-**Paso 4: ¡Encender el Bot!**
-Regresa a tu ventanita negra de PowerShell/Terminal y pega este último comando:
+**Opción B: macOS / Linux / VPS**
 ```bash
-docker compose up -d
+# Para VPS Ubuntu/Debian puedes usar el autoinstalador:
+curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install.sh | bash
+
+# Manual:
+git clone https://github.com/LedezmaSune/BotMaRe.git
+cd BotMaRe
+cp .env.example .env
+pnpm install
+pnpm run build
+./start.sh
 ```
-Espera unos segundos a que descargue el sistema y... ¡Listo! Abre tu navegador de internet y entra a `http://localhost:8000`. Inicia sesión con la contraseña que pusiste en tu archivo `.env`.
+
+### 📱 Dispositivos Móviles (Android con Termux)
+Puedes correr el bot completo directamente desde tu celular.
+**Requisitos:** Android 7.0+, Termux (desde F-Droid), 3GB libres, sin optimización de batería.
+> [!WARNING]
+> Jamás instales en `/sdcard` o `/storage/emulated/0/`. Usa siempre el `$HOME`.
+
+Ejecuta el script automático en Termux:
+```bash
+curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install-termux.sh | bash
+```
+
+### 🐳 Despliegue Automatizado (CI/CD con GitHub Actions)
+Al hacer `git push` a `main`, GitHub Actions compila automáticamente tu imagen de Docker y la publica en GitHub Container Registry (`ghcr.io`).
 
 ---
 
+## 🛠️ Gestión Avanzada con PM2
 
+Mantén el bot 24/7 en segundo plano de forma nativa.
+* **Preparación:** `npm run setup`
+* **Iniciar / Reiniciar:** `pnpm run pm2:start` o `pm2 restart BotMaRe-Unified`
+* **Ver Logs:** `pnpm run pm2:logs`
+* **Monitor Visual:** `pnpm run pm2:monit`
+* **Detener / Limpiar:** `pnpm run pm2:stop` o `pm2 delete BotMaRe-Unified`
+
+### Comandos de Emergencia (Windows)
+Si el puerto queda bloqueado (Ej. 8000):
+```cmd
+pm2 kill
+for /f "tokens=5" %a in ('netstat -aon ^| findstr :8000') do taskkill /f /pid %a
+```
+
+### Mantenimiento del Servidor y Optimización
+Limpia logs pesados y optimiza la base de datos (Vacuum):
+```bash
+pnpm run clean:logs
+```
+
+---
 
 ## ⚠️ Solución a Errores Comunes de Instalación (Troubleshooting)
 
-**¿Tienes errores `EPERM` o `Access Violation (3221225477)` al compilar con Windows?** 👉 **[Lee nuestra Guía de Diagnóstico Avanzado (TROUBLESHOOTING.md)](./TROUBLESHOOTING.md)**.
+- **Error de Base de Datos (`Could not locate the bindings file`):** 
+  PNPM v10+ bloquea la compilación de `better-sqlite3`. Usa: `pnpm rebuild better-sqlite3`.
+- **cloudflared no está instalado:** 
+  Forzar reconstrucción: `pnpm rebuild cloudflared`.
 
-Si vienes de versiones anteriores o has actualizado tu gestor de paquetes (`pnpm`) a la versión 10 o superior, es posible que te hayas topado con alguno de los siguientes errores de compilación. **A partir de la versión 1.5.5 estos errores ya están parchados de forma nativa**, pero aquí te explicamos por qué ocurrían para fines didácticos:
-
-### 1. Error de Base de Datos: `Could not locate the bindings file`
-**¿Por qué pasa?** El bot utiliza una base de datos ultrarrápida llamada `better-sqlite3`, la cual está programada parcialmente en C++ (lenguaje nativo) y requiere descargar o compilar un archivo especial (`.node`) para conectarse con Windows/Linux/macOS. Las versiones modernas de `pnpm` (v10+) **bloquean por seguridad** cualquier script automático de instalación que descargue archivos externos.
-**¿Cómo se soluciona?** Agregamos explícitamente el paquete a la lista de confianza `onlyBuiltDependencies` dentro del archivo `package.json`. Si alguna vez te vuelve a pasar, solo asegúrate de tener los permisos en el archivo y ejecuta:
-```bash
-pnpm rebuild better-sqlite3
-```
-
-### 2. Error de Red: `cloudflared no está instalado`
-**¿Por qué pasa?** Similar al error anterior, el ejecutable de `cloudflared` (que genera la URL pública de internet) es bloqueado por pnpm, impidiendo su descarga inicial. Además, en Windows, la lectura de rutas de directorios que usan retrocesos (`\`) entraba en conflicto con reglas de seguridad (SonarQube) estrictas en el código.
-**¿Cómo se soluciona?** Autorizando el paquete `cloudflared` en el `package.json` y simplificando la función de validación de rutas en el archivo `tunnel.ts`. Si alguna vez el túnel no enciende, puedes forzar su instalación con:
-```bash
-pnpm rebuild cloudflared
-```
+*(Para más detalles, consulta el archivo [TROUBLESHOOTING.md](./TROUBLESHOOTING.md))*
 
 ---
 
 ## 📶 Gestión de Redes y Conectividad
 
-BotMaRe te ofrece tres formas perfectamente integradas para ver y compartir el panel de control:
-
-1. **🌐 RED LOCAL (Wi-Fi/Ethernet):**
-   * **¿Qué es?** La dirección IP física de tu computadora en tu módem (ej: `http://xxx.xxx.xxx.xxx:8000`).
-   * **¿Para qué sirve?** Para abrir el panel desde cualquier celular, tableta o laptop que esté conectada al mismo Wi-Fi de tu casa u oficina.
-2. **🔒 RED PRIVADA (Tailscale VPN):**
-   * **¿Qué es?** Una VPN privada y segura autogestionada (IP que inicia en `100.x.x.x`).
-   * **¿Para qué sirve?** Conéctate a tu panel desde cualquier lugar del mundo de manera 100% encriptada. El bot detectará tu IP de Tailscale y te la mostrará en el dashboard con un botón de copiado rápido.
-3. **🌍 RED PÚBLICA (Cloudflare Tunnel):**
-   * **¿Qué es?** Un túnel seguro de Cloudflare (`https://tu-subdominio.trycloudflare.com`).
-   * **¿Para qué sirve?** Te da una URL pública segura (`https://`) para compartir con tu equipo o acceder desde cualquier navegador del mundo sin necesidad de abrir puertos en tu módem.
-
----
-
-## 🧹 Mantenimiento del Servidor y Optimización
-
-Los registros de chat y logs de Baileys pueden llenar tu disco. Mantén el sistema ligero con un solo comando:
-
-```bash
-pnpm run clean:logs
-```
-* **¿Qué hace?** Elimina logs antiguos, trunca archivos bloqueados por PM2 y ejecuta una desfragmentación física en tus bases de datos SQLite (`VACUUM`) para reclamar espacio en disco inmediatamente.
-
----
-
-## 🏷️ Variables Dinámicas para Plantillas y Difusión
-
-Personaliza tus mensajes de difusión y auto-respuestas inyectando datos del destinatario:
-
-| Variable | Descripción | Ejemplo Visual |
-|---|---|---|
-| `{NOMBRE}` | Nombre completo guardado en agenda | Juan Carlos Pérez |
-| `{NOMBRE_PILA}` o `{NOMBRE_PILA}` | Primer nombre únicamente | Juan |
-| `{APELLIDO}` o `{LAST_NAME}` | Apellidos únicamente | Pérez |
-| `{SALUDO}` | Saludo dinámico inteligente según horario | Buenos días / Buenas tardes / Buenas noches |
-| `{EMOJI_SALUDO}` | Emoji de saludo aleatorio | 👋, 😊, 🤝, 🙌, ✨, 🌟 |
-| `{EMOJI_ATENCION}` | Emoji de llamada a la acción aleatorio | 💡, 📢, ⚠️, 🎯, 📌 |
-| `{EMOJI_ALEATORIO}` | Emoji positivo general aleatorio | 🎉, 🚀, 🔥, ✅, 😎 |
-| `{FECHA}` o `{DATE}` | Fecha actual del servidor | 04/06/2026 |
-| `{HORA_12}` | Hora actual en formato de 12 horas | 3:45 PM |
-| `{HORA_24}` | Hora actual en formato de 24 horas | 15:45 |
-| `{DIA_SEMANA}` | Día de la semana en curso | Jueves |
-| `{NUMERO_ALEATORIO}` | Número aleatorio para forzar diferencias | 487219 |
-
----
-
-## 📜 Tabla de Scripts Disponibles
-
-| Comando | Descripción |
-|---|---|
-| `pnpm run menu` | **Lanzador Interactivo:** Menú gráfico para controlar todas las funciones. |
-| `pnpm run dev` | Inicia el motor y Next.js en modo desarrollo con recarga activa. |
-| `pnpm run build` | Compila las páginas estáticas del Dashboard para producción. |
-| `pnpm run start` | Arranca el bot y sirve el dashboard compilado en modo producción. |
-| `pnpm run clean` | Elimina todas las carpetas de caché `.next`, `.dist` y `out/`. |
-| `pnpm run clean:logs` | Vacía logs en ejecución y optimiza el almacenamiento de SQLite. |
-| `pnpm run reset:wa` | Elimina sesión actual de WhatsApp para forzar un escaneo de QR nuevo. |
-| `pnpm run pm2:start` | Despliega e inicia el bot 24/7 en segundo plano usando PM2. |
-| `pnpm run pm2:logs` | Abre el visor de consola en tiempo real para PM2. |
+1. **🌐 RED LOCAL (Wi-Fi/Ethernet):** IP de tu módem (`http://xxx.xxx.xxx.xxx:8000`).
+2. **🔒 RED PRIVADA (Tailscale VPN):** Conexión segura global autogestionada (IP `100.x.x.x`). El panel muestra un botón para copiarla.
+3. **🌍 RED PÚBLICA (Cloudflare Tunnel):** URL segura en internet sin abrir puertos (`https://tu-subdominio.trycloudflare.com`).
 
 ---
 
 ## 💾 Sistema de Base de Datos Híbrida Unificada (MongoDB Atlas / Lowdb)
 
-Toda la persistencia de datos de la plataforma (**recordatorios, plantillas, auto-respuestas, historial de chats, auditorías, configuraciones del panel y perfiles de usuarios**) ha sido completamente migrada a una arquitectura NoSQL híbrida unificada (`src/core/dbManager.ts`):
-
-1. **Prioridad en la Nube (MongoDB Atlas - Plan A):** Si configuras `MONGO_URI` en tu archivo `.env`, el bot almacenará todos los datos de forma centralizada y segura en la nube.
-2. **Fallback Local Resiliente (Lowdb - Plan B):** Si la conexión a MongoDB Atlas falla (por timeout de 5 segundos), no hay acceso a internet o la variable de entorno no está configurada, el bot conmuta en tiempo real de forma automática para guardar y leer los datos localmente en [data/database.json](file:///c:/Proyectos/wamasivos/BotMaRe-main/data/database.json).
-
-### 🤖 Migración Automática Cero-Pérdidas
-El bot cuenta con un script de migración nativo (`src/core/migrator.ts`). Al arrancar la plataforma por primera vez, detectará si cuentas con una base de datos física de SQLite previa (`data/database.db`), extraerá todos tus datos reales de forma segura y los importará con sus IDs originales al nuevo motor NoSQL activo, registrando el éxito en `data/database.db.migrated` sin alterar tu archivo original.
+1. **Prioridad Nube (MongoDB Atlas):** Si configuras `MONGO_URI` en `.env`, todo se guarda en Atlas.
+2. **Fallback Local (Lowdb):** Si la nube falla, el sistema conmuta automáticamente a guardar en `data/database.json`.
+3. **Migración Automática:** El sistema transfiere datos de tus SQLite viejos a MongoDB en el primer inicio sin pérdida de datos.
 
 ---
 
 ## 🔄 Historial de Actualizaciones (Changelog)
 
 ### [1.5.6] - 2026-06-18
-*   **Actualización General de Dependencias:** Se actualizaron paquetes clave a sus últimas versiones (`axios`, `better-sqlite3`, `grammy`, `openai`, `tailwindcss`, entre otros).
-*   **Fix de Compilación con PNPM v10:** Se solucionó el error crítico de dependencias nativas faltantes (`Could not locate the bindings file`) agregando permisos explícitos en `onlyBuiltDependencies` dentro del `package.json`. Esto permite que librerías como `better-sqlite3` se instalen y compilen correctamente.
-*   **Instaladores Mágicos:** Se añadieron scripts nativos para Windows (`install-windows.bat`) y Termux que omiten errores de administrador e instalan las dependencias automáticamente, incluyendo advertencias proactivas si se detecta Node.js v24.
-*   **Guía de Diagnóstico:** Se añadió `TROUBLESHOOTING.md` para mitigar bloqueos EPERM en Windows y PNPM.
-*   **Reparación Nativa de Túneles:** Arreglo a la lectura de rutas en `tunnel.ts` en Windows para evitar bloqueos del binario de Cloudflared, junto con una nueva Opción [12] en el menú para auto-reparar dependencias.
+* **Fix PNPM v10:** Solución a bloqueo `better-sqlite3` en `package.json`.
+* **Instaladores Mágicos:** `install-windows.bat` e `install-termux.sh`.
+* **Reparación Túneles:** Arreglos de rutas de Cloudflared en Windows.
 
 ### [1.5.0] - 2026-06-14
-*   **Rediseño de Terminal CLI (Control Maestro):** El script `launcher.js` (`pnpm run menu`) fue reescrito completamente con una interfaz visual basada en cajitas, spinners ANSI, y arte ASCII para una experiencia de usuario más inmersiva durante el arranque.
-*   **Sincronización Avanzada de Google Sheets (3 Columnas):** El parser CSV ahora procesa estrictamente 3 columnas (A: Palabra Clave, B: Respuesta, C: Regla de Coincidencia [1=Exacta, 2=Contiene]), aumentando el límite de lectura a 200 filas.
-*   **Visor de Datos Expandido:** El panel de previsualización en la web ahora soporta la visualización de 50 respuestas simultáneas distribuidas en las 3 columnas, permitiendo auditar la base de datos de manera más clara.
-*   **Gestión Remota desde Telegram:** Añadido un nuevo botón interactivo `📊 Google Sheets` en el menú `/start` del bot de Telegram para forzar la sincronización remota de autorespondedores sin necesidad de abrir el dashboard web.
+* **Rediseño de Terminal CLI:** Interfaz gráfica ANSI en la consola (`launcher.js`).
+* **Mejoras Sheets:** Sincronización avanzada de 3 columnas (Exacta/Parcial).
 
-### [1.4.3] - 2026-06-13
-*   **Integración Multi-Autenticación Google Sheets:** La herramienta de Google Sheets se ha migrado a una página dedicada con tres modalidades de conexión para mayor flexibilidad y seguridad.
-*   **Opción Pública:** Sincronización rápida sin autenticación mediante el uso de enlaces públicos (CSV).
-*   **Cuenta de Servicio (Service Account):** Opción de autenticación segura orientada a servidores subiendo el `credentials.json`.
-*   **Flujo de errores mitigado:** Inicialización dinámica de clientes OAuth para evitar el error "invalid_request".
-
-### [1.4.2] - 2026-06-11
-*   **Nuevo Menú de Actualizaciones:** Opción `[10]` añadida al menú de la terminal para gestionar actualizaciones directamente desde GitHub (permite elegir entre Versión Estable por Tags o Versión en Desarrollo por rama main).
-*   **Migración de Core DB a Lowdb v7:** Reescribimos la lógica de `lowdb.adapter.ts` de CJS síncrono a la nueva API nativa asíncrona (ESM) para mayor robustez de archivos.
-*   **Librería WhatsApp Actualizada:** Subida exitosa a `@whiskeysockets/baileys@7.0.0-rc13`.
-
-### [1.4.1] - 2026-06-10
-*   **Actualización de Seguridad de Dependencias:** Revisión completa de librerías obsoletas y actualización de Next.js (`16.2.9`), React (`19.2.7`), Axios (`1.17.0`), Framer Motion (`12.40.0`), Mongoose (`9.7.0`), OpenAI (`6.42.0`), entre otras.
-*   **Control de Actualizaciones Mayores:** Bloqueo explícito de actualizaciones mayores para `lowdb` y `@whiskeysockets/baileys` para prevenir fallos por incompatibilidad de API o ESM.
-*   **Verificación de Construcción:** Confirmación del despliegue exitoso mediante compilación limpia en TypeScript.
-
-### [1.4.0] - 2026-06-04
-*   **Motor de Spintax (Giro de Texto) Integrado:** Variación dinámica de mensajes en campañas masivas usando `{opción A|opción B|opción C}` para eludir filtros de spam de WhatsApp.
-*   **Asistente IA de Spintax:** Botón en la interfaz (color púrpura) que reescribe tus textos automáticamente aplicando Spintax y emojis temáticos específicos de tu sector comercial.
-*   **Zona Protegida de Variaciones:** Posibilidad de envolver entre llaves `{}` tus propias frases personalizadas (ej. `{nuestra promoción}`) para que el asistente de IA varíe **únicamente** esas secciones, dejando el resto del mensaje completamente idéntico.
-*   **Nuevas Variables de Emojis y Saludos:** Incorporación de `{SALUDO}` (Buenos días/tardes/noches de forma automática) y etiquetas de emojis aleatorios `{EMOJI_SALUDO}`, `{EMOJI_ATENCION}` y `{EMOJI_ALEATORIO}`.
-*   **Simulación de Presencia Multimedia:** El bot muestra *"Grabando audio..."* (para notas de voz) o *"Escribiendo..."* (para fotos y videos) durante unos segundos antes de entregar el archivo.
-*   **Retardo Caótico Proporcional:** Intervalos dinámicos entre envíos masivos basados en la longitud de caracteres del mensaje para imitar redacción humana.
-*   **Corrección de Compilación:** Reparado un fallo de TypeScript en `Reminders.tsx` relacionado con la propiedad `media`.
+*(Ver historial completo en commits)*
 
 ---
-
-
 
 <div align="center">
   <p>Desarrollado con ❤️ por <strong><a href="https://github.com/LedezmaSune">LedezmaSune</a></strong></p>
