@@ -108,11 +108,38 @@ export class MassDiffusionService {
                         }
                     }
                 } else {
-                    const sendPromise = this.waService.sendMessage(to, personalizedMessage);
-                    await Promise.race([
-                        sendPromise,
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en envío (30s)')), 30000))
-                    ]);
+                    const mediaMatch = personalizedMessage.match(/\[(IMG|DOC|VIDEO|AUDIO|MEDIA):\s*(.+?)\]/i);
+                    if (mediaMatch) {
+                        const tagType = mediaMatch[1].toUpperCase();
+                        const content = mediaMatch[2].trim();
+                        const textWithoutMedia = personalizedMessage.replace(mediaMatch[0], '').trim();
+                        
+                        let mediaUrl = content;
+                        let mediaCategory: 'image' | 'document' | 'video' | 'audio' = 'document';
+
+                        if (tagType === 'IMG' || tagType === 'MEDIA') {
+                            mediaCategory = 'image';
+                            if (!content.startsWith('http')) {
+                                mediaUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(content)}?nologo=true`;
+                            }
+                        } else if (tagType === 'VIDEO') {
+                            mediaCategory = 'video';
+                        } else if (tagType === 'AUDIO') {
+                            mediaCategory = 'audio';
+                        }
+
+                        const sendPromise = this.waService.sendMediaFromUrl(to, mediaUrl, textWithoutMedia || undefined, mediaCategory);
+                        await Promise.race([
+                            sendPromise,
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en envío (30s)')), 30000))
+                        ]);
+                    } else {
+                        const sendPromise = this.waService.sendMessage(to, personalizedMessage);
+                        await Promise.race([
+                            sendPromise,
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en envío (30s)')), 30000))
+                        ]);
+                    }
                 }
 
                 logEntry.status = 'success';
