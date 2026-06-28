@@ -2,6 +2,7 @@ import { WhatsAppClient } from '../../infrastructure/whatsapp/client';
 import fs from 'fs';
 import path from 'path';
 import { getSettings } from '../../core/memory';
+import axios from 'axios';
 
 /**
  * MODULE LAYER - MESSAGES
@@ -119,6 +120,83 @@ export class MessageService {
             url = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
         }
 
+        console.log(`[MessageService] Descargando multimedia desde URL (${url.substring(0, 60)}...) para enviar a ${target}`);
+        
+        let response;
+        try {
+            response = await axios.get(url, {
+                responseType: 'arraybuffer',
+                timeout: 25000, // 25s timeout para la descarga
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': '*/*'
+                }
+            });
+        } catch (error: any) {
+            console.error(`[MessageService] Error al descargar de URL (${url}):`, error.message);
+            throw new Error(`Error al descargar archivo: ${error.message}`);
+        }
+
+        // Obtener mimetype
+        const contentType = response.headers['content-type'] || '';
+        let mimeType = contentType.split(';')[0].trim();
+        
+        // Resolver extensión y nombre del archivo
+        let fileName = 'archivo';
+        const contentDisposition = response.headers['content-disposition'];
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename\*?=["']?(?:UTF-8'')?([^;"']+)["']?/i);
+            if (filenameMatch) {
+                fileName = decodeURIComponent(filenameMatch[1]);
+            } else {
+                const simpleMatch = contentDisposition.match(/filename\s*=\s*["']?([^;"']+)["']?/i);
+                if (simpleMatch) {
+                    fileName = simpleMatch[1];
+                }
+            }
+        } else {
+            // Intentar obtener del path de la URL original
+            try {
+                const urlPath = new URL(url).pathname;
+                const base = path.basename(urlPath);
+                if (base && base.includes('.')) {
+                    fileName = base;
+                }
+            } catch (e) {}
+        }
+
+        // Si no se pudo determinar un nombre con extensión, asignamos uno genérico según tipo
+        if (fileName === 'archivo' || !fileName.includes('.')) {
+            let ext = '';
+            if (mediaType === 'image') ext = '.jpg';
+            else if (mediaType === 'video') ext = '.mp4';
+            else if (mediaType === 'audio') ext = '.mp3';
+            else ext = '.pdf';
+            
+            if (mimeType.includes('pdf')) ext = '.pdf';
+            else if (mimeType.includes('png')) ext = '.png';
+            else if (mimeType.includes('jpeg') || mimeType.includes('jpg')) ext = '.jpg';
+            else if (mimeType.includes('mp4')) ext = '.mp4';
+            else if (mimeType.includes('mpeg') || mimeType.includes('mp3')) ext = '.mp3';
+            
+            fileName = `${fileName}${ext}`;
+        }
+
+        // Si es PDF y no tiene la extensión asignada, se la forzamos
+        if (mimeType === 'application/pdf' && !fileName.toLowerCase().endsWith('.pdf')) {
+            fileName += '.pdf';
+        }
+
+        // Guardar temporalmente en data/temp
+        const tempDir = path.resolve('data/temp');
+        if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true });
+        }
+        const tempPath = path.join(tempDir, `${Date.now()}_${fileName}`);
+        fs.writeFileSync(tempPath, response.data);
+
+        console.log(`[MessageService] Guardado temporalmente en ${tempPath}. Enviando a WhatsApp...`);
+
         // Simular presencia de carga para chats individuales
         if (!target.endsWith('@g.us')) {
             if (mediaType === 'audio') {
@@ -130,32 +208,19 @@ export class MessageService {
             await this.client.sendPresence(target, 'paused');
         }
 
-        const messageContent: any = { caption };
-        if (mediaType === 'image') {
-            messageContent.image = { url };
-        } else if (mediaType === 'document') {
-            messageContent.document = { url };
+        try {
+            // Enviar archivo local
+            return await this.sendMedia(target, tempPath, caption, mimeType, fileName);
+        } finally {
+            // Eliminar temporal
             try {
-                const urlParts = url.split('?')[0].split('/');
-                let name = urlParts[urlParts.length - 1];
-                if (!name || name.length < 3) name = 'documento.pdf';
-                messageContent.fileName = name;
-            } catch (e) {
-                messageContent.fileName = 'documento.pdf';
+                if (fs.existsSync(tempPath)) {
+                    fs.unlinkSync(tempPath);
+                }
+            } catch (e: any) {
+                console.warn('[MessageService] No se pudo borrar archivo temporal:', e.message);
             }
-            // Mimetype genérico, Baileys suele poder determinarlo o requiere uno. 
-            // Si sabemos que es PDF:
-            if (url.toLowerCase().includes('.pdf')) messageContent.mimetype = 'application/pdf';
-            else messageContent.mimetype = 'application/octet-stream';
-        } else if (mediaType === 'video') {
-            messageContent.video = { url };
-        } else if (mediaType === 'audio') {
-            messageContent.audio = { url };
-            messageContent.ptt = true;
-            delete messageContent.caption;
         }
-
-        return await this.client.sendRaw(target, messageContent);
     }
 
     /**
