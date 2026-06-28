@@ -22,18 +22,27 @@ const VARIABLES = [
     { tag: '{NUMERO_ALEATORIO}', desc: 'Número aleatorio' }
 ];
 
+const MEDIA_TAGS = [
+    { tag: '[IMG: ]', desc: 'Insertar Imagen (URL o texto)' },
+    { tag: '[DOC: ]', desc: 'Insertar Documento (PDF/Word/etc)' },
+    { tag: '[VIDEO: ]', desc: 'Insertar Video (MP4)' },
+    { tag: '[AUDIO: ]', desc: 'Insertar Audio (MP3/OGG)' }
+];
+
 interface Props {
     value: string;
     onChange: (val: string) => void;
     placeholder?: string;
     required?: boolean;
     className?: string;
+    rows?: number;
 }
 
-export function VariableTextarea({ value, onChange, placeholder, required, className }: Props) {
+export function VariableTextarea({ value, onChange, placeholder, required, className, rows = 3 }: Props) {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [filter, setFilter] = useState('');
     const [cursorIndex, setCursorIndex] = useState(-1);
+    const [triggerChar, setTriggerChar] = useState<'{' | '[' | null>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const popupRef = useRef<HTMLDivElement>(null);
 
@@ -41,19 +50,32 @@ export function VariableTextarea({ value, onChange, placeholder, required, class
         const val = target.value;
         const caretPos = target.selectionStart;
         const textBeforeCaret = val.substring(0, caretPos);
+        
         const lastBraceIndex = textBeforeCaret.lastIndexOf('{');
+        const lastBracketIndex = textBeforeCaret.lastIndexOf('[');
 
-        if (lastBraceIndex !== -1) {
+        // Determinamos qué disparador está más cerca del cursor
+        if (lastBraceIndex !== -1 && lastBraceIndex > lastBracketIndex) {
             const possibleTag = textBeforeCaret.substring(lastBraceIndex);
-            // Si hay un espacio o cierre después de la llave, cancelamos
             if (!possibleTag.includes(' ') && !possibleTag.includes('}')) {
                 setFilter(possibleTag.substring(1).toUpperCase());
                 setCursorIndex(lastBraceIndex);
+                setTriggerChar('{');
+                setShowSuggestions(true);
+                return;
+            }
+        } else if (lastBracketIndex !== -1 && lastBracketIndex > lastBraceIndex) {
+            const possibleTag = textBeforeCaret.substring(lastBracketIndex);
+            if (!possibleTag.includes(' ') && !possibleTag.includes(']')) {
+                setFilter(possibleTag.substring(1).toUpperCase());
+                setCursorIndex(lastBracketIndex);
+                setTriggerChar('[');
                 setShowSuggestions(true);
                 return;
             }
         }
         setShowSuggestions(false);
+        setTriggerChar(null);
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -75,20 +97,29 @@ export function VariableTextarea({ value, onChange, placeholder, required, class
             onChange(newValue);
             setShowSuggestions(false);
             
-            // Re-focus and set caret position
+            // Re-enfocar y posicionar el cursor de forma inteligente
             setTimeout(() => {
                 if (textareaRef.current) {
                     textareaRef.current.focus();
-                    const newPos = cursorIndex + tag.length;
+                    let newPos = cursorIndex + tag.length;
+                    if (triggerChar === '[') {
+                        // Posicionar el cursor justo después de los dos puntos y espacio (ej: [IMG: |])
+                        const colonIdx = tag.indexOf(':');
+                        if (colonIdx !== -1) {
+                            newPos = cursorIndex + colonIdx + 2;
+                        }
+                    }
                     textareaRef.current.setSelectionRange(newPos, newPos);
                 }
             }, 0);
         }
     };
 
-    const filteredVars = VARIABLES.filter(v => v.tag.includes(filter));
+    const suggestions = triggerChar === '{'
+        ? VARIABLES.filter(v => v.tag.toUpperCase().includes(filter))
+        : MEDIA_TAGS.filter(v => v.tag.toUpperCase().includes(filter));
 
-    // Handle clicks outside popup
+    // Cerrar al hacer clic fuera del popup
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
@@ -110,13 +141,14 @@ export function VariableTextarea({ value, onChange, placeholder, required, class
                 className={className}
                 placeholder={placeholder}
                 required={required}
+                rows={rows}
             />
-            {showSuggestions && filteredVars.length > 0 && (
+            {showSuggestions && suggestions.length > 0 && (
                 <div 
                     ref={popupRef}
-                    className="absolute z-[100] mt-1 max-h-48 w-full overflow-y-auto bg-white/90 dark:bg-slate-900/95 backdrop-blur-xl border-2 border-indigo-500/30 dark:border-indigo-500/40 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-top-2 duration-200"
+                    className="absolute z-[100] mt-1 max-h-48 w-full overflow-y-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-2 border-indigo-500/30 dark:border-indigo-500/40 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-top-2 duration-200"
                 >
-                    {filteredVars.map((v, idx) => (
+                    {suggestions.map((v, idx) => (
                         <button
                             key={idx}
                             type="button"

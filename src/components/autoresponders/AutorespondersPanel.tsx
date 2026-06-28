@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Autoresponder } from '../../types';
 import { Plus, Trash2, Edit2, Play, Square, Search, ToggleLeft, ToggleRight, Bot, MessageSquareOff, MessageCircle, Download, Upload, Zap, Database } from 'lucide-react';
 import { useGlobalBotData } from '@/app/BotDataProvider';
+import { VariableTextarea } from '../VariableTextarea';
 
 
 interface AutorespondersPanelProps {
@@ -464,16 +465,27 @@ export function AutorespondersPanel({ autoresponders, onRefresh }: Autoresponder
                                     <label className="text-sm font-bold text-app-text-muted">
                                         {formState.aiAction === 'menu_only' ? 'Mensaje a Enviar' : 'Instrucción o Menú para la IA'}
                                     </label>
-                                    <textarea 
+                                    <VariableTextarea 
                                         required
                                         rows={6}
                                         value={formState.response}
-                                        onChange={(e) => setFormState({...formState, response: e.target.value})}
+                                        onChange={(val) => setFormState({...formState, response: val})}
                                         className="input-field resize-none"
                                         placeholder="Escribe las opciones del menú o la respuesta..."
                                     />
-                                    <div className="text-[10px] text-app-text-muted mt-1">
-                                        Variables soportadas: <code className="text-cyan-400">{' {NOMBRE}'}</code>, <code className="text-cyan-400">{' {FECHA}'}</code>, <code className="text-cyan-400">{' {HORA_12}'}</code>
+                                    <div className="text-[10px] text-app-text-muted mt-1 space-y-1">
+                                        <div>Variables: <code className="text-cyan-400">{' {NOMBRE}'}</code>, <code className="text-cyan-400">{' {FECHA}'}</code>, <code className="text-cyan-400">{' {HORA_12}'}</code> (Escribe <b>{'{'}</b> para ver sugerencias)</div>
+                                        <div>Archivos/Medios: <code className="text-cyan-400">[IMG: url]</code>, <code className="text-cyan-400">[DOC: url]</code>, <code className="text-cyan-400">[VIDEO: url]</code>, <code className="text-cyan-400">[AUDIO: url]</code> (Escribe <b>[</b> para ver sugerencias)</div>
+                                    </div>
+                                    
+                                    <div className="mt-4 p-3 bg-cyan-950/10 border border-cyan-500/20 rounded-xl space-y-1">
+                                        <h4 className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1">
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            Soporte Multimedia
+                                        </h4>
+                                        <p className="text-[10px] text-cyan-100/60 leading-relaxed">
+                                            Puedes adjuntar imágenes, PDFs, audios o videos en tu respuesta escribiendo corchetes <b>[</b>. El bot se encargará de descargarlos y enviarlos como mensajes nativos.
+                                        </p>
                                     </div>
                                 </div>
                             )}

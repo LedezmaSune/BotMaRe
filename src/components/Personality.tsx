@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Brain, Sparkles, Loader2 } from 'lucide-react';
 import { Settings as UserSettings } from '../types';
 import { siteConfig } from '../config';
+import { VariableTextarea } from './VariableTextarea';
 
 interface PersonalityProps {
     initialSettings: UserSettings;
@@ -57,11 +58,12 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
 
                             <div>
                                 <label className="text-xs uppercase font-black text-purple-400 mb-3 block tracking-[0.2em]">System Prompt (Instrucciones de Comportamiento)</label>
-                                <textarea
+                                <VariableTextarea
                                     value={settings.system_prompt}
-                                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSettings({...settings, system_prompt: e.target.value})}
-                                    className="w-full h-64 bg-black/40 border border-app-border rounded-2xl px-5 py-4 text-sm focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/30 focus:bg-black/60 outline-none resize-none transition-all text-white placeholder:text-white/20 leading-relaxed"
+                                    onChange={(val) => setSettings({...settings, system_prompt: val})}
+                                    className="w-full bg-black/40 border border-app-border rounded-2xl px-5 py-4 text-sm focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/30 focus:bg-black/60 outline-none resize-none transition-all text-white placeholder:text-white/20 leading-relaxed"
                                     placeholder="Ej: Eres un experto asesor financiero amable y directo..."
+                                    rows={8}
                                 />
                                 <p className="text-[10px] text-app-text-muted mt-3 italic">Define cómo debe actuar: Tono, estilo de saludo, límites, etc.</p>
                             </div>
@@ -73,11 +75,12 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                         <div className="bg-black/20 p-6 rounded-3xl border border-app-border space-y-6 h-full">
                             <div>
                                 <label className="text-xs uppercase font-black text-cyan-400 mb-3 block tracking-[0.2em]">Cerebro de Datos (Reglas y Conocimiento)</label>
-                                <textarea
+                                <VariableTextarea
                                     value={settings.possible_responses}
-                                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSettings({...settings, possible_responses: e.target.value})}
-                                    className="w-full h-80 bg-black/40 border border-app-border rounded-2xl px-5 py-4 text-sm focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/30 focus:bg-black/60 outline-none resize-none transition-all font-mono text-cyan-50/90 leading-relaxed scrollbar-thin"
+                                    onChange={(val) => setSettings({...settings, possible_responses: val})}
+                                    className="w-full bg-black/40 border border-app-border rounded-2xl px-5 py-4 text-sm focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/30 focus:bg-black/60 outline-none resize-none transition-all font-mono text-cyan-50/90 leading-relaxed scrollbar-thin animate-in fade-in"
                                     placeholder="Lista aquí tus productos, precios, horarios o reglas específicas de respuesta..."
+                                    rows={10}
                                 />
                                 <p className="text-[10px] text-app-text-muted mt-3 italic">Información técnica que el bot usará para responder preguntas específicas.</p>
                                 
