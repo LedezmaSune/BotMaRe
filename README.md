@@ -165,6 +165,9 @@ Si vienes de versiones antiguas o usas **PNPM v10+** y experimentas errores de c
 - Base de datos: `pnpm rebuild better-sqlite3`
 - Túneles: `pnpm rebuild cloudflared`
 
+> [!IMPORTANT]
+> **Guía Completa de Errores de Windows / Node v24:** Si experimentas errores de tipo `EPERM`, `spawn`, o código `3221225477` (violación de acceso), consulta la guía detallada de diagnóstico en: [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
+
 ---
 
 ## 📶 Redes y Base de Datos
