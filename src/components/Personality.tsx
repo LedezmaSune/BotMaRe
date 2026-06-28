@@ -87,14 +87,18 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                                         Mini Manual: Enviar Archivos
                                     </h4>
                                     <p className="text-[11px] text-cyan-100/70 leading-relaxed">
-                                        Puedes enseñarle a la IA a enviar archivos dictándole reglas aquí arriba usando estas etiquetas (los enlaces deben ser directos):
+                                        Usa estas etiquetas en el Cerebro, en Autoresponders o en Google Sheets (Columna B). ¡Funcionan igual que las variables {'{NOMBRE}'}!
                                     </p>
                                     <ul className="text-[11px] text-cyan-100/60 list-disc pl-4 space-y-1 font-mono">
-                                        <li><span className="text-cyan-300">[DOC: url_del_pdf]</span> - Para documentos</li>
-                                        <li><span className="text-cyan-300">[VIDEO: url_del_mp4]</span> - Para videos</li>
-                                        <li><span className="text-cyan-300">[IMG: url_o_busqueda]</span> - Para imágenes</li>
+                                        <li><span className="text-cyan-300">[IMG: url_o_busqueda]</span> - Imágenes</li>
+                                        <li><span className="text-cyan-300">[DOC: url_del_pdf]</span> - Documentos</li>
+                                        <li><span className="text-cyan-300">[VIDEO: url_del_mp4]</span> - Videos</li>
+                                        <li><span className="text-cyan-300">[AUDIO: url_del_mp3]</span> - Audios</li>
                                     </ul>
-                                    <p className="text-[10px] text-green-400/80 mt-2 pt-2 border-t border-cyan-500/20 italic">
+                                    <p className="text-[10px] text-app-text-muted mt-2 pt-2 border-t border-cyan-500/20">
+                                        <span className="text-purple-400">Ejemplo:</span> <span className="italic">Aquí tienes nuestro catálogo [DOC: https://mi-web.com/catalogo.pdf]</span>
+                                    </p>
+                                    <p className="text-[10px] text-green-400/80 italic">
                                         ✨ Tip: ¡Puedes pegar enlaces normales de Google Drive y el bot los adaptará automáticamente!
                                     </p>
                                 </div>
