@@ -138,13 +138,13 @@ export class MessageService {
         }
 
         // Obtener mimetype
-        const contentType = response.headers['content-type'] || '';
+        const contentType = String(response.headers['content-type'] || '');
         let mimeType = contentType.split(';')[0].trim();
         
         // Resolver extensión y nombre del archivo
         let fileName = 'archivo';
         const contentDisposition = response.headers['content-disposition'];
-        if (contentDisposition) {
+        if (contentDisposition && typeof contentDisposition === 'string') {
             const filenameMatch = contentDisposition.match(/filename\*?=["']?(?:UTF-8'')?([^;"']+)["']?/i);
             if (filenameMatch) {
                 fileName = decodeURIComponent(filenameMatch[1]);
