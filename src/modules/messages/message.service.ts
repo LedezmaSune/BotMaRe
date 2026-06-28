@@ -74,23 +74,54 @@ export class MessageService {
         }
 
         const ext = path.extname(filePath).toLowerCase();
+        const extension = (fileName ? path.extname(fileName) : ext).toLowerCase();
+        let resolvedMimeType = mimeType || 'application/octet-stream';
+        
+        // Corregir mimetypes genéricos basados en la extensión real del archivo
+        if (resolvedMimeType === 'application/octet-stream' || !resolvedMimeType) {
+            const mimeMap: Record<string, string> = {
+                '.pdf': 'application/pdf',
+                '.doc': 'application/msword',
+                '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                '.xls': 'application/vnd.ms-excel',
+                '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                '.ppt': 'application/vnd.ms-powerpoint',
+                '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                '.txt': 'text/plain',
+                '.csv': 'text/csv',
+                '.zip': 'application/zip',
+                '.rar': 'application/vnd.rar',
+                '.png': 'image/png',
+                '.jpg': 'image/jpeg',
+                '.jpeg': 'image/jpeg',
+                '.gif': 'image/gif',
+                '.mp4': 'video/mp4',
+                '.mp3': 'audio/mpeg',
+                '.wav': 'audio/wav',
+                '.ogg': 'audio/ogg'
+            };
+            if (mimeMap[extension]) {
+                resolvedMimeType = mimeMap[extension];
+            }
+        }
+
         const buffer = fs.readFileSync(filePath);
         const message: any = { caption };
         let isAudio = false;
 
-        if (['.jpg', '.jpeg', '.png', '.gif'].includes(ext) || (mimeType && mimeType.startsWith('image/'))) {
+        if (['.jpg', '.jpeg', '.png', '.gif'].includes(ext) || (resolvedMimeType && resolvedMimeType.startsWith('image/'))) {
             message.image = buffer;
-        } else if (ext === '.mp4' || (mimeType && mimeType.startsWith('video/'))) {
+        } else if (ext === '.mp4' || (resolvedMimeType && resolvedMimeType.startsWith('video/'))) {
             message.video = buffer;
-        } else if (['.mp3', '.ogg', '.wav'].includes(ext) || (mimeType && mimeType.startsWith('audio/'))) {
+        } else if (['.mp3', '.ogg', '.wav'].includes(ext) || (resolvedMimeType && resolvedMimeType.startsWith('audio/'))) {
             message.audio = buffer;
-            message.mimetype = mimeType || (ext === '.ogg' ? 'audio/ogg; codecs=opus' : 'audio/mpeg');
+            message.mimetype = resolvedMimeType || (ext === '.ogg' ? 'audio/ogg; codecs=opus' : 'audio/mpeg');
             message.ptt = true;
             delete message.caption;
             isAudio = true;
         } else {
             message.document = buffer;
-            message.mimetype = mimeType || 'application/octet-stream';
+            message.mimetype = resolvedMimeType;
             message.fileName = fileName || path.basename(filePath);
         }
 
