@@ -276,9 +276,16 @@ function handleChoice(choice) {
             break;
         case '12':
             console.log(`\n    ${c.bgYellow}${c.bright} 🔧 REPARANDO DEPENDENCIAS NATIVAS (SQLITE / TUNNEL) ${c.reset}\n`);
-            runCmd('pnpm', ['rebuild', 'better-sqlite3'], () => {
-                runCmd('pnpm', ['rebuild', 'cloudflared'], showMenu);
-            });
+            const isAndroid = fs.existsSync('/data/data/com.termux');
+            if (isAndroid) {
+                console.log(`    ${c.yellow}⚠ Entorno Termux/Android detectado. Reconstruyendo únicamente better-sqlite3...${c.reset}`);
+                console.log(`    ${c.yellow}👉 (El túnel de Cloudflare utilizará el binario global del sistema).${c.reset}\n`);
+                runCmd('pnpm', ['rebuild', 'better-sqlite3'], showMenu);
+            } else {
+                runCmd('pnpm', ['rebuild', 'better-sqlite3'], () => {
+                    runCmd('pnpm', ['rebuild', 'cloudflared'], showMenu);
+                });
+            }
             break;
         default: invalidChoice(showMenu); break;
     }
