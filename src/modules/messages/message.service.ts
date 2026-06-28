@@ -110,6 +110,54 @@ export class MessageService {
         return await this.client.sendRaw(target, message);
     }
 
+    async sendMediaFromUrl(jid: string, url: string, caption?: string, mediaType: 'image' | 'document' | 'video' | 'audio' = 'image') {
+        const target = this.formatJid(jid);
+        
+        // Transformar automáticamente enlaces de Google Drive normales a descarga directa
+        const driveMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (driveMatch) {
+            url = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+        }
+
+        // Simular presencia de carga para chats individuales
+        if (!target.endsWith('@g.us')) {
+            if (mediaType === 'audio') {
+                await this.client.sendPresence(target, 'recording');
+            } else {
+                await this.client.sendPresence(target, 'composing');
+            }
+            await new Promise(r => setTimeout(r, 1500 + Math.random() * 1500));
+            await this.client.sendPresence(target, 'paused');
+        }
+
+        const messageContent: any = { caption };
+        if (mediaType === 'image') {
+            messageContent.image = { url };
+        } else if (mediaType === 'document') {
+            messageContent.document = { url };
+            try {
+                const urlParts = url.split('?')[0].split('/');
+                let name = urlParts[urlParts.length - 1];
+                if (!name || name.length < 3) name = 'documento.pdf';
+                messageContent.fileName = name;
+            } catch (e) {
+                messageContent.fileName = 'documento.pdf';
+            }
+            // Mimetype genérico, Baileys suele poder determinarlo o requiere uno. 
+            // Si sabemos que es PDF:
+            if (url.toLowerCase().includes('.pdf')) messageContent.mimetype = 'application/pdf';
+            else messageContent.mimetype = 'application/octet-stream';
+        } else if (mediaType === 'video') {
+            messageContent.video = { url };
+        } else if (mediaType === 'audio') {
+            messageContent.audio = { url };
+            messageContent.ptt = true;
+            delete messageContent.caption;
+        }
+
+        return await this.client.sendRaw(target, messageContent);
+    }
+
     /**
      * Lógica orquestada para manejar mensajes entrantes (IA + Voz)
      */

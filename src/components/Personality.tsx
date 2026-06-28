@@ -80,6 +80,24 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                                     placeholder="Lista aquí tus productos, precios, horarios o reglas específicas de respuesta..."
                                 />
                                 <p className="text-[10px] text-app-text-muted mt-3 italic">Información técnica que el bot usará para responder preguntas específicas.</p>
+                                
+                                <div className="mt-4 p-4 bg-cyan-900/20 border border-cyan-500/30 rounded-xl space-y-2">
+                                    <h4 className="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                        Mini Manual: Enviar Archivos
+                                    </h4>
+                                    <p className="text-[11px] text-cyan-100/70 leading-relaxed">
+                                        Puedes enseñarle a la IA a enviar archivos dictándole reglas aquí arriba usando estas etiquetas (los enlaces deben ser directos):
+                                    </p>
+                                    <ul className="text-[11px] text-cyan-100/60 list-disc pl-4 space-y-1 font-mono">
+                                        <li><span className="text-cyan-300">[DOC: url_del_pdf]</span> - Para documentos</li>
+                                        <li><span className="text-cyan-300">[VIDEO: url_del_mp4]</span> - Para videos</li>
+                                        <li><span className="text-cyan-300">[IMG: url_o_busqueda]</span> - Para imágenes</li>
+                                    </ul>
+                                    <p className="text-[10px] text-green-400/80 mt-2 pt-2 border-t border-cyan-500/20 italic">
+                                        ✨ Tip: ¡Puedes pegar enlaces normales de Google Drive y el bot los adaptará automáticamente!
+                                    </p>
+                                </div>
                             </div>
 
                             <div className="pt-6 border-t border-white/5 space-y-6">

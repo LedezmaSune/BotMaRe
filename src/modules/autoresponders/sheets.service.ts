@@ -107,7 +107,7 @@ export class GoogleSheetsService {
 
         const response = await sheets.spreadsheets.values.get({
           spreadsheetId: cleanSpreadsheetId,
-          range: `${firstSheetName}!A:C`, // <-- Fetching A:C
+          range: `${firstSheetName}!A:D`, // <-- Fetching A:D
         });
 
         rows = response.data.values || [];
@@ -151,6 +151,7 @@ export class GoogleSheetsService {
         const keyword = rows[i][0]?.trim();
         const reply = rows[i][1]?.trim();
         const matchCol = rows[i][2]?.trim();
+        const imageUrl = rows[i][3]?.trim();
 
         // Ignoramos filas si falta alguna de las 3 columnas
         if (!keyword || !reply || !matchCol) continue;
@@ -166,7 +167,7 @@ export class GoogleSheetsService {
           'menu_only', // 'menu_only' significa que se enviará la respuesta directamente sin pasar por la IA
           true, // isActive
           null,
-          'sheets_synced' // Etiqueta para identificarlos
+          JSON.stringify({ source: 'sheets_synced', image: imageUrl || null }) // Opciones extendidas
         );
         importedCount++;
       }
@@ -220,7 +221,7 @@ export class GoogleSheetsService {
     try {
       const allResponders = await dbManager.listAutoresponders();
       for (const ar of allResponders) {
-        if (ar.options === 'sheets_synced') {
+        if (ar.options && ar.options.includes('sheets_synced')) {
           await dbManager.deleteAutoresponder(ar.id);
         }
       }
