@@ -9,7 +9,7 @@ export default function SheetsPage() {
     const [isSyncing, setIsSyncing] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'public' | 'service_account' | 'oauth'>('public');
-    const [previewData, setPreviewData] = useState<{keyword: string, reply: string, matchType?: string}[] | null>(null);
+    const [previewData, setPreviewData] = useState<{keyword: string, reply: string, matchType?: string, fileUrl?: string}[] | null>(null);
     const [isPreviewing, setIsPreviewing] = useState(false);
     const [isCleaning, setIsCleaning] = useState(false);
 
@@ -410,6 +410,34 @@ export default function SheetsPage() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Estructura de la Hoja */}
+                    <div className="premium-glass p-6 rounded-3xl relative border border-app-border">
+                        <h3 className="text-lg font-bold mb-4 text-emerald-400 flex items-center gap-2 border-b border-app-border pb-3">
+                            <Database size={18} /> Estructura de la Hoja
+                        </h3>
+                        <p className="text-xs text-app-text-muted mb-4">
+                            Tu archivo de Google Sheets debe tener las siguientes columnas en este orden exacto:
+                        </p>
+                        <div className="space-y-3">
+                            <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                                <div className="font-mono text-cyan-400 font-bold text-xs">Columna A: Palabra Clave</div>
+                                <div className="text-[10px] text-app-text-muted mt-0.5">El disparador del bot (ej: "hola", "precios", "menú").</div>
+                            </div>
+                            <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                                <div className="font-mono text-cyan-400 font-bold text-xs">Columna B: Respuesta</div>
+                                <div className="text-[10px] text-app-text-muted mt-0.5">El mensaje a enviar. Soporta variables como <code className="text-cyan-300">{"{NOMBRE}"}</code> y etiquetas <code className="text-cyan-300">[DOC: url]</code>, <code className="text-cyan-300">[IMG: url]</code>, etc.</div>
+                            </div>
+                            <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                                <div className="font-mono text-cyan-400 font-bold text-xs">Columna C: Coincidencia</div>
+                                <div className="text-[10px] text-app-text-muted mt-0.5">Escribe <code className="text-cyan-300">1</code> para coincidencia exacta, o <code className="text-cyan-300">2</code> para coincidencia parcial (si contiene la palabra).</div>
+                            </div>
+                            <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                                <div className="font-mono text-cyan-400 font-bold text-xs">Columna D: Archivo / Multimedia (Opcional)</div>
+                                <div className="text-[10px] text-app-text-muted mt-0.5">URL directa o etiqueta con formato <code className="text-cyan-300">[DOC: url]</code> del archivo (PDF, Imagen, Video, Audio) a adjuntar.</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -451,6 +479,7 @@ export default function SheetsPage() {
                                     <th className="pb-3 px-4">Palabra Clave (Col. A)</th>
                                     <th className="pb-3 px-4">Respuesta del Bot (Col. B)</th>
                                     <th className="pb-3 px-4">Coincidencia (Col. C)</th>
+                                    <th className="pb-3 px-4">Archivo / Adjunto (Col. D)</th>
                                 </tr>
                             </thead>
                             <tbody className="text-sm">
@@ -459,6 +488,13 @@ export default function SheetsPage() {
                                         <td className="py-3 px-4 font-mono text-cyan-400 font-bold">{row.keyword}</td>
                                         <td className="py-3 px-4 text-white whitespace-pre-wrap">{row.reply}</td>
                                         <td className="py-3 px-4 text-emerald-400 font-bold">{row.matchType}</td>
+                                        <td className="py-3 px-4 font-mono text-xs text-app-text-muted max-w-[200px] truncate" title={row.fileUrl}>
+                                            {row.fileUrl ? (
+                                                <span className="text-purple-400">{row.fileUrl}</span>
+                                            ) : (
+                                                <span className="text-gray-600 italic">Ninguno</span>
+                                            )}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

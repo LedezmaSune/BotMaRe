@@ -199,14 +199,15 @@ export class GoogleSheetsService {
       const keyword = result.rows[i][0]?.trim();
       const reply = result.rows[i][1]?.trim();
       const matchCol = result.rows[i][2]?.trim();
+      const fileUrl = result.rows[i][3]?.trim() || '';
 
-      // Ignoramos si falta alguna columna
+      // Ignoramos si falta alguna de las primeras 3 columnas principales
       if (!keyword || !reply || !matchCol) continue;
       if (i === 0 && keyword.toLowerCase().includes('palabra')) continue;
 
       const matchType = matchCol === '2' ? 'Contiene (2)' : 'Exacta (1)';
 
-      preview.push({ keyword, reply, matchType });
+      preview.push({ keyword, reply, matchType, fileUrl });
       count++;
       if (count >= 200) break; // Mostramos hasta 200
     }
