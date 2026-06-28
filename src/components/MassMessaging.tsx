@@ -194,6 +194,10 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, p
                             placeholder="Hola {NOMBRE}, ¿cómo estás?..."
                             className="w-full h-64 bg-app-bg dark:bg-background border border-app-border rounded-2xl p-4 text-sm focus:ring-2 focus:ring-orange-500/30 outline-none transition-all resize-none shadow-inner text-app-text placeholder:text-app-text-muted/50"
                         />
+                        <div className="text-[10px] text-app-text-muted mt-2 space-y-1">
+                            <div>Variables: <code className="text-cyan-400">{' {NOMBRE}'}</code>, <code className="text-cyan-400">{' {FECHA}'}</code>, <code className="text-cyan-400">{' {HORA_12}'}</code> (Escribe <b>{'{'}</b> para sugerencias)</div>
+                            <div>Archivos/Medios: <code className="text-cyan-400">[IMG: url]</code>, <code className="text-cyan-400">[DOC: url]</code>, <code className="text-cyan-400">[VIDEO: url]</code>, <code className="text-cyan-400">[AUDIO: url]</code> (Escribe <b>[</b> para sugerencias)</div>
+                        </div>
                     </div>
 
                     <motion.div 
