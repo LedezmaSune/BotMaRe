@@ -95,12 +95,30 @@ export class MessageController {
 
                     if (fileUrl) {
                         let mediaType: 'image' | 'document' | 'video' | 'audio' = 'image';
-                        const lowerUrl = fileUrl.toLowerCase();
-                        if (lowerUrl.includes('.pdf') || lowerUrl.includes('.doc') || lowerUrl.includes('.xls')) mediaType = 'document';
-                        else if (lowerUrl.includes('.mp4') || lowerUrl.includes('.avi')) mediaType = 'video';
-                        else if (lowerUrl.includes('.mp3') || lowerUrl.includes('.ogg')) mediaType = 'audio';
+                        let finalUrl = fileUrl;
 
-                        await this.messageService.sendMediaFromUrl(jid, fileUrl, processedResponse, mediaType);
+                        // Verificar si viene con formato [TAG: URL] en la columna de Sheets
+                        const bracketMatch = fileUrl.match(/\[(IMG|DOC|VIDEO|AUDIO|MEDIA):\s*(.+?)\]/i);
+                        if (bracketMatch) {
+                            const tagType = bracketMatch[1].toUpperCase();
+                            finalUrl = bracketMatch[2].trim();
+                            if (tagType === 'IMG' || tagType === 'MEDIA') mediaType = 'image';
+                            else if (tagType === 'DOC') mediaType = 'document';
+                            else if (tagType === 'VIDEO') mediaType = 'video';
+                            else if (tagType === 'AUDIO') mediaType = 'audio';
+                        } else {
+                            // Detección tradicional si es URL directa
+                            const lowerUrl = fileUrl.toLowerCase();
+                            if (lowerUrl.includes('.pdf') || lowerUrl.includes('.doc') || lowerUrl.includes('.xls') || lowerUrl.includes('drive.google.com')) {
+                                mediaType = 'document';
+                            } else if (lowerUrl.includes('.mp4') || lowerUrl.includes('.avi')) {
+                                mediaType = 'video';
+                            } else if (lowerUrl.includes('.mp3') || lowerUrl.includes('.ogg')) {
+                                mediaType = 'audio';
+                            }
+                        }
+
+                        await this.messageService.sendMediaFromUrl(jid, finalUrl, processedResponse, mediaType);
                     } else {
                         await this.messageService.sendMessage(jid, processedResponse);
                     }
