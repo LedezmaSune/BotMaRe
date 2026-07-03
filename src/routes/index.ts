@@ -31,6 +31,7 @@ import { createTemplateRouter } from './template.routes';
 import { createSupportRouter } from './support.routes';
 import { createAutoresponderRouter } from '../modules/autoresponders/autoresponder.routes';
 import { createSheetsRouter } from '../modules/autoresponders/sheets.routes';
+import accessRouter from './access.routes';
 
 // Setup de Multer removido; ahora se importa secureUpload centralizado.
 
@@ -73,6 +74,7 @@ export function createMainRouter(waClient: WhatsAppClient) {
     router.use('/support', createSupportRouter());
     router.use('/autoresponders', createAutoresponderRouter(autoresponderController));
     router.use('/sheets', createSheetsRouter());
+    router.use('/access', accessRouter);
 
     return router;
 }

@@ -20,6 +20,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import { NotificationService } from "./notification.service";
 import { globalEvents, EVENTS } from "../core/events";
+import { accessControl } from "../core/accessControl";
 
 const execAsync = promisify(exec);
 
@@ -94,6 +95,7 @@ export function initTelegramBot(
     { command: "masivo", description: "📣 Enviar difusión masiva" },
     { command: "detenermasivo", description: "🚨 Cancelar difusión masiva activa" },
     { command: "cerebro", description: "🧠 Ver configuración del bot" },
+    { command: "lista", description: "🛡️ Control de listas (Whitelist/Blacklist)" },
     { command: "auditoria", description: "📊 Ver últimos 10 movimientos" },
     { command: "notificaciones", description: "🔔 Alternar notificaciones (ON/OFF)" },
     { command: "actualizar", description: "🔄 Buscar y aplicar actualizaciones" },
@@ -130,6 +132,32 @@ export function initTelegramBot(
     );
   });
 
+  bot.command("lista", async (ctx) => {
+    const args = ctx.match;
+    if (!args) {
+        const helpText = `🛡️ *Control de Acceso*\n\n` +
+          `Usa \`/lista [contactos|grupos] [add|ban|remove|mode] [valor]\`\n\n` +
+          `*Ejemplos:*\n` +
+          `\`/lista contactos add 5215512345678\`\n` +
+          `\`/lista grupos mode whitelist\``;
+        return ctx.reply(helpText, { parse_mode: "Markdown" });
+    }
+
+    const argsArr = args.trim().split(/\s+/);
+    const contextType = argsArr[0].toLowerCase();
+    
+    if (contextType !== 'contactos' && contextType !== 'grupos') {
+        return ctx.reply("❌ El primer argumento debe ser 'contactos' o 'grupos'.\\nEjemplo: `/lista contactos mode all`", { parse_mode: "Markdown" });
+    }
+
+    const isGroupContext = contextType === 'grupos';
+    // Reconstruir el comando como si fuera de WA (!lista add ...)
+    const waCommand = `!lista ${argsArr.slice(1).join(' ')}`;
+    const response = accessControl.processAdminCommand(waCommand, isGroupContext);
+    
+    await ctx.reply(response);
+  });
+
   bot.command(["ayuda", "comandos", "help"], async (ctx) => {
     const guide = `🦊 *Guía de Comandos y Uso de BotMaRe*\n\n` +
       `¡Hola! Soy tu asistente maestro. Puedes conversar conmigo de forma natural para pedirme cosas, enviarme audios, o usar los siguientes comandos rápidos:\n\n` +
@@ -141,6 +169,7 @@ export function initTelegramBot(
       `👉 /masivo - Iniciar una campaña de difusión por WhatsApp.\n` +
       `👉 /detenermasivo - Cancelar una difusión en curso.\n` +
       `👉 /cerebro - Ajustar parámetros de la IA y reglas.\n` +
+      `👉 /lista - Administrar listas blancas y negras.\n` +
       `👉 /auditoria - Ver últimos movimientos y errores.\n` +
       `👉 /notificaciones - Activar/desactivar alertas en Telegram.\n\n` +
       `*Mantenimiento y Servidor:*\n` +

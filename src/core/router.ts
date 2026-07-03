@@ -2,7 +2,7 @@ import { WAMessage } from '@whiskeysockets/baileys';
 import { MessageController } from '../modules/messages/message.controller';
 import { getSettings, isChatPaused } from './memory';
 import { getConfig } from './config';
-
+import { accessControl } from './accessControl';
 /**
  * CORE LAYER - ROUTER
  * Este es el punto de decisión. Recibe eventos crudos de los clientes (WhatsApp, etc)
@@ -46,6 +46,26 @@ export class Router {
             || '';
 
         if (!text) return;
+
+        // Comandos Administrativos (!lista)
+        const ownerNumber = await getConfig('WHATSAPP_OWNER_NUMBER', '');
+        const participantClean = participant.split('@')[0];
+        if (text.startsWith('!lista') && ownerNumber && participantClean === ownerNumber) {
+            const isGroup = jid.endsWith('@g.us');
+            const response = accessControl.processAdminCommand(text, isGroup);
+            await socket.sendMessage(jid, { text: response }, { quoted: msg });
+            return;
+        }
+
+        // Validación de Listas de Acceso (Whitelist/Blacklist)
+        if (!accessControl.canReplyTo(participantClean, false)) {
+            console.log(`[Router] Ignorando mensaje de ${participantClean} por reglas de lista (Contactos).`);
+            return;
+        }
+        if (jid.endsWith('@g.us') && !accessControl.canReplyTo(jid, true)) {
+            console.log(`[Router] Ignorando mensaje en grupo ${jid} por reglas de lista (Grupos).`);
+            return;
+        }
 
         // Lógica de filtrado en grupos
         if (jid.endsWith('@g.us')) {

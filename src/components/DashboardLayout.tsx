@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users, BookOpen, ShieldAlert, RefreshCw, Database } from 'lucide-react';
+import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users, BookOpen, ShieldAlert, Shield, RefreshCw, Database } from 'lucide-react';
 
 import { ConnectionOverlay } from '@/components/ConnectionOverlay';
 import { ThemeToggle, UpdateChecker, AIToggle, GlobalClock } from '@/components/StatusHeader';
@@ -21,6 +21,7 @@ const routes: Array<{ path: string; icon: any; label: string; id: TabId }> = [
     { path: '/autoresponders', icon: Menu, label: 'Menús Rápidos', id: 'autoresponders' as TabId },
     { path: '/groups', icon: Users, label: 'Grupos', id: 'groups' },
     { path: '/personality', icon: Brain, label: 'Cerebro IA', id: 'personality' },
+    { path: '/access', icon: Shield, label: 'Listas de Acceso', id: 'access' as TabId },
     { path: '/support', icon: ShieldAlert, label: 'Soporte', id: 'support' as TabId },
     { path: '/sheets', icon: Database, label: 'Google Sheets', id: 'sheets' as TabId },
     { path: '/settings', icon: SettingsIcon, label: 'Configuración', id: 'settings' },
