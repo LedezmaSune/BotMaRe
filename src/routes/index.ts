@@ -33,6 +33,7 @@ import { createAutoresponderRouter } from '../modules/autoresponders/autorespond
 import { createSheetsRouter } from '../modules/autoresponders/sheets.routes';
 import accessRouter from './access.routes';
 import webhooksRouter from './webhooks.routes';
+import crmRouter from './crm.routes';
 
 // Setup de Multer removido; ahora se importa secureUpload centralizado.
 
@@ -77,6 +78,7 @@ export function createMainRouter(waClient: WhatsAppClient) {
     router.use('/sheets', createSheetsRouter());
     router.use('/access', accessRouter);
     router.use('/webhooks', webhooksRouter);
+    router.use('/crm', crmRouter);
 
     return router;
 }
