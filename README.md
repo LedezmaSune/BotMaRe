@@ -84,6 +84,17 @@ Usa variables en tus plantillas que se rellenarán automáticamente: `{NOMBRE}`,
 - **IA OFF (Naranja):** Pausa la IA para intervención humana.
 </details>
 
+<details>
+<summary><b>🎙️ Macros Multimedia (Audios Reales y Documentos)</b></summary>
+<br>
+Puedes enviar archivos y audios (Push-To-Talk) directamente desde tus Autorespondedores o Google Sheets escribiendo etiquetas especiales en tu texto de respuesta:
+
+- `[AUDIO: https://tu-link.com/audio.ogg]` -> El bot dirá "Grabando audio..." y lo enviará como nota de voz verde nativa.
+- `[IMG: https://tu-link.com/imagen.jpg]` -> Envía una imagen (puedes escribir el pie de foto justo después de la etiqueta).
+- `[DOC: https://tu-link.com/archivo.pdf]` -> Envía un documento PDF descargable.
+- `[VIDEO: https://tu-link.com/video.mp4]` -> Envía un video.
+</details>
+
 ---
 
 ## 🧠 Orquestador de IA y Failover Automático
@@ -107,39 +118,70 @@ flowchart LR
 ## 🚀 Guías de Instalación Paso a Paso
 
 <details open>
-<summary><b>💻 Instalación Automática (Clientes)</b></summary>
+<summary><b>💻 Opción 1: Instalación Súper Fácil con Docker (Recomendado)</b></summary>
 <br>
-Requiere <b>Docker Desktop</b> instalado en tu máquina.
-Abre tu terminal y ejecuta:
 
-**Windows:**
+Esta es la forma más rápida y segura de instalar el bot sin preocuparte por instalar dependencias o lidiar con errores del sistema.
 
+**Paso 1: Preparar tu computadora**
+1. Descarga e instala [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+2. Ábrelo y asegúrate de que el motor de Docker esté corriendo (deberías ver el icono en verde).
+
+**Paso 2: Descargar los archivos iniciales**
+Abre tu terminal (Símbolo del sistema o PowerShell en Windows) y copia este código para crear la carpeta y bajar lo esencial:
+
+*Si usas Windows:*
 ```powershell
 mkdir BotMaRe; cd BotMaRe
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/ejemplo_cliente/docker-compose.yml" -OutFile "docker-compose.yml"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/docker-compose.yml" -OutFile "docker-compose.yml"
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/.env.example" -OutFile ".env"
 ```
 
-**Mac/Linux:**
-
+*Si usas Mac/Linux:*
 ```bash
-mkdir BotMaRe; cd BotMaRe
-curl -O https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/ejemplo_cliente/docker-compose.yml
+mkdir BotMaRe && cd BotMaRe
+curl -O https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/.env.example
 ```
 
-1. Edita el archivo `.env` para establecer tu propia contraseña segura.
-2. Arranca con: `docker compose up -d`.
-3. Accede a `http://localhost:8000`.
+**Paso 3: Configurar y Encender**
+1. Abre el archivo `.env` que se acaba de descargar con el Bloc de notas. Cambia la línea `DASHBOARD_PASS=admin123` por tu propia contraseña secreta y guarda el archivo.
+2. En tu terminal, dentro de la carpeta BotMaRe, escribe el comando mágico para encender todo:
+   `docker-compose up -d --build`
+3. ¡Listo! Abre tu navegador de internet y entra a: `http://localhost:8000`
 </details>
 
 <details>
-<summary><b>🖥️ Compilación Manual (Sin Docker)</b></summary>
+<summary><b>🖥️ Opción 2: Instalación Manual (Avanzados / Servidor)</b></summary>
 <br>
 
-- **Windows:** Ejecuta el archivo `install-windows.bat`.
-- **Linux/VPS:** Ejecuta `curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install.sh | bash`
-- **Android Termux:** Ejecuta `curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install-termux.sh | bash`
+Si no quieres usar Docker y prefieres instalar todo nativamente, sigue estos pasos:
+
+**Paso 1: Requisitos previos**
+Asegúrate de tener instalado [Node.js](https://nodejs.org/) (Versión 18 o superior) y Git en tu computadora.
+
+**Paso 2: Ejecutar el Instalador Automático**
+Abre tu terminal y ejecuta el comando según tu sistema operativo. Este instalador descargará el código, preparará la base de datos y dejará todo listo:
+
+* 🪟 **Windows:**
+  Descarga el repositorio como `.zip`, descomprímelo y dale doble clic al archivo `install-windows.bat`.
+
+* 🐧 **Linux/VPS (Ubuntu/Debian):**
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install.sh | bash
+  ```
+
+* 📱 **Android Termux:**
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install-termux.sh | bash
+  ```
+
+**Paso 3: ¡A disfrutar!**
+Una vez finalizada la instalación, simplemente entra a la carpeta y arranca el menú principal interactivo:
+```bash
+cd BotMaRe
+npm run menu
+```
 </details>
 
 ---
