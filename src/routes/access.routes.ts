@@ -16,6 +16,15 @@ router.get('/', (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+router.get('/recent', (req, res) => {
+    try {
+        const recent = accessControl.getRecentInteractions();
+        res.json(recent);
+    } catch (error) {
+        console.error('[AccessRoutes] Error obteniendo recientes:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
 
 // Este endpoint permite enviar comandos como si fueran desde WA (ej: "!lista contactos mode whitelist")
 router.post('/command', (req, res) => {

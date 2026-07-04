@@ -17,9 +17,24 @@ const DEFAULT_CONFIG: AccessConfig = {
     groups: { mode: 'all', whitelist: [], blacklist: [] }
 };
 
+interface MenuState {
+    step: 'MAIN_MENU' | 'WAITING_ADD_ID' | 'WAITING_BAN_ID' | 'WAITING_REMOVE_ID';
+    isGroup: boolean;
+}
+
+const menuStateMap = new Map<string, MenuState>();
+
+export interface Interaction {
+    id: string;
+    pushName: string;
+    timestamp: number;
+    isGroup: boolean;
+}
+
 class AccessControlService {
     private configPath = path.join(process.cwd(), 'data', 'accessList.json');
     private config: AccessConfig;
+    private recentInteractions: Interaction[] = [];
 
     constructor() {
         this.config = this.loadConfig();
@@ -50,6 +65,19 @@ class AccessControlService {
         } catch (error) {
             console.error('[AccessControl] Error saving config:', error);
         }
+    }
+
+    public trackInteraction(id: string, pushName: string, isGroup: boolean) {
+        // Remove if exists to place it at the top
+        this.recentInteractions = this.recentInteractions.filter(i => i.id !== id);
+        this.recentInteractions.unshift({ id, pushName, timestamp: Date.now(), isGroup });
+        if (this.recentInteractions.length > 50) {
+            this.recentInteractions.pop();
+        }
+    }
+
+    public getRecentInteractions(): Interaction[] {
+        return this.recentInteractions;
     }
 
     /**
@@ -133,6 +161,83 @@ class AccessControlService {
 
     public getConfig(): AccessConfig {
         return this.config;
+    }
+
+    public startMenu(userId: string, isGroup: boolean): string {
+        menuStateMap.set(userId, { step: 'MAIN_MENU', isGroup });
+        const listName = isGroup ? "👥 Grupos" : "👤 Contactos";
+        return `🛡️ *MENÚ DE LISTAS DE ACCESO* 🛡️
+👉 *Categoría:* ${listName}
+━━━━━━━━━━━━━━━━━
+*Responde con el número de la opción deseada:*
+
+⚙️ *MODOS GENERALES*
+1️⃣ 🟢 *Activar Lista Blanca* (Solo autorizados)
+2️⃣ 🔴 *Activar Lista Negra* (Todos menos bloqueados)
+3️⃣ 🔓 *Desactivar filtros* (Modo abierto para todos)
+
+📝 *GESTIÓN DE ESTA LISTA*
+4️⃣ ✅ *Agregar* un usuario/grupo (Blanca)
+5️⃣ 🚫 *Bloquear* un usuario/grupo (Negra)
+6️⃣ 🗑️ *Eliminar* de ambas listas
+
+_(💡 Escribe "salir" en cualquier momento para cancelar)_`;
+    }
+
+    public handleMenuWizard(userId: string, text: string, isGroup: boolean): string | null {
+        const state = menuStateMap.get(userId);
+        if (!state) return null; // No está en el menú
+
+        const listName = state.isGroup ? "Grupos" : "Contactos";
+        const cleanText = text.trim();
+
+        if (cleanText.toLowerCase() === 'cancelar' || cleanText.toLowerCase() === 'salir') {
+            menuStateMap.delete(userId);
+            return "❌ Menú cancelado.";
+        }
+
+        if (state.step === 'MAIN_MENU') {
+            switch (cleanText) {
+                case '1':
+                    menuStateMap.delete(userId);
+                    return this.processAdminCommand(`!lista mode whitelist`, state.isGroup);
+                case '2':
+                    menuStateMap.delete(userId);
+                    return this.processAdminCommand(`!lista mode blacklist`, state.isGroup);
+                case '3':
+                    menuStateMap.delete(userId);
+                    return this.processAdminCommand(`!lista mode all`, state.isGroup);
+                case '4':
+                    state.step = 'WAITING_ADD_ID';
+                    return `🟢 *AGREGAR A LISTA BLANCA*\n\nPor favor, responde a este mensaje enviando el *número de teléfono* (ej. 521551234) o *ID del Grupo* que deseas autorizar en la categoría de ${listName}.\n\n_(❌ Para cancelar escribe "salir")_`;
+                case '5':
+                    state.step = 'WAITING_BAN_ID';
+                    return `🔴 *BLOQUEAR (LISTA NEGRA)*\n\nPor favor, responde a este mensaje enviando el *número de teléfono* o *ID del Grupo* que deseas bloquear en la categoría de ${listName}.\n\n_(❌ Para cancelar escribe "salir")_`;
+                case '6':
+                    state.step = 'WAITING_REMOVE_ID';
+                    return `🗑️ *ELIMINAR DE LAS LISTAS*\n\nPor favor, responde a este mensaje enviando el *número de teléfono* o *ID del Grupo* que deseas eliminar completamente de las listas de ${listName}.\n\n_(❌ Para cancelar escribe "salir")_`;
+                default:
+                    return "⚠️ Opción no válida. Por favor responde únicamente con un número del *1* al *6*, o escribe *salir*.";
+            }
+        }
+
+        if (state.step === 'WAITING_ADD_ID') {
+            menuStateMap.delete(userId);
+            return this.processAdminCommand(`!lista add ${cleanText}`, state.isGroup);
+        }
+
+        if (state.step === 'WAITING_BAN_ID') {
+            menuStateMap.delete(userId);
+            return this.processAdminCommand(`!lista ban ${cleanText}`, state.isGroup);
+        }
+
+        if (state.step === 'WAITING_REMOVE_ID') {
+            menuStateMap.delete(userId);
+            return this.processAdminCommand(`!lista remove ${cleanText}`, state.isGroup);
+        }
+
+        menuStateMap.delete(userId);
+        return "❌ Estado desconocido. Menú cancelado.";
     }
 }
 

@@ -181,6 +181,7 @@ Si vienes de versiones antiguas o usas **PNPM v10+** y experimentas errores de c
 <summary><b>🔄 Historial de Actualizaciones (Changelog)</b></summary>
 <br>
 
+- **[2.0.0] - 2026-07-04:** Actualización Enterprise: Soporte Docker, Respaldos diarios encriptados (Telegram), CRM con Etiquetas, Handoff/Pausa de IA, y envíos nativos de Notas de Voz reales (PTT).
 - **[1.5.6] - 2026-06-18:** Fix para PNPM v10, instaladores mágicos (`.bat` y `.sh`), reparación de túneles en Windows.
 - **[1.5.0] - 2026-06-14:** Rediseño CLI con arte ANSI, mejoras Sheets 3 columnas.
 - **[1.4.0] - 2026-06-04:** Motor de Spintax, asistencia IA, simulación multimedia anti-ban.

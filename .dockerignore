@@ -1,10 +1,11 @@
 node_modules
+npm-debug.log
 .next
 out
 dist
-data
-backups
-auth_info_baileys
-*.log
+data/
+auth_info_baileys/
 .env
 .git
+.gitignore
+*.md

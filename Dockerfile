@@ -1,50 +1,35 @@
-# 🦊 BotMaRe Unified Dockerfile
-FROM node:20-slim AS builder
+# Base image
+FROM node:20-alpine
 
+# Set working directory
 WORKDIR /app
 
-# Instalar dependencias necesarias para better-sqlite3 y compilación nativa
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
+# Install build tools and python for better-sqlite3
+RUN apk add --no-cache python3 make g++
 
-# Instalar pnpm globalmente para mantener consistencia con el ecosistema del proyecto
-RUN npm install -g pnpm
+# Enable Corepack to use pnpm
+RUN corepack enable
 
-# Copiar archivos de dependencias y lockfile de pnpm
+# Copy package.json and pnpm-lock.yaml (if exists)
 COPY package.json pnpm-lock.yaml* ./
 
-# Instalar TODAS las dependencias respetando el lockfile para consistencia absoluta
-RUN pnpm install --frozen-lockfile
+# Install dependencies
+RUN pnpm install --frozen-lockfile || pnpm install
 
-# Copiar el resto del código fuente
+# Copy all source files
 COPY . .
 
-# Compilar el Frontend y el Servidor utilizando Webpack (estabilidad garantizada)
+# Build the Next.js UI
 RUN pnpm run build
 
-# --- ETAPA DE PRODUCCIÓN ---
-FROM node:20-slim
-
-WORKDIR /app
-
-# Instalar certificados SSL (necesarios para Cloudflared) y herramientas de ejecución
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
-RUN npm install -g pnpm tsx
-
-# Copiar solo los artefactos y archivos necesarios de la etapa anterior
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/pnpm-lock.yaml* ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/out ./out
-COPY --from=builder /app/src ./src
-COPY --from=builder /app/bin ./bin
-COPY --from=builder /app/.env.example ./.env.example
-
-# Exponer el puerto del Monolito
+# Expose the ports (Next.js Dashboard and Express API)
+EXPOSE 3000
 EXPOSE 8000
 
-# Comando de arranque nativo usando tsx
-CMD ["tsx", "src/server.ts"]
+# Set environment variables for production
+ENV NODE_ENV=production
+
+# Start both Next.js UI and the Backend Engine
+# Note: We use concurrently directly via pnpm run dev for simplicity, 
+# or pnpm run start if we want to run the production build.
+CMD ["pnpm", "run", "start"]

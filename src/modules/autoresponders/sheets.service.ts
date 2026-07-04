@@ -21,10 +21,25 @@ export class GoogleSheetsService {
         // Option A: Public Sheet using CSV Export
         const url = `https://docs.google.com/spreadsheets/d/${cleanSpreadsheetId}/export?format=csv`;
         const axios = require('axios');
-        const axiosRes = await axios.get(url, { responseType: 'text', validateStatus: () => true });
+        let axiosRes;
+        let retries = 3;
         
-        if (axiosRes.status !== 200) {
-           return { success: false, message: `No se pudo acceder a la hoja pública. Código HTTP: ${axiosRes.status}. Verifica que el ID sea correcto y el enlace sea público.` };
+        while (retries > 0) {
+            try {
+                axiosRes = await axios.get(url, { responseType: 'text', validateStatus: () => true, timeout: 10000 });
+                break; // Si tiene éxito salimos del bucle
+            } catch (err: any) {
+                retries--;
+                if (retries === 0) {
+                    return { success: false, message: `Error de red reiterado al conectar con Google Sheets: ${err.message}` };
+                }
+                // Esperar 2 segundos antes de reintentar
+                await new Promise(res => setTimeout(res, 2000));
+            }
+        }
+        
+        if (!axiosRes || axiosRes.status !== 200) {
+           return { success: false, message: `No se pudo acceder a la hoja pública. Código HTTP: ${axiosRes ? axiosRes.status : 'Desconocido'}. Verifica que el ID sea correcto y el enlace sea público.` };
         }
         const text = axiosRes.data;
         

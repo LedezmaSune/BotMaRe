@@ -16,6 +16,21 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'V 2.0.0',
+        date: '04 Julio 2026',
+        title: 'Actualización Enterprise (CRM, Handoff, Docker & Respaldos)',
+        type: 'major',
+        description: 'La actualización más grande de BotMaRe. Transforma tu bot en un CRM Enterprise completo listo para producción y escalabilidad masiva.',
+        features: [
+            '🐳 Docker Support: Dockerfile y docker-compose listos para despliegue en la nube.',
+            '📦 Respaldos Encriptados (Telegram): Copias de seguridad diarias programadas y cifradas enviadas a los administradores.',
+            '🛡️ Handoff (Pausa IA): Detección de "asesor/humano" para pausar el bot por 1 hora y notificar al admin por Telegram.',
+            '🏷️ CRM y Etiquetas: Sistema preparado para asignar prospectos, VIPs, y deudores.',
+            '🎙️ Notas de Voz Nativas (PTT): Soporte nativo para la etiqueta [AUDIO: url] para enviar audios como si fueran grabados en tiempo real.',
+            '🔗 Webhooks (Beta): Preparación de API endpoints para integración futura con Zapier y Make.'
+        ]
+    },
+    {
         version: 'K 1.5.0',
         date: '14 Junio 2026',
         title: 'Rediseño CLI y Google Sheets Avanzado',

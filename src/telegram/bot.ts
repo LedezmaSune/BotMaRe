@@ -27,10 +27,12 @@ const execAsync = promisify(exec);
 type TelegramBot = Bot & { ownerId: string };
 
 interface WizardState {
-  step: "WAITING_NUMBERS" | "WAITING_MESSAGE" | "WAITING_DATE" | "WAITING_DIFFUSION_NUMBERS" | "WAITING_DIFFUSION_MESSAGE";
+  step: "WAITING_NUMBERS" | "WAITING_MESSAGE" | "WAITING_DATE" | "WAITING_DIFFUSION_NUMBERS" | "WAITING_DIFFUSION_MESSAGE" | "WAITING_LISTA_ID";
   numbers?: string;
   message?: string;
   date?: string;
+  listaContext?: 'contactos' | 'grupos';
+  listaAction?: 'add' | 'ban' | 'remove';
 }
 export const wizardState = new Map<string, WizardState>();
 
@@ -104,6 +106,8 @@ export function initTelegramBot(
     { command: "tailscale", description: "🛡️ Red privada Tailscale" },
     { command: "pm2", description: "⚙️ Control de procesos PM2" },
     { command: "borrarmemorial", description: "🧹 Borrar memoria del bot" },
+    { command: "setadmin", description: "👑 Añadir número admin de WhatsApp" },
+    { command: "backup", description: "📦 Generar respaldo manual (ZIP)" },
     { command: "ayuda", description: "❓ Ver la guía de comandos" },
   ]).catch(console.error);
 
@@ -115,7 +119,8 @@ export function initTelegramBot(
       .text("📣 Difusión Masiva", "menu_masivo").row()
       .text("🧠 Cerebro IA", "menu_cerebro")
       .text("📊 Google Sheets", "menu_sheets").row()
-      .text("📋 Auditoría", "menu_auditoria")
+      .text("🛡️ Listas de Acceso", "menu_lista")
+      .text("📋 Auditoría", "menu_auditoria").row()
       .text("🔔 Notificaciones", "menu_notificaciones").row()
       .text("🔄 Actualizar", "menu_actualizar").row()
       .text("🌐 Cloudflare", "menu_tunel")
@@ -132,30 +137,29 @@ export function initTelegramBot(
     );
   });
 
+  bot.command("backup", async (ctx) => {
+    const adminId = ctx.from?.id.toString();
+    if (!adminId) return;
+    
+    await ctx.reply("⏳ Generando archivos de respaldo encriptados, por favor espera...");
+    try {
+        await BackupService.createBackup(true);
+        await ctx.reply("✅ Respaldo generado y enviado con éxito.");
+    } catch (e) {
+        await ctx.reply("⚠️ Hubo un problema al generar el respaldo.");
+    }
+  });
+
   bot.command("lista", async (ctx) => {
-    const args = ctx.match;
-    if (!args) {
-        const helpText = `🛡️ *Control de Acceso*\n\n` +
-          `Usa \`/lista [contactos|grupos] [add|ban|remove|mode] [valor]\`\n\n` +
-          `*Ejemplos:*\n` +
-          `\`/lista contactos add 5215512345678\`\n` +
-          `\`/lista grupos mode whitelist\``;
-        return ctx.reply(helpText, { parse_mode: "Markdown" });
-    }
+    const keyboard = new InlineKeyboard()
+      .text("👤 Administrar Contactos", "lista_cat_contactos").row()
+      .text("👥 Administrar Grupos", "lista_cat_grupos").row();
 
-    const argsArr = args.trim().split(/\s+/);
-    const contextType = argsArr[0].toLowerCase();
-    
-    if (contextType !== 'contactos' && contextType !== 'grupos') {
-        return ctx.reply("❌ El primer argumento debe ser 'contactos' o 'grupos'.\\nEjemplo: `/lista contactos mode all`", { parse_mode: "Markdown" });
-    }
-
-    const isGroupContext = contextType === 'grupos';
-    // Reconstruir el comando como si fuera de WA (!lista add ...)
-    const waCommand = `!lista ${argsArr.slice(1).join(' ')}`;
-    const response = accessControl.processAdminCommand(waCommand, isGroupContext);
-    
-    await ctx.reply(response);
+    await ctx.reply(
+        `🛡️ *Control de Listas de Acceso*\n\n` +
+        `Selecciona la categoría que deseas configurar:`,
+        { reply_markup: keyboard, parse_mode: "Markdown" }
+    );
   });
 
   bot.command(["ayuda", "comandos", "help"], async (ctx) => {
@@ -182,6 +186,33 @@ export function initTelegramBot(
       `💡 *Tip:* Si estás desde el celular, simplemente escribe "/" en el chat para que Telegram te despliegue la lista automática de comandos interactivos.`;
     
     await ctx.reply(guide, { parse_mode: "Markdown" });
+  });
+
+  bot.command("setadmin", async (ctx) => {
+    const args = ctx.match;
+    if (!args) {
+        return ctx.reply("❌ Error. Debes especificar el número. Ejemplo:\n`/setadmin 4821024749`\n`/setadmin 49658596425808@lid`", { parse_mode: "Markdown" });
+    }
+    const newAdmin = args.trim().split('@')[0]; // Limpiar por si mandan el @lid completo o @s.whatsapp.net
+    
+    const currentConfig = await getConfig('WHATSAPP_OWNER_NUMBER', '');
+    let admins = currentConfig ? currentConfig.split(',').map((n: string) => n.trim()) : [];
+    
+    if (admins.includes(newAdmin)) {
+        return ctx.reply(`⚠️ El número \`${newAdmin}\` ya es administrador.`, { parse_mode: "Markdown" });
+    }
+    
+    admins.push(newAdmin);
+    const newConfigStr = admins.join(',');
+    
+    await updateSettings({ WHATSAPP_OWNER_NUMBER: newConfigStr });
+    
+    await ctx.reply(
+        `✅ *Administrador Agregado*\n\n` +
+        `El número \`${newAdmin}\` ahora tiene permisos totales para usar \`!lista\` en WhatsApp.\n\n` +
+        `_Lista actual de admins:_ \n\`${newConfigStr}\``,
+        { parse_mode: "Markdown" }
+    );
   });
 
   bot.command(["dashboard", "dashbord"], async (ctx) => {
@@ -236,6 +267,71 @@ export function initTelegramBot(
         const keyboard = new InlineKeyboard()
           .text("🔄 Sincronizar Ahora", "sheets_sync").row();
         await ctx.reply("📊 *Google Sheets*\n\nSincroniza tus autorespondedores desde tu hoja de cálculo configurada de forma remota.", { reply_markup: keyboard, parse_mode: "Markdown" });
+      } else if (data === "menu_lista") {
+        const keyboard = new InlineKeyboard()
+          .text("👤 Administrar Contactos", "lista_cat_contactos").row()
+          .text("👥 Administrar Grupos", "lista_cat_grupos").row();
+        await ctx.reply("🛡️ *Control de Listas de Acceso*\n\nSelecciona la categoría que deseas configurar:", { reply_markup: keyboard, parse_mode: "Markdown" });
+      } else if (data.startsWith("lista_cat_")) {
+        const cat = data.replace("lista_cat_", ""); // 'contactos' or 'grupos'
+        const isGroup = cat === 'grupos';
+        const config = accessControl.getConfig();
+        const currentList = isGroup ? config.groups : config.contacts;
+        
+        const emoji = cat === 'grupos' ? '👥' : '👤';
+        let currentModeText = '';
+        switch(currentList.mode) {
+           case 'all': currentModeText = '🔓 Abierto (Todos)'; break;
+           case 'whitelist': currentModeText = '🟢 Lista Blanca'; break;
+           case 'blacklist': currentModeText = '🔴 Lista Negra'; break;
+           case 'none': currentModeText = '🔕 Silenciado (Nadie)'; break;
+        }
+
+        const keyboard = new InlineKeyboard()
+          .text("🟢 Modo Whitelist", `lista_action_mode_whitelist_${cat}`)
+          .text("🔴 Modo Blacklist", `lista_action_mode_blacklist_${cat}`).row()
+          .text("🔓 Modo Todos", `lista_action_mode_all_${cat}`).row()
+          .text("➕ Agregar a Whitelist", `lista_action_add_${cat}`)
+          .text("⛔ Bloquear", `lista_action_ban_${cat}`).row()
+          .text("🗑️ Eliminar de listas", `lista_action_remove_${cat}`).row()
+          .text("🔙 Volver", "menu_lista");
+
+        await ctx.editMessageText(
+           `🛡️ *Control de ${cat === 'grupos' ? 'Grupos' : 'Contactos'}*\n\n` +
+           `*Modo Actual:* ${currentModeText}\n` +
+           `*Whitelist:* ${currentList.whitelist.length} | *Blacklist:* ${currentList.blacklist.length}\n\n` +
+           `¿Qué deseas hacer?`,
+           { reply_markup: keyboard, parse_mode: "Markdown" }
+        );
+      } else if (data.startsWith("lista_action_")) {
+        const parts = data.replace("lista_action_", "").split("_");
+        const action = parts[0]; // mode, add, ban, remove
+        
+        if (action === "mode") {
+           const modeValue = parts[1];
+           const cat = parts[2]; // contactos o grupos
+           const isGroup = cat === 'grupos';
+           const response = accessControl.processAdminCommand(`!lista mode ${modeValue}`, isGroup);
+           await ctx.answerCallbackQuery({ text: "✅ Modo actualizado", show_alert: true });
+           
+           // Refrescar menú
+           const keyboard = new InlineKeyboard().text("🔙 Volver a opciones", `lista_cat_${cat}`);
+           await ctx.editMessageText(response, { reply_markup: keyboard, parse_mode: "Markdown" });
+        } else {
+           // action es add, ban o remove
+           const cat = parts[1];
+           const isGroup = cat === 'grupos';
+           wizardState.set(userId, { step: 'WAITING_LISTA_ID', listaContext: isGroup ? 'grupos' : 'contactos', listaAction: action as any });
+           
+           let actionText = action === 'add' ? 'AGREGAR (🟢 Blanca)' : action === 'ban' ? 'BLOQUEAR (🔴 Negra)' : 'ELIMINAR (🗑️)';
+           await ctx.editMessageText(
+             `📝 *Modo:* ${actionText}\n\n` +
+             `Por favor, envía un mensaje de texto con el *Número de teléfono* o *ID del Grupo* que deseas afectar en la categoría de *${cat}*.\n\n` +
+             `_(Escribe /cancelar para salir)_`,
+             { parse_mode: "Markdown" }
+           );
+           await ctx.answerCallbackQuery();
+        }
       } else if (data === "menu_auditoria") {
         try {
             const rows = await listAudits(10);

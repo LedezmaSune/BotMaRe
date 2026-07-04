@@ -1,8 +1,12 @@
 import { WAMessage } from '@whiskeysockets/baileys';
 import { MessageController } from '../modules/messages/message.controller';
+import { NotificationService } from '../telegram/notification.service';
 import { getSettings, isChatPaused } from './memory';
 import { getConfig } from './config';
 import { accessControl } from './accessControl';
+
+const pausedUsers = new Map<string, number>();
+
 /**
  * CORE LAYER - ROUTER
  * Este es el punto de decisión. Recibe eventos crudos de los clientes (WhatsApp, etc)
@@ -48,13 +52,35 @@ export class Router {
         if (!text) return;
 
         // Comandos Administrativos (!lista)
-        const ownerNumber = await getConfig('WHATSAPP_OWNER_NUMBER', '');
+        const ownerNumberConfig = await getConfig('WHATSAPP_OWNER_NUMBER', '');
+        const ownerNumbers = ownerNumberConfig.split(',').map((n: string) => n.trim());
         const participantClean = participant.split('@')[0];
-        if (text.startsWith('!lista') && ownerNumber && participantClean === ownerNumber) {
-            const isGroup = jid.endsWith('@g.us');
-            const response = accessControl.processAdminCommand(text, isGroup);
-            await socket.sendMessage(jid, { text: response }, { quoted: msg });
-            return;
+        const isGroup = jid.endsWith('@g.us');
+
+        if (ownerNumbers.includes(participantClean)) {
+            // 1. Ver si estamos en medio de un menú interactivo
+            const menuResponse = accessControl.handleMenuWizard(participantClean, text, isGroup);
+            if (menuResponse) {
+                await socket.sendMessage(jid, { text: menuResponse }, { quoted: msg });
+                return;
+            }
+
+            // 2. Si no, ver si iniciaron un comando administrativo
+            if (text.trim() === '!lista') {
+                const response = accessControl.startMenu(participantClean, isGroup);
+                await socket.sendMessage(jid, { text: response }, { quoted: msg });
+                return;
+            } else if (text.startsWith('!lista ')) {
+                const response = accessControl.processAdminCommand(text, isGroup);
+                await socket.sendMessage(jid, { text: response }, { quoted: msg });
+                return;
+            }
+        }
+
+        // Rastrear interacciones para el Dashboard Web
+        accessControl.trackInteraction(participantClean, pushName, false);
+        if (isGroup) {
+            accessControl.trackInteraction(jid, 'Grupo', true); // No tenemos el nombre del grupo aquí fácilmente, así que usamos un genérico
         }
 
         // Validación de Listas de Acceso (Whitelist/Blacklist)
@@ -102,6 +128,48 @@ export class Router {
             
             text = cleanText.trim() || text;
         }
+
+        // ==========================================
+        // 1. HANDOFF (PAUSA DE IA Y ATENCIÓN HUMANA)
+        // ==========================================
+        
+        // Verificar si el usuario está en pausa temporal
+        if (pausedUsers.has(participantClean)) {
+            const expireTime = pausedUsers.get(participantClean)!;
+            if (Date.now() < expireTime) {
+                console.log(`[Router] Ignorando mensaje de ${participantClean} (Pausa de IA activa).`);
+                return; // Ignorar completamente, dejar que el humano responda
+            } else {
+                pausedUsers.delete(participantClean); // Ya expiró la pausa
+            }
+        }
+
+        // Detectar si el usuario pide ayuda humana
+        const lowerText = text.toLowerCase();
+        const handoffKeywords = ['asesor', 'humano', 'soporte', 'hablar con un agente'];
+        if (handoffKeywords.some(kw => lowerText.includes(kw))) {
+            const pauseDurationHours = 1;
+            pausedUsers.set(participantClean, Date.now() + (pauseDurationHours * 60 * 60 * 1000));
+            
+            console.log(`[Router] ⚠️ Handoff detectado para ${participantClean}. Pausando IA por ${pauseDurationHours} hora.`);
+            
+            // Avisar al cliente
+            await socket.sendMessage(jid, { 
+                text: "🤖 _Entendido. He pausado mi sistema automático. Un asesor humano se conectará contigo en breve..._" 
+            }, { quoted: msg });
+            
+            // Avisar al Admin por Telegram
+            const waLink = `https://wa.me/${participantClean}`;
+            const alertMsg = `⚠️ *Solicitud de Asesor Humano*\n\n` +
+                             `El usuario \`${participantClean}\` (\`${pushName}\`) ha solicitado ayuda humana.\n\n` +
+                             `🤖 _La IA ha sido pausada para este usuario durante 1 hora._\n\n` +
+                             `👇 *Hablar con el cliente:* \n${waLink}`;
+            
+            await NotificationService.notifyAdmin(alertMsg);
+            
+            return; // Terminar procesamiento aquí
+        }
+        // ==========================================
 
         // Reaccionar de forma aleatoria para confirmar que el bot está procesando la solicitud
         try {

@@ -2,26 +2,18 @@ version: '3.8'
 
 services:
   botmare:
-    build: 
-      context: .
-      dockerfile: Dockerfile
-    container_name: botmare-unified
+    build: .
+    container_name: botmare_engine
     restart: unless-stopped
     ports:
+      - "3000:3000"
       - "8000:8000"
     volumes:
-      # Persistencia de sesiones, datos y backups en el host
-      - ./auth_info_baileys:/app/auth_info_baileys
       - ./data:/app/data
-      - ./backups:/app/backups
-    env_file:
-      - .env
+      - ./auth_info_baileys:/app/auth_info_baileys
+      - ./.env:/app/.env
     environment:
-      - PORT=8000
       - NODE_ENV=production
-    # Rotación de logs de Docker para evitar saturación de espacio en disco en servidores VPS
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    # If using tailscale or similar, you might need extra capabilities:
+    # cap_add:
+    #   - NET_ADMIN

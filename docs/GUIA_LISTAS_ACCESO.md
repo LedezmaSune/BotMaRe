@@ -24,12 +24,27 @@ Los modos de operación posibles son:
 Solo el número definido en `WHATSAPP_OWNER_NUMBER` puede enviar estos comandos. Al enviarlos, el bot no se los pasará a la Inteligencia Artificial, sino que ejecutará la acción administrativa.
 
 ### Para Contactos (Chats Privados)
-El formato general es: `!lista [add|ban|remove|mode] [valor]`
-- `!lista mode whitelist` (Activa el modo estricto, nadie puede hablarle excepto los agregados).
+La forma más fácil de administrar tus listas es mediante el menú interactivo:
+
+Simplemente envía: `!lista`
+
+El bot te responderá con un menú enumerado como este:
+```
+🛡️ Menú de Listas de Acceso (Contactos) 🛡️
+1️⃣ Activar Lista Blanca (Estricto)
+2️⃣ Activar Lista Negra (Bloqueos)
+3️⃣ Desactivar filtros (Modo abierto)
+...
+```
+Solo tienes que responder con el **número** de la opción que desees (ej: envías `1`). Si eliges agregar o bloquear a alguien, el bot te preguntará el número de esa persona en el siguiente mensaje.
+
+**(Avanzado) Atajos Rápidos**
+Si no quieres usar el menú, puedes enviar el comando completo en una sola línea:
+- `!lista mode whitelist` (Activa el modo estricto).
 - `!lista mode all` (Desactiva las restricciones).
-- `!lista add 5215512345678` (Agrega ese número a tu lista blanca para que pueda hablar con el bot).
-- `!lista ban 5215512345678` (Agrega el número a tu lista negra para bloquearlo).
-- `!lista remove 5215512345678` (Quita el número de cualquier lista).
+- `!lista add 5215512345678` (Agrega a lista blanca).
+- `!lista ban 5215512345678` (Agrega a lista negra).
+- `!lista remove 5215512345678` (Quita de cualquier lista).
 
 ### Para Grupos
 Si escribes el comando `!lista` **dentro de un grupo**, las acciones afectarán a las listas de **Grupos**, no de Contactos.
