@@ -19,6 +19,8 @@ export class Router {
      * Maneja mensajes entrantes de WhatsApp
      */
     async handleWhatsAppMessage(data: { messages: WAMessage[], type: string }, socket: any) {
+        if (data.type !== 'notify') return; // Solo procesar mensajes nuevos en tiempo real
+        
         const msg = data.messages[0];
         if (!msg || msg.key.fromMe || !msg.message) return;
 
