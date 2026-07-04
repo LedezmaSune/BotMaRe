@@ -161,10 +161,12 @@ export class Router {
             }, { quoted: msg });
             
             // Avisar al Admin por Telegram
-            const waLink = `https://wa.me/${participantClean}`;
+            const isGroupChat = jid.endsWith('@g.us');
+            const phoneToLink = isGroupChat ? participantClean : jid.split('@')[0];
+            const waLink = `https://wa.me/${phoneToLink}`;
             const alertMsg = `⚠️ *Solicitud de Asesor Humano*\n\n` +
-                             `El usuario \`${participantClean}\` (\`${pushName}\`) ha solicitado ayuda humana.\n\n` +
-                             `🤖 _La IA ha sido pausada para este usuario durante 1 hora._\n\n` +
+                             `El usuario \`${phoneToLink}\` (\`${pushName}\`) ha solicitado ayuda humana.\n\n` +
+                             `🤖 _La IA ha sido pausada para este chat durante 1 hora._\n\n` +
                              `👇 *Hablar con el cliente:* \n${waLink}`;
             
             await NotificationService.notifyAdmin(alertMsg);
