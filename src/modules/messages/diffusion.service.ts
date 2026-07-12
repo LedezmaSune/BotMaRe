@@ -95,17 +95,30 @@ export class MassDiffusionService {
                 console.log(`[Mass] Sending to ${to}...`);
                 
                 if (mediaFiles && mediaFiles.length > 0) {
+                    let sentAny = false;
+                    let errors: string[] = [];
                     for (let i = 0; i < mediaFiles.length; i++) {
                         const file = mediaFiles[i];
                         if (fs.existsSync(file.path)) {
-                            // Enviar caption solo en el primer archivo
-                            const caption = i === 0 ? personalizedMessage : '';
-                            const sendPromise = this.waService.sendMedia(to, file.path, caption, file.type, file.name);
-                            await Promise.race([
-                                sendPromise,
-                                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en envío (30s)')), 30000))
-                            ]);
+                            try {
+                                // Enviar caption solo en el primer archivo multimedia enviado exitosamente
+                                const caption = !sentAny ? personalizedMessage : '';
+                                const sendPromise = this.waService.sendMedia(to, file.path, caption, file.type, file.name);
+                                await Promise.race([
+                                    sendPromise,
+                                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en envío (60s)')), 60000))
+                                ]);
+                                sentAny = true;
+                            } catch (err: any) {
+                                console.error(`[Mass] Error al enviar archivo ${file.name} a ${to}:`, err.message);
+                                errors.push(`${file.name}: ${err.message}`);
+                            }
+                        } else {
+                            errors.push(`${file.name}: Archivo no existe en disco`);
                         }
+                    }
+                    if (!sentAny && errors.length > 0) {
+                        throw new Error(`Fallo el envío de todos los archivos. Errores: ${errors.join(', ')}`);
                     }
                 } else {
                     const mediaMatch = personalizedMessage.match(/\[(IMG|DOC|VIDEO|AUDIO|MEDIA):\s*(.+?)\]/i);
@@ -131,13 +144,13 @@ export class MassDiffusionService {
                         const sendPromise = this.waService.sendMediaFromUrl(to, mediaUrl, textWithoutMedia || undefined, mediaCategory);
                         await Promise.race([
                             sendPromise,
-                            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en envío (30s)')), 30000))
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en envío (60s)')), 60000))
                         ]);
                     } else {
                         const sendPromise = this.waService.sendMessage(to, personalizedMessage);
                         await Promise.race([
                             sendPromise,
-                            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en envío (30s)')), 30000))
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en envío (60s)')), 60000))
                         ]);
                     }
                 }

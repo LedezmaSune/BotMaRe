@@ -6,6 +6,7 @@ import {
     ReminderData, TemplateData, PausedChatData, 
     AutoresponderData, UserStateData, MessageRow 
 } from './db/interfaces';
+import { cacheManager } from '../utils/cache';
 
 // Re-exportamos interfaces para el resto de la aplicación
 export * from './db/interfaces';
@@ -63,8 +64,18 @@ export function generateNumericId(): number {
 export const saveUser = (id: string, data: Partial<UserData>) => adapter.saveUser(id, data);
 export const getUser = (id: string) => adapter.getUser(id);
 
-export const getSettings = () => adapter.getSettings();
-export const updateSettings = (settings: Record<string, string>) => adapter.updateSettings(settings);
+export const getSettings = async () => {
+    const cached = cacheManager.get<Record<string, string>>('settings');
+    if (cached) return cached;
+    const settings = await adapter.getSettings();
+    cacheManager.set('settings', settings, 300000);
+    return settings;
+};
+export const updateSettings = async (settings: Record<string, string>) => {
+    const res = await adapter.updateSettings(settings);
+    cacheManager.del('settings');
+    return res;
+};
 
 export const addMessage = (userId: string, role: string, content: string) => adapter.addMessage(userId, role, content);
 export const getHistory = (userId: string, limit?: number) => adapter.getHistory(userId, limit);
@@ -85,21 +96,61 @@ export const updateReminder = (id: number, data: Partial<ReminderData>) => adapt
 export const listPendingOrFailedReminders = () => adapter.listPendingOrFailedReminders();
 export const checkReminderExistsByMediaPath = (mediaPath: string) => adapter.checkReminderExistsByMediaPath(mediaPath);
 
-export const listTemplates = () => adapter.listTemplates();
-export const createTemplate = (name: string, content: string) => adapter.createTemplate(name, content);
-export const deleteTemplate = (id: number) => adapter.deleteTemplate(id);
-export const updateTemplate = (id: number, name: string, content: string) => adapter.updateTemplate(id, name, content);
+export const listTemplates = async () => {
+    const cached = cacheManager.get<any[]>('templates');
+    if (cached) return cached;
+    const templates = await adapter.listTemplates();
+    cacheManager.set('templates', templates, 300000);
+    return templates;
+};
+export const createTemplate = async (name: string, content: string) => {
+    const res = await adapter.createTemplate(name, content);
+    cacheManager.del('templates');
+    return res;
+};
+export const deleteTemplate = async (id: number) => {
+    const res = await adapter.deleteTemplate(id);
+    cacheManager.del('templates');
+    return res;
+};
+export const updateTemplate = async (id: number, name: string, content: string) => {
+    const res = await adapter.updateTemplate(id, name, content);
+    cacheManager.del('templates');
+    return res;
+};
 
 export const pauseChat = (chatId: string, reason: string, durationHours?: number) => adapter.pauseChat(chatId, reason, durationHours);
 export const unpauseChat = (chatId: string) => adapter.unpauseChat(chatId);
 export const isChatPaused = (chatId: string) => adapter.isChatPaused(chatId);
 export const listPausedChats = () => adapter.listPausedChats();
 
-export const listAutoresponders = () => adapter.listAutoresponders();
-export const createAutoresponder = (keyword: string, matchType: string, response: string, aiAction: string, isActive?: boolean, parentId?: number | null, options?: string | null) => adapter.createAutoresponder(keyword, matchType, response, aiAction, isActive, parentId, options);
-export const updateAutoresponder = (id: number, keyword: string, matchType: string, response: string, aiAction: string, isActive: boolean, parentId?: number | null, options?: string | null) => adapter.updateAutoresponder(id, keyword, matchType, response, aiAction, isActive, parentId, options);
-export const toggleAutoresponder = (id: number, isActive: boolean) => adapter.toggleAutoresponder(id, isActive);
-export const deleteAutoresponder = (id: number) => adapter.deleteAutoresponder(id);
+export const listAutoresponders = async () => {
+    const cached = cacheManager.get<any[]>('autoresponders');
+    if (cached) return cached;
+    const autoresponders = await adapter.listAutoresponders();
+    cacheManager.set('autoresponders', autoresponders, 300000);
+    return autoresponders;
+};
+export const createAutoresponder = async (keyword: string, matchType: string, response: string, aiAction: string, isActive?: boolean, parentId?: number | null, options?: string | null) => {
+    const res = await adapter.createAutoresponder(keyword, matchType, response, aiAction, isActive, parentId, options);
+    cacheManager.del('autoresponders');
+    return res;
+};
+export const updateAutoresponder = async (id: number, keyword: string, matchType: string, response: string, aiAction: string, isActive: boolean, parentId?: number | null, options?: string | null) => {
+    const res = await adapter.updateAutoresponder(id, keyword, matchType, response, aiAction, isActive, parentId, options);
+    cacheManager.del('autoresponders');
+    return res;
+};
+export const toggleAutoresponder = async (id: number, isActive: boolean) => {
+    const res = await adapter.toggleAutoresponder(id, isActive);
+    cacheManager.del('autoresponders');
+    return res;
+};
+export const deleteAutoresponder = async (id: number) => {
+    const res = await adapter.deleteAutoresponder(id);
+    cacheManager.del('autoresponders');
+    return res;
+};
 
 export const getUserState = (chatId: string) => adapter.getUserState(chatId);
 export const setUserState = (chatId: string, currentMenuId: number | null) => adapter.setUserState(chatId, currentMenuId);
