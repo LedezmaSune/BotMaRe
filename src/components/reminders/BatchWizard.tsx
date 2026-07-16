@@ -13,7 +13,7 @@ interface BatchWizardProps {
     onClose: () => void;
     onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onScanFolder?: () => void;
-    batchProgress: { current: number; total: number; filename: string } | null;
+    batchProgress: { current: number; total: number; filename: string; label?: string; description?: string } | null;
 }
 
 export function BatchWizard({
@@ -130,9 +130,11 @@ export function BatchWizard({
                             <Zap size={36} className="animate-pulse" />
                         </div>
                         
-                        <h3 className="text-2xl font-black text-app-text mb-2 tracking-tight">Procesando Lista de Espera...</h3>
+                        <h3 className="text-2xl font-black text-app-text mb-2 tracking-tight">
+                            {batchProgress.label || "Procesando Lista de Espera..."}
+                        </h3>
                         <p className="text-sm text-app-text-muted font-medium mb-8 text-center">
-                            Programando envíos uno por uno para asegurar su correcta entrega.
+                            {batchProgress.description || "Programando envíos uno por uno para asegurar su correcta entrega."}
                         </p>
 
                         <div className="w-full max-w-md bg-slate-100 dark:bg-slate-900/60 p-6 rounded-3xl border border-slate-200 dark:border-white/10 shadow-inner relative overflow-hidden">

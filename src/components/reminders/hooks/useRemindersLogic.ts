@@ -163,61 +163,108 @@ export function useRemindersLogic(
             e.target.value = '';
             return alert('Por favor ingresa un destinatario antes de subir los archivos.');
         }
-        const files = e.target.files; if (!files) return;
-        const formData = new FormData();
-        for (let i = 0; i < files.length; i++) formData.append('files', files[i]);
+        const files = e.target.files; if (!files || files.length === 0) return;
         
         setLoading(true);
+        const uploadedFiles: any[] = [];
+        let uploadFailed = false;
+
         try {
-            const res = await fetch('/api/system/upload-multiple', { method: 'POST', body: formData });
-            const d = await res.json();
-            if (res.ok) {
-                const filesWithDates = (d.files || []).map((f: any) => {
-                    const currentYear = new Date().getFullYear().toString();
-                    const isoMatch = f.name.match(/(\d{4})[-._]?(\d{2})[-._]?(\d{2})/);
-                    if (isoMatch) {
-                        const [_, _y, m, day] = isoMatch;
-                        const mNum = parseInt(m), dNum = parseInt(day);
-                        if (mNum >= 1 && mNum <= 12 && dNum >= 1 && dNum <= 31) {
-                            return { ...f, date: `${currentYear}-${m}-${day}` }; 
-                        }
-                    }
-                    const match = f.name.match(/(\d{2})[-._]?(\d{2})(?:[-._]?(\d{4}|\d{2}))?\b/);
-                    if (match) {
-                        const [_, day, m, _yStr] = match;
-                        const dNum = parseInt(day);
-                        const mNum = parseInt(m);
-                        if (dNum >= 1 && dNum <= 31 && mNum >= 1 && mNum <= 12) {
-                            return { ...f, date: `${currentYear}-${m}-${day}` };
-                        }
-                    }
-                    return { ...f, date: null };
+            // Fase 1: Subida secuencial de archivos (Evita límites de Cloudflare y timeouts)
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                setBatchProgress({ 
+                    current: i + 1, 
+                    total: files.length, 
+                    filename: file.name,
+                    label: "Subiendo Archivos...",
+                    description: "Transfiriendo archivos al servidor uno por uno para evitar desconexiones."
                 });
 
-                const withDate = filesWithDates.filter((f: any) => f.date);
-                if (withDate.length > 0) {
-                    setBatchProgress({ current: 0, total: withDate.length, filename: 'Iniciando...' });
-                    let current = 0;
-                    for (const file of withDate) {
-                        current++;
-                        setBatchProgress({ current, total: withDate.length, filename: file.name });
-                        const finalTime = `${file.date}T${batchTime}`;
-                        const finalText = batchText.replace('{ARCHIVO}', file.name);
-                        await onAdd(batchChatId, finalText, finalTime, null, 'none', 1, 'days', file.name, file.path);
+                const formData = new FormData();
+                formData.append('files', file);
+
+                try {
+                    const res = await fetch('/api/system/upload-multiple', { method: 'POST', body: formData });
+                    const d = await res.json();
+                    
+                    if (res.ok && d.success && d.files && d.files[0]) {
+                        uploadedFiles.push(d.files[0]);
+                    } else {
+                        const errMsg = d.error?.message || d.error || 'Error desconocido';
+                        if (!confirm(`❌ Falló la subida de: ${file.name}\nMotivo: ${errMsg}\n\n¿Deseas omitir este archivo y continuar con los demás?`)) {
+                            uploadFailed = true;
+                            break;
+                        }
                     }
-                    setShowBatchWizard(false);
-                    alert(`✅ ${withDate.length} recordatorios programados exitosamente.`);
-                } else {
-                    alert(`✅ Archivos subidos, pero no se detectaron fechas DDMMYYYY en los nombres para auto-programar.`);
+                } catch (err: any) {
+                    if (!confirm(`❌ Error de conexión al subir: ${file.name}\n\n¿Deseas omitir este archivo y continuar con los demás?`)) {
+                        uploadFailed = true;
+                        break;
+                    }
                 }
+            }
+
+            if (uploadFailed || uploadedFiles.length === 0) {
+                alert('⚠️ Proceso cancelado o no se subió ningún archivo.');
+                return;
+            }
+
+            // Fase 2: Detección y procesamiento de fechas en los nombres de archivo
+            const filesWithDates = uploadedFiles.map((f: any) => {
+                const currentYear = new Date().getFullYear().toString();
+                const isoMatch = f.name.match(/(\d{4})[-._]?(\d{2})[-._]?(\d{2})/);
+                if (isoMatch) {
+                    const [_, _y, m, day] = isoMatch;
+                    const mNum = parseInt(m), dNum = parseInt(day);
+                    if (mNum >= 1 && mNum <= 12 && dNum >= 1 && dNum <= 31) {
+                        return { ...f, date: `${currentYear}-${m}-${day}` }; 
+                    }
+                }
+                const match = f.name.match(/(\d{2})[-._]?(\d{2})(?:[-._]?(\d{4}|\d{2}))?\b/);
+                if (match) {
+                    const [_, day, m, _yStr] = match;
+                    const dNum = parseInt(day);
+                    const mNum = parseInt(m);
+                    if (dNum >= 1 && dNum <= 31 && mNum >= 1 && mNum <= 12) {
+                        return { ...f, date: `${currentYear}-${m}-${day}` };
+                    }
+                }
+                return { ...f, date: null };
+            });
+
+            const withDate = filesWithDates.filter((f: any) => f.date);
+            if (withDate.length > 0) {
+                // Fase 3: Programación secuencial de recordatorios
+                setBatchProgress({ 
+                    current: 0, 
+                    total: withDate.length, 
+                    filename: 'Iniciando...',
+                    label: "Programando Mensajes...",
+                    description: "Creando los recordatorios correspondientes uno a uno para asegurar su entrega."
+                });
+
+                let current = 0;
+                for (const file of withDate) {
+                    current++;
+                    setBatchProgress({ 
+                        current, 
+                        total: withDate.length, 
+                        filename: file.name,
+                        label: "Programando Mensajes...",
+                        description: "Creando los recordatorios correspondientes uno a uno para asegurar su entrega."
+                    });
+                    const finalTime = `${file.date}T${batchTime}`;
+                    const finalText = batchText.replace('{ARCHIVO}', file.name);
+                    await onAdd(batchChatId, finalText, finalTime, null, 'none', 1, 'days', file.name, file.path);
+                }
+                setShowBatchWizard(false);
+                alert(`✅ ${withDate.length} recordatorios programados exitosamente.`);
             } else {
-                const errorMessage = typeof d.error === 'object' && d.error !== null 
-                    ? (d.error.message || JSON.stringify(d.error)) 
-                    : (d.error || 'Fallo desconocido');
-                alert(`❌ Error: ${errorMessage}`);
+                alert(`✅ ${uploadedFiles.length} archivos subidos correctamente, pero no se detectaron fechas DDMMYYYY en los nombres para auto-programar.`);
             }
         } catch (err) {
-            alert('❌ Error de conexión.');
+            alert('❌ Ocurrió un error inesperado al procesar el lote.');
         } finally {
             setLoading(false);
             setBatchProgress(null);
