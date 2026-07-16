@@ -18,8 +18,8 @@ export class SystemController {
 
     cleanUploads = asyncHandler(async (req: Request, res: Response) => {
         const { BackupService } = require('./backup.service');
-        await BackupService.cleanOldUploads(0); // 0 días para limpieza manual inmediata
-        res.json({ success: true, message: 'Multimedia no utilizada eliminada con éxito.' });
+        await BackupService.cleanOldUploads(1); // 1 día de gracia para no borrar envíos recientes
+        res.json({ success: true, message: 'Multimedia antigua eliminada con éxito.' });
     });
 
     getNetworkStatus = asyncHandler(async (req: Request, res: Response) => {

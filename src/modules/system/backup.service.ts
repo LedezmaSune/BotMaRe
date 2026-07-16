@@ -293,17 +293,15 @@ export class BackupService {
         console.log(`🧹 [System] Iniciando limpieza de multimedia antigua (>${daysToKeep} días)...`);
         
         try {
-            const { listReminders } = require('../../core/memory');
+            const { listPendingMediaPaths } = require('../../core/memory');
             const files = fs.readdirSync(uploadDir);
             const now = Date.now();
             const msThreshold = daysToKeep * 24 * 60 * 60 * 1000;
 
             // Obtener lista de archivos que SÍ están en uso por recordatorios pendientes
-            const pendingReminders = await listReminders('owner');
+            const mediaPaths = await listPendingMediaPaths();
             const activePaths = new Set(
-                pendingReminders
-                    .map((r: any) => r.mediaPath)
-                    .filter(Boolean)
+                mediaPaths
                     .map((p: string) => path.normalize(p))
             );
 
@@ -314,7 +312,7 @@ export class BackupService {
                 const stats = fs.statSync(filePath);
 
                 // Si el archivo NO está en uso Y es más viejo que el umbral
-                if (!activePaths.has(normalizedFilePath) && (now - stats.mtimeMs > msThreshold)) {
+                if (!activePaths.has(normalizedFilePath) && (now - Math.max(stats.mtimeMs, stats.ctimeMs) > msThreshold)) {
                     try {
                         fs.unlinkSync(filePath);
                         deletedCount++;

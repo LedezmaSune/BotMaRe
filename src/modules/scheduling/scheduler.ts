@@ -242,7 +242,7 @@ export class Scheduler {
                 try {
                     const stats = fs.statSync(fullPath);
                     // Delete if older than 30 days and NOT currently used in a pending reminder
-                    if (!activePaths.has(normalizedFullPath) && (now - stats.mtimeMs > THIRTY_DAYS_MS)) {
+                    if (!activePaths.has(normalizedFullPath) && (now - Math.max(stats.mtimeMs, stats.ctimeMs) > THIRTY_DAYS_MS)) {
                         fs.unlinkSync(fullPath);
                         deleted++;
                     }

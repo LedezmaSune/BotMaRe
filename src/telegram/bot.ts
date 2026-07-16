@@ -864,7 +864,17 @@ export function initTelegramBot(
         }
 
         const text = rows.map(r => {
-            const details = r.details ? (r.details.length > 100 ? r.details.substring(0, 100) + '...' : r.details) : 'Sin detalles';
+            let details = r.details;
+            try {
+                if (typeof details === 'string' && details.startsWith('{')) {
+                    const parsed = JSON.parse(details);
+                    details = Object.entries(parsed).map(([k, v]) => `${k}: ${v}`).join(', ');
+                } else if (typeof details === 'object' && details !== null) {
+                    details = Object.entries(details).map(([k, v]) => `${k}: ${v}`).join(', ');
+                }
+            } catch(e) {}
+            
+            details = details ? (details.length > 150 ? details.substring(0, 150) + '...' : details) : 'Sin detalles';
             const ts = r.timestamp ? new Date(r.timestamp).toLocaleString() : 'N/A';
             return `• [${ts}] *${r.action}*\n└ \`${details}\``;
         }).join("\n\n");

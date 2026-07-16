@@ -58,26 +58,32 @@ export class SettingsController {
     });
 
     cleanUploads = asyncHandler(async (req: Request, res: Response) => {
+        const uploadDir = path.resolve('data/uploads');
         if (!fs.existsSync(uploadDir)) return res.json({ success: true, deletedCount: 0 });
         
         const files = fs.readdirSync(uploadDir);
-        let deletedCount = 0;
-        const pendingReminders = await listReminders('owner');
-        // Keep media linked to pending reminders
+        const { listAllPendingReminders } = require('../../core/memory');
+        const pendingReminders = await listAllPendingReminders();
+        
         const activePaths = new Set(pendingReminders.map((r: any) => r.mediaPath).filter(Boolean));
         
+        let count = 0;
+        const now = Date.now();
+        const oneDayMs = 24 * 60 * 60 * 1000;
+        
         files.forEach(file => {
-            const fullPath = path.join(uploadDir, file);
-            if (!activePaths.has(fullPath)) {
+            const p = path.join(uploadDir, file);
+            const stats = fs.statSync(p);
+            // Delete if not active AND older than 1 day
+            if (!activePaths.has(p) && (now - Math.max(stats.mtimeMs, stats.ctimeMs) > oneDayMs)) {
                 try {
-                    fs.unlinkSync(fullPath);
-                    deletedCount++;
-                } catch (e) {
-                    console.error("Could not delete file", fullPath, e);
-                }
+                    fs.unlinkSync(p);
+                    count++;
+                } catch(e) {}
             }
         });
-        res.json({ success: true, deletedCount });
+
+        res.json({ success: true, deletedCount: count });
     });
     learnFromUrl = asyncHandler(async (req: Request, res: Response) => {
         const { url } = req.body;
