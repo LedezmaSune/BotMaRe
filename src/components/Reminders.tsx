@@ -19,9 +19,10 @@ interface RemindersProps {
     initialTime?: string;
     initialId?: number | null;
     onClearInitialId?: () => void;
+    onRefresh?: () => void;
 }
 
-export function Reminders({ reminders, templates, onAdd, onDelete, initialTime, initialId, onClearInitialId }: RemindersProps) {
+export function Reminders({ reminders, templates, onAdd, onDelete, initialTime, initialId, onClearInitialId, onRefresh }: RemindersProps) {
     const {
         mode, setMode,
         viewMode, setViewMode,
@@ -196,8 +197,8 @@ export function Reminders({ reminders, templates, onAdd, onDelete, initialTime, 
 
                 {/* List Section */}
                 <section className="lg:col-span-2 space-y-8">
-                    <PendingList reminders={sortedReminders} viewMode={viewMode} setViewMode={setViewMode} pendingPage={pendingPage} setPendingPage={setPendingPage} onEdit={handleEdit} onSendNow={handleSendNow} onDelete={onDelete} />
-                    <HistoryList reminders={reminders} viewMode={viewMode} setViewMode={setViewMode} historyPage={historyPage} setHistoryPage={setHistoryPage} onDelete={onDelete} />
+                    <PendingList reminders={sortedReminders} viewMode={viewMode} setViewMode={setViewMode} pendingPage={pendingPage} setPendingPage={setPendingPage} onEdit={handleEdit} onSendNow={handleSendNow} onDelete={onDelete} onRefresh={onRefresh} />
+                    <HistoryList reminders={reminders} viewMode={viewMode} setViewMode={setViewMode} historyPage={historyPage} setHistoryPage={setHistoryPage} onDelete={onDelete} onRefresh={onRefresh} />
                 </section>
             </div>
             

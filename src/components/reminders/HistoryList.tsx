@@ -10,6 +10,7 @@ interface HistoryListProps {
     historyPage: number;
     setHistoryPage: (page: number | ((p: number) => number)) => void;
     onDelete: (id: number) => void;
+    onRefresh?: () => void;
 }
 
 export function HistoryList({
@@ -18,7 +19,8 @@ export function HistoryList({
     setViewMode,
     historyPage,
     setHistoryPage,
-    onDelete
+    onDelete,
+    onRefresh
 }: HistoryListProps) {
     const ITEMS_PER_PAGE = 8;
     const historyItems = reminders.filter(r => r.status === 'sent').sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
@@ -35,7 +37,7 @@ export function HistoryList({
                         <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-purple-500 text-white shadow-lg' : 'text-app-text-muted hover:text-app-text'}`}><List size={14} /></button>
                     </div>
                 </div>
-                <button onClick={async () => { if(confirm('¿Limpiar historial?')) { await fetch('/api/reminders/bulk?type=sent', { method: 'DELETE' }); window.location.reload(); } }} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 text-[10px] font-black text-red-500 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-all uppercase tracking-widest">
+                <button onClick={async () => { if(confirm('¿Limpiar historial?')) { await fetch('/api/reminders/bulk?type=sent', { method: 'DELETE' }); onRefresh?.(); } }} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 text-[10px] font-black text-red-500 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-all uppercase tracking-widest">
                     <Trash2 size={12} /> Limpiar Historial
                 </button>
             </div>

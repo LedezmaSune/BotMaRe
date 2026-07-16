@@ -12,6 +12,7 @@ interface PendingListProps {
     onEdit: (r: Reminder) => void;
     onSendNow: (id: number) => void;
     onDelete: (id: number) => void;
+    onRefresh?: () => void;
 }
 
 export function PendingList({
@@ -22,7 +23,8 @@ export function PendingList({
     setPendingPage,
     onEdit,
     onSendNow,
-    onDelete
+    onDelete,
+    onRefresh
 }: PendingListProps) {
     const ITEMS_PER_PAGE = 8;
     const pendingItems = reminders.filter(r => r.status === 'pending' || r.status === 'failed');
@@ -46,7 +48,7 @@ export function PendingList({
                                 const res = await fetch('/api/reminders/bulk/fix-dates', { method: 'POST' });
                                 const data = await res.json();
                                 alert(`✅ Proceso finalizado:\n- ${data.fixed} eventos actualizados al año actual.\n- ${data.deleted} eventos eliminados (ya pasaron este año).`);
-                                window.location.reload();
+                                onRefresh?.();
                             } catch(e) {
                                 alert('Error al reparar.');
                             }
@@ -55,7 +57,7 @@ export function PendingList({
                         <Zap size={12} /> Auto-Año
                     </button>
 
-                    <button onClick={async () => { if(confirm('¿Borrar TODOS los pendientes y fallidos?')) { await fetch('/api/reminders/bulk?type=pending', { method: 'DELETE' }); await fetch('/api/reminders/bulk?type=failed', { method: 'DELETE' }); window.location.reload(); } }} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 text-[10px] font-black text-red-500 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-all uppercase tracking-widest">
+                    <button onClick={async () => { if(confirm('¿Borrar TODOS los pendientes y fallidos?')) { await fetch('/api/reminders/bulk?type=pending', { method: 'DELETE' }); await fetch('/api/reminders/bulk?type=failed', { method: 'DELETE' }); onRefresh?.(); } }} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 text-[10px] font-black text-red-500 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-all uppercase tracking-widest">
                         <Trash2 size={12} /> Limpiar Todo
                     </button>
                 </div>
