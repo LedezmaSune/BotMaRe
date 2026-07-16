@@ -66,6 +66,19 @@ export class TunnelService extends EventEmitter {
     }
 
     public async start(port: number): Promise<string> {
+        if (process.env.CUSTOM_DOMAIN) {
+            let domain = process.env.CUSTOM_DOMAIN.trim();
+            if (!domain.startsWith('http')) {
+                domain = 'https://' + domain;
+            }
+            this.publicUrl = domain;
+            console.log(`\n-----------------------------------------`);
+            console.log(`🌍 TUNEL PERSONALIZADO (Dominio Propio): ${domain}`);
+            console.log(`-----------------------------------------\n`);
+            this.emit('started', domain);
+            return domain;
+        }
+
         this.retryCount = 0;
         return this.initializeTunnel(port);
     }

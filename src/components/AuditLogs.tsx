@@ -32,6 +32,18 @@ export function AuditLogs({ audits }: AuditLogsProps) {
                     let details: any = {};
                     try { details = JSON.parse(a.details); } catch (e) { details = { text: a.details }; }
 
+                    // Format date nicely
+                    let formattedDate = a.timestamp;
+                    try {
+                        const dateObj = new Date(a.timestamp);
+                        if (!isNaN(dateObj.getTime())) {
+                            formattedDate = dateObj.toLocaleString('es-MX', {
+                                day: '2-digit', month: 'short', year: 'numeric',
+                                hour: '2-digit', minute: '2-digit', second: '2-digit'
+                            }).toUpperCase();
+                        }
+                    } catch(e) {}
+
                     return (
                         <div key={a.id} className={`bg-app-bg dark:bg-slate-950/40 border rounded-3xl transition-all duration-300 overflow-hidden ${isExpanded ? 'border-indigo-500/50 shadow-xl shadow-indigo-500/5' : 'border-app-border hover:border-slate-400/30'}`}>
                             {/* Header del Log */}
@@ -40,14 +52,14 @@ export function AuditLogs({ audits }: AuditLogsProps) {
                                 className="flex flex-col sm:flex-row sm:items-center justify-between p-5 cursor-pointer group"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className={`w-2 h-2 rounded-full animate-pulse ${
-                                        a.action.includes('SENT') || a.action.includes('SUCCESS') || details.success > 0 ? 'bg-emerald-500' : 
-                                        a.action.includes('FAILED') || a.action.includes('ERROR') ? 'bg-red-500' : 'bg-cyan-500'
+                                    <div className={`w-2 h-2 rounded-full ${
+                                        a.action.includes('SENT') || a.action.includes('SUCCESS') || details.success > 0 ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 
+                                        a.action.includes('FAILED') || a.action.includes('ERROR') ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)]'
                                     }`} />
                                     <div className="flex flex-col">
-                                        <span className="text-[10px] font-black text-app-text-muted uppercase tracking-widest mb-1">{a.timestamp}</span>
+                                        <span className="text-[10px] font-black text-app-text-muted uppercase tracking-widest mb-1">{formattedDate}</span>
                                         <div className="flex items-center gap-2">
-                                            <span className={`text-xs font-black uppercase tracking-tighter ${isCampaign ? 'text-indigo-400' : 'text-app-text'}`}>
+                                            <span className={`text-xs font-black uppercase tracking-widest ${isCampaign ? 'text-indigo-400' : 'text-app-text'}`}>
                                                 {isCampaign ? '🚀 Difusión Masiva' : a.action.replace(/_/g, ' ')}
                                             </span>
                                             {isCampaign && (
@@ -68,10 +80,10 @@ export function AuditLogs({ audits }: AuditLogsProps) {
                                         </div>
                                     )}
                                     <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-bold text-app-text-muted bg-app-card px-2 py-1 rounded-lg border border-app-border">
+                                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
                                             @{a.userId}
                                         </span>
-                                        <div className="text-app-text-muted group-hover:text-app-text transition-colors">
+                                        <div className="text-app-text-muted group-hover:text-cyan-400 transition-colors ml-2">
                                             {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                                         </div>
                                     </div>
@@ -156,13 +168,26 @@ export function AuditLogs({ audits }: AuditLogsProps) {
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="bg-app-bg dark:bg-slate-900/60 p-5 rounded-2xl border border-app-border flex items-start gap-4">
-                                            <Info size={18} className="text-cyan-400 mt-1 shrink-0" />
-                                            <div>
-                                                <span className="text-[9px] font-black text-app-text-muted uppercase tracking-widest block mb-2">Detalles Técnicos</span>
-                                                <code className="text-xs text-app-text break-all opacity-80 whitespace-pre-wrap">
-                                                    {typeof details === 'object' ? JSON.stringify(details, null, 2) : details}
-                                                </code>
+                                        <div className="bg-app-bg dark:bg-slate-900/40 p-6 rounded-2xl border border-app-border">
+                                            <div className="flex items-center gap-2 mb-5">
+                                                <Info size={16} className="text-cyan-400" />
+                                                <span className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Información Detallada</span>
+                                            </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                {typeof details === 'object' && details !== null ? (
+                                                    Object.entries(details).map(([key, value], idx) => (
+                                                        <div key={idx} className="bg-app-card dark:bg-slate-800/40 p-4 rounded-xl border border-app-border/50 hover:border-cyan-500/30 transition-colors flex flex-col justify-center">
+                                                            <span className="text-[9px] font-black text-app-text-muted uppercase tracking-widest mb-1.5">{key}</span>
+                                                            <span className="text-sm font-semibold text-app-text truncate" title={String(value)}>
+                                                                {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                                                            </span>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div className="col-span-full">
+                                                        <p className="text-sm text-app-text opacity-80">{String(details)}</p>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     )}
