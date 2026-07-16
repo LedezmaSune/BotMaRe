@@ -211,7 +211,10 @@ export function useRemindersLogic(
                     alert(`✅ Archivos subidos, pero no se detectaron fechas DDMMYYYY en los nombres para auto-programar.`);
                 }
             } else {
-                alert(`❌ Error: ${d.error || 'Fallo desconocido'}`);
+                const errorMessage = typeof d.error === 'object' && d.error !== null 
+                    ? (d.error.message || JSON.stringify(d.error)) 
+                    : (d.error || 'Fallo desconocido');
+                alert(`❌ Error: ${errorMessage}`);
             }
         } catch (err) {
             alert('❌ Error de conexión.');

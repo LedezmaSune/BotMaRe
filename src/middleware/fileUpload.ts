@@ -50,6 +50,6 @@ export const secureUpload = multer({
     fileFilter,
     limits: {
         fileSize: 100 * 1024 * 1024, // Límite estricto de 100MB por archivo (configurable)
-        files: 20 // Máximo 20 archivos a la vez
+        files: 100 // Máximo 100 archivos a la vez
     }
 });
