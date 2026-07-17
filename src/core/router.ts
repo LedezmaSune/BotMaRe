@@ -6,6 +6,7 @@ import { getConfig } from './config';
 import { accessControl } from './accessControl';
 
 const pausedUsers = new Map<string, number>();
+const processedMessageIds = new Set<string>();
 
 /**
  * CORE LAYER - ROUTER
@@ -23,6 +24,20 @@ export class Router {
         
         const msg = data.messages[0];
         if (!msg || msg.key.fromMe || !msg.message) return;
+
+        const msgId = msg.key.id;
+        if (msgId) {
+            if (processedMessageIds.has(msgId)) {
+                console.log(`[Router] Mensaje duplicado detectado e ignorado: ${msgId}`);
+                return;
+            }
+            processedMessageIds.add(msgId);
+            // Mantener el caché limitado para evitar fugas de memoria
+            if (processedMessageIds.size > 500) {
+                const firstItem = processedMessageIds.values().next().value;
+                if (firstItem) processedMessageIds.delete(firstItem);
+            }
+        }
 
         const jid = msg.key.remoteJid!;
         const participant = msg.key.participant || jid;
