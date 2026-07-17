@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ShieldCheck, Trash2, Loader2, RefreshCw, Sun, Moon, Brain } from 'lucide-react';
+import { ShieldCheck, Trash2, Loader2, RefreshCw, Sun, Moon, Brain, Zap, Database } from 'lucide-react';
 import { ConnectionState } from '../types';
 import { useGlobalBotData } from '@/app/BotDataProvider';
 
@@ -42,15 +42,102 @@ export function AIToggle() {
     return (
         <button 
             onClick={toggle}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all hover:scale-[1.03] active:scale-95 duration-300 ${
                 isEnabled 
-                ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20' 
-                : 'bg-amber-500/10 border-amber-500/20 text-amber-500 hover:bg-amber-500/20'
+                ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.15)]' 
+                : 'bg-slate-500/5 dark:bg-slate-900/40 border-slate-200/50 dark:border-white/5 text-slate-400 dark:text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
             }`}
-            title={isEnabled ? "IA Activada - El bot responderá automáticamente" : "IA Desactivada - Modo Humano (No auto-respuestas)"}
+            title={isEnabled ? "IA Activada - El bot responderá de forma fluida con Inteligencia Artificial" : "IA Desactivada - Modo Humano (No auto-respuestas de IA)"}
         >
-            <Brain size={14} className={isEnabled ? 'animate-pulse' : ''} />
+            <Brain size={14} className={isEnabled ? 'animate-pulse text-cyan-400' : ''} />
             <span>{isEnabled ? 'IA ON' : 'IA OFF'}</span>
+        </button>
+    );
+}
+
+export function AutorespondersToggle() {
+    const { settings, handleUpdateSettings } = useGlobalBotData();
+    const isEnabled = settings?.AUTORESPONDERS_ENABLED !== 'false';
+
+    const toggle = async () => {
+        if (!settings) return;
+        const newValue = isEnabled ? 'false' : 'true';
+        await handleUpdateSettings({ ...settings, AUTORESPONDERS_ENABLED: newValue });
+    };
+
+    return (
+        <button 
+            onClick={toggle}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all hover:scale-[1.03] active:scale-95 duration-300 ${
+                isEnabled 
+                ? 'bg-purple-500/10 border-purple-500/30 text-purple-400 hover:bg-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.15)]' 
+                : 'bg-slate-500/5 dark:bg-slate-900/40 border-slate-200/50 dark:border-white/5 text-slate-400 dark:text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+            }`}
+            title={isEnabled ? "Auto-Respuestas Activas - El bot responderá a tus reglas y palabras clave locales" : "Auto-Respuestas Desactivadas"}
+        >
+            <Zap size={14} className={isEnabled ? 'animate-pulse text-purple-400' : ''} />
+            <span>{isEnabled ? 'REGLAS ON' : 'REGLAS OFF'}</span>
+        </button>
+    );
+}
+
+export function SheetsToggle() {
+    const [isEnabled, setIsEnabled] = useState(false);
+    const [sheetSettings, setSheetSettings] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch('/api/sheets/settings');
+                if (res.ok) {
+                    const data = await res.json();
+                    setSheetSettings(data);
+                    setIsEnabled(!!data.isActive);
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchSettings();
+    }, []);
+
+    const toggle = async () => {
+        if (loading || !sheetSettings) return;
+        const nextValue = !isEnabled;
+        setIsEnabled(nextValue);
+        try {
+            const payload = { ...sheetSettings, isActive: nextValue };
+            const res = await fetch('/api/sheets/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                setSheetSettings(payload);
+            } else {
+                setIsEnabled(!nextValue); // Rollback
+            }
+        } catch (e) {
+            setIsEnabled(!nextValue); // Rollback
+        }
+    };
+
+    return (
+        <button 
+            onClick={toggle}
+            disabled={loading}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all hover:scale-[1.03] active:scale-95 duration-300 ${
+                isEnabled 
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.15)]' 
+                : 'bg-slate-500/5 dark:bg-slate-900/40 border-slate-200/50 dark:border-white/5 text-slate-400 dark:text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+            }`}
+            title={isEnabled ? "Google Sheets Activo - El bot sincronizará y responderá usando tu hoja de cálculo remota" : "Google Sheets Desactivado"}
+        >
+            <Database size={14} className={isEnabled ? 'animate-pulse text-emerald-400' : ''} />
+            <span>{isEnabled ? 'SHEETS ON' : 'SHEETS OFF'}</span>
         </button>
     );
 }

@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users, BookOpen, ShieldAlert, Shield, RefreshCw, Database, Webhook, Briefcase } from 'lucide-react';
 
 import { ConnectionOverlay } from '@/components/ConnectionOverlay';
-import { ThemeToggle, UpdateChecker, AIToggle, GlobalClock } from '@/components/StatusHeader';
+import { ThemeToggle, UpdateChecker, AIToggle, AutorespondersToggle, SheetsToggle, GlobalClock } from '@/components/StatusHeader';
 import { PageTransition } from '@/components/PageTransition';
 import { siteConfig } from '@/config';
 import { useGlobalBotData } from '@/app/BotDataProvider';
@@ -90,6 +90,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <div className="flex items-center gap-2 md:gap-4">
                     <div className="hidden sm:flex items-center gap-1 bg-app-card/40 p-1 rounded-xl border border-app-border/50">
                         <AIToggle />
+                        <AutorespondersToggle />
+                        <SheetsToggle />
                         <div className="w-px h-4 bg-app-border/50 mx-1"></div>
                         <ThemeToggle />
                         <UpdateChecker />
