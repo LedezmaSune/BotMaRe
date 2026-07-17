@@ -144,3 +144,42 @@ h1, h2, h3, h4, .font-black {
 #nprogress .peg {
   box-shadow: 0 0 10px #06b6d4, 0 0 5px #06b6d4 !important;
 }
+
+/* Custom Global Smooth Transitions & Premium Animations */
+.hover-glow {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hover-glow:hover {
+  box-shadow: 0 0 20px var(--app-glow);
+  transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Smooth page load backdrop */
+.premium-blur {
+  backdrop-filter: blur(8px);
+  transition: backdrop-filter 0.3s ease;
+}

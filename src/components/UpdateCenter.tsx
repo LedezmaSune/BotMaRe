@@ -16,6 +16,21 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'V 2.1.0',
+        date: '17 Julio 2026',
+        title: 'Conectividad Fija & Carga Inteligente Resiliente',
+        type: 'minor',
+        description: 'Mejoras críticas de infraestructura y experiencia de usuario. Agrega control central de servicios en cabecera, subida en cola de archivos masiva para evitar bloqueos y deduplicación de eventos.',
+        features: [
+            '🌍 Túneles Fijos (CUSTOM_DOMAIN): Nueva variable en el .env para desactivar el túnel rápido aleatorio y redirigir al instante hacia tu propio dominio personalizado en Cloudflare Zero Trust.',
+            '⚡ Cola de Subida Secuencial (Upload Queue): Los archivos masivos en el Asistente Lote ahora se suben uno por uno en segundo plano. Esto evita desconexiones (error 502) y supera el límite de tamaño de Cloudflare (100MB).',
+            '🕹️ Control Central (Header Cockpit): Tres nuevos botones interactivos en el header para encender o apagar la IA, el motor de Auto-Respuestas (Reglas) y Google Sheets de forma instantánea.',
+            '📊 Auditoría Rediseñada: Visualización estructurada con tarjetas de información técnica y acordeones con propiedades JSON parseadas para lectura inmediata.',
+            '🛡️ Deduplicador de WhatsApp: Control inteligente de ID de mensajes entrantes para evitar que el bot responda dos veces al mismo mensaje por reconexiones de Baileys.',
+            '🧹 Limpieza FTP Segura: Salvaguardas en las funciones de auto-limpieza nocturnas que respetan archivos con fechas de modificación antiguas pero recién transferidos y archivos asignados a recordatorios activos.'
+        ]
+    },
+    {
         version: 'V 2.0.0',
         date: '04 Julio 2026',
         title: 'Actualización Enterprise (CRM, Handoff, Docker & Respaldos)',
