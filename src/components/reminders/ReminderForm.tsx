@@ -1,4 +1,4 @@
-import { Loader2, Save, Send, Wand2 } from 'lucide-react';
+import { Loader2, Save, Send, Wand2, Trash2, Plus } from 'lucide-react';
 import React from 'react';
 import { VariableTextarea } from '../VariableTextarea';
 import { Template } from '../../types';
@@ -12,8 +12,17 @@ interface ReminderFormProps {
     setText: (val: string) => void;
     time: string;
     setTime: (val: string) => void;
+    repeat: string;
+    setRepeat: (val: string) => void;
+    repeatInterval: number;
+    setRepeatInterval: (val: number) => void;
+    repeatUnit: string;
+    setRepeatUnit: (val: string) => void;
+    multipleTimes: string[];
+    setMultipleTimes: (val: string[]) => void;
     setMedia: (val: File[] | null) => void;
     media: File[] | null;
+    existingMedia?: string | null;
     
     editingId: number | null;
     setEditingId: (val: number | null) => void;
@@ -30,7 +39,12 @@ export function ReminderForm({
     chatId, setChatId,
     text, setText,
     time, setTime,
+    repeat, setRepeat,
+    repeatInterval, setRepeatInterval,
+    repeatUnit, setRepeatUnit,
+    multipleTimes, setMultipleTimes,
     media, setMedia,
+    existingMedia,
     editingId, setEditingId,
     loading,
     templates,
@@ -90,8 +104,8 @@ export function ReminderForm({
                             }}
                             className="w-full bg-slate-100 dark:bg-slate-800/50 border border-app-border rounded-xl px-3 py-2 text-[10px] font-bold text-app-text-muted mb-2 outline-none uppercase tracking-widest"
                         >
-                            <option value="">-- Plantilla --</option>
-                            {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                            <option className="bg-app-bg dark:bg-slate-900 text-app-text" value="">-- Plantilla --</option>
+                            {templates.map(t => <option className="bg-app-bg dark:bg-slate-900 text-app-text" key={t.id} value={t.id}>{t.name}</option>)}
                         </select>
                     )}
                     <VariableTextarea
@@ -102,18 +116,164 @@ export function ReminderForm({
                         required
                     />
                 </div>
+                {repeat !== 'multiple_times' && (
+                    <div>
+                        <label className="text-[10px] uppercase font-bold text-app-text-muted mb-1 block tracking-widest">Fecha y Hora</label>
+                        <input
+                            type="datetime-local"
+                            value={time}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTime(e.target.value)}
+                            className="w-full bg-app-bg dark:bg-background border border-app-border rounded-xl px-4 py-3 text-sm text-app-text"
+                            required
+                        />
+                    </div>
+                )}
                 <div>
-                    <label className="text-[10px] uppercase font-bold text-app-text-muted mb-1 block tracking-widest">Fecha y Hora</label>
-                    <input
-                        type="datetime-local"
-                        value={time}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTime(e.target.value)}
-                        className="w-full bg-app-bg dark:bg-background border border-app-border rounded-xl px-4 py-3 text-sm text-app-text"
-                        required
-                    />
+                    <label className="text-[10px] uppercase font-bold text-app-text-muted mb-1 block tracking-widest">Repetición</label>
+                    <select
+                        value={repeat}
+                        onChange={(e) => {
+                            setRepeat(e.target.value);
+                            if (e.target.value === 'multiple_times' && multipleTimes.length === 0) {
+                                setMultipleTimes(['09:00']);
+                            }
+                        }}
+                        className="w-full bg-app-bg dark:bg-background border border-app-border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all text-app-text"
+                    >
+                        <option className="bg-app-bg dark:bg-slate-900 text-app-text" value="none">Una sola vez (Sin repetir)</option>
+                        <option className="bg-app-bg dark:bg-slate-900 text-app-text" value="hourly">Cada hora</option>
+                        <option className="bg-app-bg dark:bg-slate-900 text-app-text" value="daily">Diariamente</option>
+                        <option className="bg-app-bg dark:bg-slate-900 text-app-text" value="weekdays">De Lunes a Viernes</option>
+                        <option className="bg-app-bg dark:bg-slate-900 text-app-text" value="weekly">Semanalmente</option>
+                        <option className="bg-app-bg dark:bg-slate-900 text-app-text" value="monthly">Mensualmente</option>
+                        <option className="bg-app-bg dark:bg-slate-900 text-app-text" value="multiple_times">Varias veces por día...</option>
+                        <option className="bg-app-bg dark:bg-slate-900 text-app-text" value="advanced">Personalizado...</option>
+                    </select>
+
+                    {repeat === 'multiple_times' && (
+                        <div className="mt-3 bg-slate-100 dark:bg-slate-800/50 p-4 rounded-2xl border border-app-border space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-app-text-muted mb-1 block tracking-widest">Fecha de inicio</label>
+                                <input
+                                    type="date"
+                                    value={time ? time.split('T')[0] : ''}
+                                    onChange={(e) => setTime(`${e.target.value}T00:00`)}
+                                    className="w-full bg-app-bg dark:bg-background border border-app-border rounded-xl px-3 py-2 text-sm text-app-text outline-none focus:border-cyan-500"
+                                    required
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-app-text-muted mb-1 block tracking-widest">Horarios a enviar</label>
+                                <div className="space-y-2">
+                                    {multipleTimes.map((t, idx) => (
+                                        <div key={idx} className="flex items-center gap-2">
+                                            <input
+                                                type="time"
+                                                value={t}
+                                                onChange={(e) => {
+                                                    const newTimes = [...multipleTimes];
+                                                    newTimes[idx] = e.target.value;
+                                                    setMultipleTimes(newTimes);
+                                                }}
+                                                className="flex-1 bg-app-bg dark:bg-background border border-app-border rounded-xl px-3 py-2 text-sm text-app-text outline-none focus:border-cyan-500"
+                                                required
+                                            />
+                                            <button 
+                                                type="button" 
+                                                onClick={() => setMultipleTimes(multipleTimes.filter((_, i) => i !== idx))}
+                                                className="p-2 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500/20 transition-all"
+                                                disabled={multipleTimes.length <= 1}
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                                <button 
+                                    type="button" 
+                                    onClick={() => setMultipleTimes([...multipleTimes, '12:00'])}
+                                    className="mt-2 w-full py-2 bg-cyan-500/10 text-cyan-500 border border-cyan-500/20 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-cyan-500/20 transition-all"
+                                >
+                                    <Plus size={16} /> Agregar Horario
+                                </button>
+                            </div>
+                            
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-app-text-muted mb-1 block tracking-widest">¿Repetir este patrón?</label>
+                                <div className="flex gap-4">
+                                    <label className="flex items-center gap-2 text-sm text-app-text cursor-pointer">
+                                        <input 
+                                            type="radio" 
+                                            name="multipleRepeat" 
+                                            checked={repeatUnit === 'none'} 
+                                            onChange={() => setRepeatUnit('none')}
+                                            className="accent-cyan-500" 
+                                        />
+                                        Solo hoy
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-app-text cursor-pointer">
+                                        <input 
+                                            type="radio" 
+                                            name="multipleRepeat" 
+                                            checked={repeatUnit === 'daily'} 
+                                            onChange={() => setRepeatUnit('daily')}
+                                            className="accent-cyan-500" 
+                                        />
+                                        Diariamente
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-app-text cursor-pointer">
+                                        <input 
+                                            type="radio" 
+                                            name="multipleRepeat" 
+                                            checked={repeatUnit === 'weekly'} 
+                                            onChange={() => setRepeatUnit('weekly')}
+                                            className="accent-cyan-500" 
+                                        />
+                                        Semanalmente
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {repeat === 'advanced' && (
+                        <div className="mt-3 flex gap-2 animate-in slide-in-from-top-2 duration-200">
+                            <div className="flex-1">
+                                <label className="text-[9px] uppercase font-bold text-app-text-muted mb-1 block">Cada</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={repeatInterval}
+                                    onChange={(e) => setRepeatInterval(Number(e.target.value))}
+                                    className="w-full bg-app-bg dark:bg-background border border-app-border rounded-xl px-3 py-2 text-sm text-app-text outline-none focus:border-cyan-500"
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <label className="text-[9px] uppercase font-bold text-app-text-muted mb-1 block">Unidad</label>
+                                <select
+                                    value={repeatUnit}
+                                    onChange={(e) => setRepeatUnit(e.target.value)}
+                                    className="w-full bg-app-bg dark:bg-background border border-app-border rounded-xl px-3 py-2 text-sm text-app-text outline-none focus:border-cyan-500"
+                                >
+                                    <option className="bg-app-bg dark:bg-slate-900 text-app-text" value="hours">Horas</option>
+                                    <option className="bg-app-bg dark:bg-slate-900 text-app-text" value="days">Días</option>
+                                    <option className="bg-app-bg dark:bg-slate-900 text-app-text" value="weeks">Semanas</option>
+                                    <option className="bg-app-bg dark:bg-slate-900 text-app-text" value="months">Meses</option>
+                                </select>
+                            </div>
+                        </div>
+                    )}
                 </div>
                 <div>
                     <label className="text-[10px] uppercase font-bold text-app-text-muted mb-1 block tracking-widest">Multimedia</label>
+                    {editingId && existingMedia && (
+                        <div className="mb-2 p-3 bg-app-bg dark:bg-background/50 rounded-xl border border-app-border flex items-center justify-between">
+                             <span className={`text-xs font-medium truncate ${media && media.length > 0 ? 'line-through text-app-text-muted' : 'text-cyan-500'}`}>
+                                Archivo actual: {existingMedia}
+                             </span>
+                        </div>
+                    )}
                     <input
                         type="file"
                         multiple

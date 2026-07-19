@@ -39,6 +39,11 @@ export function Reminders({ reminders, templates, onAdd, onDelete, initialTime, 
         text, setText,
         time, setTime,
         media, setMedia,
+        existingMedia,
+        repeat, setRepeat,
+        repeatInterval, setRepeatInterval,
+        repeatUnit, setRepeatUnit,
+        multipleTimes, setMultipleTimes,
         loading, setLoading,
         editingId, setEditingId,
         handleSubmit, handleEdit, handleSendNow, handleAIPerfect,
@@ -115,8 +120,13 @@ export function Reminders({ reminders, templates, onAdd, onDelete, initialTime, 
                                 chatId={chatId} setChatId={setChatId}
                                 text={text} setText={setText}
                                 time={time} setTime={setTime}
+                                repeat={repeat} setRepeat={setRepeat}
+                                repeatInterval={repeatInterval} setRepeatInterval={setRepeatInterval}
+                                repeatUnit={repeatUnit} setRepeatUnit={setRepeatUnit}
+                                multipleTimes={multipleTimes} setMultipleTimes={setMultipleTimes}
                                 media={media}
                                 setMedia={setMedia}
+                                existingMedia={existingMedia}
                                 editingId={editingId} setEditingId={setEditingId}
                                 loading={loading}
                                 templates={templates}

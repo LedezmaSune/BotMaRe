@@ -12,7 +12,7 @@ export function createReminderRouter(controller: ReminderController, upload: mul
     router.post('/bulk/scan-folder', controller.scanFolder);
     router.delete('/bulk', controller.bulkDelete);
     router.delete('/:id', controller.delete);
-    router.patch('/:id', controller.update);
+    router.patch('/:id', upload.array('media', 10), controller.update);
     router.post('/:id/send-now', controller.sendNow);
     
     return router;

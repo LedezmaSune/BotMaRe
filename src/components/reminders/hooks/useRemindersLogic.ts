@@ -37,9 +37,11 @@ export function useRemindersLogic(
     const [media, setMedia] = useState<File[] | null>(null);
     const [loading, setLoading] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [existingMedia, setExistingMedia] = useState<string | null>(null);
     const [repeat, setRepeat] = useState('none');
     const [repeatInterval, setRepeatInterval] = useState(1);
     const [repeatUnit, setRepeatUnit] = useState('days');
+    const [multipleTimes, setMultipleTimes] = useState<string[]>([]);
 
     useEffect(() => {
         if (initialTime) setTime(initialTime);
@@ -58,6 +60,7 @@ export function useRemindersLogic(
                 setRepeat(reminderToEdit.repeat || 'none');
                 setRepeatInterval(reminderToEdit.repeatInterval || 1);
                 setRepeatUnit(reminderToEdit.repeatUnit || 'days');
+                setExistingMedia(reminderToEdit.mediaPath ? reminderToEdit.mediaPath.split(/[\\/]/).pop() || null : null);
                 setMode('single');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 if (onClearInitialId) onClearInitialId();
@@ -70,7 +73,7 @@ export function useRemindersLogic(
     const [batchChatId, setBatchChatId] = useState('');
     const [batchTime, setBatchTime] = useState('09:00');
     const [batchText, setBatchText] = useState('Adjunto archivo: {ARCHIVO}');
-    const [batchProgress, setBatchProgress] = useState<{current: number, total: number, filename: string} | null>(null);
+    const [batchProgress, setBatchProgress] = useState<{current: number, total: number, filename: string, label?: string, description?: string} | null>(null);
 
     const sortedReminders = [...reminders].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
 
@@ -97,23 +100,52 @@ export function useRemindersLogic(
         e.preventDefault();
         setLoading(true);
         if (editingId) {
-            await fetch(`/api/reminders/${editingId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chatId, text, time, repeat, repeatInterval, repeatUnit, title })
-            });
+            if (media && media.length > 0) {
+                const formData = new FormData();
+                formData.append('chatId', chatId);
+                formData.append('text', text);
+                formData.append('time', time);
+                formData.append('repeat', repeat);
+                formData.append('repeatInterval', String(repeatInterval));
+                formData.append('repeatUnit', repeatUnit);
+                if (title) formData.append('title', title);
+                formData.append('media', media[0]);
+
+                await fetch(`/api/reminders/${editingId}`, {
+                    method: 'PATCH',
+                    body: formData
+                });
+            } else {
+                await fetch(`/api/reminders/${editingId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chatId, text, time, repeat, repeatInterval, repeatUnit, title })
+                });
+            }
             setEditingId(null);
         } else {
-            await onAdd(chatId, text, time, media, repeat, repeatInterval, repeatUnit, title);
+            if (repeat === 'multiple_times' && multipleTimes.length > 0) {
+                const baseDate = time ? time.split('T')[0] : new Date().toISOString().split('T')[0];
+                const actualRepeat = repeatUnit === 'weekly' ? 'weekly' : (repeatUnit === 'daily' ? 'daily' : 'none');
+                
+                for (const t of multipleTimes) {
+                    const nextTimeStr = `${baseDate}T${t}`;
+                    await onAdd(chatId, text, nextTimeStr, media, actualRepeat, 1, 'days', title);
+                }
+            } else {
+                await onAdd(chatId, text, time, media, repeat, repeatInterval, repeatUnit, title);
+            }
         }
         setChatId('');
         setTitle('');
         setText('');
         setTime('');
         setMedia(null);
+        setExistingMedia(null);
         setRepeat('none');
         setRepeatInterval(1);
         setRepeatUnit('days');
+        setMultipleTimes([]);
         setLoading(false);
     };
 
@@ -126,6 +158,7 @@ export function useRemindersLogic(
         setRepeat(r.repeat || 'none');
         setRepeatInterval(r.repeatInterval || 1);
         setRepeatUnit(r.repeatUnit || 'days');
+        setExistingMedia(r.mediaPath ? r.mediaPath.split(/[\\/]/).pop() || null : null);
         setMode('single');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -317,11 +350,13 @@ export function useRemindersLogic(
         text, setText,
         time, setTime,
         media, setMedia,
+        existingMedia, setExistingMedia,
         loading, setLoading,
         editingId, setEditingId,
         repeat, setRepeat,
         repeatInterval, setRepeatInterval,
         repeatUnit, setRepeatUnit,
+        multipleTimes, setMultipleTimes,
         handleSubmit, handleEdit, handleSendNow, handleAIPerfect,
 
         showBatchWizard, setShowBatchWizard,

@@ -74,7 +74,7 @@ export class ReminderController {
         const id = req.params.id;
         const { chatId, text, time, repeat, repeatInterval, repeatUnit, title } = req.body;
         
-        await updateReminder(parseInt(id as string), {
+        const updateData: any = {
             chatId,
             text,
             time,
@@ -82,7 +82,22 @@ export class ReminderController {
             repeatInterval: repeatInterval ? parseInt(repeatInterval) : undefined,
             repeatUnit: repeatUnit || undefined,
             title: title || undefined
-        });
+        };
+
+        const files = req.files as Express.Multer.File[];
+        if (files && files.length > 0) {
+            const file = files[0];
+            let mediaType;
+            if (file.mimetype.startsWith('image/')) mediaType = 'image';
+            else if (file.mimetype.startsWith('video/')) mediaType = 'video';
+            else if (file.mimetype.startsWith('audio/')) mediaType = 'audio';
+            else mediaType = 'document';
+
+            updateData.mediaPath = path.resolve(file.path);
+            updateData.mediaType = mediaType;
+        }
+        
+        await updateReminder(parseInt(id as string), updateData);
           
         res.json({ success: true });
     });
