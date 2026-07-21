@@ -101,18 +101,22 @@ export default function ManualPage() {
                     <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/5 blur-3xl rounded-full -mr-10 -mt-10 transition-all group-hover:bg-pink-500/10"></div>
                     <div className="flex items-center gap-3 mb-6">
                         <Rocket className="text-pink-500" size={24} />
-                        <h2 className="text-xl font-black text-app-text tracking-tight">Difusión y Varita Mágica</h2>
+                        <h2 className="text-xl font-black text-app-text tracking-tight">Formato y Medios Múltiples</h2>
                     </div>
                     <div className="space-y-4 text-sm text-app-text-muted">
-                        <p>Optimiza tus mensajes manuales con la integración de DeepSeek.</p>
+                        <p>Dale estilo a tus mensajes y envía varios archivos a la vez sin complicaciones.</p>
                         <ul className="space-y-3">
                             <li className="flex items-start gap-2">
                                 <ArrowRight size={16} className="text-pink-400 shrink-0 mt-0.5" />
-                                <span><b>Corrección AI:</b> Escribe un mensaje feo o con mala ortografía, presiona el botón <b className="text-pink-400">Varita Mágica</b> en el redactor y la IA lo convertirá en un texto persuasivo en 1 segundo.</span>
+                                <span><b>Barra de Formato:</b> En cualquier cuadro de texto verás botones para poner el texto en <b>Negrita</b>, <i>Cursiva</i>, <del>Tachado</del> o <code>Monoespaciado</code>. El sistema pondrá los símbolos automáticamente por ti.</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <ArrowRight size={16} className="text-pink-400 shrink-0 mt-0.5" />
-                                <span><b>Envío Inmediato:</b> Todos los recordatorios agendados tienen un botón para forzar su envío ahora mismo si urge despacharlos.</span>
+                                <span><b>Múltiples Archivos:</b> Puedes agregar varios medios escribiendo varias etiquetas (ej. <code className="text-pink-400 font-black">[IMG: url1] [DOC: url2]</code>). El primer archivo llevará el texto adjunto, y el resto se enviará en secuencia automática.</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <ArrowRight size={16} className="text-pink-400 shrink-0 mt-0.5" />
+                                <span><b>Corrección AI:</b> Presiona el botón <b className="text-pink-400">Varita Mágica</b> en el redactor y la IA convertirá tu borrador en un texto persuasivo en 1 segundo.</span>
                             </li>
                         </ul>
                     </div>

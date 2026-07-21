@@ -1,6 +1,6 @@
 'use client';
-
 import React, { useState, useRef, useEffect } from 'react';
+import { Bold, Italic, Strikethrough, Code } from 'lucide-react';
 
 const VARIABLES = [
     { tag: '{NOMBRE}', desc: 'Nombre completo' },
@@ -115,6 +115,30 @@ export function VariableTextarea({ value, onChange, placeholder, required, class
         }
     };
 
+    const applyFormat = (prefix: string, suffix: string = prefix) => {
+        if (!textareaRef.current) return;
+        const start = textareaRef.current.selectionStart;
+        const end = textareaRef.current.selectionEnd;
+        const before = value.substring(0, start);
+        const selected = value.substring(start, end);
+        const after = value.substring(end);
+        
+        const newValue = before + prefix + selected + suffix + after;
+        onChange(newValue);
+        
+        // Restore focus and cursor
+        setTimeout(() => {
+            if (textareaRef.current) {
+                textareaRef.current.focus();
+                const newPos = start + prefix.length + selected.length;
+                textareaRef.current.setSelectionRange(
+                    start === end ? start + prefix.length : newPos,
+                    start === end ? start + prefix.length : newPos
+                );
+            }
+        }, 0);
+    };
+
     const suggestions = triggerChar === '{'
         ? VARIABLES.filter(v => v.tag.toUpperCase().includes(filter))
         : MEDIA_TAGS.filter(v => v.tag.toUpperCase().includes(filter));
@@ -131,7 +155,21 @@ export function VariableTextarea({ value, onChange, placeholder, required, class
     }, []);
 
     return (
-        <div className="relative w-full">
+        <div className="relative w-full flex flex-col">
+            <div className="flex items-center gap-1 mb-1 px-1">
+                <button type="button" onClick={() => applyFormat('*')} className="p-1.5 text-app-text-muted hover:text-cyan-500 hover:bg-cyan-500/10 rounded-lg transition-colors" title="Negrita (*texto*)">
+                    <Bold size={14} />
+                </button>
+                <button type="button" onClick={() => applyFormat('_')} className="p-1.5 text-app-text-muted hover:text-cyan-500 hover:bg-cyan-500/10 rounded-lg transition-colors" title="Cursiva (_texto_)">
+                    <Italic size={14} />
+                </button>
+                <button type="button" onClick={() => applyFormat('~')} className="p-1.5 text-app-text-muted hover:text-cyan-500 hover:bg-cyan-500/10 rounded-lg transition-colors" title="Tachado (~texto~)">
+                    <Strikethrough size={14} />
+                </button>
+                <button type="button" onClick={() => applyFormat('```')} className="p-1.5 text-app-text-muted hover:text-cyan-500 hover:bg-cyan-500/10 rounded-lg transition-colors" title="Monoespaciado (```texto```)">
+                    <Code size={14} />
+                </button>
+            </div>
             <textarea
                 ref={textareaRef}
                 value={value}

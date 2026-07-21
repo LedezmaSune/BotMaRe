@@ -23,29 +23,49 @@ export class MessageController {
      * Si no encuentra ninguna, devuelve false (para que el caller envíe texto normal).
      */
     private async processMediaTags(jid: string, text: string): Promise<boolean> {
-        const mediaMatch = text.match(/\[(IMG|DOC|VIDEO|AUDIO|MEDIA):\s*(.+?)\]/i);
-        if (!mediaMatch) return false;
+        const regex = /\[(IMG|DOC|VIDEO|AUDIO|MEDIA):\s*(.+?)\]/ig;
+        const matches = [...text.matchAll(regex)];
+        
+        if (matches.length === 0) return false;
 
-        const tagType = mediaMatch[1].toUpperCase();
-        const content = mediaMatch[2].trim();
-        const textWithoutMedia = text.replace(mediaMatch[0], '').trim();
+        // Limpiar todas las etiquetas del texto para el caption
+        let textWithoutMedia = text;
+        for (const match of matches) {
+            textWithoutMedia = textWithoutMedia.replace(match[0], '');
+        }
+        textWithoutMedia = textWithoutMedia.trim();
 
-        let mediaUrl = content;
-        let mediaCategory: 'image' | 'document' | 'video' | 'audio' = 'document';
+        // Enviar todos los archivos
+        for (let i = 0; i < matches.length; i++) {
+            const match = matches[i];
+            const tagType = match[1].toUpperCase();
+            const content = match[2].trim();
 
-        if (tagType === 'IMG' || tagType === 'MEDIA') {
-            mediaCategory = 'image';
-            // Si el contenido no parece una URL, asumimos que es una búsqueda para Pollinations AI
-            if (!content.startsWith('http')) {
-                mediaUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(content)}?nologo=true`;
+            let mediaUrl = content;
+            let mediaCategory: 'image' | 'document' | 'video' | 'audio' = 'document';
+
+            if (tagType === 'IMG' || tagType === 'MEDIA') {
+                mediaCategory = 'image';
+                if (!content.startsWith('http')) {
+                    mediaUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(content)}?nologo=true`;
+                }
+            } else if (tagType === 'VIDEO') {
+                mediaCategory = 'video';
+            } else if (tagType === 'AUDIO') {
+                mediaCategory = 'audio';
             }
-        } else if (tagType === 'VIDEO') {
-            mediaCategory = 'video';
-        } else if (tagType === 'AUDIO') {
-            mediaCategory = 'audio';
+
+            // Solo añadir el caption al PRIMER archivo
+            const caption = i === 0 && textWithoutMedia ? textWithoutMedia : undefined;
+            
+            await this.messageService.sendMediaFromUrl(jid, mediaUrl, caption, mediaCategory);
+            
+            // Pausa de 1 segundo entre archivos para no saturar WhatsApp y mantener orden
+            if (i < matches.length - 1) {
+                await new Promise(res => setTimeout(res, 1000));
+            }
         }
 
-        await this.messageService.sendMediaFromUrl(jid, mediaUrl, textWithoutMedia || undefined, mediaCategory);
         return true;
     }
 

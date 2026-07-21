@@ -16,6 +16,18 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'V 2.1.1',
+        date: '20 Julio 2026',
+        title: 'Formato Enriquecido, Medios Múltiples y Recordatorios Diarios',
+        type: 'minor',
+        description: 'Mejoras en la experiencia de usuario y capacidades de mensajería. Ahora puedes dar formato al texto visualmente y enviar múltiples archivos en un solo mensaje.',
+        features: [
+            '📝 Barra de Formato (Rich Text): Nueva barra de herramientas en todas las áreas de texto para aplicar Negrita, Cursiva, Tachado y Monoespaciado con un solo clic.',
+            '📂 Múltiples Archivos (Multi-media): El bot ahora soporta el envío de varios archivos en un mismo mensaje usando múltiples etiquetas [IMG: url], [DOC: url], enviándolos en secuencia.',
+            '⏰ Recordatorios Multi-Horario: Nueva opción "Varias veces por día" en Recordatorios que permite programar múltiples horas exactas y repetirlas diariamente o semanalmente.'
+        ]
+    },
+    {
         version: 'V 2.1.0',
         date: '17 Julio 2026',
         title: 'Conectividad Fija & Carga Inteligente Resiliente',
