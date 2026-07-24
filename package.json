@@ -22,7 +22,7 @@
     "clean:logs": "node bin/clean-logs.js"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "6.7.22",
+    "@whiskeysockets/baileys": "6.7.23",
     "adm-zip": "^0.5.17",
     "autoprefixer": "^10.5.2",
     "axios": "^1.18.1",
@@ -89,7 +89,7 @@
       "sharp"
     ],
     "overrides": {
-      "@whiskeysockets/baileys": "6.7.22"
+      "@whiskeysockets/baileys": "6.7.23"
     }
   }
 }
