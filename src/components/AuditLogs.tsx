@@ -173,18 +173,18 @@ export function AuditLogs({ audits }: AuditLogsProps) {
                                                 <Info size={16} className="text-cyan-400" />
                                                 <span className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Información Detallada</span>
                                             </div>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            <div className="flex flex-col rounded-xl border border-app-border/50 bg-app-card/30 dark:bg-slate-950/30 overflow-hidden divide-y divide-app-border/50">
                                                 {typeof details === 'object' && details !== null ? (
                                                     Object.entries(details).map(([key, value], idx) => (
-                                                        <div key={idx} className="bg-app-card dark:bg-slate-800/40 p-4 rounded-xl border border-app-border/50 hover:border-cyan-500/30 transition-colors flex flex-col justify-center">
-                                                            <span className="text-[9px] font-black text-app-text-muted uppercase tracking-widest mb-1.5">{key}</span>
-                                                            <span className="text-sm font-semibold text-app-text truncate" title={String(value)}>
+                                                        <div key={idx} className="flex flex-col sm:flex-row sm:items-start sm:items-center p-3 hover:bg-slate-500/5 transition-colors">
+                                                            <span className="sm:w-1/3 text-[10px] font-black text-app-text-muted uppercase tracking-widest mb-1 sm:mb-0">{key}</span>
+                                                            <span className="sm:w-2/3 text-xs font-mono font-medium text-app-text break-words">
                                                                 {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                                                             </span>
                                                         </div>
                                                     ))
                                                 ) : (
-                                                    <div className="col-span-full">
+                                                    <div className="p-4">
                                                         <p className="text-sm text-app-text opacity-80">{String(details)}</p>
                                                     </div>
                                                 )}
