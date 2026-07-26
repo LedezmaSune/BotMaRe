@@ -6,7 +6,7 @@ import { parseContactList } from '../utils/contactParser';
 const API_BASE = '/api';
 const SOCKET_URL = ''; // En el monolito unificado, el socket vive en la misma URL/Puerto que la web
 
-export type TabId = 'mass' | 'scheduling' | 'calendar' | 'templates' | 'groups' | 'personality' | 'settings' | 'audits' | 'support' | 'manual' | 'updates' | 'autoresponders' | 'sheets';
+export type TabId = 'mass' | 'scheduling' | 'calendar' | 'templates' | 'groups' | 'personality' | 'settings' | 'audits' | 'support' | 'manual' | 'updates' | 'autoresponders' | 'sheets' | 'telemetry';
 
 export function useBotData() {
     const [status, setStatus] = useState<ConnectionState>('disconnected');

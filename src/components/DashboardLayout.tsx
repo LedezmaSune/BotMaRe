@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users, BookOpen, ShieldAlert, Shield, RefreshCw, Database, Webhook, Briefcase } from 'lucide-react';
+import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users, BookOpen, ShieldAlert, Shield, RefreshCw, Database, Webhook, Briefcase, Activity } from 'lucide-react';
 
 import { ConnectionOverlay } from '@/components/ConnectionOverlay';
 import { ThemeToggle, UpdateChecker, AIToggle, AutorespondersToggle, SheetsToggle, GlobalClock } from '@/components/StatusHeader';
@@ -29,6 +29,7 @@ const routes: Array<{ path: string; icon: any; label: string; id: TabId }> = [
     { path: '/settings', icon: SettingsIcon, label: 'Configuración', id: 'settings' },
     { path: '/audits', icon: History, label: 'Auditoría', id: 'audits' },
     { path: '/updates', icon: RefreshCw, label: 'Actualizaciones', id: 'updates' as TabId },
+    { path: '/telemetry', icon: Activity, label: 'Telemetría', id: 'telemetry' as TabId },
     { path: '/manual', icon: BookOpen, label: 'Manual de Uso', id: 'manual' as TabId }
 ];
 

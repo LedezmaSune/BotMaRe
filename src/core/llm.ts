@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { getAllConfig } from "./config";
+import { telemetry } from "./telemetry";
 import { NotificationService } from "../telegram/notification.service";
 
 /**
@@ -43,10 +44,12 @@ async function tryProvider(
                 setTimeout(() => reject(new Error(`Timeout after ${timeout}ms`)), timeout)
             );
 
+            const startMs = Date.now();
             const responseWithHeaders = await Promise.race([
                 client.chat.completions.create(payload).withResponse(),
                 timeoutPromise
             ]) as any;
+            const latencyMs = Date.now() - startMs;
 
             const remainingTokens = responseWithHeaders.response.headers.get('x-ratelimit-remaining-tokens');
             if (remainingTokens) {
@@ -58,7 +61,11 @@ async function tryProvider(
                 }
             }
 
-            console.log(`[LLM] ${providerName} (${config.model}) Respondió con éxito.`);
+            const usage = responseWithHeaders.data.usage;
+            const totalTokens = usage ? usage.total_tokens : 0;
+            telemetry.recordLLMRequest(providerName, totalTokens, latencyMs);
+
+            console.log(`[LLM] ${providerName} (${config.model}) Respondió con éxito. Tokens: ${totalTokens}, Latencia: ${latencyMs}ms`);
             NotificationService.notifyModelEvent(providerName, config.model, 'success');
             return responseWithHeaders.data.choices[0]?.message;
         } catch (error: any) {

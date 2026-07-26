@@ -182,7 +182,12 @@ export class WhatsAppClient {
 
     async sendPresence(jid: string, state: 'composing' | 'recording' | 'paused') {
         if (this.state !== 'connected' || !this.socket) return;
-        await this.socket.sendPresenceUpdate(state, jid);
+        try {
+            await this.socket.presenceSubscribe(jid);
+            await this.socket.sendPresenceUpdate(state, jid);
+        } catch (e: any) {
+            console.warn(`[WhatsAppClient] Error enviando presencia a ${jid}:`, e.message);
+        }
     }
 
     getSocket() {

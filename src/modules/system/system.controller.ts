@@ -5,11 +5,17 @@ import { listAudits } from '../../core/dbManager';
 import { asyncHandler } from '../../middleware/errorHandler';
 import { UpdateService } from './update.service';
 
+import { telemetry } from '../../core/telemetry';
+
 const uploadDir = path.resolve('data/uploads');
 
 export class SystemController {
     private updateService = new UpdateService();
     constructor(private waClient?: any) {}
+
+    getTelemetry = asyncHandler(async (req: Request, res: Response) => {
+        res.json(telemetry.getData());
+    });
 
     getAudits = asyncHandler(async (req: Request, res: Response) => {
         const audits = await listAudits(50);

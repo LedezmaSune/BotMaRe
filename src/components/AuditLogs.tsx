@@ -153,12 +153,12 @@ export function AuditLogs({ audits }: AuditLogsProps) {
                                                                 <span className="text-[9px] font-bold text-app-text-muted opacity-50">{log.time}</span>
                                                                 <div className="flex items-center gap-1.5">
                                                                     {log.status === 'success' ? (
-                                                                        <CheckCircle2 size={14} className="text-emerald-500" />
+                                                                        <span className="text-sm">✅</span>
                                                                     ) : (
-                                                                        <XCircle size={14} className="text-red-500" />
+                                                                        <span className="text-sm">❌</span>
                                                                     )}
                                                                     <span className={`text-[9px] font-black uppercase tracking-widest ${log.status === 'success' ? 'text-emerald-500' : 'text-red-500'}`}>
-                                                                        {log.status === 'success' ? 'Éxito' : 'Error'}
+                                                                        {log.status === 'success' ? 'Entregado' : 'No Entregado'}
                                                                     </span>
                                                                 </div>
                                                             </div>
