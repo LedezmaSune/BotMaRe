@@ -207,6 +207,9 @@ Si vienes de versiones antiguas o usas **PNPM v10+** y experimentas errores de c
 - Base de datos: `pnpm rebuild better-sqlite3`
 - Túneles: `pnpm rebuild cloudflared`
 
+> [!TIP]
+> **Error de actualización en Termux (Git Pull):** Si al hacer `git pull` recibes un error de que `package.json` será sobreescrito, significa que hubo modificaciones locales. Descartalas ejecutando `git restore .` (o `git checkout .`) y luego vuelve a intentar `git pull origin main`.
+
 > [!IMPORTANT]
 > **Guía Completa de Errores de Windows / Node v24:** Si experimentas errores de tipo `EPERM`, `spawn`, o código `3221225477` (violación de acceso), consulta la guía detallada de diagnóstico en: [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
 
