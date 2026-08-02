@@ -23,6 +23,8 @@ interface ReminderFormProps {
     setMedia: (val: File[] | null) => void;
     media: File[] | null;
     existingMedia?: string | null;
+    channel?: string;
+    setChannel?: (val: 'whatsapp' | 'sms') => void;
     
     editingId: number | null;
     setEditingId: (val: number | null) => void;
@@ -45,6 +47,7 @@ export function ReminderForm({
     multipleTimes, setMultipleTimes,
     media, setMedia,
     existingMedia,
+    channel = 'whatsapp', setChannel,
     editingId, setEditingId,
     loading,
     templates,
@@ -65,6 +68,37 @@ export function ReminderForm({
                         placeholder="Ej: Cumpleaños de Juan..."
                     />
                 </div>
+
+                {/* CANAL DE ENVÍO */}
+                {setChannel && (
+                    <div>
+                        <label className="text-[10px] uppercase font-bold text-app-text-muted mb-2 block tracking-widest">Canal de Envío</label>
+                        <div className="flex gap-4">
+                            <label className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl cursor-pointer transition-all border ${channel === 'whatsapp' ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 font-bold' : 'bg-app-bg dark:bg-background border-app-border text-app-text-muted hover:bg-slate-200 dark:hover:bg-slate-800'}`}>
+                                <input 
+                                    type="radio" 
+                                    name="channel" 
+                                    className="hidden"
+                                    checked={channel === 'whatsapp'} 
+                                    onChange={() => setChannel('whatsapp')}
+                                />
+                                <img src="/wa-icon.svg" alt="WA" className="w-4 h-4 opacity-70" onError={(e) => e.currentTarget.style.display='none'} />
+                                WhatsApp
+                            </label>
+                            <label className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl cursor-pointer transition-all border ${channel === 'sms' ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-600 dark:text-indigo-400 font-bold' : 'bg-app-bg dark:bg-background border-app-border text-app-text-muted hover:bg-slate-200 dark:hover:bg-slate-800'}`}>
+                                <input 
+                                    type="radio" 
+                                    name="channel" 
+                                    className="hidden"
+                                    checked={channel === 'sms'} 
+                                    onChange={() => setChannel('sms')}
+                                />
+                                SMS (httpSMS)
+                            </label>
+                        </div>
+                    </div>
+                )}
+
                 <div>
                     <div className="flex items-center justify-between mb-1">
                         <label className="text-[10px] uppercase font-bold text-app-text-muted tracking-widest">Destinatarios</label>

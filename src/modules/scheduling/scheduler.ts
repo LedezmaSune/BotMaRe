@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { MessageService } from '../messages/message.service';
 import { ReminderService } from '../reminders/reminder.service';
+import { SmsService } from '../sms/sms.service';
 import { 
     createReminder, 
     listAllPendingReminders, 
@@ -16,6 +17,7 @@ import { GoogleSheetsService } from '../autoresponders/sheets.service';
 export class Scheduler {
     private static waService: MessageService;
     private static reminderService: ReminderService;
+    private static smsService: SmsService;
 
     private static intervalId: NodeJS.Timeout | null = null;
     private static isChecking: boolean = false;
@@ -23,6 +25,7 @@ export class Scheduler {
     static init(waService: MessageService, reminderService: ReminderService) {
         this.waService = waService;
         this.reminderService = reminderService;
+        this.smsService = new SmsService();
         console.log("[Scheduler] System Initialized");
         
         if (this.intervalId) clearInterval(this.intervalId);
@@ -60,42 +63,53 @@ export class Scheduler {
                     const targetName = contact.name;
 
                     const personalizedText = processVariables(r.text, targetName);
-
-                    if (r.mediaPath) {
-                        let finalPath = r.mediaPath;
-                        
-                        // Reparación en caliente: Si la ruta no existe, buscamos el archivo en uploads local
-                        if (!fs.existsSync(finalPath)) {
-                            const fileName = path.basename(finalPath);
-                            const uploadsDir = path.resolve('data/uploads');
-                            const localPath = path.join(uploadsDir, fileName);
-
-                            if (fs.existsSync(localPath)) {
-                                finalPath = localPath;
-                            } else if (fs.existsSync(uploadsDir)) {
-                                // Búsqueda difusa por prefijo (primeros 15 caracteres)
-                                const filesInDir = fs.readdirSync(uploadsDir);
-                                const prefix = fileName.substring(0, 15);
-                                const match = filesInDir.find(f => f.startsWith(prefix) || fileName.startsWith(f.substring(0, 15)));
-                                if (match) finalPath = path.join(uploadsDir, match);
-                            }
-                        }
-
-                        // Verificación final antes de enviar
-                        if (fs.existsSync(finalPath)) {
-                            await this.waService.sendMedia(targetId, finalPath, personalizedText);
-                        } else {
-                            console.warn(`[Scheduler] Saltando multimedia para ${r.id}: archivo no encontrado tras reparación.`);
-                            await this.waService.sendMessage(targetId, personalizedText + "\n\n(No se pudo adjuntar el archivo multimedia)");
+                    
+                    if (r.channel === 'sms') {
+                        try {
+                            await this.smsService.sendMessage(targetId, personalizedText);
+                            console.log(`[Scheduler] SMS enviado a ${targetId}`);
+                        } catch (err: any) {
+                            console.error(`[Scheduler] Error enviando SMS a ${targetId}:`, err.message);
+                            throw err; // throw to mark reminder as failed
                         }
                     } else {
-                        await this.waService.sendMessage(targetId, personalizedText);
+                        // Flujo normal WhatsApp
+                        if (r.mediaPath) {
+                            let finalPath = r.mediaPath;
+                            
+                            // Reparación en caliente: Si la ruta no existe, buscamos el archivo en uploads local
+                            if (!fs.existsSync(finalPath)) {
+                                const fileName = path.basename(finalPath);
+                                const uploadsDir = path.resolve('data/uploads');
+                                const localPath = path.join(uploadsDir, fileName);
+
+                                if (fs.existsSync(localPath)) {
+                                    finalPath = localPath;
+                                } else if (fs.existsSync(uploadsDir)) {
+                                    // Búsqueda difusa por prefijo (primeros 15 caracteres)
+                                    const filesInDir = fs.readdirSync(uploadsDir);
+                                    const prefix = fileName.substring(0, 15);
+                                    const match = filesInDir.find(f => f.startsWith(prefix) || fileName.startsWith(f.substring(0, 15)));
+                                    if (match) finalPath = path.join(uploadsDir, match);
+                                }
+                            }
+
+                            // Verificación final antes de enviar
+                            if (fs.existsSync(finalPath)) {
+                                await this.waService.sendMedia(targetId, finalPath, personalizedText);
+                            } else {
+                                console.warn(`[Scheduler] Saltando multimedia para ${r.id}: archivo no encontrado tras reparación.`);
+                                await this.waService.sendMessage(targetId, personalizedText + "\n\n(No se pudo adjuntar el archivo multimedia)");
+                            }
+                        } else {
+                            await this.waService.sendMessage(targetId, personalizedText);
+                        }
                     }
                 }
 
                 // Phase 3: Success
                 await this.reminderService.updateStatus(r.id, 'sent');
-                await this.reminderService.logAudit('system', 'REMINDER_SENT', { id: r.id, to: r.chatId, type: r.mediaPath ? 'media' : 'text' });
+                await this.reminderService.logAudit('system', 'REMINDER_SENT', { id: r.id, to: r.chatId, type: r.mediaPath ? 'media' : 'text', channel: r.channel || 'whatsapp' });
                 console.log(`[Scheduler] Recordatorio ${r.id} enviado con éxito.`);
 
                 // --- PROTECCIÓN ANTI-BAN (BUFFER) ---
@@ -142,14 +156,14 @@ export class Scheduler {
 
                     if (validRepeat) {
                         const nextTimeStr = nextTime.toFormat("yyyy-MM-dd'T'HH:mm");
-                        await createReminder(r.userId, r.chatId, r.text, nextTimeStr, r.mediaPath, r.mediaType, r.repeat, r.repeatInterval, r.repeatUnit);
+                        await createReminder(r.userId, r.chatId, r.text, nextTimeStr, r.mediaPath, r.mediaType, r.repeat, r.repeatInterval, r.repeatUnit, r.title, 'pending', r.channel);
                         console.log(`[Scheduler] Recordatorio ${r.id} reprogramado para ${nextTimeStr}`);
                     }
                 }
             } catch (error: any) {
                 console.error(`[Scheduler] Error enviando recordatorio ${r.id}:`, error.message);
                 await this.reminderService.updateStatus(r.id, 'failed'); 
-                await this.reminderService.logAudit('system', 'REMINDER_FAILED', { id: r.id, to: r.chatId, error: error.message });
+                await this.reminderService.logAudit('system', 'REMINDER_FAILED', { id: r.id, to: r.chatId, error: error.message, channel: r.channel || 'whatsapp' });
             }
         }
     }
@@ -196,7 +210,7 @@ export class Scheduler {
                     if (diffMinutes > 5) {
                         console.warn(`[Scheduler] Saltando ${r.id}: Fecha expirada (${diffMinutes.toFixed(1)} min de retraso).`);
                         await this.reminderService.updateStatus(r.id, 'failed');
-                        await this.reminderService.logAudit('system', 'REMINDER_EXPIRED_SKIPPED', { id: r.id, delay: diffMinutes });
+                        await this.reminderService.logAudit('system', 'REMINDER_EXPIRED_SKIPPED', { id: r.id, delay: diffMinutes, channel: r.channel || 'whatsapp' });
                         continue;
                     }
                     due.push(r);

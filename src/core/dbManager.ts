@@ -84,7 +84,7 @@ export const clearHistory = (userId: string) => adapter.clearHistory(userId);
 export const logAudit = (userId: string, action: string, details: any) => adapter.logAudit(userId, action, details);
 export const listAudits = (limit?: number) => adapter.listAudits(limit);
 
-export const createReminder = (userId: string, chatId: string, text: string, time: string, mediaPath?: string, mediaType?: string, repeat?: string, repeatInterval?: number, repeatUnit?: string, title?: string, status?: 'pending' | 'processing' | 'sent' | 'failed') => adapter.createReminder(userId, chatId, text, time, mediaPath, mediaType, repeat, repeatInterval, repeatUnit, title, status);
+export const createReminder = (userId: string, chatId: string, text: string, time: string, mediaPath?: string, mediaType?: string, repeat?: string, repeatInterval?: number, repeatUnit?: string, title?: string, status?: 'pending' | 'processing' | 'sent' | 'failed', channel?: 'whatsapp' | 'sms') => adapter.createReminder(userId, chatId, text, time, mediaPath, mediaType, repeat, repeatInterval, repeatUnit, title, status, channel);
 export const listReminders = (userId: string, includeProcessed?: boolean) => adapter.listReminders(userId, includeProcessed);
 export const deleteReminder = (id: number) => adapter.deleteReminder(id);
 export const updateReminderStatus = (id: number, status: 'pending' | 'processing' | 'sent' | 'failed') => adapter.updateReminderStatus(id, status);

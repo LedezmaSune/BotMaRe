@@ -20,6 +20,7 @@ export class DiffusionController {
         }
 
         const rawMessage = req.body.message;
+        const channel = req.body.channel || 'whatsapp';
 
         if (!Array.isArray(contacts) || contacts.length === 0 || !rawMessage) {
             return res.status(400).json({ success: false, error: "Invalid payload: contacts and message are required" });
@@ -32,7 +33,7 @@ export class DiffusionController {
             name: file.originalname
         })) : undefined;
 
-        const queuedCount = await this.diffusionService.sendMass(contacts, rawMessage, mediaFiles);
+        const queuedCount = await this.diffusionService.sendMass(contacts, rawMessage, mediaFiles, channel);
         
         if (queuedCount === -1) {
             return res.status(409).json({ 

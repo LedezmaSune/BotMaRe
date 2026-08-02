@@ -111,7 +111,7 @@ export function CalendarView({ reminders, onDateSelect, onEventSelect }: Calenda
 
     const renderAgendaView = () => {
         const sorted = [...reminders]
-            .filter(r => r.time)
+            .filter(r => r.time && r.status === 'pending' && new Date(r.time).getTime() > Date.now() - 12 * 60 * 60 * 1000)
             .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
 
         const grouped: Record<string, { date: Date, events: typeof reminders }> = {};
@@ -205,12 +205,17 @@ export function CalendarView({ reminders, onDateSelect, onEventSelect }: Calenda
                                                     </span>
                                                 </div>
 
-                                                <div className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${
-                                                    r.status === 'sent' ? 'bg-emerald-500/20 text-emerald-500' :
-                                                    r.status === 'failed' ? 'bg-red-500/20 text-red-500' :
-                                                    'bg-cyan-500/20 text-cyan-500'
-                                                }`}>
-                                                    {r.status || 'pending'}
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${r.channel === 'sms' ? 'bg-purple-500/20 text-purple-500' : 'bg-emerald-500/20 text-emerald-500'}`}>
+                                                        {r.channel === 'sms' ? 'SMS' : 'WhatsApp'}
+                                                    </span>
+                                                    <div className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${
+                                                        r.status === 'sent' ? 'bg-emerald-500/20 text-emerald-500' :
+                                                        r.status === 'failed' ? 'bg-red-500/20 text-red-500' :
+                                                        'bg-cyan-500/20 text-cyan-500'
+                                                    }`}>
+                                                        {r.status || 'pending'}
+                                                    </div>
                                                 </div>
                                             </div>
                                         );

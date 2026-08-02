@@ -14,7 +14,7 @@ export class ReminderService {
     async bulkDelete(userId: string, type: 'all' | 'pending' | 'sent') {
         return await deleteRemindersBulk(userId, type);
     }
-    async create(userId: string, chatId: string, text: string, time: string, mediaPath?: string, mediaType?: string, repeat?: string, repeatInterval?: number, repeatUnit?: string, title?: string) {
+    async create(userId: string, chatId: string, text: string, time: string, mediaPath?: string, mediaType?: string, repeat?: string, repeatInterval?: number, repeatUnit?: string, title?: string, channel: 'whatsapp' | 'sms' = 'whatsapp') {
         let finalPath = mediaPath;
         let finalType = mediaType;
 
@@ -57,7 +57,7 @@ export class ReminderService {
         // Aseguramos que las barras sean normales para evitar problemas de escape en JSON
         if (finalPath) finalPath = finalPath.replace(/\\/g, '/');
 
-        return await createReminder(userId, chatId, text, time, finalPath, finalType, repeat, repeatInterval, repeatUnit, title);
+        return await createReminder(userId, chatId, text, time, finalPath, finalType, repeat, repeatInterval, repeatUnit, title, 'pending', channel);
     }
 
     async list(userId: string, includeProcessed: boolean = false): Promise<Reminder[]> {

@@ -176,12 +176,13 @@ export class LowdbAdapter implements IDatabaseAdapter {
         userId: string, chatId: string, text: string, time: string,
         mediaPath?: string, mediaType?: string, repeat: string = 'none',
         repeatInterval?: number, repeatUnit?: string, title?: string,
-        status: 'pending' | 'processing' | 'sent' | 'failed' = 'pending'
+        status: 'pending' | 'processing' | 'sent' | 'failed' = 'pending',
+        channel: 'whatsapp' | 'sms' = 'whatsapp'
     ): Promise<number> {
         const id = generateNumericId();
         const payload: ReminderData = {
             id, userId, chatId, title, text, time, mediaPath, mediaType,
-            status, repeat, repeatInterval, repeatUnit, timestamp: new Date()
+            status, repeat, repeatInterval, repeatUnit, channel, timestamp: new Date()
         };
         try {
             this.ldb.data.reminders.push(payload);

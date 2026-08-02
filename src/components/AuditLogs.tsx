@@ -9,7 +9,7 @@ interface AuditLogsProps {
 }
 
 export function AuditLogs({ audits }: AuditLogsProps) {
-    const [expandedId, setExpandedId] = useState<number | null>(null);
+    const [expandedId, setExpandedId] = useState<number | string | null>(null);
 
     return (
         <section className="bg-app-card border border-app-border rounded-3xl p-6 lg:p-10 backdrop-blur-3xl animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-2xl min-h-[700px] relative overflow-hidden">
@@ -26,8 +26,9 @@ export function AuditLogs({ audits }: AuditLogsProps) {
             </div>
 
             <div className="space-y-4 relative z-10">
-                {audits.map((a) => {
-                    const isExpanded = expandedId === a.id;
+                {audits.map((a, index) => {
+                    const uniqueId = a.id || `audit-${index}`;
+                    const isExpanded = expandedId === uniqueId;
                     const isCampaign = a.action === 'MASS_DIFFUSION_CAMPAIGN';
                     let details: any = {};
                     try { details = JSON.parse(a.details); } catch (e) { details = { text: a.details }; }
@@ -45,10 +46,10 @@ export function AuditLogs({ audits }: AuditLogsProps) {
                     } catch(e) {}
 
                     return (
-                        <div key={a.id} className={`bg-app-bg dark:bg-slate-950/40 border rounded-3xl transition-all duration-300 overflow-hidden ${isExpanded ? 'border-indigo-500/50 shadow-xl shadow-indigo-500/5' : 'border-app-border hover:border-slate-400/30'}`}>
+                        <div key={uniqueId} className={`bg-app-bg dark:bg-slate-950/40 border rounded-3xl transition-all duration-300 overflow-hidden ${isExpanded ? 'border-indigo-500/50 shadow-xl shadow-indigo-500/5' : 'border-app-border hover:border-slate-400/30'}`}>
                             {/* Header del Log */}
                             <div 
-                                onClick={() => setExpandedId(isExpanded ? null : a.id)}
+                                onClick={() => setExpandedId(isExpanded ? null : uniqueId)}
                                 className="flex flex-col sm:flex-row sm:items-center justify-between p-5 cursor-pointer group"
                             >
                                 <div className="flex items-center gap-4">
@@ -64,6 +65,16 @@ export function AuditLogs({ audits }: AuditLogsProps) {
                                             </span>
                                             {isCampaign && (
                                                 <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full text-[9px] font-black">CAMPAÑA</span>
+                                            )}
+                                            {details.channel === 'sms' && (
+                                                <span className="px-2 py-0.5 bg-purple-500/10 text-purple-500 border border-purple-500/20 rounded-full text-[9px] font-black flex items-center gap-1">
+                                                    SMS
+                                                </span>
+                                            )}
+                                            {(details.channel === 'whatsapp' || (!details.channel && a.action.includes('REMINDER'))) && (
+                                                <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-full text-[9px] font-black flex items-center gap-1">
+                                                    WhatsApp
+                                                </span>
                                             )}
                                         </div>
                                     </div>
@@ -165,6 +176,43 @@ export function AuditLogs({ audits }: AuditLogsProps) {
                                                         </div>
                                                     ))}
                                                 </div>
+                                            </div>
+                                        </div>
+                                    ) : a.action.includes('REMINDER') ? (
+                                        <div className="bg-app-bg dark:bg-slate-900/40 p-6 rounded-2xl border border-app-border">
+                                            <div className="flex items-center gap-2 mb-5">
+                                                <CheckCircle2 size={16} className="text-cyan-400" />
+                                                <span className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Estado del Recordatorio</span>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="flex flex-col gap-1 p-4 bg-app-card/30 dark:bg-slate-950/30 rounded-xl border border-app-border/50">
+                                                    <span className="text-[9px] font-black text-app-text-muted uppercase tracking-widest">ID del Evento</span>
+                                                    <span className="text-sm font-mono font-bold text-app-text">{details.id || 'N/A'}</span>
+                                                </div>
+                                                <div className="flex flex-col gap-1 p-4 bg-app-card/30 dark:bg-slate-950/30 rounded-xl border border-app-border/50">
+                                                    <span className="text-[9px] font-black text-app-text-muted uppercase tracking-widest">Destinatario</span>
+                                                    <span className="text-sm font-mono font-bold text-app-text">{details.to || 'N/A'}</span>
+                                                </div>
+                                                <div className="flex flex-col gap-1 p-4 bg-app-card/30 dark:bg-slate-950/30 rounded-xl border border-app-border/50">
+                                                    <span className="text-[9px] font-black text-app-text-muted uppercase tracking-widest">Canal</span>
+                                                    <span className={`text-sm font-black uppercase tracking-widest ${details.channel === 'sms' ? 'text-purple-500' : 'text-emerald-500'}`}>{details.channel === 'sms' ? 'SMS' : 'WhatsApp'}</span>
+                                                </div>
+                                                <div className="flex flex-col gap-1 p-4 bg-app-card/30 dark:bg-slate-950/30 rounded-xl border border-app-border/50">
+                                                    <span className="text-[9px] font-black text-app-text-muted uppercase tracking-widest">Tipo de Contenido</span>
+                                                    <span className="text-sm font-bold text-app-text capitalize">{details.type || 'Texto'}</span>
+                                                </div>
+                                                {details.error && (
+                                                    <div className="col-span-1 md:col-span-2 flex flex-col gap-1 p-4 bg-red-500/5 rounded-xl border border-red-500/20">
+                                                        <span className="text-[9px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1"><AlertCircle size={10} /> Error Reportado</span>
+                                                        <span className="text-sm font-mono text-red-400">{details.error}</span>
+                                                    </div>
+                                                )}
+                                                {details.delay && (
+                                                    <div className="col-span-1 md:col-span-2 flex flex-col gap-1 p-4 bg-amber-500/5 rounded-xl border border-amber-500/20">
+                                                        <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1"><AlertCircle size={10} /> Retraso Detectado</span>
+                                                        <span className="text-sm font-mono text-amber-500">Omitido por exceder {details.delay} minutos.</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     ) : (

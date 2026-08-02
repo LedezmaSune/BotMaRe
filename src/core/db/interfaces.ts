@@ -38,6 +38,7 @@ export interface ReminderData {
     repeat: string;
     repeatInterval?: number;
     repeatUnit?: string;
+    channel?: 'whatsapp' | 'sms';
     timestamp: Date;
 }
 

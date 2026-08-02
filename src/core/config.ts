@@ -41,7 +41,10 @@ export async function getAllConfig(): Promise<Record<string, string>> {
         'AI_ENABLED',
         'ENABLE_GROUPS',
         'ALLOWED_GROUPS',
-        'NOTIFY_MODELS_TELEGRAM'
+        'NOTIFY_MODELS_TELEGRAM',
+        'HTTPSMS_API_KEY',
+        'HTTPSMS_FROM_NUMBER',
+        'HTTPSMS_API_URL'
     ];
     
     const merged: Record<string, string> = { ...dbSettings };

@@ -90,6 +90,7 @@ export function PendingList({
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-2">
                                     <span className={`px-2 py-1 text-[10px] font-black uppercase rounded-lg ${r.status === 'failed' || new Date(r.time) < new Date() ? 'bg-red-500/20 text-red-400' : 'bg-background/80 text-app-text-muted'}`}>{r.status === 'failed' ? 'Fallido' : (new Date(r.time) < new Date() ? 'Expirado' : r.status)}</span>
+                                    <span className={`px-2 py-1 text-[10px] font-black uppercase rounded-lg ${r.channel === 'sms' ? 'bg-purple-500/10 text-purple-500' : 'bg-emerald-500/10 text-emerald-500'}`}>{r.channel === 'sms' ? 'SMS' : 'WA'}</span>
                                     {r.mediaPath && <span className="flex items-center gap-1 px-2 py-1 bg-purple-500/10 text-purple-500 text-[10px] font-bold rounded-lg border border-purple-500/20"><Paperclip size={10} /> MEDIA</span>}
                                 </div>
                                 <span className="text-[10px] font-bold tabular-nums text-app-text-muted">{r.time}</span>
@@ -144,7 +145,12 @@ export function PendingList({
                                         className={`hover:bg-app-bg/30 transition-colors ${isPastOrFailed ? 'bg-red-500/5' : ''}`}
                                     >
                                         <td className="px-6 py-4"><p className={`text-xs font-black tabular-nums ${isPastOrFailed ? 'text-red-400' : 'text-app-text'}`}>{date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}</p><p className="text-[10px] text-app-text-muted font-bold">{date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</p></td>
-                                        <td className="px-6 py-4"><p className="text-xs font-bold text-app-text truncate max-w-[120px]">{r.chatId}</p></td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${r.channel === 'sms' ? 'bg-purple-500/10 text-purple-500' : 'bg-emerald-500/10 text-emerald-500'}`}>{r.channel === 'sms' ? 'SMS' : 'WA'}</span>
+                                                <p className="text-xs font-bold text-app-text truncate max-w-[120px]">{r.chatId}</p>
+                                            </div>
+                                        </td>
                                         <td className="px-6 py-4"><div className="flex items-center gap-2">{r.mediaPath && <Paperclip size={10} className="text-purple-400 shrink-0" />}<p className="text-[11px] text-app-text-muted truncate max-w-[200px]">{r.text}</p></div></td>
                                         <td className="px-6 py-4 text-right"><div className="flex items-center justify-end gap-1"><button onClick={() => onEdit(r)} className="p-2 hover:bg-cyan-500/10 text-app-text-muted hover:text-cyan-500 rounded-lg transition-all"><Edit3 size={14} /></button><button onClick={() => onSendNow(r.id)} className="p-2 hover:bg-amber-500/10 text-app-text-muted hover:text-amber-500 rounded-lg transition-all"><Zap size={14} /></button><button onClick={() => onDelete(r.id)} className="p-2 hover:bg-red-500/10 text-red-500/70 rounded-lg transition-all"><Trash2 size={14} /></button></div></td>
                                     </motion.tr>

@@ -9,6 +9,7 @@ import { MessageService } from '../modules/messages/message.service';
 import { ReminderService } from '../modules/reminders/reminder.service';
 import { AIService } from '../modules/ai/ai.service';
 import { MassDiffusionService } from '../modules/messages/diffusion.service';
+import { SmsService } from '../modules/sms/sms.service';
 
 // Controllers
 import { WhatsAppController } from '../modules/messages/whatsapp.controller';
@@ -48,7 +49,8 @@ export function createMainRouter(waClient: WhatsAppClient) {
     const waService = new MessageService(waClient);
     const reminderService = new ReminderService();
     const aiService = new AIService();
-    const diffusionService = new MassDiffusionService(waService as any);
+    const smsService = new SmsService();
+    const diffusionService = new MassDiffusionService(waService as any, smsService);
     
     // Registrar el servicio en el adaptador para que el Bot pueda emitir su estado
     if ((waClient as any).setDiffusionService) {

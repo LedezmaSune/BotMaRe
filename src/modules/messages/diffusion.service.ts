@@ -5,15 +5,16 @@ import { Contact } from '../../types';
 import { processVariables } from '../../utils/variables';
 import { logAudit } from '../../core/memory';
 import { globalEvents, EVENTS } from '../../core/events';
+import { SmsService } from '../sms/sms.service';
 
 export class MassDiffusionService {
     private isProcessing = false;
     private shouldStop = false;
     private currentProgress: { current: number, total: number, percentage: number } | null = null;
 
-    constructor(private waService: MessageService) {}
+    constructor(private waService: MessageService, private smsService: SmsService) {}
 
-    async sendMass(contacts: Contact[], rawMessage: string, mediaFiles?: { path: string, type: string, name: string }[]) {
+    async sendMass(contacts: Contact[], rawMessage: string, mediaFiles?: { path: string, type: string, name: string }[], channel: string = 'whatsapp') {
         if (this.isProcessing) {
              console.warn("[Mass] A mass diffusion is already in progress. Ignoring request.");
              return -1;
@@ -21,7 +22,7 @@ export class MassDiffusionService {
 
         this.shouldStop = false;
         // Run in background
-        this.processQueue(contacts, rawMessage, mediaFiles).catch(err => {
+        this.processQueue(contacts, rawMessage, mediaFiles, channel).catch(err => {
             console.error("[Mass] Fatal error in processQueue:", err);
         });
 
@@ -41,7 +42,7 @@ export class MassDiffusionService {
         return this.currentProgress;
     }
 
-    private async processQueue(contacts: Contact[], rawMessage: string, mediaFiles?: { path: string, type: string, name: string }[]) {
+    private async processQueue(contacts: Contact[], rawMessage: string, mediaFiles?: { path: string, type: string, name: string }[], channel: string = 'whatsapp') {
         this.isProcessing = true;
         
         // Emitir progreso inicial (0%) para que el UI sepa que hemos empezado
@@ -56,10 +57,12 @@ export class MassDiffusionService {
         for (const contact of contacts) {
             // --- VERIFICACIÓN DE CONEXIÓN ---
             // Si perdemos la conexión, esperamos a que el bot se reconecte antes de seguir
-            // para evitar que toda la cola falle en cadena.
-            while (this.waService.getStatus().state !== 'connected') {
-                console.warn("[Mass] Conexión perdida. Pausando cola hasta reconexión...");
-                await new Promise(r => setTimeout(r, 10000)); // Esperar 10s antes de re-verificar
+            // para evitar que toda la cola falle en cadena. Solo aplica si es WhatsApp.
+            if (channel === 'whatsapp') {
+                while (this.waService.getStatus().state !== 'connected') {
+                    console.warn("[Mass] Conexión WA perdida. Pausando cola hasta reconexión...");
+                    await new Promise(r => setTimeout(r, 10000));
+                }
             }
             // --------------------------------
 
@@ -147,11 +150,19 @@ export class MassDiffusionService {
                             new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en envío (60s)')), 60000))
                         ]);
                     } else {
-                        const sendPromise = this.waService.sendMessage(to, personalizedMessage);
-                        await Promise.race([
-                            sendPromise,
-                            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en envío (60s)')), 60000))
-                        ]);
+                        if (channel === 'sms') {
+                            const sendPromise = this.smsService.sendMessage(to, personalizedMessage);
+                            await Promise.race([
+                                sendPromise,
+                                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout SMS en envío (60s)')), 60000))
+                            ]);
+                        } else {
+                            const sendPromise = this.waService.sendMessage(to, personalizedMessage);
+                            await Promise.race([
+                                sendPromise,
+                                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout en envío (60s)')), 60000))
+                            ]);
+                        }
                     }
                 }
 

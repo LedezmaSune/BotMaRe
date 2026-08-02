@@ -111,6 +111,26 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                         <div className={`w-1.5 h-1.5 rounded-full ${status === 'connected' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`}></div>
                         <span className="hidden xs:inline">{status}</span>
                     </div>
+
+                    {settings?.HTTPSMS_FROM_NUMBER && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-indigo-500/20 text-[9px] font-black uppercase tracking-widest bg-app-card/50 text-indigo-400 group relative cursor-help">
+                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></div>
+                            <span className="hidden xs:inline">SMS: {settings.HTTPSMS_FROM_NUMBER.split(',').filter((n: string) => n.trim() !== '').length}</span>
+                            
+                            {/* Tooltip de los números SMS */}
+                            <div className="absolute top-full right-0 mt-2 w-max p-3 bg-[#131B2C] border border-indigo-500/30 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                                <span className="block text-[9px] font-bold text-indigo-300/70 mb-2 uppercase tracking-widest">Rutas SMS (Round-Robin)</span>
+                                <div className="space-y-1">
+                                    {settings.HTTPSMS_FROM_NUMBER.split(',').filter((n: string) => n.trim() !== '').map((num: string, i: number) => (
+                                        <div key={i} className="text-[11px] text-white font-mono flex items-center gap-2">
+                                            <div className="w-1 h-1 rounded-full bg-indigo-400 opacity-50"></div>
+                                            {num.trim()}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </header>
 

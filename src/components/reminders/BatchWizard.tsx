@@ -9,6 +9,8 @@ interface BatchWizardProps {
     setBatchTime: (val: string) => void;
     batchText: string;
     setBatchText: (val: string) => void;
+    batchChannel?: string;
+    setBatchChannel?: (val: 'whatsapp' | 'sms') => void;
     onOpenGroupModal: () => void;
     onClose: () => void;
     onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -23,6 +25,8 @@ export function BatchWizard({
     setBatchTime,
     batchText,
     setBatchText,
+    batchChannel = 'whatsapp',
+    setBatchChannel,
     onOpenGroupModal,
     onClose,
     onUpload,
@@ -71,6 +75,35 @@ export function BatchWizard({
                                 placeholder="Número o ID de grupo..."
                             />
                         </div>
+
+                        {setBatchChannel && (
+                            <div>
+                                <label className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 tracking-widest mb-2 block">Canal de Envío</label>
+                                <div className="flex gap-4">
+                                    <label className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl cursor-pointer transition-all border ${batchChannel === 'whatsapp' ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 font-bold' : 'bg-slate-50 dark:bg-[#131B2C] border-slate-200 dark:border-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800'}`}>
+                                        <input 
+                                            type="radio" 
+                                            name="batchChannel" 
+                                            className="hidden"
+                                            checked={batchChannel === 'whatsapp'} 
+                                            onChange={() => setBatchChannel('whatsapp')}
+                                        />
+                                        <img src="/wa-icon.svg" alt="WA" className="w-4 h-4 opacity-70" onError={(e) => e.currentTarget.style.display='none'} />
+                                        WhatsApp
+                                    </label>
+                                    <label className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl cursor-pointer transition-all border ${batchChannel === 'sms' ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-600 dark:text-indigo-400 font-bold' : 'bg-slate-50 dark:bg-[#131B2C] border-slate-200 dark:border-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800'}`}>
+                                        <input 
+                                            type="radio" 
+                                            name="batchChannel" 
+                                            className="hidden"
+                                            checked={batchChannel === 'sms'} 
+                                            onChange={() => setBatchChannel('sms')}
+                                        />
+                                        SMS (httpSMS)
+                                    </label>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>

@@ -120,13 +120,14 @@ export function useBotData() {
         alert('Limpieza completada.');
     };
 
-    const handleSendMass = async (contacts: string, message: string, media: File[] | File | null) => {
+    const handleSendMass = async (contacts: string, message: string, media: File[] | File | null, channel: string = 'whatsapp') => {
         setIsLoading(true);
         try {
             const contactList = parseContactList(contacts);
             const formData = new FormData();
             formData.append('contacts', JSON.stringify(contactList));
             formData.append('message', message);
+            formData.append('channel', channel);
             if (media) {
                 if (Array.isArray(media)) {
                     media.forEach(f => formData.append('media', f));
@@ -190,7 +191,7 @@ export function useBotData() {
         }
     };
 
-    const handleAddReminder = async (chatId: string, text: string, time: string, media: File[] | File | null, repeat?: string, repeatInterval?: number, repeatUnit?: string, title?: string, mediaPath?: string, mediaType?: string) => {
+    const handleAddReminder = async (chatId: string, text: string, time: string, media: File[] | File | null, repeat?: string, repeatInterval?: number, repeatUnit?: string, title?: string, mediaPath?: string, mediaType?: string, channel?: string) => {
         setIsLoading(true);
         try {
             const formData = new FormData();
@@ -210,11 +211,12 @@ export function useBotData() {
             if (repeatUnit) formData.append('repeatUnit', repeatUnit);
             if (mediaPath) formData.append('mediaPath', mediaPath);
             if (mediaType) formData.append('mediaType', mediaType);
+            if (channel) formData.append('channel', channel);
 
             const url = media ? `${API_BASE}/reminders/with-media` : `${API_BASE}/reminders`;
             const res = await fetch(url, {
                 method: 'POST',
-                body: media ? formData : JSON.stringify({ chatId, text, time, repeat, repeatInterval, repeatUnit, title, mediaPath, mediaType }),
+                body: media ? formData : JSON.stringify({ chatId, text, time, repeat, repeatInterval, repeatUnit, title, mediaPath, mediaType, channel }),
                 headers: media ? {} : { 'Content-Type': 'application/json' }
             });
 

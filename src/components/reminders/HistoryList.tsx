@@ -68,6 +68,7 @@ export function HistoryList({
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-2">
                                     <span className="px-2 py-1 bg-emerald-500/20 text-[10px] font-black text-emerald-400 rounded-lg uppercase tracking-wider">Entregado</span>
+                                    <span className={`px-2 py-1 text-[10px] font-black uppercase rounded-lg ${r.channel === 'sms' ? 'bg-purple-500/10 text-purple-500' : 'bg-emerald-500/10 text-emerald-500'}`}>{r.channel === 'sms' ? 'SMS' : 'WA'}</span>
                                     {r.mediaPath && <span className="flex items-center gap-1 px-2 py-1 bg-purple-500/10 text-purple-500 text-[10px] font-bold rounded-lg border border-purple-500/20"><Paperclip size={10} /> MEDIA</span>}
                                 </div>
                                 <span className="text-[10px] font-bold tabular-nums text-app-text-muted">{r.time}</span>
@@ -118,7 +119,12 @@ export function HistoryList({
                                         className="hover:bg-app-bg/30 transition-colors"
                                     >
                                         <td className="px-6 py-4"><p className="text-xs font-black tabular-nums text-app-text-muted">{date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}</p><p className="text-[10px] text-app-text-muted font-bold">{date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</p></td>
-                                        <td className="px-6 py-4"><p className="text-xs font-bold text-app-text-muted truncate max-w-[120px]">{r.chatId}</p></td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${r.channel === 'sms' ? 'bg-purple-500/10 text-purple-500' : 'bg-emerald-500/10 text-emerald-500'}`}>{r.channel === 'sms' ? 'SMS' : 'WA'}</span>
+                                                <p className="text-xs font-bold text-app-text-muted truncate max-w-[120px]">{r.chatId}</p>
+                                            </div>
+                                        </td>
                                         <td className="px-6 py-4"><div className="flex items-center gap-2">{r.mediaPath && <Paperclip size={10} className="text-purple-400/50 shrink-0" />}<p className="text-[11px] text-app-text-muted/80 truncate max-w-[200px] line-through decoration-slate-400/30">{r.text}</p></div></td>
                                         <td className="px-6 py-4 text-right"><div className="flex items-center justify-end gap-1"><button onClick={() => onDelete(r.id)} className="p-2 hover:bg-red-500/10 text-red-500/70 rounded-lg transition-all"><Trash2 size={14} /></button></div></td>
                                     </motion.tr>

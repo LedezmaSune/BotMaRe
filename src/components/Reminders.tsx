@@ -44,6 +44,7 @@ export function Reminders({ reminders, templates, onAdd, onDelete, initialTime, 
         repeatInterval, setRepeatInterval,
         repeatUnit, setRepeatUnit,
         multipleTimes, setMultipleTimes,
+        channel, setChannel,
         loading, setLoading,
         editingId, setEditingId,
         handleSubmit, handleEdit, handleSendNow, handleAIPerfect,
@@ -52,6 +53,7 @@ export function Reminders({ reminders, templates, onAdd, onDelete, initialTime, 
         batchChatId, setBatchChatId,
         batchTime, setBatchTime,
         batchText, setBatchText,
+        batchChannel, setBatchChannel,
         batchProgress,
         handleBatchUploadAndProcess,
         handleScanFolder
@@ -77,6 +79,8 @@ export function Reminders({ reminders, templates, onAdd, onDelete, initialTime, 
                     setBatchTime={setBatchTime}
                     batchText={batchText}
                     setBatchText={setBatchText}
+                    batchChannel={batchChannel}
+                    setBatchChannel={setBatchChannel}
                     onOpenGroupModal={() => { setShowGroupModal(true); fetchGroups(); }}
                     onClose={() => setShowBatchWizard(false)}
                     onUpload={handleBatchUploadAndProcess}
@@ -121,9 +125,9 @@ export function Reminders({ reminders, templates, onAdd, onDelete, initialTime, 
                                 text={text} setText={setText}
                                 time={time} setTime={setTime}
                                 repeat={repeat} setRepeat={setRepeat}
-                                repeatInterval={repeatInterval} setRepeatInterval={setRepeatInterval}
                                 repeatUnit={repeatUnit} setRepeatUnit={setRepeatUnit}
                                 multipleTimes={multipleTimes} setMultipleTimes={setMultipleTimes}
+                                channel={channel} setChannel={setChannel}
                                 media={media}
                                 setMedia={setMedia}
                                 existingMedia={existingMedia}

@@ -30,7 +30,8 @@ export interface IDatabaseAdapter {
         userId: string, chatId: string, text: string, time: string, 
         mediaPath?: string, mediaType?: string, repeat?: string, 
         repeatInterval?: number, repeatUnit?: string, title?: string, 
-        status?: 'pending' | 'processing' | 'sent' | 'failed'
+        status?: 'pending' | 'processing' | 'sent' | 'failed',
+        channel?: 'whatsapp' | 'sms'
     ): Promise<number>;
     listReminders(userId: string, includeProcessed?: boolean): Promise<any[]>;
     deleteReminder(id: number): Promise<void>;

@@ -12,8 +12,11 @@ export function useRemindersLogic(
         repeatInterval?: number, 
         repeatUnit?: string, 
         title?: string,
+        repeatUnit?: string, 
+        title?: string,
         mediaPath?: string,
-        mediaType?: string
+        mediaType?: string,
+        channel?: string
     ) => Promise<void>,
     initialTime?: string,
     initialId?: number | null,
@@ -42,6 +45,7 @@ export function useRemindersLogic(
     const [repeatInterval, setRepeatInterval] = useState(1);
     const [repeatUnit, setRepeatUnit] = useState('days');
     const [multipleTimes, setMultipleTimes] = useState<string[]>([]);
+    const [channel, setChannel] = useState<'whatsapp' | 'sms'>('whatsapp');
 
     useEffect(() => {
         if (initialTime) setTime(initialTime);
@@ -61,6 +65,7 @@ export function useRemindersLogic(
                 setRepeatInterval(reminderToEdit.repeatInterval || 1);
                 setRepeatUnit(reminderToEdit.repeatUnit || 'days');
                 setExistingMedia(reminderToEdit.mediaPath ? reminderToEdit.mediaPath.split(/[\\/]/).pop() || null : null);
+                setChannel(reminderToEdit.channel || 'whatsapp');
                 setMode('single');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 if (onClearInitialId) onClearInitialId();
@@ -73,6 +78,7 @@ export function useRemindersLogic(
     const [batchChatId, setBatchChatId] = useState('');
     const [batchTime, setBatchTime] = useState('09:00');
     const [batchText, setBatchText] = useState('Adjunto archivo: {ARCHIVO}');
+    const [batchChannel, setBatchChannel] = useState<'whatsapp' | 'sms'>('whatsapp');
     const [batchProgress, setBatchProgress] = useState<{current: number, total: number, filename: string, label?: string, description?: string} | null>(null);
 
     const sortedReminders = [...reminders].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
@@ -108,6 +114,7 @@ export function useRemindersLogic(
                 formData.append('repeat', repeat);
                 formData.append('repeatInterval', String(repeatInterval));
                 formData.append('repeatUnit', repeatUnit);
+                formData.append('channel', channel);
                 if (title) formData.append('title', title);
                 formData.append('media', media[0]);
 
@@ -119,7 +126,7 @@ export function useRemindersLogic(
                 await fetch(`/api/reminders/${editingId}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chatId, text, time, repeat, repeatInterval, repeatUnit, title })
+                    body: JSON.stringify({ chatId, text, time, repeat, repeatInterval, repeatUnit, title, channel })
                 });
             }
             setEditingId(null);
@@ -130,10 +137,10 @@ export function useRemindersLogic(
                 
                 for (const t of multipleTimes) {
                     const nextTimeStr = `${baseDate}T${t}`;
-                    await onAdd(chatId, text, nextTimeStr, media, actualRepeat, 1, 'days', title);
+                    await onAdd(chatId, text, nextTimeStr, media, actualRepeat, 1, 'days', title, undefined, undefined, channel);
                 }
             } else {
-                await onAdd(chatId, text, time, media, repeat, repeatInterval, repeatUnit, title);
+                await onAdd(chatId, text, time, media, repeat, repeatInterval, repeatUnit, title, undefined, undefined, channel);
             }
         }
         setChatId('');
@@ -159,6 +166,7 @@ export function useRemindersLogic(
         setRepeatInterval(r.repeatInterval || 1);
         setRepeatUnit(r.repeatUnit || 'days');
         setExistingMedia(r.mediaPath ? r.mediaPath.split(/[\\/]/).pop() || null : null);
+        setChannel(r.channel || 'whatsapp');
         setMode('single');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -289,7 +297,7 @@ export function useRemindersLogic(
                     });
                     const finalTime = `${file.date}T${batchTime}`;
                     const finalText = batchText.replace('{ARCHIVO}', file.name);
-                    await onAdd(batchChatId, finalText, finalTime, null, 'none', 1, 'days', file.name, file.path);
+                    await onAdd(batchChatId, finalText, finalTime, null, 'none', 1, 'days', file.name, file.path, undefined, batchChannel);
                 }
                 setShowBatchWizard(false);
                 alert(`✅ ${withDate.length} recordatorios programados exitosamente.`);
@@ -314,7 +322,8 @@ export function useRemindersLogic(
                 body: JSON.stringify({
                     globalChatId: batchChatId,
                     globalTime: batchTime,
-                    globalText: batchText
+                    globalText: batchText,
+                    channel: batchChannel
                 })
             });
             const data = await res.json();
@@ -357,12 +366,14 @@ export function useRemindersLogic(
         repeatInterval, setRepeatInterval,
         repeatUnit, setRepeatUnit,
         multipleTimes, setMultipleTimes,
+        channel, setChannel,
         handleSubmit, handleEdit, handleSendNow, handleAIPerfect,
 
         showBatchWizard, setShowBatchWizard,
         batchChatId, setBatchChatId,
         batchTime, setBatchTime,
         batchText, setBatchText,
+        batchChannel, setBatchChannel,
         batchProgress,
         handleBatchUploadAndProcess,
         handleScanFolder

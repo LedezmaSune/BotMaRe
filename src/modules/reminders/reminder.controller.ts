@@ -20,17 +20,17 @@ export class ReminderController {
     });
 
     create = asyncHandler(async (req: Request, res: Response) => {
-        const { chatId, text, time, repeat, repeatInterval, repeatUnit, title, mediaPath, mediaType } = req.body;
-        const id = await this.reminderService.create('owner', chatId, text, time, mediaPath, mediaType, repeat, repeatInterval, repeatUnit, title);
+        const { chatId, text, time, repeat, repeatInterval, repeatUnit, title, mediaPath, mediaType, channel } = req.body;
+        const id = await this.reminderService.create('owner', chatId, text, time, mediaPath, mediaType, repeat, repeatInterval, repeatUnit, title, channel || 'whatsapp');
         res.json({ success: true, id });
     });
 
     createWithMedia = asyncHandler(async (req: Request, res: Response) => {
-        const { chatId, text, time, repeat, repeatInterval, repeatUnit, title } = req.body;
+        const { chatId, text, time, repeat, repeatInterval, repeatUnit, title, channel } = req.body;
         const files = req.files as Express.Multer.File[];
 
         if (!files || files.length === 0) {
-            const id = await this.reminderService.create('owner', chatId, text, time, undefined, undefined, repeat, repeatInterval ? parseInt(repeatInterval) : undefined, repeatUnit, title);
+            const id = await this.reminderService.create('owner', chatId, text, time, undefined, undefined, repeat, repeatInterval ? parseInt(repeatInterval) : undefined, repeatUnit, title, channel || 'whatsapp');
             return res.json({ success: true, id });
         }
 
@@ -50,7 +50,7 @@ export class ReminderController {
             // Solo adjuntamos el texto (caption) al primer archivo para evitar spam si suben muchas fotos
             const textForThisFile = i === 0 ? text : '';
             
-            const id = await this.reminderService.create('owner', chatId, textForThisFile, time, mediaPath, mediaType, repeat, repeatInterval ? parseInt(repeatInterval) : undefined, repeatUnit, title);
+            const id = await this.reminderService.create('owner', chatId, textForThisFile, time, mediaPath, mediaType, repeat, repeatInterval ? parseInt(repeatInterval) : undefined, repeatUnit, title, channel || 'whatsapp');
             createdIds.push(id);
             mediaPaths.push(mediaPath);
         }
@@ -72,7 +72,7 @@ export class ReminderController {
 
     update = asyncHandler(async (req: Request, res: Response) => {
         const id = req.params.id;
-        const { chatId, text, time, repeat, repeatInterval, repeatUnit, title } = req.body;
+        const { chatId, text, time, repeat, repeatInterval, repeatUnit, title, channel } = req.body;
         
         const updateData: any = {
             chatId,
@@ -81,7 +81,8 @@ export class ReminderController {
             repeat: repeat || 'none',
             repeatInterval: repeatInterval ? parseInt(repeatInterval) : undefined,
             repeatUnit: repeatUnit || undefined,
-            title: title || undefined
+            title: title || undefined,
+            channel: channel || 'whatsapp'
         };
 
         const files = req.files as Express.Multer.File[];
@@ -134,7 +135,7 @@ export class ReminderController {
     });
 
     scanFolder = asyncHandler(async (req: Request, res: Response) => {
-        const { globalChatId, globalTime, globalText } = req.body;
+        const { globalChatId, globalTime, globalText, channel } = req.body;
         
         const uploadsDir = path.resolve('data/uploads');
         let fsLib;
@@ -187,7 +188,7 @@ export class ReminderController {
                     let text = globalText || 'Adjunto archivo: {ARCHIVO}';
                     text = text.replace('{ARCHIVO}', file);
 
-                    await createReminder('owner', globalChatId || '', text, timeStr, mediaPath, mediaType, 'none', undefined, undefined, undefined, 'pending');
+                    await createReminder('owner', globalChatId || '', text, timeStr, mediaPath, mediaType, 'none', undefined, undefined, undefined, 'pending', channel || 'whatsapp');
                     added++;
                 }
             }

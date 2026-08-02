@@ -29,59 +29,6 @@ export const Settings: React.FC<SettingsProps> = ({ settings, networkStatus, onU
         setIsSaving(false);
     };
 
-    const handleDownloadBackup = async () => {
-        try {
-            window.location.href = '/api/system/backup';
-        } catch (e) {
-            alert('Error al descargar el respaldo');
-        }
-    };
-
-    const handleRestoreBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        if (!confirm('⚠️ ¿Estás seguro? Esto reemplazará todos tus datos actuales con los del respaldo. No podrás deshacer esta acción.')) {
-            e.target.value = '';
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('backup', file);
-
-        try {
-            const res = await fetch('/api/system/restore', {
-                method: 'POST',
-                body: formData
-            });
-            const data = await res.json();
-            if (data.success) {
-                alert('✅ Respaldo restaurado con éxito. Por favor, reinicia el programa manualmente para aplicar los cambios.');
-                window.location.reload();
-            } else {
-                alert('❌ Error: ' + data.message);
-            }
-        } catch (error) {
-            alert('❌ Error de conexión al restaurar.');
-        } finally {
-            e.target.value = '';
-        }
-    };
-
-    const handleCleanMultimedia = async () => {
-        if (!confirm('¿Deseas eliminar todos los archivos multimedia que ya no están en uso? Esta acción liberará espacio en el disco.')) return;
-        
-        try {
-            const res = await fetch('/api/system/clean-uploads', { method: 'DELETE' });
-            const data = await res.json();
-            if (data.success) {
-                alert('✅ Multimedia antigua eliminada con éxito.');
-            }
-        } catch (e) {
-            alert('❌ Error al conectar con el servidor.');
-        }
-    };
-
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -95,6 +42,45 @@ export const Settings: React.FC<SettingsProps> = ({ settings, networkStatus, onU
             setTimeout(() => setUploadStatus('idle'), 3000);
         };
         reader.readAsText(file);
+    };
+
+    const handleDownloadTemplate = () => {
+        const template = `# Plantilla de Configuración para BotMaRe
+# Llena los valores que necesites e importa este archivo en el Dashboard.
+
+GROQ_API_KEY=
+GEMINI_API_KEY=
+OPENROUTER_API_KEY=
+NVIDIA_API_KEY=
+OPENAI_API_KEY=
+
+AI_ENABLED=true
+AUTORESPONDERS_ENABLED=true
+ENABLE_GROUPS=false
+
+GEMINI_MODEL=gemini-1.5-flash
+OPENAI_MODEL=gpt-4o-mini
+NVIDIA_MODEL=deepseek-ai/deepseek-v4-pro
+
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_ALLOWED_USER_IDS=
+
+SMS_API_KEY=
+SMS_PHONES=
+
+PORT=8001
+DASHBOARD_USER=admin
+DASHBOARD_PASS=admin123
+`;
+        const blob = new Blob([template], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '.env.example';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     };
 
     const sections = [
@@ -133,6 +119,8 @@ export const Settings: React.FC<SettingsProps> = ({ settings, networkStatus, onU
             keys: [
                 { id: 'TELEGRAM_BOT_TOKEN', label: 'Telegram Bot Token', desc: 'De @BotFather' },
                 { id: 'TELEGRAM_ALLOWED_USER_IDS', label: 'ID Usuarios Telegram', desc: 'Separados por comas' },
+                { id: 'SMS_API_KEY', label: 'SMS API Key', desc: 'Clave para la pasarela de SMS' },
+                { id: 'SMS_PHONES', label: 'Teléfonos SMS', desc: 'Separados por comas (Ej. 52123,52456)' },
                 { id: 'PORT', label: 'Puerto Backend', desc: 'Default: 8001' },
             ]
         },
@@ -155,108 +143,49 @@ export const Settings: React.FC<SettingsProps> = ({ settings, networkStatus, onU
             
             {/* Header / Import Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-app-card/40 backdrop-blur-xl border border-app-border rounded-3xl p-8 shadow-xl">
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="p-3 bg-cyan-500/10 rounded-2xl">
-                            <Terminal className="text-cyan-400" size={24} />
+                <div className="lg:col-span-2 bg-gradient-to-br from-app-card/80 to-app-bg border border-app-border rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8 opacity-5">
+                        <Terminal size={150} />
+                    </div>
+                    
+                    <div className="flex items-center gap-4 mb-8 relative z-10">
+                        <div className="p-4 bg-cyan-500/10 rounded-2xl border border-cyan-500/20 shadow-inner">
+                            <Key className="text-cyan-400" size={28} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-white tracking-tight">Configuración Maestra</h2>
-                            <p className="text-app-text-muted text-sm">Gestiona tus API Keys y parámetros del sistema.</p>
+                            <h2 className="text-2xl font-black text-white tracking-tight">Configuración Maestra</h2>
+                            <p className="text-app-text-muted mt-1">Gestiona tus variables de entorno (.env) de forma segura.</p>
                         </div>
                     </div>
                     
-                    <div className="flex flex-wrap gap-4">
+                    <div className="flex flex-wrap items-center gap-4 relative z-10 bg-black/20 p-4 rounded-2xl border border-app-border/50 backdrop-blur-md">
                         <button 
                             onClick={handleSave}
                             disabled={isSaving}
-                            className="flex items-center gap-2 bg-white text-black px-6 py-3 rounded-2xl font-bold text-sm hover:bg-cyan-50 transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                            className="flex-1 sm:flex-none flex justify-center items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white px-8 py-3.5 rounded-xl font-black text-sm shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"
                         >
                             <Save size={18} />
                             {isSaving ? 'Guardando...' : 'Guardar Cambios'}
                         </button>
 
-                        <label className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm border border-app-border cursor-pointer transition-all active:scale-95 ${
-                            uploadStatus === 'success' ? 'bg-green-500/20 border-green-500/50 text-green-400' : 
-                            uploadStatus === 'error' ? 'bg-red-500/20 border-red-500/50 text-red-400' :
-                            'bg-app-card/50 text-white hover:bg-app-card'
+                        <button 
+                            onClick={handleDownloadTemplate}
+                            className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm border-2 bg-app-bg border-app-border text-app-text-muted hover:border-slate-500/50 hover:text-white transition-all active:scale-95"
+                        >
+                            <Download size={18} />
+                            Descargar Plantilla .env
+                        </button>
+
+                        <label className={`flex-1 sm:flex-none flex justify-center items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm border-2 cursor-pointer transition-all active:scale-95 ${
+                            uploadStatus === 'success' ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 
+                            uploadStatus === 'error' ? 'bg-red-500/10 border-red-500/50 text-red-400' :
+                            'bg-app-bg border-app-border text-app-text-muted hover:border-slate-500/50 hover:text-white'
                         }`}>
                             <Upload size={18} />
                             {uploadStatus === 'loading' ? 'Procesando...' : 
                              uploadStatus === 'success' ? '¡Importado!' :
-                             uploadStatus === 'error' ? 'Error al leer' : 'Importar .env'}
+                             uploadStatus === 'error' ? 'Error al leer' : 'Importar archivo .env'}
                             <input type="file" className="hidden" onChange={handleFileUpload} accept=".env,text/plain" />
-                        </label>
-
-                        <div className="flex flex-col gap-2">
-                            <button 
-                                onClick={handleDownloadBackup}
-                                className="flex items-center gap-2 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 px-6 py-3 rounded-2xl font-bold text-sm border border-indigo-500/30 transition-all active:scale-95"
-                            >
-                                <Download size={18} />
-                                Generar Respaldo (en partes)
-                            </button>
-                            <span className="text-[10px] text-indigo-400/50 px-2">Sistema y Multimedia por separado</span>
-                        </div>
-
-                        <label className="flex items-center gap-2 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 px-6 py-3 rounded-2xl font-bold text-sm border border-emerald-500/30 transition-all active:scale-95 cursor-pointer">
-                            <RefreshCw size={18} />
-                            Importar Respaldo
-                            <input type="file" accept=".zip,.enc" className="hidden" onChange={handleRestoreBackup} />
-                        </label>
-
-                        <button 
-                            onClick={handleCleanMultimedia}
-                            className="flex items-center gap-2 bg-red-600/20 hover:bg-red-600/40 text-red-400 px-6 py-3 rounded-2xl font-bold text-sm border border-red-500/30 transition-all active:scale-95"
-                        >
-                            <Trash2 size={18} />
-                            Limpiar Multimedia
-                        </button>
-
-                        <button 
-                            onClick={() => window.location.href = '/api/system/export-readable'}
-                            className="flex items-center gap-2 bg-amber-600/20 hover:bg-amber-600/40 text-amber-400 px-6 py-3 rounded-2xl font-bold text-sm border border-amber-500/30 transition-all active:scale-95"
-                        >
-                            <FileText size={18} />
-                            Exportar Legible (TXT + Multimedia)
-                        </button>
-
-                        <button 
-                            onClick={onResetWhatsApp}
-                            className="flex items-center gap-2 bg-orange-600/20 hover:bg-orange-600/40 text-orange-400 px-6 py-3 rounded-2xl font-bold text-sm border border-orange-500/30 transition-all active:scale-95"
-                        >
-                            <RefreshCw size={18} className="animate-spin-slow" />
-                            Cerrar Sesión WhatsApp (Re-escanear)
-                        </button>
-
-                        <label className="flex items-center gap-2 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 px-6 py-3 rounded-2xl font-bold text-sm border border-emerald-500/30 transition-all active:scale-95 cursor-pointer">
-                            <Upload size={18} />
-                            Subir Multimedia en Lote
-                            <input 
-                                type="file" 
-                                className="hidden" 
-                                multiple 
-                                onChange={async (e) => {
-                                    const files = e.target.files;
-                                    if (!files || files.length === 0) return;
-                                    
-                                    const formData = new FormData();
-                                    for (let i = 0; i < files.length; i++) {
-                                        formData.append('files', files[i]);
-                                    }
-                                    
-                                    try {
-                                        const res = await fetch('/api/system/upload-multiple', {
-                                            method: 'POST',
-                                            body: formData
-                                        });
-                                        const data = await res.json();
-                                        alert(`✅ ${data.message}`);
-                                    } catch (err) {
-                                        alert('❌ Error al subir archivos.');
-                                    }
-                                }}
-                            />
                         </label>
                     </div>
                 </div>

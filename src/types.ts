@@ -12,6 +12,7 @@ export interface Reminder {
     repeat?: string;
     repeatInterval?: number;
     repeatUnit?: string;
+    channel?: 'whatsapp' | 'sms';
 }
 
 export interface Settings {
