@@ -61,6 +61,9 @@ export class Bot {
 
         // Mensajes entrantes hacia el Router
         this.client.onMessage = (data) => {
+            // Notificamos a los plugins globales (si existen)
+            globalEvents.emit(EVENTS.MESSAGE_RECEIVED, data);
+            
             this.router.handleWhatsAppMessage(data, this.client.getSocket());
         };
         

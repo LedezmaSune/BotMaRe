@@ -37,6 +37,21 @@ export class Scheduler {
         
         // Background Google Sheets Sync (evaluated every 1 minute)
         setInterval(() => this.checkSheetsSync(), 60 * 1000);
+
+        // Limpieza de archivos temporales (huérfanos) cada 3 minutos
+        setInterval(() => this.checkTempCleanup(), 3 * 60 * 1000);
+
+        // Purga de archivos antiguos (logs y backups) diariamente
+        setInterval(() => this.checkOldFilesCleanup(), 24 * 60 * 60 * 1000);
+        setTimeout(() => this.checkOldFilesCleanup(), 10000); // 10 segundos tras el arranque
+
+        // Purga de claves pre-compartidas (pre-key) cada 1 hora para evitar crecimiento excesivo de la BD
+        setInterval(() => {
+            if (this.waService) {
+                console.log("[Scheduler] Ejecutando purga programada de pre-keys (1 hora)...");
+                this.waService.purgePreKeys();
+            }
+        }, 60 * 60 * 1000); // 1 hora
     }
 
     static stop() {
@@ -267,6 +282,81 @@ export class Scheduler {
             }
         } catch (error) {
             console.error("[Scheduler] Error in cleanup cycle:", error);
+        }
+    }
+
+    private static async checkTempCleanup() {
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const tempDir = path.resolve('data/temp');
+            if (!fs.existsSync(tempDir)) return;
+            
+            const files = fs.readdirSync(tempDir);
+            const TEN_MINUTES_MS = 10 * 60 * 1000;
+            const now = Date.now();
+            
+            // Querying pending reminders just in case a user scheduled something directly from the temp folder
+            const mediaPaths = await listPendingMediaPaths();
+            const activePaths = new Set(
+                mediaPaths.map((p: string) => path.normalize(p))
+            );
+            
+            let deleted = 0;
+            files.forEach((file: string) => {
+                const fullPath = path.join(tempDir, file);
+                const normalizedFullPath = path.normalize(fullPath);
+                try {
+                    const stats = fs.statSync(fullPath);
+                    // Borrar si tiene más de 10 minutos de antigüedad Y no está en uso activo
+                    if (!activePaths.has(normalizedFullPath) && (now - Math.max(stats.mtimeMs, stats.ctimeMs) > TEN_MINUTES_MS)) {
+                        fs.unlinkSync(fullPath);
+                        deleted++;
+                    }
+                } catch(e) {}
+            });
+            if (deleted > 0) {
+                console.log(`[Scheduler] Limpieza temporal: ${deleted} archivos huérfanos eliminados de data/temp.`);
+            }
+        } catch (error) {
+            console.error("[Scheduler] Error en limpieza temporal:", error);
+        }
+    }
+
+    private static async checkOldFilesCleanup() {
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const now = Date.now();
+            
+            const targets = [
+                { dir: path.resolve('data/logs'), maxAgeMs: 7 * 24 * 60 * 60 * 1000 }, // 7 días para logs
+                { dir: path.resolve('backups'), maxAgeMs: 15 * 24 * 60 * 60 * 1000 } // 15 días para backups
+            ];
+            
+            let totalDeleted = 0;
+            
+            for (const target of targets) {
+                if (!fs.existsSync(target.dir)) continue;
+                
+                const files = fs.readdirSync(target.dir);
+                files.forEach((file: string) => {
+                    const fullPath = path.join(target.dir, file);
+                    try {
+                        const stats = fs.statSync(fullPath);
+                        if (stats.isFile() && (now - Math.max(stats.mtimeMs, stats.ctimeMs) > target.maxAgeMs)) {
+                            fs.unlinkSync(fullPath);
+                            totalDeleted++;
+                        }
+                    } catch (e) {}
+                });
+            }
+            
+            if (totalDeleted > 0) {
+                console.log(`[Scheduler] Purga de archivos antiguos: ${totalDeleted} archivos (logs/backups) eliminados.`);
+            }
+        } catch (error) {
+            console.error("[Scheduler] Error en purga de archivos antiguos:", error);
         }
     }
 

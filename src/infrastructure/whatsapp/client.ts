@@ -25,6 +25,7 @@ export class WhatsAppClient {
     private connectionPromise: Promise<void> | null = null;
     private resolveConnection: (() => void) | null = null;
     private authCloseFn: (() => void) | null = null;
+    private purgePreKeysFn: (() => void) | null = null;
 
     // Callbacks para desacoplar el cliente del resto de la app
     public onStatusUpdate?: (data: { state: string, qr?: string }) => void;
@@ -39,8 +40,9 @@ export class WhatsAppClient {
         });
 
         try {
-            const { state, saveCreds, close: authClose } = await useSQLiteAuthState(path.join('data', 'whatsapp_auth.db'));
+            const { state, saveCreds, purgePreKeys, close: authClose } = await useSQLiteAuthState(path.join('data', 'whatsapp_auth.db'));
             this.authCloseFn = authClose;
+            this.purgePreKeysFn = purgePreKeys;
             const { version } = await fetchLatestBaileysVersion();
 
             this.socket = makeWASocket({
@@ -276,6 +278,12 @@ export class WhatsAppClient {
         } catch (error) {
             console.error('[WhatsAppClient] Error al solicitar Pairing Code:', error);
             throw error;
+        }
+    }
+
+    purgePreKeys() {
+        if (this.purgePreKeysFn) {
+            this.purgePreKeysFn();
         }
     }
 }

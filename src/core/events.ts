@@ -10,5 +10,6 @@ export const EVENTS = {
     DIFFUSION_PROGRESS: 'diffusion:progress',
     DIFFUSION_COMPLETED: 'diffusion:completed',
     DIFFUSION_LOG: 'diffusion:log',
-    SYSTEM_NOTIFY: 'system:notify'
+    SYSTEM_NOTIFY: 'system:notify',
+    MESSAGE_RECEIVED: 'message:received'
 };

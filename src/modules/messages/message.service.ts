@@ -24,6 +24,10 @@ export class MessageService {
         return await this.client.getGroups();
     }
 
+    purgePreKeys() {
+        this.client.purgePreKeys();
+    }
+
     async requestPairingCode(phoneNumber: string) {
         return await this.client.requestPairingCode(phoneNumber);
     }

@@ -15,7 +15,7 @@ import fs from 'fs';
  * Custom SQLite provider for Baileys Authentication State.
  * This drastically improves performance on Windows by avoiding thousands of JSON files.
  */
-export async function useSQLiteAuthState(dbPath: string): Promise<{ state: AuthenticationState, saveCreds: () => Promise<void>, close: () => void }> {
+export async function useSQLiteAuthState(dbPath: string): Promise<{ state: AuthenticationState, saveCreds: () => Promise<void>, purgePreKeys: () => void, close: () => void }> {
     // Ensure data directory exists
     const dir = path.dirname(dbPath);
     if (!fs.existsSync(dir)) {
@@ -85,6 +85,15 @@ export async function useSQLiteAuthState(dbPath: string): Promise<{ state: Authe
         },
         saveCreds: async () => {
             writeData('creds', creds);
+        },
+        purgePreKeys: () => {
+            try {
+                const info = db.prepare("DELETE FROM whatsapp_auth WHERE id LIKE 'pre-key-%'").run();
+                console.log(`[SQLite Auth] Purged ${info.changes} pre-keys to reduce DB size.`);
+                db.prepare("VACUUM").run(); // Optimize DB size after deletion
+            } catch (error: any) {
+                console.error("[SQLite Auth] Error purging pre-keys:", error.message);
+            }
         },
         close: () => {
             try {

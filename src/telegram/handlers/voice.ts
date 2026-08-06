@@ -28,7 +28,11 @@ export async function handleTelegramVoice(ctx: Context) {
 
     // Process with Agent
     await ctx.replyWithChatAction("typing");
-    const agentResponse = await runAgent(userId, text, userId, undefined, true);
+    
+    // Inyectamos contexto para que el agente sepa que está hablando con el Admin en Telegram
+    const adminContext = `\n\n[SISTEMA: Estás hablando con el Administrador principal desde el bot de Telegram. Tienes permisos totales (fullAccess). Si la instrucción en el audio te pide agendar un recordatorio, modificar listas o realizar alguna acción técnica, asume que es una orden directa y usa tus herramientas (tools) inmediatamente para ejecutarla. Confírmale al administrador de forma breve y concisa que la tarea fue realizada.]`;
+    
+    const agentResponse = await runAgent(userId, text + adminContext, userId, undefined, true);
     const needsVoice = /voz|audio|habla|dímelo|escuchar/i.test(text);
 
     if (needsVoice) {
