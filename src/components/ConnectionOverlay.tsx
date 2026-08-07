@@ -114,6 +114,12 @@ export function ConnectionOverlay({ qr, pairingCode, onRequestPairingCode, statu
                                         <div className="text-4xl font-black tracking-[0.2em] text-slate-800 bg-slate-100 py-4 px-6 rounded-2xl border border-slate-200 shadow-inner">
                                             {pairingCode.match(/.{1,4}/g)?.join('-') || pairingCode}
                                         </div>
+                                        <button
+                                            onClick={() => setPhone('')}
+                                            className="text-[10px] text-cyan-600 hover:underline uppercase tracking-wider font-bold"
+                                        >
+                                            🔄 Ingresar otro número
+                                        </button>
                                     </div>
                                 ) : (
                                     <div className="flex flex-col gap-3 w-full animate-in fade-in duration-300">

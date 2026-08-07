@@ -25,6 +25,7 @@ export class WhatsAppClient {
     private connectionPromise: Promise<void> | null = null;
     private resolveConnection: (() => void) | null = null;
     private authCloseFn: (() => void) | null = null;
+    private authClearFn: (() => void) | null = null;
     private purgePreKeysFn: (() => void) | null = null;
 
     // Callbacks para desacoplar el cliente del resto de la app
@@ -33,6 +34,8 @@ export class WhatsAppClient {
 
     async connect() {
         if (this.state === 'connecting') return;
+        this.state = 'connecting';
+        this.onStatusUpdate?.({ state: 'connecting', qr: this.qr || undefined });
         
         // Crear una promesa que se resolverá cuando estemos conectados
         this.connectionPromise = new Promise((resolve) => {
@@ -40,8 +43,9 @@ export class WhatsAppClient {
         });
 
         try {
-            const { state, saveCreds, purgePreKeys, close: authClose } = await useSQLiteAuthState(path.join('data', 'whatsapp_auth.db'));
+            const { state, saveCreds, purgePreKeys, close: authClose, clear: authClear } = await useSQLiteAuthState(path.join('data', 'whatsapp_auth.db'));
             this.authCloseFn = authClose;
+            this.authClearFn = authClear;
             this.purgePreKeysFn = purgePreKeys;
             const { version } = await fetchLatestBaileysVersion();
 
@@ -70,6 +74,7 @@ export class WhatsAppClient {
                 
                 if (qr) {
                     this.qr = qr;
+                    this.state = 'connecting';
                     this.onStatusUpdate?.({ state: 'connecting', qr });
                 }
 
@@ -116,7 +121,12 @@ export class WhatsAppClient {
                             void this.connect();
                         }, delay);
                     } else {
-                        console.log('[Infraestructura WA] Sesión cerrada permanentemente. Se requiere re-escaneo de QR.');
+                        console.log('[Infraestructura WA] Sesión cerrada permanentemente. Generando nuevo código QR...');
+                        this.qr = null;
+                        this.authClearFn?.();
+                        setTimeout(() => {
+                            void this.connect();
+                        }, 1000);
                     }
                 }
             });
@@ -216,6 +226,37 @@ export class WhatsAppClient {
         this.state = 'disconnected';
     }
 
+    async resetSession() {
+        if (this.socket) {
+            try {
+                await this.socket.logout().catch(() => null);
+            } catch (e) {}
+            try {
+                this.socket.end(undefined);
+            } catch (e) {}
+            this.socket = null;
+        }
+
+        if (this.authClearFn) {
+            console.log('[WhatsAppClient] Limpiando credenciales de sesión en SQLite...');
+            try {
+                this.authClearFn();
+            } catch (e) {}
+        }
+
+        if (this.authCloseFn) {
+            console.log('[WhatsAppClient] Cerrando conexión de base de datos de sesión...');
+            try {
+                this.authCloseFn();
+            } catch (e) {}
+            this.authCloseFn = null;
+        }
+
+        this.qr = null;
+        this.state = 'disconnected';
+        this.onStatusUpdate?.({ state: 'disconnected' });
+    }
+
     async getGroups() {
         // Si no está conectado, devolvemos el caché sin intentar la consulta
         if (!this.socket || this.state !== 'connected') {
@@ -263,21 +304,30 @@ export class WhatsAppClient {
 
     async requestPairingCode(phoneNumber: string): Promise<string> {
         if (!this.socket) {
-            throw new Error('Socket no inicializado');
+            throw new Error('El motor de WhatsApp aún se está inicializando. Por favor espera unos segundos.');
         }
+
+        // Limpiar cualquier carácter no numérico
+        let clean = phoneNumber.replace(/\D/g, '');
         
-        // Esperar a que el socket esté listo para pedir el código
-        if (this.state === 'connecting') {
-            await new Promise(resolve => setTimeout(resolve, 2000));
+        // Si el usuario ingresa 10 dígitos (México), agregar prefijo internacional 521
+        if (clean.length === 10) {
+            clean = `521${clean}`;
+        } else if (clean.length === 12 && clean.startsWith('52') && !clean.startsWith('521')) {
+            clean = `521${clean.slice(2)}`;
+        }
+
+        if (clean.length < 10) {
+            throw new Error('Número de teléfono incompleto o inválido.');
         }
 
         try {
-            console.log(`[WhatsAppClient] Solicitando Pairing Code para: ${phoneNumber}`);
-            const code = await this.socket.requestPairingCode(phoneNumber);
+            console.log(`[WhatsAppClient] Solicitando Pairing Code para: ${clean}`);
+            const code = await this.socket.requestPairingCode(clean);
             return code;
-        } catch (error) {
+        } catch (error: any) {
             console.error('[WhatsAppClient] Error al solicitar Pairing Code:', error);
-            throw error;
+            throw new Error(error?.message || 'No se pudo generar el código. Verifica que el número sea correcto o usa el código QR.');
         }
     }
 

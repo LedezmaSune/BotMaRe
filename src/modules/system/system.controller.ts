@@ -58,34 +58,46 @@ export class SystemController {
     resetWhatsApp = asyncHandler(async (req: Request, res: Response) => {
         console.log('[System] Resetting WhatsApp session (Full Logout)...');
         
-        // 1. Desconectar cliente actual
+        // 1. Limpiar credenciales y desconectar socket actual
         if (this.waClient) {
             try {
-                await this.waClient.disconnect();
+                if (typeof (this.waClient as any).resetSession === 'function') {
+                    await (this.waClient as any).resetSession();
+                } else {
+                    await this.waClient.disconnect();
+                }
             } catch (e) {
-                console.warn('[System] Error al desconectar cliente:', e);
+                console.warn('[System] Advertencia al resetear sesión de WhatsApp:', e);
             }
         }
 
-        // 2. Eliminar base de datos de autenticación (SQLite)
+        // 2. Intentar remover archivos remanentes de manera segura (tolerante a bloqueos de SO)
         const authDbPath = path.resolve('data/whatsapp_auth.db');
         if (fs.existsSync(authDbPath)) {
-            console.log('[System] Eliminando base de datos de autenticación...');
             try {
                 fs.unlinkSync(authDbPath);
+                console.log('[System] Archivo de base de datos de autenticación eliminado.');
             } catch (e) {
-                console.error('[System] No se pudo eliminar el archivo. Puede que esté bloqueado:', e);
-                return res.status(500).json({ success: false, error: 'El archivo de sesión está bloqueado. Por favor, reinicia el servidor manualmente.' });
+                console.log('[System] Base de datos vaciada mediante SQLite (archivo físico retenido temporalmente por el SO).');
             }
         }
 
-        // 3. Re-inicializar cliente (esto generará un nuevo QR)
-        if (this.waClient) {
-            console.log('[System] Re-inicializando cliente para nuevo QR...');
-            void this.waClient.connect();
+        const legacyDir = path.resolve('auth_info_baileys');
+        if (fs.existsSync(legacyDir)) {
+            try {
+                fs.rmSync(legacyDir, { recursive: true, force: true });
+            } catch (e) {}
         }
 
-        res.json({ success: true, message: 'Sesión cerrada. Escanea el nuevo QR en el dashboard.' });
+        // 3. Re-inicializar cliente para generar el nuevo código QR inmediatamente
+        if (this.waClient) {
+            console.log('[System] Re-inicializando cliente para nuevo QR...');
+            setTimeout(() => {
+                void this.waClient.connect();
+            }, 300);
+        }
+
+        res.json({ success: true, message: 'Sesión reiniciada con éxito. Generando nuevo código QR en el dashboard...' });
     });
     checkUpdates = asyncHandler(async (req: Request, res: Response) => {
         const result = await this.updateService.checkUpdate();

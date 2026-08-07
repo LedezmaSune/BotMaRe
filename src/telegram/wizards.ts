@@ -60,12 +60,12 @@ export function registerWizards(bot: Bot, diffusionService: MassDiffusionService
       if (state.step === 'WAITING_NUMBERS') {
         state.numbers = ctx.message.text;
         state.step = 'WAITING_MESSAGE';
-        await ctx.reply("📝 ¡Entendido! Ahora, escribe el mensaje del recordatorio:\n_(Si deseas cancelar, escribe /cancelar)_", { parse_mode: "Markdown" });
+        await ctx.reply("📝 *Paso 2/3: Contenido del Recordatorio*\n\n¡Entendido! Ahora escribe el texto del recordatorio que se enviará:\n\n💡 _(Si deseas cancelar, escribe `/cancelar`)_", { parse_mode: "Markdown" });
         return;
       } else if (state.step === 'WAITING_MESSAGE') {
         state.message = ctx.message.text;
         state.step = 'WAITING_DATE';
-        await ctx.reply("📅 ¿Para qué fecha y hora (CDMX)?\nEscribe en formato `dd/mm/aaaa HH:MM` (Ej. 30/12/2026 15:30) o con am/pm (Ej. 30/12/2026 03:30 pm).\nTambién puedes escribir `ahora`.", { parse_mode: "Markdown" });
+        await ctx.reply("⏰ *Paso 3/3: Fecha y Hora de Envío*\n\n¿Cuándo deseas enviarlo? (Zona Horaria CDMX 🇲🇽)\n\n🗓️ Formato: `dd/mm/aaaa HH:MM` (Ej: `30/12/2026 15:30` o `03:30 pm`)\n⚡ O escribe `ahora` para enviarlo de inmediato.", { parse_mode: "Markdown" });
         return;
       } else if (state.step === 'WAITING_DATE') {
         let finalDateStr = "";
@@ -78,7 +78,7 @@ export function registerWizards(bot: Bot, diffusionService: MassDiffusionService
                parsed = DateTime.fromFormat(ctx.message.text.trim(), "dd/MM/yyyy hh:mm a", { zone: 'America/Mexico_City' });
            }
            if (!parsed.isValid) {
-              await ctx.reply("⚠️ Formato inválido. Usa `dd/mm/aaaa HH:MM` (ej. 30/12/2026 15:30) o con am/pm (ej. 30/12/2026 03:30 pm), o escribe `ahora`.", { parse_mode: "Markdown" });
+              await ctx.reply("⚠️ *Formato de fecha u hora no reconocido*\n\nPor favor usa el formato `dd/mm/aaaa HH:MM` (ej: `30/12/2026 15:30`) o escribe `ahora`.", { parse_mode: "Markdown" });
               return;
            }
            finalDateStr = parsed.toFormat("yyyy-MM-dd'T'HH:mm");
@@ -87,20 +87,20 @@ export function registerWizards(bot: Bot, diffusionService: MassDiffusionService
         state.date = finalDateStr;
         
         let kb = new InlineKeyboard()
-          .text("No se repite", "rep_none").row()
-          .text("Cada hora", "rep_hourly").row()
-          .text("Diariamente", "rep_daily").row()
-          .text("Entre semana (lun-vie)", "rep_weekdays").row()
-          .text("Semanalmente", "rep_weekly").row()
-          .text("Mensualmente", "rep_monthly").row()
-          .text("Anual", "rep_yearly");
+          .text("🚫 Sin repetición (Una vez)", "rep_none").row()
+          .text("⏱️ Cada hora", "rep_hourly").row()
+          .text("☀️ Diariamente", "rep_daily").row()
+          .text("💼 Días laborables (Lun - Vie)", "rep_weekdays").row()
+          .text("📅 Semanalmente", "rep_weekly").row()
+          .text("🗓️ Mensualmente", "rep_monthly").row()
+          .text("🎂 Anualmente", "rep_yearly");
 
-        await ctx.reply("🔁 Por último, ¿con qué frecuencia se repetirá?", { reply_markup: kb });
+        await ctx.reply("🔁 *Frecuencia de Repetición*\n\n¿Con qué frecuencia se repetirá este recordatorio?", { reply_markup: kb, parse_mode: "Markdown" });
         return;
       } else if (state.step === 'WAITING_DIFFUSION_NUMBERS') {
         state.numbers = ctx.message.text;
         state.step = 'WAITING_DIFFUSION_MESSAGE';
-        await ctx.reply("📝 ¡Excelente! Ahora escribe el mensaje masivo que vas a enviar:\n_(Si deseas cancelar, escribe /cancelar)_", { parse_mode: "Markdown" });
+        await ctx.reply("📝 *Paso 2/2: Mensaje de Difusión*\n\n¡Excelente! Escribe ahora el mensaje masivo que deseas transmitir:\n\n💡 _(Si deseas cancelar, escribe `/cancelar`)_", { parse_mode: "Markdown" });
         return;
       } else if (state.step === 'WAITING_DIFFUSION_MESSAGE') {
         const rawMessage = ctx.message.text;
@@ -109,12 +109,12 @@ export function registerWizards(bot: Bot, diffusionService: MassDiffusionService
         wizardState.delete(userId);
 
         if (numbers.length === 0) {
-           await ctx.reply("⚠️ No se detectaron números válidos. Difusión cancelada.");
+           await ctx.reply("⚠️ *Sin números válidos*\n\nNo se detectaron destinatarios válidos. La campaña de difusión fue cancelada.", { parse_mode: "Markdown" });
            return;
         }
 
         const contacts = numbers.map(n => ({ number: n, name: "Usuario" }));
-        await ctx.reply(`🚀 Iniciando difusión masiva para ${contacts.length} contactos...`);
+        await ctx.reply(`🚀 *¡Despegando Campaña Masiva!*\n\nEnviando difusión a *${contacts.length}* destinatarios...`, { parse_mode: "Markdown" });
         diffusionService.sendMass(contacts, rawMessage).catch(console.error);
         return;
       } else if (state.step === 'WAITING_LISTA_ID') {

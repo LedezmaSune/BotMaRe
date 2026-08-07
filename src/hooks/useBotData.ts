@@ -78,6 +78,15 @@ export function useBotData() {
     }, [settings, networkStatus, groups.length]);
 
     useEffect(() => {
+        // Consultar el estado inicial inmediatamente vía REST
+        fetch(`${API_BASE}/whatsapp/status`)
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data?.state) setStatus(data.state);
+                if (data?.qr) setQr(data.qr);
+            })
+            .catch(() => null);
+
         const socket = io(SOCKET_URL);
         socket.on('status', (newStatus: ConnectionState) => {
             setStatus(newStatus);
@@ -86,7 +95,10 @@ export function useBotData() {
                 setPairingCode(null);
             }
         });
-        socket.on('qr', (newQr: string) => setQr(newQr));
+        socket.on('qr', (newQr: string) => {
+            setQr(newQr);
+            setStatus('connecting');
+        });
         
         socket.on('diffusion_progress', (data) => {
             setDiffusionProgress(data);
@@ -110,9 +122,19 @@ export function useBotData() {
         void fetchData(activeTab);
         const interval = setInterval(() => {
             void fetchData(activeTab);
-        }, 30000); // Actualizar cada 30 segundos en lugar de 5 para evitar saturación
+            // Si no está conectado, mantener sincronizado el QR
+            if (status !== 'connected') {
+                fetch(`${API_BASE}/whatsapp/status`)
+                    .then(res => res.ok ? res.json() : null)
+                    .then(data => {
+                        if (data?.state) setStatus(data.state);
+                        if (data?.qr) setQr(data.qr);
+                    })
+                    .catch(() => null);
+            }
+        }, 30000);
         return () => clearInterval(interval);
-    }, [activeTab, fetchData]);
+    }, [activeTab, fetchData, status]);
 
     const handleCleanUploads = async () => {
         if (!confirm('¿Deseas limpiar archivos temporales no utilizados?')) return;

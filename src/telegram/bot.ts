@@ -67,7 +67,14 @@ export function initTelegramBot(
   registerWizards(bot, diffusionService);
 
   // ── INICIALIZACIÓN ─────────────────────────────────────────────────────────────────
-  bot.catch((err) => console.error("[Grammy Error]", err));
+  bot.catch((err: any) => {
+    const msg = err?.error?.message || err?.message || String(err);
+    if (msg.includes("ETIMEDOUT") || msg.includes("Network request")) {
+      console.warn("[Telegram] Advertencia de conexión de red (Timeout con api.telegram.org). Reconectando automáticamente...");
+    } else {
+      console.error("[Grammy Error]", err);
+    }
+  });
 
   bot.start({
     onStart: (botInfo) => {

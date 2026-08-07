@@ -7,8 +7,8 @@ import { BackupService } from "../modules/system/backup.service";
 import { wizardState } from "./state";
 import os from "os";
 
-export function registerCommands(bot: Bot, waService: WhatsAppService, diffusionService: MassDiffusionService) {
-  bot.api.setMyCommands([
+async function syncTelegramCommands(bot: Bot, maxRetries = 3, delayMs = 3500) {
+  const commandsList = [
     { command: "start", description: "🦊 Iniciar y ver panel" },
     { command: "dashboard", description: "🌌 Ver panel de control web" },
     { command: "recordatorios", description: "📅 Gestión de recordatorios" },
@@ -27,7 +27,23 @@ export function registerCommands(bot: Bot, waService: WhatsAppService, diffusion
     { command: "setadmin", description: "👑 Añadir número admin de WhatsApp" },
     { command: "backup", description: "📦 Generar respaldo manual (ZIP)" },
     { command: "ayuda", description: "❓ Ver la guía de comandos" },
-  ]).catch(console.error);
+  ];
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await bot.api.setMyCommands(commandsList);
+      return;
+    } catch (err: any) {
+      if (attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
+    }
+  }
+}
+
+export function registerCommands(bot: Bot, waService: WhatsAppService, diffusionService: MassDiffusionService) {
+  // Sincronización de comandos en segundo plano con reintentos silenciosos
+  syncTelegramCommands(bot).catch(() => null);
 
   bot.command("start", async (ctx) => {
     const keyboard = new InlineKeyboard()
@@ -146,14 +162,14 @@ export function registerCommands(bot: Bot, waService: WhatsAppService, diffusion
       .text("➕ Crear Nuevo", "new_reminder")
       .row()
       .text("🗑️ Eliminar", "delete_reminder");
-    await ctx.reply("📅 *Gestión de Recordatorios*", { reply_markup: keyboard, parse_mode: "Markdown" });
+    await ctx.reply("📅 *Centro de Gestión de Recordatorios*\n\nSelecciona una opción para administrar tus alertas programadas de WhatsApp:", { reply_markup: keyboard, parse_mode: "Markdown" });
   });
 
   bot.command(["actualizar", "update"], async (ctx) => {
     const keyboard = new InlineKeyboard()
       .text("🔍 Buscar Actualización", "update_check").row()
       .text("⬆️ Aplicar Actualización", "update_apply");
-    await ctx.reply("🔄 *Centro de Actualizaciones*\nVerifica si hay una nueva versión disponible en GitHub.", { reply_markup: keyboard, parse_mode: "Markdown" });
+    await ctx.reply("🔄 *Centro de Actualizaciones de BotMaRe*\n\nVerifica y aplica las últimas funciones y mejoras desde GitHub:", { reply_markup: keyboard, parse_mode: "Markdown" });
   });
 
   bot.command(["tunel", "tunnel"], async (ctx) => {
@@ -161,12 +177,12 @@ export function registerCommands(bot: Bot, waService: WhatsAppService, diffusion
     const tunnel = TunnelService.getInstance();
     const currentUrl = tunnel.getUrl();
     const statusText = currentUrl
-      ? `🟢 *Túnel Activo*\n🔗 ${currentUrl}`
-      : `🔴 *Túnel Inactivo*\nNo hay túnel en ejecución.`;
+      ? `🟢 *Túnel Activo*\n🔗 \`${currentUrl}\``
+      : `🔴 *Túnel Inactivo*\nNo hay túnel en ejecución en este momento.`;
     const keyboard = new InlineKeyboard()
       .text("🔄 Reiniciar Túnel", "tunnel_restart").row()
       .text("⏹️ Detener Túnel", "tunnel_stop");
-    await ctx.reply(`🌐 *Cloudflare Tunnel*\n\n${statusText}`, { reply_markup: keyboard, parse_mode: "Markdown" });
+    await ctx.reply(`🌐 *Cloudflare Tunnel (Dominio Público)*\n\n${statusText}`, { reply_markup: keyboard, parse_mode: "Markdown" });
   });
 
   bot.command(["ssh", "tmate"], async (ctx) => {
@@ -191,27 +207,27 @@ export function registerCommands(bot: Bot, waService: WhatsAppService, diffusion
     
     if (tailscaleIp) {
         const port = process.env.PORT || 8000;
-        await ctx.reply(`🛡️ *Red Privada Activa (Tailscale)*\n\nEl dispositivo está conectado a la malla.\n\n🌐 *Enlace Directo y Seguro:*\n\`http://${tailscaleIp}:${port}\`\n\n_Solo accesible para dispositivos en tu cuenta de Tailscale._`, { parse_mode: "Markdown" });
+        await ctx.reply(`🛡️ *Red Privada Activa (Tailscale)*\n\nEl dispositivo está conectado a la malla.\n\n🌐 *Enlace Directo y Seguro:*\n\`http://${tailscaleIp}:${port}\`\n\n_Solo accesible para dispositivos autorizados en tu cuenta de Tailscale._`, { parse_mode: "Markdown" });
     } else {
-        await ctx.reply(`🔴 *Tailscale Inactivo o no detectado*\n\nNo se encontró una IP de red privada (100.x.x.x).\n\nPara configurarlo:\n1. Descarga la app **Tailscale** en este dispositivo.\n2. Inicia sesión y activa el VPN.\n3. Vuelve a intentar el comando.`, { parse_mode: "Markdown" });
+        await ctx.reply(`🔴 *Tailscale Inactivo o no detectado*\n\nNo se encontró una IP de red privada (100.x.x.x).\n\nPara configurarlo:\n1. 📲 Descarga la app **Tailscale** en este dispositivo.\n2. 🔑 Inicia sesión y activa el VPN.\n3. 🔄 Vuelve a intentar el comando.`, { parse_mode: "Markdown" });
     }
   });
 
   bot.command("delreminder", async (ctx) => {
     const args = ctx.message?.text.split(" ").slice(1);
-    if (!args || args.length === 0) return ctx.reply("⚠️ Proporciona el ID. Ejemplo: `/delreminder 5`", { parse_mode: "Markdown" });
+    if (!args || args.length === 0) return ctx.reply("⚠️ *Falta el ID del recordatorio*\n\nEjemplo: `/delreminder 5`", { parse_mode: "Markdown" });
     const id = parseInt(args[0]);
-    if (isNaN(id)) return ctx.reply("⚠️ ID inválido.");
+    if (isNaN(id)) return ctx.reply("⚠️ *ID Inválido*. Debe ser un número entero.");
     await deleteReminder(id);
-    await ctx.reply(`✅ Recordatorio ${id} eliminado.`);
+    await ctx.reply(`✅ *Recordatorio #${id} eliminado exitosamente.*`, { parse_mode: "Markdown" });
   });
 
   bot.command("detenermasivo", async (ctx) => {
     const stopped = diffusionService.stopProcessing();
     if (stopped) {
-      await ctx.reply("🚨 *Deteniendo Campaña...*\n\nSe ha solicitado la cancelación del envío masivo en curso. El bot detendrá la cola después de terminar el mensaje actual.", { parse_mode: "Markdown" });
+      await ctx.reply("🚨 *Deteniendo Campaña Masiva...*\n\nSe ha cancelado la cola del envío masivo en curso. El bot finalizará el mensaje actual y se detendrá.", { parse_mode: "Markdown" });
     } else {
-      await ctx.reply("ℹ️ *Sin Actividad*\n\nNo hay ninguna campaña de difusión masiva activa en este momento.", { parse_mode: "Markdown" });
+      await ctx.reply("ℹ️ *Sin Campaña Activa*\n\nNo hay ninguna difusión masiva en ejecución en este momento.", { parse_mode: "Markdown" });
     }
   });
 
@@ -225,11 +241,11 @@ export function registerCommands(bot: Bot, waService: WhatsAppService, diffusion
       const numbers = numbersStr.split(",").map(n => n.trim()).filter(n => n);
 
       if (numbers.length === 0 || !rawMessage) {
-        return ctx.reply("⚠️ Faltan números o mensaje.");
+        return ctx.reply("⚠️ *Faltan datos*. Debes proporcionar los números y el mensaje separados por `|`.\n\nEjemplo: `/masivo 521XXXXXXXXXX, 521YYYYYYYYYY | Hola a todos`", { parse_mode: "Markdown" });
       }
 
       const contacts = numbers.map(n => ({ number: n, name: "Usuario" }));
-      await ctx.reply(`🚀 Iniciando difusión masiva para ${contacts.length} contactos...`);
+      await ctx.reply(`🚀 *¡Iniciando Difusión Masiva!*\n\nEnviando mensaje a *${contacts.length}* contactos...`, { parse_mode: "Markdown" });
       diffusionService.sendMass(contacts, rawMessage).catch(console.error);
       return;
     }
@@ -237,13 +253,13 @@ export function registerCommands(bot: Bot, waService: WhatsAppService, diffusion
     const userId = ctx.from?.id.toString();
     if (userId) {
       wizardState.set(userId, { step: 'WAITING_DIFFUSION_NUMBERS' });
-      await ctx.reply("📣 ¡Vamos a enviar una Difusión Masiva paso a paso!\n\n¿A qué números o grupos se enviará?\n_(Escribe los números separados por coma. Ej: 10 dígitos o 521XXXXXXXX)_", { parse_mode: "Markdown" });
+      await ctx.reply("📣 *Campaña de Difusión Masiva*\n\n📱 *Paso 1/2: Lista de Destinatarios*\n\n¿A qué números o grupos se enviará el mensaje?\n\n💡 _Escribe los números separados por coma (Ej: 10 dígitos o 521XXXXXXXXXX) o escribe `/cancelar` para salir._", { parse_mode: "Markdown" });
     }
   });
 
   bot.command("cerebro", async (ctx) => {
     const settings = await getSettings() as any;
-    const text = `🧠 *Cerebro Actual*\n\n*Nombre:* ${settings.bot_name}\n\n*Prompt:*\n_${settings.system_prompt}_\n\n*Reglas:*\n_${settings.possible_responses}_\n\n💡 _Para editar, usa:_ \`/setname\`, \`/setprompt\`, \`/setrules\``;
+    const text = `🧠 *Configuración del Cerebro IA*\n\n🤖 *Nombre:* \`${settings.bot_name}\`\n\n📌 *Prompt del Sistema:*\n_${settings.system_prompt}_\n\n📋 *Reglas de Respuesta:*\n_${settings.possible_responses}_\n\n💡 _Para editar usa:_ \`/setname\`, \`/setprompt\`, \`/setrules\``;
     await ctx.reply(text, { parse_mode: "Markdown" });
   });
 

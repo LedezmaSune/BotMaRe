@@ -29,7 +29,12 @@ export class NotificationService {
                     reply_markup: options?.reply_markup
                 });
             } catch (error: any) {
-                console.error(`[NotificationService] Error enviando notificación a ${id}:`, error.message);
+                const errMsg = error?.message || String(error);
+                if (errMsg.includes("ETIMEDOUT") || errMsg.includes("Network request")) {
+                    console.warn(`[NotificationService] Timeout de red al enviar notificación a Telegram (${id}). Se reintentará en el siguiente ciclo.`);
+                } else {
+                    console.error(`[NotificationService] Error enviando notificación a ${id}:`, errMsg);
+                }
             }
         }
     }

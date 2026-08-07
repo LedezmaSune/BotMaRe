@@ -289,10 +289,10 @@ export function registerCallbacks(bot: Bot, waService: WhatsAppService) {
       await ctx.answerCallbackQuery();
     } else if (data === "new_reminder") {
       wizardState.set(userId, { step: 'WAITING_NUMBERS' });
-      await ctx.reply("📲 ¡Vamos a crear un recordatorio paso a paso!\n\n¿Para quién es?\n_(Escribe el número de WhatsApp, Ej: 10 dígitos o 521XXXXXXXX. Usa comas para múltiples números)_", { parse_mode: "Markdown" });
+      await ctx.reply("📲 *Crear Recordatorio Programado*\n\n📱 *Paso 1/3: Destinatarios*\n\n¿A qué número(s) de WhatsApp deseas enviarlo?\n\n💡 _Escribe los números a 10 dígitos separados por comas (Ej: `521XXXXXXXXXX, 521YYYYYYYYYY`) o `/cancelar` para salir._", { parse_mode: "Markdown" });
       await ctx.answerCallbackQuery();
     } else if (data === "delete_reminder") {
-      await ctx.reply("Para eliminar un recordatorio, usa el botón de 'Eliminar ID' en la lista de 'Ver Activos', o usa el comando: `/delreminder ID`", { parse_mode: "Markdown" });
+      await ctx.reply("🗑️ *Eliminar Recordatorio*\n\nPara eliminar una alerta programada:\n• Toca el botón *'Eliminar ID'* directamente en la lista de 📋 *Ver Activos*.\n• O envía el comando rápido: `/delreminder <ID>`", { parse_mode: "Markdown" });
       await ctx.answerCallbackQuery();
     }
 

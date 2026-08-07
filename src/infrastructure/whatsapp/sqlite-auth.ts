@@ -15,7 +15,7 @@ import fs from 'fs';
  * Custom SQLite provider for Baileys Authentication State.
  * This drastically improves performance on Windows by avoiding thousands of JSON files.
  */
-export async function useSQLiteAuthState(dbPath: string): Promise<{ state: AuthenticationState, saveCreds: () => Promise<void>, purgePreKeys: () => void, close: () => void }> {
+export async function useSQLiteAuthState(dbPath: string): Promise<{ state: AuthenticationState, saveCreds: () => Promise<void>, purgePreKeys: () => void, close: () => void, clear: () => void }> {
     // Ensure data directory exists
     const dir = path.dirname(dbPath);
     if (!fs.existsSync(dir)) {
@@ -99,6 +99,15 @@ export async function useSQLiteAuthState(dbPath: string): Promise<{ state: Authe
             try {
                 db.close();
             } catch (e) {}
+        },
+        clear: () => {
+            try {
+                db.prepare("DELETE FROM whatsapp_auth").run();
+                db.prepare("VACUUM").run();
+                console.log("[SQLite Auth] Base de datos de autenticación limpiada por completo.");
+            } catch (e: any) {
+                console.error("[SQLite Auth] Error al vaciar tabla de autenticación:", e.message);
+            }
         }
     };
 }
