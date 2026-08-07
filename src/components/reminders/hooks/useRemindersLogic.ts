@@ -12,8 +12,6 @@ export function useRemindersLogic(
         repeatInterval?: number, 
         repeatUnit?: string, 
         title?: string,
-        repeatUnit?: string, 
-        title?: string,
         mediaPath?: string,
         mediaType?: string,
         channel?: string

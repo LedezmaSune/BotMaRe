@@ -19,6 +19,7 @@ export class PluginService {
     private plugins: Map<string, any>;
     private metadata: Map<string, PluginMetadata>;
     private waService: MessageService | null = null;
+    private apiKeysConfig: any = { APIs: {}, APIKeys: {} };
     private static instance: PluginService;
 
     private constructor() {
@@ -61,6 +62,24 @@ export class PluginService {
         this.plugins.clear();
         this.metadata.clear();
         
+        // Cargar configuración global de APIs si existe
+        const apiKeysPath = path.resolve(process.cwd(), 'data/api-keys.json');
+        if (fs.existsSync(apiKeysPath)) {
+            try {
+                const config = JSON.parse(fs.readFileSync(apiKeysPath, 'utf8'));
+                if (config.APIKeys) {
+                    for (const [provider, keys] of Object.entries(config.APIKeys)) {
+                        if (Array.isArray(keys) && keys.length > 0) {
+                            config.APIKeys[provider] = keys[Math.floor(Math.random() * keys.length)];
+                        }
+                    }
+                }
+                this.apiKeysConfig = config;
+            } catch (error) {
+                console.error('[PluginService] Error cargando api-keys.json:', error);
+            }
+        }
+        
         if (!fs.existsSync(this.pluginsDir)) return;
 
         const files = fs.readdirSync(this.pluginsDir).filter(f => f.endsWith('.js'));
@@ -94,6 +113,7 @@ export class PluginService {
                 setTimeout,
                 clearTimeout,
                 axios: axios,
+                global: this.apiKeysConfig,
                 module: { exports: {} },
                 exports: {}
             };
@@ -164,6 +184,12 @@ export class PluginService {
         const api = {
             reply: async (text: string) => await this.waService?.sendMessage(ctx.from, text),
             sendTo: async (jid: string, text: string) => await this.waService?.sendMessage(jid, text),
+            sendMedia: async (url: string, caption?: string, mediaType: 'image' | 'document' | 'video' | 'audio' = 'image') => {
+                if (this.waService) {
+                    return await this.waService.sendMediaFromUrl(ctx.from, url, caption, mediaType);
+                }
+            },
+            getPlugins: () => this.getPlugins()
         };
 
         for (const [id, plugin] of this.plugins.entries()) {

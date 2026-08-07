@@ -125,6 +125,7 @@ export function Reminders({ reminders, templates, onAdd, onDelete, initialTime, 
                                 text={text} setText={setText}
                                 time={time} setTime={setTime}
                                 repeat={repeat} setRepeat={setRepeat}
+                                repeatInterval={repeatInterval} setRepeatInterval={setRepeatInterval}
                                 repeatUnit={repeatUnit} setRepeatUnit={setRepeatUnit}
                                 multipleTimes={multipleTimes} setMultipleTimes={setMultipleTimes}
                                 channel={channel} setChannel={setChannel}

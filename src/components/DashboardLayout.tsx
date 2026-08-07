@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users, BookOpen, ShieldAlert, Shield, RefreshCw, Database, Webhook, Briefcase, Activity } from 'lucide-react';
+import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users, BookOpen, ShieldAlert, Shield, RefreshCw, Database, Webhook, Briefcase, Activity, Puzzle } from 'lucide-react';
 
 import { ConnectionOverlay } from '@/components/ConnectionOverlay';
 import { ThemeToggle, UpdateChecker, AIToggle, AutorespondersToggle, SheetsToggle, GlobalClock } from '@/components/StatusHeader';
@@ -18,19 +18,20 @@ const routes: Array<{ path: string; icon: any; label: string; id: TabId }> = [
     { path: '/scheduling', icon: Bell, label: 'Recordatorios', id: 'scheduling' },
     { path: '/calendar', icon: CalendarDays, label: 'Calendario', id: 'calendar' },
     { path: '/templates', icon: LayoutIcon, label: 'Plantillas', id: 'templates' },
-    { path: '/autoresponders', icon: Menu, label: 'Menús Rápidos', id: 'autoresponders' as TabId },
+    { path: '/autoresponders', icon: Menu, label: 'Menús Rápidos', id: 'autoresponders' },
     { path: '/groups', icon: Users, label: 'Grupos', id: 'groups' },
     { path: '/personality', icon: Brain, label: 'Cerebro IA', id: 'personality' },
-    { path: '/access', icon: Shield, label: 'Listas de Acceso', id: 'access' as TabId },
-    { path: '/support', icon: ShieldAlert, label: 'Soporte', id: 'support' as TabId },
-    { path: '/crm', icon: Briefcase, label: 'CRM y Etiquetas', id: 'crm' as TabId },
-    { path: '/sheets', icon: Database, label: 'Google Sheets', id: 'sheets' as TabId },
-    { path: '/webhooks', icon: Webhook, label: 'Webhooks 🚧', id: 'webhooks' as TabId },
+    { path: '/access', icon: Shield, label: 'Listas de Acceso', id: 'access' },
+    { path: '/support', icon: ShieldAlert, label: 'Soporte', id: 'support' },
+    { path: '/crm', icon: Briefcase, label: 'CRM y Etiquetas', id: 'crm' },
+    { path: '/sheets', icon: Database, label: 'Google Sheets', id: 'sheets' },
+    { path: '/plugins', icon: Puzzle, label: 'Plugins JS', id: 'plugins' },
+    { path: '/webhooks', icon: Webhook, label: 'Webhooks 🚧', id: 'webhooks' },
     { path: '/settings', icon: SettingsIcon, label: 'Configuración', id: 'settings' },
     { path: '/audits', icon: History, label: 'Auditoría', id: 'audits' },
-    { path: '/updates', icon: RefreshCw, label: 'Actualizaciones', id: 'updates' as TabId },
-    { path: '/telemetry', icon: Activity, label: 'Telemetría', id: 'telemetry' as TabId },
-    { path: '/manual', icon: BookOpen, label: 'Manual de Uso', id: 'manual' as TabId }
+    { path: '/updates', icon: RefreshCw, label: 'Actualizaciones', id: 'updates' },
+    { path: '/telemetry', icon: Activity, label: 'Telemetría', id: 'telemetry' },
+    { path: '/manual', icon: BookOpen, label: 'Manual de Uso', id: 'manual' }
 ];
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
