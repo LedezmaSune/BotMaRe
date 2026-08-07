@@ -15,7 +15,9 @@ import {
     RefreshCw, 
     FileCode, 
     Terminal,
-    Upload
+    Upload,
+    Copy,
+    Check
 } from 'lucide-react';
 
 export default function PluginsPage() {
@@ -25,6 +27,8 @@ export default function PluginsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [saving, setSaving] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
+    const [copied, setCopied] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -157,6 +161,50 @@ export default function PluginsPage() {
         setIsModalOpen(true);
     };
 
+    const copyPrompt = () => {
+        const promptText = `Actúa como un desarrollador experto en Node.js y frameworks de bots de WhatsApp.
+
+Tengo un sistema de bots propio llamado "BotMaRe" que utiliza un entorno Sandbox (VM) para ejecutar plugins. Necesito que adaptes un plugin creado originalmente para Baileys (ej. Mystic Bot) a la arquitectura estricta de BotMaRe.
+
+REGLAS DE ARQUITECTURA DE BOTMARE:
+1. El plugin DEBE exportarse exactamente con esta estructura:
+module.exports = {
+    name: "Nombre del Plugin",
+    description: "Descripción breve",
+    active: true,
+    onMessage: async (ctx, api) => {
+        // Lógica aquí
+    }
+};
+
+2. EL OBJETO \`ctx\` CONTIENE:
+- \`ctx.text\`: El mensaje de texto que envió el usuario.
+- \`ctx.from\`: El número/JID del remitente o grupo.
+- \`ctx.isGroup\`: Booleano (true/false) si es un grupo.
+- \`ctx.pushName\`: Nombre de perfil de WhatsApp del remitente.
+
+3. EL OBJETO \`api\` CONTIENE ÚNICAMENTE LAS SIGUIENTES FUNCIONES:
+- \`api.reply(text)\`: Responde con un texto al chat actual.
+- \`api.sendTo(jid, text)\`: Envía un texto a un chat específico.
+- \`api.sendMedia(url, caption, type)\`: Descarga y envía un archivo desde una URL. \`type\` puede ser 'image', 'video', 'audio', o 'document'.
+- \`api.getPlugins()\`: Devuelve un arreglo con los metadatos de los plugins instalados.
+
+4. INSTRUCCIONES DE CONVERSIÓN:
+- No uses \`import\` ni \`export\` bajo ninguna circunstancia. El sandbox utiliza CommonJS puro.
+- No uses \`export default handler\` ni dependas de argumentos como \`m, {conn, command}\`. Extrae el comando usando Expresiones Regulares sobre \`ctx.text\`.
+- Si el plugin original descargaba contenido y usaba \`conn.sendMessage(m.chat, { video: ... })\`, cámbialo para que use \`await api.sendMedia(url, caption, 'video')\`.
+- Todos los mensajes de texto (reacciones, errores, respuestas) deben enviarse usando \`await api.reply(texto)\`.
+- Si el plugin original usa \`global.APIs\` o \`global.APIKeys\`, déjalo intacto (BotMaRe lo inyecta automáticamente).
+- Si el plugin original usa librerías como \`axios\` o \`fs\`, NO las importes con \`require\` ni \`import\`. Úsalas directamente porque ya están inyectadas de forma global.
+
+A continuación te paso el código del plugin de Baileys. Devuélveme ÚNICAMENTE el código adaptado para BotMaRe, sin explicaciones, listo para guardar en un archivo .js:
+
+[PEGA EL CÓDIGO DEL PLUGIN AQUÍ]`;
+        navigator.clipboard.writeText(promptText);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-8">
             {/* Header */}
@@ -181,6 +229,14 @@ export default function PluginsPage() {
                         title="Recargar plugins"
                     >
                         <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    </button>
+                    <button 
+                        onClick={() => setIsPromptModalOpen(true)}
+                        className="px-4 py-3 bg-app-card hover:bg-amber-500/20 text-amber-400 font-bold rounded-xl shadow-lg shadow-amber-500/10 border border-amber-500/30 transition-all active:scale-95 flex items-center gap-2 text-sm"
+                        title="Adaptar plugin con IA"
+                    >
+                        <Sparkles className="w-4 h-4" />
+                        Adaptador IA
                     </button>
                     <input 
                         type="file" 
@@ -232,7 +288,7 @@ export default function PluginsPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {plugins.map((plugin) => (
+                    {plugins.map((plugin: any) => (
                         <div 
                             key={plugin.id} 
                             className={`premium-glass rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden group ${
@@ -344,7 +400,7 @@ export default function PluginsPage() {
                                     ID del Archivo (Nombre único sin .js)
                                 </label>
                                 <input 
-                                    disabled={!!plugins.find(p => p.id === editingPlugin.id)}
+                                    disabled={!!plugins.find((p: any) => p.id === editingPlugin.id)}
                                     value={editingPlugin.id} 
                                     onChange={e => setEditingPlugin({...editingPlugin, id: e.target.value.replace(/[^a-zA-Z0-9_-]/g, '')})}
                                     placeholder="mi_nuevo_plugin"
@@ -395,6 +451,84 @@ export default function PluginsPage() {
                                     Guardar y Aplicar
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal del Prompt IA */}
+            {isPromptModalOpen && (
+                <div className="fixed inset-0 z-[300] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 sm:p-6">
+                    <div className="bg-[#111827] border border-amber-500/30 rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-app-border/50 flex items-center justify-between bg-app-card/50">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-amber-500/20 border border-amber-500/30 rounded-xl">
+                                    <Sparkles className="w-5 h-5 text-amber-400" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-bold text-white">Prompt Maestro IA</h2>
+                                    <p className="text-xs text-slate-400">Pega esto en ChatGPT, Claude o Gemini para adaptar tus plugins.</p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setIsPromptModalOpen(false)}
+                                className="p-2 hover:bg-app-card rounded-xl text-slate-400 hover:text-white transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        
+                        <div className="p-6">
+                            <div className="bg-[#090d16] border border-app-border/70 rounded-xl p-4 overflow-y-auto max-h-[50vh] font-mono text-xs text-emerald-400 leading-relaxed shadow-inner">
+                                <pre className="whitespace-pre-wrap">Actúa como un desarrollador experto en Node.js y frameworks de bots de WhatsApp.
+
+Tengo un sistema de bots propio llamado "BotMaRe" que utiliza un entorno Sandbox (VM) para ejecutar plugins. Necesito que adaptes un plugin creado originalmente para Baileys (ej. Mystic Bot) a la arquitectura estricta de BotMaRe.
+
+REGLAS DE ARQUITECTURA DE BOTMARE:
+1. El plugin DEBE exportarse exactamente con esta estructura:
+module.exports = {'{'}
+    name: "Nombre del Plugin",
+    description: "Descripción breve",
+    active: true,
+    onMessage: async (ctx, api) =&gt; {'{'}
+        // Lógica aquí
+    {'}'}
+{'}'};
+
+2. EL OBJETO \`ctx\` CONTIENE:
+- \`ctx.text\`: El mensaje de texto que envió el usuario.
+- \`ctx.from\`: El número/JID del remitente o grupo.
+- \`ctx.isGroup\`: Booleano (true/false) si es un grupo.
+- \`ctx.pushName\`: Nombre de perfil de WhatsApp del remitente.
+
+3. EL OBJETO \`api\` CONTIENE ÚNICAMENTE LAS SIGUIENTES FUNCIONES:
+- \`api.reply(text)\`: Responde con un texto al chat actual.
+- \`api.sendTo(jid, text)\`: Envía un texto a un chat específico.
+- \`api.sendMedia(url, caption, type)\`: Descarga y envía un archivo desde una URL. \`type\` puede ser 'image', 'video', 'audio', o 'document'.
+- \`api.getPlugins()\`: Devuelve un arreglo con los metadatos de los plugins instalados.
+
+4. INSTRUCCIONES DE CONVERSIÓN:
+- No uses \`import\` ni \`export\` bajo ninguna circunstancia. El sandbox utiliza CommonJS puro.
+- No uses \`export default handler\` ni dependas de argumentos como \`m, &#123;conn, command&#125;\`. Extrae el comando usando Expresiones Regulares sobre \`ctx.text\`.
+- Si el plugin original descargaba contenido y usaba \`conn.sendMessage(m.chat, &#123; video: ... &#125;)\`, cámbialo para que use \`await api.sendMedia(url, caption, 'video')\`.
+- Todos los mensajes de texto (reacciones, errores, respuestas) deben enviarse usando \`await api.reply(texto)\`.
+- Si el plugin original usa \`global.APIs\` o \`global.APIKeys\`, déjalo intacto (BotMaRe lo inyecta automáticamente).
+- Si el plugin original usa librerías como \`axios\` o \`fs\`, NO las importes con \`require\` ni \`import\`. Úsalas directamente porque ya están inyectadas de forma global.
+
+A continuación te paso el código del plugin de Baileys. Devuélveme ÚNICAMENTE el código adaptado para BotMaRe, sin explicaciones, listo para guardar en un archivo .js:
+
+...[Pega tu código de Baileys al final]...</pre>
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-4 border-t border-app-border/50 bg-app-card/50 flex justify-end">
+                            <button 
+                                onClick={copyPrompt}
+                                className="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2"
+                            >
+                                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                {copied ? "¡Copiado!" : "Copiar Prompt Completo"}
+                            </button>
                         </div>
                     </div>
                 </div>

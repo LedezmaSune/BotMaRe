@@ -113,6 +113,8 @@ export class PluginService {
                 setTimeout,
                 clearTimeout,
                 axios: axios,
+                require: require,
+                fetch: global.fetch,
                 global: this.apiKeysConfig,
                 module: { exports: {} },
                 exports: {}

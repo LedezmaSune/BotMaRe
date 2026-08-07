@@ -22,7 +22,7 @@ import { NotificationService } from './telegram/notification.service';
 // Components
 import { createMainRouter } from './routes/index';
 import { errorHandler } from './middleware/errorHandler';
-import { basicAuth } from './middleware/auth.middleware';
+import { basicAuth, validateCredentials } from './middleware/auth.middleware';
 import { loggingMiddleware } from './middleware/logger';
 import { Scheduler } from './modules/scheduling/scheduler';
 import { ReminderService } from './modules/reminders/reminder.service';
@@ -31,8 +31,7 @@ import { initTools } from './tools/index';
 import { BackupService } from './modules/system/backup.service';
 import { initDB } from './core/dbManager';
 
-
-// Prevenir caídas del servidor por excepciones no controladas o promesas rechazadas (p.ej. fallos en Baileys/Signal)
+// Prevenir caídas del servidor por excepciones no controladas o promesas rechazadas
 process.on('uncaughtException', (err) => {
     console.error('💥 [CRÍTICO] Excepción no controlada (Uncaught Exception):', err);
 });
@@ -50,12 +49,36 @@ const io = new Server(server, {
     }
 });
 
+// Middleware de Autenticación para WebSockets
+io.use((socket, next) => {
+    const authHeader = socket.handshake.headers.authorization || socket.handshake.auth?.token;
+    // Si no hay encabezado en entorno local de desarrollo, permitir la conexión
+    if (!authHeader && process.env.NODE_ENV === 'development') {
+        return next();
+    }
+    if (authHeader) {
+        const b64auth = authHeader.replace(/^Basic\s+/i, '');
+        const [login, password] = Buffer.from(b64auth, 'base64').toString().split(':');
+        if (validateCredentials(login, password)) {
+            return next();
+        }
+    }
+    // Permitir acceso solo si no se ha configurado autenticación estricta en dev o si las credenciales son válidas
+    const userDefined = process.env.DASHBOARD_USER;
+    if (!userDefined && !authHeader) {
+        return next();
+    }
+    const err = new Error("Authentication error: Credenciales inválidas para WebSocket.");
+    return next(err);
+});
+
 app.use(cors({
     origin: true,
     credentials: true
 }));
 
 app.set('trust proxy', 1);
+
 
 // 1. Seguridad de Cabeceras (Configuración Pro-Dashboard)
 app.use(helmet({
@@ -269,11 +292,17 @@ async function gracefulShutdown(signal: string) {
         const tunnel = TunnelService.getInstance();
         if (tunnel) await tunnel.stop();
     } catch(e) {}
-    
+
+    try {
+        await bot.getSocketAdapter()?.disconnect();
+        console.log(`[SYSTEM] Cliente de WhatsApp desconectado limpiamente.`);
+    } catch(e) {}
+
     setTimeout(() => {
         console.log(`[SYSTEM] Apagado completado. Adios.`);
         process.exit(0);
     }, 1500); // Dar 1.5s extra a Baileys para guardar la sesión
+
 }
 
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));

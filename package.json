@@ -24,6 +24,7 @@
   "dependencies": {
     "@whiskeysockets/baileys": "6.7.23",
     "adm-zip": "^0.5.17",
+    "api-dylux": "^1.8.6",
     "autoprefixer": "^10.5.2",
     "axios": "^1.18.1",
     "better-sqlite3": "^12.11.1",
