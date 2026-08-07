@@ -1,23 +1,25 @@
 <div align="center">
   <img src="https://img.shields.io/badge/BotMaRe-AI_Agent-6366f1?style=for-the-badge&logo=probot" alt="BotMaRe Banner"/>
   <h1>🦊 BotMaRe - Dashboard</h1>
-  <p><strong>La plataforma definitiva de automatización para WhatsApp impulsada por Inteligencia Artificial y Orquestación Multi-Proveedor.</strong></p>
+  <p><strong>La plataforma definitiva de automatización para WhatsApp impulsada por Inteligencia Artificial, Orquestación Multi-Proveedor y Despliegue Multi-Plataforma.</strong></p>
 
   <p>
     <img src="https://img.shields.io/badge/Node.js-18+-339933?logo=nodedotjs&logoColor=white" alt="Node.js"/>
     <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs" alt="Next.js"/>
     <img src="https://img.shields.io/badge/Express-5-000000?logo=express" alt="Express"/>
     <img src="https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white" alt="TypeScript"/>
+    <img src="https://img.shields.io/badge/Terraform-1.5+-844FBA?logo=terraform&logoColor=white" alt="Terraform"/>
+    <img src="https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white" alt="Docker"/>
     <img src="https://img.shields.io/badge/License-ISC-blue" alt="License"/>
   </p>
   <p>
-    <i>Automatiza, difunde y responde como un humano 24/7.</i>
+    <i>Automatiza, difunde y responde como un humano 24/7 en Android, Linux, Windows y la Nube.</i>
   </p>
 </div>
 
 <br />
 
-> **BotMaRe (powered by Kitsune Engine)** transforma tu cuenta de WhatsApp en una central de operaciones inteligente. Integra modelos de IA, flujos de automatización, programadores de recordatorios, y un panel de administración premium (_Glassmorphism_), todo en un proceso monolítico de alto rendimiento.
+> **BotMaRe (powered by Kitsune Engine)** transforma tu cuenta de WhatsApp en una central de operaciones inteligente. Integra modelos de IA, flujos de automatización, programadores de recordatorios, sincronización con Google Sheets, asistente maestro por Telegram y un panel de administración premium (_Glassmorphism_), todo en un monolito de alto rendimiento.
 
 ---
 
@@ -25,13 +27,22 @@
 <summary><h2>📑 Tabla de Contenidos</h2></summary>
 
 1. [✨ Características Principales](#-características-principales)
-2. [📘 Manual de Usuario](#-manual-de-usuario-dashboard-y-funciones)
-3. [🧠 Orquestador de IA](#-orquestador-de-ia-y-failover-automático)
-4. [🚀 Instalación y Despliegue](#-guías-de-instalación-paso-a-paso)
-5. [🛠️ Gestión Avanzada (PM2)](#-gestión-avanzada-con-pm2)
-6. [⚠️ Troubleshooting](#-solución-a-errores-comunes)
-7. [📶 Redes y Base de Datos](#-redes-y-base-de-datos)
-8. [🔄 Changelog](#-historial-de-actualizaciones-changelog)
+2. [🚀 Despliegue Multi-Plataforma](#-despliegue-multi-plataforma)
+   - [📱 Android (Termux)](#-1-android-termux)
+   - [🐧 Linux / Debian / VPS](#-2-linux--debian--ubuntu-vps)
+   - [🪟 Windows Local](#-3-windows-local)
+   - [☁️ Despliegue en la Nube con Terraform](#-4-despliegue-en-la-nube-con-terraform)
+   - [🐳 Docker / Docker Compose](#-5-docker--docker-compose)
+3. [🔄 Centro de Actualizaciones](#-centro-de-actualizaciones)
+4. [📘 Manual de Usuario (Web & Telegram)](#-manual-de-usuario)
+   - [🦊 Asistente Maestro de Telegram](#-asistente-maestro-de-telegram)
+   - [🤖 Carga Masiva y Spintax](#-difusiones-masivas-y-spintax)
+   - [🧠 Variables Dinámicas y Cerebro IA](#-variables-dinámicas-y-cerebro-ia)
+   - [🎙️ Macros Multimedia](#-macros-multimedia)
+5. [🧹 Mantenimiento Autónomo y Memoria](#-mantenimiento-autónomo-y-limpieza)
+6. [🛠️ Gestión Avanzada con PM2](#-gestión-avanzada-con-pm2)
+7. [⚠️ Troubleshooting](#-solución-a-errores-comunes)
+8. [🔄 Historial de Actualizaciones (Changelog)](#-historial-de-actualizaciones-changelog)
 
 </details>
 
@@ -39,199 +50,197 @@
 
 ## ✨ Características Principales
 
-| Característica              | Descripción                                                                      |
-| :-------------------------- | :------------------------------------------------------------------------------- |
-| 🧠 **IA Multi-Proveedor**   | Groq, Gemini, OpenAI, DeepSeek, OpenRouter y Nvidia con Failover automático.     |
-| 📱 **WhatsApp Agent**       | Comprensión de imágenes (Visión), transcripción de audio (Whisper) y documentos. |
-| 📢 **Difusión con Spintax** | Campañas masivas con giro de texto anti-spam asistidas por IA.                   |
-| 📅 **Recordatorios**        | Programación inteligente masiva en chats privados y grupales.                    |
-| 🛡️ **Blindaje Anti-Ban**    | Retardos proporcionales, pausas y simulación humana ("Escribiendo...").          |
-| 👤 **Soporte Híbrido**      | Apaga la IA temporalmente para tomar control manual. Alertas vía Telegram.       |
-| 📦 **Sincronización**       | Conexión web con Google Sheets para auto-respuestas y gestión de plantillas.     |
+| Característica | Descripción |
+| :--- | :--- |
+| 🧠 **IA Multi-Proveedor** | Groq, Gemini, OpenAI, DeepSeek, OpenRouter y Nvidia con Failover automático. |
+| 📱 **WhatsApp Agent** | Comprensión de imágenes (Visión), transcripción de audio (Whisper), documentos y QR/Pairing Code instantáneo. |
+| 🦊 **Asistente Telegram** | Control remoto total por comandos y botones interactivos con emojis. |
+| 📢 **Difusión con Spintax** | Campañas masivas anti-spam con variación de frases y macros de contacto. |
+| 📅 **Recordatorios Inteligentes** | Programación individual y grupal con frecuencias configurables (horas, días, semanas, meses). |
+| 🛡️ **Blindaje Anti-Ban** | Retardos progresivos, pausas y simulación humana ("Escribiendo...", "Grabando audio..."). |
+| 📦 **Sincronización Sheets** | Auto-respuestas y plantillas sincronizadas automáticamente desde Google Sheets. |
+| ☁️ **Infraestructura como Código** | Archivos `main.tf` listos para aprovisionar VPS en AWS, Hetzner, DigitalOcean u Oracle Cloud. |
 
 ---
 
-## 📘 Manual de Usuario (Dashboard y Funciones)
+## 🚀 Despliegue Multi-Plataforma
 
-<details>
-<summary><b>🤖 El Asistente Inteligente (Carga Masiva)</b></summary>
-<br>
-La joya de la corona para programar envíos.
-
-1. Ve a **Recordatorios / Programación > Carga Masiva**.
-2. **Configura la Campaña:** Destinatario, hora de envío, y usa `{ARCHIVO}` en tu mensaje.
-3. **Nombra los archivos:** Usa la fecha (ej. `1105.jpg` para el 11 de Mayo).
-4. El sistema agendará todo automáticamente en _Pendientes_.
-</details>
-
-<details>
-<summary><b>📢 Difusiones y Motor Spintax</b></summary>
-<br>
-Para evitar baneos al enviar a cientos de personas, usa la sintaxis `{Opción 1|Opción 2}`. El bot elegirá una frase al azar para cada contacto.
-
-**Botones de IA en el Panel:**
-
-- **Perfeccionar:** Mejora ortografía y semántica.
-- **Generar Spintax:** Crea variaciones anti-spam (puedes proteger palabras clave envolviéndolas en llaves `{texto inamovible}`).
-</details>
-
-<details>
-<summary><b>🧠 Variables Dinámicas y Cerebro IA</b></summary>
-<br>
-Usa variables en tus plantillas que se rellenarán automáticamente: `{NOMBRE}`, `{NOMBRE_PILA}`, `{SALUDO}` (cambia según la hora), `{EMOJI_SALUDO}`, `{EMOJI_ATENCION}`, `{HORA_12}`, `{DIA_SEMANA}`, `{NUMERO_ALEATORIO}`.
-
-- **IA ON (Verde):** El bot atiende automáticamente.
-- **IA OFF (Naranja):** Pausa la IA para intervención humana.
-</details>
-
-<details>
-<summary><b>🎙️ Macros Multimedia (Audios Reales y Documentos)</b></summary>
-<br>
-Puedes enviar archivos y audios (Push-To-Talk) directamente desde tus Autorespondedores o Google Sheets escribiendo etiquetas especiales en tu texto de respuesta:
-
-- `[AUDIO: https://tu-link.com/audio.ogg]` -> El bot dirá "Grabando audio..." y lo enviará como nota de voz verde nativa.
-- `[IMG: https://tu-link.com/imagen.jpg]` -> Envía una imagen (puedes escribir el pie de foto justo después de la etiqueta).
-- `[DOC: https://tu-link.com/archivo.pdf]` -> Envía un documento PDF descargable.
-- `[VIDEO: https://tu-link.com/video.mp4]` -> Envía un video.
-</details>
-
----
-
-## 🧠 Orquestador de IA y Failover Automático
-
-La función `callLLM` asegura que si una API (ej. Llama en Groq) se cae o agota el saldo, se conmute a la siguiente de manera transparente en milisegundos.
-
-```mermaid
-flowchart LR
-    Start(("Entrada")) --> P1["⚡ Groq"]
-    P1 -- Falla --> P2["🤖 DeepSeek"]
-    P2 -- Falla --> P3["♊ Gemini"]
-    P3 -- Falla --> P4["🟢 OpenAI"]
-    P4 -- Falla --> P5["🧭 OpenRouter"]
-    P5 -- Falla --> P6["💚 Nvidia"]
-
-    P1 & P2 & P3 & P4 & P5 & P6 -- Éxito --> Done(("Salida"))
-```
-
----
-
-## 🚀 Guías de Instalación Paso a Paso
-
-<details open>
-<summary><b>💻 Opción 1: Instalación Súper Fácil con Docker (Recomendado)</b></summary>
-<br>
-
-Esta es la forma más rápida y segura de instalar el bot sin preocuparte por instalar dependencias o lidiar con errores del sistema.
-
-**Paso 1: Preparar tu computadora**
-1. Descarga e instala [Docker Desktop](https://www.docker.com/products/docker-desktop/).
-2. Ábrelo y asegúrate de que el motor de Docker esté corriendo (deberías ver el icono en verde).
-
-**Paso 2: Descargar los archivos iniciales**
-Abre tu terminal (Símbolo del sistema o PowerShell en Windows) y copia este código para crear la carpeta y bajar lo esencial:
-
-*Si usas Windows:*
-```powershell
-mkdir BotMaRe; cd BotMaRe
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/docker-compose.yml" -OutFile "docker-compose.yml"
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/.env.example" -OutFile ".env"
-```
-
-*Si usas Mac/Linux:*
+### 📱 1. Android (Termux)
+Ideal para ejecutar el bot de forma continua en tu teléfono Android sin root.
 ```bash
-mkdir BotMaRe && cd BotMaRe
-curl -O https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/.env.example
+# Instalador automático en 1 paso:
+curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install-termux.sh | bash
+
+# Iniciar el panel maestro:
+cd BotMaRe && pnpm run menu
 ```
 
-**Paso 3: Configurar y Encender**
-1. Abre el archivo `.env` que se acaba de descargar con el Bloc de notas. Cambia la línea `DASHBOARD_PASS=admin123` por tu propia contraseña secreta y guarda el archivo.
-2. En tu terminal, dentro de la carpeta BotMaRe, escribe el comando mágico para encender todo:
-   `docker-compose up -d --build`
-3. ¡Listo! Abre tu navegador de internet y entra a: `http://localhost:8000`
-</details>
+---
 
-<details>
-<summary><b>🖥️ Opción 2: Instalación Manual (Avanzados / Servidor)</b></summary>
-<br>
-
-Si no quieres usar Docker y prefieres instalar todo nativamente, sigue estos pasos:
-
-**Paso 1: Requisitos previos**
-Asegúrate de tener instalado [Node.js](https://nodejs.org/) (Versión 18 o superior) y Git en tu computadora.
-
-**Paso 2: Ejecutar el Instalador Automático**
-Abre tu terminal y ejecuta el comando según tu sistema operativo. Este instalador descargará el código, preparará la base de datos y dejará todo listo:
-
-* 🪟 **Windows:**
-  Descarga el repositorio como `.zip`, descomprímelo y dale doble clic al archivo `install-windows.bat`.
-
-* 🐧 **Linux/VPS (Ubuntu/Debian):**
-  ```bash
-  curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install.sh | bash
-  ```
-
-* 📱 **Android Termux:**
-  ```bash
-  curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install-termux.sh | bash
-  ```
-
-**Paso 3: ¡A disfrutar!**
-Una vez finalizada la instalación, simplemente entra a la carpeta y arranca el menú principal interactivo:
+### 🐧 2. Linux / Debian / Ubuntu VPS
+Para servidores dedicados o VPS en la nube.
 ```bash
-cd BotMaRe
-npm run menu
+# Instalador desatendido en Linux:
+curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install.sh | bash
+
+# Iniciar servidor:
+cd BotMaRe && ./start.sh
 ```
-</details>
+
+---
+
+### 🪟 3. Windows Local
+Sin necesidad de permisos de Administrador.
+1. Descarga el repositorio o haz `git clone https://github.com/LedezmaSune/BotMaRe.git`.
+2. Dale doble clic a `install-windows.bat` para instalar dependencias y base de datos.
+3. Dale doble clic a `START.bat` para abrir el **Menú de Control Maestro**.
+4. O ejecuta directamente `npm run dev` para modo desarrollo.
+
+---
+
+### ☁️ 4. Despliegue en la Nube con Terraform
+Aprovisiona en minutos un servidor VPS con disco SSD cifrado, IP pública fija, Docker y BotMaRe preconfigurado.
+```bash
+# 1. Configurar variables (opcional):
+cp terraform.tfvars.example terraform.tfvars
+
+# 2. Inicializar Terraform:
+terraform init
+
+# 3. Aplicar y desplegar servidor:
+terraform apply
+```
+
+---
+
+### 🐳 5. Docker / Docker Compose
+```bash
+# Iniciar contenedor en segundo plano:
+docker compose up -d --build
+
+# Ver logs en tiempo real:
+docker compose logs -f
+```
+
+---
+
+## 🔄 Centro de Actualizaciones
+
+BotMaRe cuenta con un **Centro de Actualizaciones Inteligente** accesible desde 3 canales:
+
+1. **🌐 Desde el Panel Web (Dashboard):**
+   - Ve a la pestaña **"Actualizaciones"** para verificar nuevos commits en GitHub.
+   - Aplica actualizaciones con un solo clic con respaldo automático preventivo.
+2. **🦊 Desde Telegram:**
+   - Envía el comando `/actualizar` para buscar nuevas versiones y aplicarlas al instante.
+3. **💻 Desde la Terminal:**
+   - Ejecuta `pnpm run menu` y selecciona la opción `[10] Git Update`.
+
+---
+
+## 📘 Manual de Usuario
+
+### 🦊 Asistente Maestro de Telegram
+
+Puedes supervisar, configurar y operar BotMaRe de forma remota usando tu bot de Telegram:
+
+#### 🎮 Comandos Principales
+- `👉 /start` - Abre el menú principal con botones interactivos.
+- `👉 /ayuda` - Muestra la guía rápida de comandos y sintaxis.
+- `👉 /dashboard` - Obtiene el enlace de acceso actual al Panel Web.
+- `👉 /recordatorios` - Gestiona, programa o elimina alertas de WhatsApp.
+- `👉 /masivo` - Asistente interactivo paso a paso para enviar difusiones masivas.
+- `👉 /detenermasivo` - Cancela de inmediato una campaña masiva activa.
+- `👉 /cerebro` - Muestra y permite editar el prompt y reglas de la IA.
+- `👉 /lista` - Control de Listas Blancas (Whitelist) y Negras (Blacklist).
+- `👉 /auditoria` - Muestra los últimos 10 movimientos y eventos del sistema.
+- `👉 /notificaciones` - Activa o desactiva alertas del sistema en Telegram.
+
+#### ⚙️ Mantenimiento y Servidor
+- `👉 /actualizar` - Busca y aplica nuevas versiones desde GitHub.
+- `👉 /tunel` - Consulta o reinicia la URL pública del túnel Cloudflare.
+- `👉 /ssh` - Genera una sesión SSH remota segura (tmate) para soporte técnico.
+- `👉 /tailscale` - Muestra el estado y enlace de red privada VPN.
+- `👉 /pm2` - Panel de control de procesos (Estado, Reinicio y Logs).
+- `👉 /borrarmemorial` - Limpia la memoria conversacional del bot.
+- `👉 /setadmin <numero>` - Añade un nuevo número como administrador autorizado.
+- `👉 /backup` - Genera y envía un respaldo manual comprimido (`.zip`).
+
+---
+
+### 📢 Difusiones Masivas y Spintax
+
+Para evitar baneos al enviar a múltiples contactos, usa la sintaxis `{Opción 1|Opción 2|Opción 3}`. El motor elegirá una variación al azar para cada contacto.
+
+**Botones de Asistencia en el Panel:**
+- **Perfeccionar:** Corrige ortografía y mejora la semántica con IA.
+- **Generar Spintax:** Genera variaciones inteligentes respetando palabras protegidas `{texto protegido}`.
+
+---
+
+### 🧠 Variables Dinámicas y Cerebro IA
+
+Usa variables dinámicas que se reemplazarán automáticamente al enviar mensajes:
+- `{NOMBRE}`, `{NOMBRE_PILA}`, `{SALUDO}`, `{EMOJI_SALUDO}`, `{EMOJI_ATENCION}`, `{HORA_12}`, `{DIA_SEMANA}`, `{NUMERO_ALEATORIO}`.
+
+---
+
+### 🎙️ Macros Multimedia
+
+Envía notas de voz nativas, imágenes y documentos desde tus plantillas o Google Sheets:
+- `[AUDIO: https://tu-dominio.com/audio.ogg]` ➔ Nota de voz verde nativa ("Grabando audio...").
+- `[IMG: https://tu-dominio.com/foto.jpg]` ➔ Imagen con pie de foto opcional.
+- `[DOC: https://tu-dominio.com/archivo.pdf]` ➔ Archivo descargable.
+- `[VIDEO: https://tu-dominio.com/clip.mp4]` ➔ Envío de video.
+
+---
+
+## 🧹 Mantenimiento Autónomo y Limpieza
+
+El planificador central ([`Scheduler`](file:///C:/Proyectos/wamasivos/BotMaRe/src/modules/scheduling/scheduler.ts)) ejecuta rutinas de optimización continuas:
+- 🧹 **Temporales huérfanos:** Purga cada **3 minutos**.
+- 📦 **Logs y Backups antiguos:** Purga diaria de logs (>7 días) y respaldos (>15 días).
+- 🗑️ **Uploads temporales:** Limpieza cada **24 horas** y al arrancar el servidor.
+- 🔑 **Optimización SQLite:** Purga de claves temporales (`purgePreKeys`) cada **1 hora** para mantener la base de datos ligera y rápida.
 
 ---
 
 ## 🛠️ Gestión Avanzada con PM2
 
-Mantén el bot 24/7 en tu servidor (VPS).
-
+Ejecución continua 24/7 en servidores de producción:
 - **Preparar:** `npm run setup`
 - **Iniciar:** `pnpm run pm2:start`
 - **Ver Logs:** `pnpm run pm2:logs`
+- **Reiniciar:** `pnpm run pm2:restart`
 - **Detener:** `pnpm run pm2:stop`
-
-> [!TIP]
-> **Mantenimiento:** Para optimizar y liberar espacio de registros viejos, usa `pnpm run clean:logs`.
+- **Limpiar Logs:** `pnpm run clean:logs`
 
 ---
 
 ## ⚠️ Solución a Errores Comunes
 
-Si vienes de versiones antiguas o usas **PNPM v10+** y experimentas errores de compilación por falta de binarios nativos:
-
-- Base de datos: `pnpm rebuild better-sqlite3`
-- Túneles: `pnpm rebuild cloudflared`
-
-> [!TIP]
-> **Error de actualización en Termux (Git Pull):** Si al hacer `git pull` recibes un error de que `package.json` será sobreescrito, significa que hubo modificaciones locales. Descartalas ejecutando `git restore .` (o `git checkout .`) y luego vuelve a intentar `git pull origin main`.
-
-> [!IMPORTANT]
-> **Guía Completa de Errores de Windows / Node v24:** Si experimentas errores de tipo `EPERM`, `spawn`, o código `3221225477` (violación de acceso), consulta la guía detallada de diagnóstico en: [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
-
----
-
-## 📶 Redes y Base de Datos
-
-- **Conectividad Múltiple:** Soporte nativo para Red Local, **Tailscale VPN** (Privada), y **Cloudflare Tunnel** (Pública). Copia tus enlaces directo desde el dashboard.
-- **Base de Datos Híbrida:** Prioridad a **MongoDB Atlas** (Nube). Si se cae la red, conmuta automáticamente a **Lowdb** (Local sin pérdida de datos).
+- **Recompilar binarios nativos:**
+  ```bash
+  pnpm rebuild better-sqlite3
+  pnpm rebuild cloudflared
+  ```
+- **Error de actualización en Git (archivos modificados localmente):**
+  ```bash
+  git restore . && git pull origin main
+  ```
+- **Guía de errores en Windows / Node.js:** Consulta [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
 
 ---
 
-<details>
-<summary><b>🔄 Historial de Actualizaciones (Changelog)</b></summary>
-<br>
+## 🔄 Historial de Actualizaciones (Changelog)
 
-- **[2.1.0] - 2026-07-17:** Conectividad Fija & Carga Inteligente Resiliente: Soporte de `CUSTOM_DOMAIN` para túneles permanentes de Cloudflare, cola de subida secuencial (Upload Queue) en el Asistente por Lotes, botones de encendido/apagado rápido (Cabina de Control) en el Header, visualización rediseñada en Auditoría, deduplicación inteligente de mensajes de WhatsApp y salvaguardas de borrado FTP de archivos activos.
-- **[2.0.0] - 2026-07-04:** Actualización Enterprise: Soporte Docker, Respaldos diarios encriptados (Telegram), CRM con Etiquetas, Handoff/Pausa de IA, y envíos nativos de Notas de Voz reales (PTT).
-- **[1.5.6] - 2026-06-18:** Fix para PNPM v10, instaladores mágicos (`.bat` y `.sh`), reparación de túneles en Windows.
-- **[1.5.0] - 2026-06-14:** Rediseño CLI con arte ANSI, mejoras Sheets 3 columnas.
-- **[1.4.0] - 2026-06-04:** Motor de Spintax, asistencia IA, simulación multimedia anti-ban.
-</details>
+- **[2.2.0] - 2026-08-07:** Despliegue Multi-Plataforma y Resiliencia Total:
+  - ☁️ Módulo de **Terraform** (`main.tf`, `variables.tf`, `outputs.tf`) para despliegue automatizado en VPS/Cloud.
+  - 🔄 **Reconexión WhatsApp Resiliente:** Reseteo nativo en SQLite (`clear()`) inmune a bloqueos `EBUSY` en Windows y normalización automática para **Pairing Code**.
+  - 🦊 **Telegram Enriquecido:** Asistentes interactivos paso a paso (Wizards), emojis temáticos y reintentos silenciosos para `setMyCommands`.
+  - 🧹 **Scheduler Autónomo:** Limpieza programada de temporales, purga de logs antiguos y optimización periódica de SQLite.
+- **[2.1.0] - 2026-07-17:** Conectividad Fija & Carga Inteligente Resiliente (`CUSTOM_DOMAIN` Cloudflare, cola de subida secuencial, deduplicación de mensajes).
+- **[2.0.0] - 2026-07-04:** Actualización Enterprise (Soporte Docker, respaldos encriptados a Telegram, CRM con etiquetas, notas de voz PTT).
 
 ---
 
