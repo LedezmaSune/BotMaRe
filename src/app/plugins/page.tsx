@@ -17,8 +17,110 @@ import {
     Terminal,
     Upload,
     Copy,
-    Check
+    Check,
+    BookOpen,
+    Layers,
+    Globe,
+    Image as ImageIcon,
+    MessageSquare
 } from 'lucide-react';
+
+const PLUGIN_TEMPLATES = [
+    {
+        id: 'comando_ping',
+        name: 'Comando Básico',
+        description: 'Prefijos !, ., /, # y respuesta de texto',
+        code: `module.exports = {
+    name: "Comando Ping",
+    description: "Comprueba el estado del bot con soporte para prefijos flexibles",
+    active: true,
+    onMessage: async (ctx, api) => {
+        // ctx: { text, from, isGroup, pushName, quoted }
+        const text = (ctx.text || "").trim();
+        
+        // Soporta prefijos !, ., /, # o comando directo
+        const match = text.match(/^[!./#]?(ping|hola|estado)$/i);
+        if (!match) return;
+
+        const senderName = ctx.pushName || "amigo";
+        await api.reply(\`🏓 ¡Pong! Hola *\${senderName}*, BotMaRe está activo y respondiendo al 100%.\`);
+    }
+};`
+    },
+    {
+        id: 'multimedia_imagen',
+        name: 'Envío Multimedia',
+        description: 'Descarga y envía imágenes, videos o audios',
+        code: `module.exports = {
+    name: "Envío Multimedia",
+    description: "Envía una imagen o archivo con api.sendMedia()",
+    active: true,
+    onMessage: async (ctx, api) => {
+        const text = (ctx.text || "").trim();
+        
+        if (/^[!./#]?(imagen|foto|meme)$/i.test(text)) {
+            await api.reply('⏳ Generando y enviando tu imagen...');
+            // Puedes enviar: 'image' | 'video' | 'audio' | 'document'
+            const imageUrl = 'https://picsum.photos/800/600';
+            await api.sendMedia(imageUrl, '📸 ¡Aquí tienes tu imagen!', 'image');
+        }
+    }
+};`
+    },
+    {
+        id: 'api_externa',
+        name: 'API Externa',
+        description: 'Consume datos en vivo con axios o fetch',
+        code: `module.exports = {
+    name: "Consulta API Externa",
+    description: "Obtiene datos en vivo usando axios o fetch global",
+    active: true,
+    onMessage: async (ctx, api) => {
+        const text = (ctx.text || "").trim();
+        
+        // Ejemplo comando: !chiste o /chiste
+        if (/^[!./#]?(chiste|broma)$/i.test(text)) {
+            try {
+                // 'axios' y 'fetch' ya están disponibles globalmente en el sandbox
+                const res = await axios.get('https://v2.jokeapi.dev/joke/Any?lang=es&type=single');
+                const joke = res.data?.joke || '¿Qué le dice un jaguar a otro jaguar? Jaguar you!';
+                await api.reply(\`😂 *Chiste del momento:*\\n\\n\${joke}\`);
+            } catch (err) {
+                await api.reply('❌ No se pudo conectar con el servicio de chistes.');
+            }
+        }
+    }
+};`
+    },
+    {
+        id: 'menu_comandos',
+        name: 'Menú Interactivo',
+        description: 'Lista dinámica de plugins activos instalados',
+        code: `module.exports = {
+    name: "Menú de Comandos",
+    description: "Muestra la lista de comandos y plugins instalados",
+    active: true,
+    onMessage: async (ctx, api) => {
+        const text = (ctx.text || "").trim();
+        if (!/^[!./#]?(menu|comandos|plugins|help|ayuda)$/i.test(text)) return;
+
+        const plugins = api.getPlugins ? api.getPlugins() : [];
+        const activePlugins = plugins.filter(p => p.active);
+
+        let msg = \`╭━━━ 🤖 *LISTA DE PLUGINS* ━━━╮\\n\`;
+        msg += \`┃ Activos: \${activePlugins.length} plugins\\n\`;
+        msg += \`╰━━━━━━━━━━━━━━━━━━━━━╯\\n\\n\`;
+
+        activePlugins.forEach((p, i) => {
+            msg += \`*\${i + 1}. \${p.name}*\\n> \${p.description}\\n\\n\`;
+        });
+
+        msg += \`_Escribe el comando que deseas ejecutar._\`;
+        await api.reply(msg);
+    }
+};`
+    }
+];
 
 export default function PluginsPage() {
     const [plugins, setPlugins] = useState<any[]>([]);
@@ -408,6 +510,39 @@ A continuación te paso el código del plugin de Baileys. Devuélveme ÚNICAMENT
                                     className="w-full px-4 py-2.5 bg-[#0b0f19] border border-app-border/70 rounded-xl font-mono text-sm text-purple-300 focus:outline-none focus:border-purple-500 disabled:opacity-60"
                                 />
                                 <p className="text-[11px] text-slate-400 mt-1">Solo letras, números, guiones bajo (_) y guiones (-).</p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                                        <Layers className="w-3.5 h-3.5 text-purple-400" />
+                                        Plantillas Rápidas
+                                    </label>
+                                    <span className="text-[11px] text-purple-400 font-medium">Haz clic para cargar código predefinido</span>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    {PLUGIN_TEMPLATES.map((tmpl) => (
+                                        <button
+                                            key={tmpl.id}
+                                            type="button"
+                                            onClick={() => {
+                                                const isNew = !plugins.find((p: any) => p.id === editingPlugin.id);
+                                                if (isNew && (!editingPlugin?.id || PLUGIN_TEMPLATES.some(t => t.id === editingPlugin.id))) {
+                                                    setEditingPlugin({ ...editingPlugin, id: tmpl.id, code: tmpl.code });
+                                                } else {
+                                                    setEditingPlugin({ ...editingPlugin, code: tmpl.code });
+                                                }
+                                            }}
+                                            className="p-2.5 text-left bg-[#0b0f19] hover:bg-purple-500/10 border border-app-border/70 hover:border-purple-500/40 rounded-xl transition-all group"
+                                        >
+                                            <div className="text-[11px] font-bold text-white group-hover:text-purple-300 flex items-center gap-1.5">
+                                                <Sparkles className="w-3 h-3 text-purple-400 shrink-0" />
+                                                <span className="truncate">{tmpl.name}</span>
+                                            </div>
+                                            <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">{tmpl.description}</p>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             <div className="flex flex-col flex-1">

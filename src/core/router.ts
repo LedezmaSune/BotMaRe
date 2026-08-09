@@ -4,6 +4,7 @@ import { NotificationService } from '../telegram/notification.service';
 import { getSettings, isChatPaused } from './memory';
 import { getConfig } from './config';
 import { accessControl } from './accessControl';
+import { crmService } from './crm.service';
 
 const pausedUsers = new Map<string, number>();
 const processedMessageIds = new Set<string>();
@@ -25,6 +26,12 @@ export class Router {
         const msg = data.messages[0];
         if (!msg || msg.key.fromMe || !msg.message) return;
 
+        const jid = msg.key.remoteJid;
+        // Ignorar estados de WhatsApp (Stories), difusiones y canales (newsletter)
+        if (!jid || jid === 'status@broadcast' || jid.endsWith('@broadcast') || jid.endsWith('@newsletter')) {
+            return;
+        }
+
         const msgId = msg.key.id;
         if (msgId) {
             if (processedMessageIds.has(msgId)) {
@@ -39,7 +46,6 @@ export class Router {
             }
         }
 
-        const jid = msg.key.remoteJid!;
         const participant = msg.key.participant || jid;
         const pushName = msg.pushName || '';
         const messageContent = msg.message;
@@ -94,8 +100,9 @@ export class Router {
             }
         }
 
-        // Rastrear interacciones para el Dashboard Web
+        // Rastrear interacciones para el Dashboard Web y CRM
         accessControl.trackInteraction(participantClean, pushName, false);
+        crmService.autoTrackContact(participantClean, pushName, isGroup);
         if (isGroup) {
             accessControl.trackInteraction(jid, 'Grupo', true); // No tenemos el nombre del grupo aquí fácilmente, así que usamos un genérico
         }

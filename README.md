@@ -34,15 +34,19 @@
    - [☁️ Despliegue en la Nube con Terraform](#-4-despliegue-en-la-nube-con-terraform)
    - [🐳 Docker / Docker Compose](#-5-docker--docker-compose)
 3. [🔄 Centro de Actualizaciones](#-centro-de-actualizaciones)
-4. [📘 Manual de Usuario (Web & Telegram)](#-manual-de-usuario)
+4. [🧩 Sistema de Plugins JS](#-sistema-de-plugins-js-sandbox)
+   - [📁 Estructura de un Plugin](#-estructura-de-un-plugin-datapluginsidjs)
+   - [📋 Galería de Plantillas](#-galería-de-plantillas-listas-para-usar)
+   - [🤖 Adaptación con IA](#-adaptar-plugins-de-otros-bots-con-ia)
+5. [📘 Manual de Usuario (Web & Telegram)](#-manual-de-usuario)
    - [🦊 Asistente Maestro de Telegram](#-asistente-maestro-de-telegram)
    - [🤖 Carga Masiva y Spintax](#-difusiones-masivas-y-spintax)
    - [🧠 Variables Dinámicas y Cerebro IA](#-variables-dinámicas-y-cerebro-ia)
    - [🎙️ Macros Multimedia](#-macros-multimedia)
-5. [🧹 Mantenimiento Autónomo y Memoria](#-mantenimiento-autónomo-y-limpieza)
-6. [🛠️ Gestión Avanzada con PM2](#-gestión-avanzada-con-pm2)
-7. [⚠️ Troubleshooting](#-solución-a-errores-comunes)
-8. [🔄 Historial de Actualizaciones (Changelog)](#-historial-de-actualizaciones-changelog)
+6. [🧹 Mantenimiento Autónomo y Memoria](#-mantenimiento-autónomo-y-limpieza)
+7. [🛠️ Gestión Avanzada con PM2](#-gestión-avanzada-con-pm2)
+8. [⚠️ Troubleshooting](#-solución-a-errores-comunes)
+9. [🔄 Historial de Actualizaciones (Changelog)](#-historial-de-actualizaciones-changelog)
 
 </details>
 
@@ -53,6 +57,7 @@
 | Característica | Descripción |
 | :--- | :--- |
 | 🧠 **IA Multi-Proveedor** | Groq, Gemini, OpenAI, DeepSeek, OpenRouter y Nvidia con Failover automático. |
+| 🧩 **Plugins JS en Sandbox** | Entorno seguro Node.js VM con plantillas prediseñadas, comandos, APIs y multimedia. |
 | 📱 **WhatsApp Agent** | Comprensión de imágenes (Visión), transcripción de audio (Whisper), documentos y QR/Pairing Code instantáneo. |
 | 🦊 **Asistente Telegram** | Control remoto total por comandos y botones interactivos con emojis. |
 | 📢 **Difusión con Spintax** | Campañas masivas anti-spam con variación de frases y macros de contacto. |
@@ -135,6 +140,133 @@ BotMaRe cuenta con un **Centro de Actualizaciones Inteligente** accesible desde 
    - Envía el comando `/actualizar` para buscar nuevas versiones y aplicarlas al instante.
 3. **💻 Desde la Terminal:**
    - Ejecuta `pnpm run menu` y selecciona la opción `[10] Git Update`.
+
+---
+
+## 🧩 Sistema de Plugins JS (Sandbox)
+
+BotMaRe incorpora un potente motor de **Plugins en JavaScript** ejecutados en un entorno seguro **Sandbox (Node.js VM)**. Esto permite agregar comandos personalizados, menús interactivos, descargas multimedia y consumo de APIs externas sin necesidad de reiniciar el servidor.
+
+### 📁 Estructura de un Plugin (`data/plugins/<id>.js`)
+Todo plugin exporta un objeto CommonJS con la siguiente estructura estándar:
+
+```javascript
+module.exports = {
+    name: "Nombre del Plugin",
+    description: "Descripción visible en el panel y menú",
+    active: true, // true = activo, false = pausado
+    onMessage: async (ctx, api) => {
+        // Lógica de respuesta e interceptor
+    }
+};
+```
+
+#### 📥 Parámetros del Objeto `ctx` (Contexto Entrante):
+* `ctx.text`: Texto recibido del usuario.
+* `ctx.from`: Identificador (JID o número) del remitente o grupo.
+* `ctx.isGroup`: Booleano (`true` para grupos, `false` para chats directos).
+* `ctx.pushName`: Nombre público del perfil de WhatsApp.
+* `ctx.quoted`: Información del mensaje citado o respondido (si existe).
+
+#### 🛠️ Métodos del Objeto `api` (Interacción con WhatsApp):
+* `await api.reply(texto)`: Envía una respuesta al chat actual.
+* `await api.sendTo(jid, texto)`: Envía un mensaje a cualquier chat o grupo específico.
+* `await api.sendMedia(url, caption, tipo)`: Descarga y envía archivos (`'image' | 'video' | 'audio' | 'document'`).
+* `api.getPlugins()`: Devuelve la lista y estado de todos los plugins instalados.
+
+#### 🌐 Librerías Globales Disponibles en Sandbox (Sin `import`/`require`):
+* `axios` y `fetch`: Para consumir servicios web y APIs REST en tiempo real.
+* `console`: Métodos `log`, `warn`, `error` con prefijo `[Plugin:<id>]`.
+* `global.APIs` y `global.APIKeys`: Llaves y endpoints inyectados automáticamente.
+
+---
+
+### 📋 Galería de Plantillas Listas para Usar
+
+#### 1. Comando Básico con Prefijo Flexible (`!ping`, `.ping`, `/ping`)
+```javascript
+module.exports = {
+    name: "Comando Ping",
+    description: "Comprueba el estado del bot",
+    active: true,
+    onMessage: async (ctx, api) => {
+        const text = (ctx.text || "").trim();
+        const match = text.match(/^[!./#]?(ping|hola|estado)$/i);
+        if (!match) return;
+
+        const sender = ctx.pushName || "amigo";
+        await api.reply(`🏓 ¡Pong! Hola *${sender}*, BotMaRe está activo al 100%.`);
+    }
+};
+```
+
+#### 2. Envío de Imágenes y Multimedia (`api.sendMedia`)
+```javascript
+module.exports = {
+    name: "Envío Multimedia",
+    description: "Genera y envía una imagen",
+    active: true,
+    onMessage: async (ctx, api) => {
+        const text = (ctx.text || "").trim();
+        if (/^[!./#]?(imagen|foto|meme)$/i.test(text)) {
+            await api.reply("⏳ Generando tu imagen...");
+            await api.sendMedia("https://picsum.photos/800/600", "📸 ¡Aquí tienes tu imagen!", "image");
+        }
+    }
+};
+```
+
+#### 3. Consumo de API Externa en Tiempo Real (Axios / Fetch)
+```javascript
+module.exports = {
+    name: "Consulta API Externa",
+    description: "Obtiene chistes o datos desde una API pública",
+    active: true,
+    onMessage: async (ctx, api) => {
+        const text = (ctx.text || "").trim();
+        if (/^[!./#]?(chiste|broma)$/i.test(text)) {
+            try {
+                const res = await axios.get("https://v2.jokeapi.dev/joke/Any?lang=es&type=single");
+                const chiste = res.data?.joke || "¿Qué hace una abeja en el gimnasio? ¡Zumba!";
+                await api.reply(`😂 *Chiste:* \n\n${chiste}`);
+            } catch (err) {
+                await api.reply("❌ Error al consultar la API externa.");
+            }
+        }
+    }
+};
+```
+
+#### 4. Menú Interactivo Dinámico
+```javascript
+module.exports = {
+    name: "Menú de Comandos",
+    description: "Muestra la lista de plugins instalados",
+    active: true,
+    onMessage: async (ctx, api) => {
+        const text = (ctx.text || "").trim();
+        if (!/^[!./#]?(menu|comandos|plugins|help|ayuda)$/i.test(text)) return;
+
+        const plugins = api.getPlugins ? api.getPlugins() : [];
+        const activePlugins = plugins.filter(p => p.active);
+
+        let msg = `╭━━━ 🤖 *LISTA DE PLUGINS* ━━━╮\n`;
+        msg += `┃ Activos: ${activePlugins.length} plugins\n`;
+        msg += `╰━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+
+        activePlugins.forEach((p, i) => {
+            msg += `*${i + 1}. ${p.name}*\n> ${p.description}\n\n`;
+        });
+
+        await api.reply(msg);
+    }
+};
+```
+
+---
+
+### 🤖 Adaptar Plugins de Otros Bots con IA
+El Panel Web incluye un botón **"Adaptar Plugin con IA"** con un prompt preconfigurado. Solo debes copiar el prompt, pegarlo junto al código de cualquier plugin de **Mystic Bot**, **GataBot** o **Baileys** en ChatGPT, Claude o Gemini, y el modelo te devolverá el código adaptado listo para pegar en BotMaRe.
 
 ---
 
@@ -234,6 +366,13 @@ Ejecución continua 24/7 en servidores de producción:
 
 ## 🔄 Historial de Actualizaciones (Changelog)
 
+- **[2.3.0] - 2026-08-09:** CRM Completo, Ecosistema de Plugins JS & Resiliencia de Red:
+  - 💼 **CRM y Perfilado de Clientes:** Captura automática de contactos en tiempo real al recibir mensajes, panel visual de prospectos, tarjetas de estadísticas (Total, VIP, Leads, Activos Hoy), notas comerciales internas y descarga de base de datos en CSV.
+  - 🏷️ **Gestor de Etiquetas (Tags):** Asignación rápida y creación de etiquetas personalizadas con colores temáticos (VIP, Leads, Cobranza, Soporte, Mayorista).
+  - 📢 **Segmentación en Difusiones:** Integración directa entre el CRM y el módulo de Difusión Masiva para cargar destinatarios automáticamente filtrados por etiqueta.
+  - 🧩 **Galería de Plantillas de Plugins JS:** Selector de plantillas prediseñadas (Comandos prefijados, Envío Multimedia, APIs externas y Menús dinámicos) con archivo maestro de ejemplo comentado en `data/plugins/ejemplo_plantilla.js`.
+  - 🛡️ **Filtro de Estados de WhatsApp:** Filtrado automático de `status@broadcast` y canales `@newsletter` en el router para evitar colisiones y avisos falsos en listas de contactos.
+  - 🌐 **Resiliencia Cloudflare Tunnel:** Detección de sesiones caídas (`Unauthorized: Tunnel not found`) con autorreinicio y regeneración transparente del túnel en segundo plano.
 - **[2.2.0] - 2026-08-07:** Despliegue Multi-Plataforma y Resiliencia Total:
   - ☁️ Módulo de **Terraform** (`main.tf`, `variables.tf`, `outputs.tf`) para despliegue automatizado en VPS/Cloud.
   - 🔄 **Reconexión WhatsApp Resiliente:** Reseteo nativo en SQLite (`clear()`) inmune a bloqueos `EBUSY` en Windows y normalización automática para **Pairing Code**.

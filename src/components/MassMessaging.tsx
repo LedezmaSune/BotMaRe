@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import { motion } from 'framer-motion';
-import { Megaphone, Upload, Wand2, Loader2, Send, File, X } from 'lucide-react';
+import { Megaphone, Upload, Wand2, Loader2, Send, File, X, Tags, Briefcase } from 'lucide-react';
 import { VariableTextarea } from './VariableTextarea';
 import { Template } from '../types';
 
@@ -24,7 +25,41 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, p
     const [reviewingMode, setReviewingMode] = useState<'standard' | 'spintax' | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [channel, setChannel] = useState<'whatsapp' | 'sms'>('whatsapp');
+    const [crmTags, setCrmTags] = useState<any[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Cargar etiquetas CRM al iniciar
+    useEffect(() => {
+        axios.get('/api/crm/tags')
+            .then(res => {
+                if (res.data?.success && Array.isArray(res.data.tags)) {
+                    setCrmTags(res.data.tags);
+                }
+            })
+            .catch(() => {});
+    }, []);
+
+    // Cargar contactos de una etiqueta CRM
+    const handleLoadCRMTag = async (tagId: string) => {
+        if (!tagId) return;
+        try {
+            const res = await axios.get('/api/crm');
+            if (res.data?.success && Array.isArray(res.data.contacts)) {
+                const taggedContacts = res.data.contacts.filter((c: any) => c.tags && c.tags.includes(tagId));
+                if (taggedContacts.length === 0) {
+                    alert(`No hay contactos con la etiqueta "${tagId}" en el CRM.`);
+                    return;
+                }
+                const formatted = taggedContacts.map((c: any) => `${c.phone || c.id}, ${c.name || ''}`).join('\n');
+                setContacts(prev => {
+                    const trimmed = prev.trim();
+                    return trimmed ? `${trimmed}\n${formatted}` : formatted;
+                });
+            }
+        } catch (e) {
+            alert('Error al cargar contactos del CRM');
+        }
+    };
 
     // Cargar borrador al iniciar
     useEffect(() => {
@@ -157,6 +192,23 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, p
                                     <option value="">+ Añadir Grupo</option>
                                     {groups.map(g => (
                                         <option key={g.id} value={g.id}>{g.subject}</option>
+                                    ))}
+                                </select>
+                            )}
+
+                            {crmTags.length > 0 && (
+                                <select 
+                                    value=""
+                                    className="bg-purple-500/10 border border-purple-500/30 rounded-md text-[9px] font-bold py-1 px-2 outline-none cursor-pointer hover:bg-purple-500/20 text-purple-300"
+                                    onChange={(e) => {
+                                        if (e.target.value) {
+                                            handleLoadCRMTag(e.target.value);
+                                        }
+                                    }}
+                                >
+                                    <option value="" className="bg-[#111827] text-slate-300">🏷️ Cargar Tag CRM</option>
+                                    {crmTags.map(t => (
+                                        <option key={t.id} value={t.id} className="bg-[#111827] text-white">{t.name}</option>
                                     ))}
                                 </select>
                             )}

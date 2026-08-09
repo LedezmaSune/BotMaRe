@@ -15,61 +15,14 @@
 
 # WhatsApp Sessions & Data
 auth_info_baileys/
-data/
+data/*
+!data/.gitkeep
+!data/plugins/
+!data/plugins/**
+ejemplo_cliente/data/
 backups/
 agenda.json
 .antigravitycli/
-!data/.gitkeep
-*.db
-*.db-journal
-*.db-shm
-*.db-wal
-data/uploads/*
-
-# Compilación y Next.js
-out/
-.next/
-dist/
-next-env.d.ts
-
-# OS Files
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-npm-debug.log*
-
-# Portable Builds
-En_Desarrollo_Portable/
-
-# Batch Files and Scripts (Moved to bin/ and excluded from Git/GitHub, allowing core scripts)
-bin/*
-!bin/check-build.js
-!bin/clean_reminders.js
-!bin/launcher.js
-# Dependencies
-**/node_modules
-**/dist
-**/.next
-**/.vercel
-
-# Environment & Secrets
-**/.env
-**/.env.*
-**/*.pem
-**/credentials.json
-
-# Permitir archivos de ejemplo (sin datos reales)
-!**/.env.example
-
-# WhatsApp Sessions & Data
-auth_info_baileys/
-data/
-backups/
-agenda.json
-.antigravitycli/
-!data/.gitkeep
 *.db
 *.db-journal
 *.db-shm
@@ -104,4 +57,4 @@ bin/*
 # Documentation (Kept locally, excluded from Git/GitHub)
 MANUAL_DE_USUARIO.md
 ia.md
-client_secret_*.json  
+client_secret_*.json

@@ -16,6 +16,21 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'V 2.3.0',
+        date: '09 Agosto 2026',
+        title: 'CRM Completo & Etiquetas, Plantillas de Plugins y Blindaje de Router',
+        type: 'major',
+        description: 'Lanzamiento del CRM y Gestión de Clientes con auto-perfilado de contactos en tiempo real, selector visual de plantillas de plugins en JavaScript y autorreinicio de Cloudflare Tunnel.',
+        features: [
+            '💼 CRM y Gestión de Clientes Completo: Auto-captura de contactos en tiempo real al recibir mensajes, tarjetas de estadísticas (Total, VIP, Leads, Activos Hoy), notas comerciales internas y descarga en CSV.',
+            '🏷️ Sistema Dinámico de Etiquetas: Categorización con colores temáticos (VIP, Leads, Clientes, Deudores, Soporte, Mayorista), gestor de tags personalizados y asignación rápida.',
+            '📢 Integración CRM con Mensajería Masiva: Selector de etiquetas directamente en la pantalla de difusión para enviar campañas segmentadas (ej: solo contactos VIP o Leads).',
+            '🧩 Galería de Plantillas de Plugins JS: Selector integrado de plantillas listas para usar (Comandos con prefijo flexible, Envío de Multimedia, Consulta de APIs Externas y Menú Dinámico) con plantilla maestra comentada.',
+            '🛡️ Filtro Silencioso de Estados WhatsApp: El router descarta automáticamente transmisiones (status@broadcast) y canales (@newsletter), evitando interferencias con reglas de contactos.',
+            '🌐 Auto-Recuperación de Cloudflare Tunnel: Detección proactiva de sesiones expiradas ("Unauthorized: Tunnel not found") con regeneración y reconexión inmediata del túnel en segundo plano.'
+        ]
+    },
+    {
         version: 'V 2.1.1',
         date: '20 Julio 2026',
         title: 'Formato Enriquecido, Medios Múltiples y Recordatorios Diarios',
