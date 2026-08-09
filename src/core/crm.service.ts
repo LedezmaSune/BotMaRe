@@ -94,17 +94,21 @@ export class CRMService {
     /**
      * Registra o actualiza automáticamente a un contacto en tiempo real cuando envía un mensaje
      */
-    public autoTrackContact(id: string, pushName: string = '', isGroup: boolean = false) {
-        const cleanId = id.replace(/@.+/, '').trim();
-        if (!cleanId) return;
+    public autoTrackContact(id: string, pushName: string = '', isGroup: boolean = false, phone?: string) {
+        const primaryId = (phone || id).replace(/@.+/, '').trim();
+        if (!primaryId) return;
 
-        const existing = this.db.contacts[cleanId];
+        const cleanId = id.replace(/@.+/, '').trim();
+        const existing = this.db.contacts[primaryId] || this.db.contacts[cleanId];
         const now = Date.now();
 
         if (existing) {
             existing.lastInteraction = now;
             existing.messageCount = (existing.messageCount || 0) + 1;
-            if (pushName && (!existing.name || existing.name === cleanId)) {
+            if (phone && (!existing.phone || existing.phone.length > 15)) {
+                existing.phone = phone;
+            }
+            if (pushName && (!existing.name || existing.name === primaryId || existing.name === cleanId)) {
                 existing.name = pushName;
             }
             if (pushName) {
@@ -112,11 +116,11 @@ export class CRMService {
             }
             existing.isGroup = isGroup;
         } else {
-            this.db.contacts[cleanId] = {
-                id: cleanId,
-                name: pushName || cleanId,
+            this.db.contacts[primaryId] = {
+                id: primaryId,
+                name: pushName || (phone || primaryId),
                 pushName: pushName,
-                phone: cleanId,
+                phone: phone || primaryId,
                 tags: ['lead'],
                 notes: '',
                 firstInteraction: now,

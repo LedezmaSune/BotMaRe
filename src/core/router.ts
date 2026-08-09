@@ -100,9 +100,17 @@ export class Router {
             }
         }
 
+        // Identificar número telefónico real directo (excluyendo IDs de privacidad LID)
+        let directPhone: string | undefined = undefined;
+        if (!isGroup && jid.endsWith('@s.whatsapp.net')) {
+            directPhone = jid.split('@')[0];
+        } else if (participant.endsWith('@s.whatsapp.net')) {
+            directPhone = participant.split('@')[0];
+        }
+
         // Rastrear interacciones para el Dashboard Web y CRM
-        accessControl.trackInteraction(participantClean, pushName, false);
-        crmService.autoTrackContact(participantClean, pushName, isGroup);
+        accessControl.trackInteraction(directPhone || participantClean, pushName, false);
+        crmService.autoTrackContact(participantClean, pushName, isGroup, directPhone);
         if (isGroup) {
             accessControl.trackInteraction(jid, 'Grupo', true); // No tenemos el nombre del grupo aquí fácilmente, así que usamos un genérico
         }

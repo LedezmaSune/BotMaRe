@@ -329,9 +329,9 @@ export default function CRMUI() {
             return;
         }
 
-        const headers = ['ID/Teléfono', 'Nombre', 'Nombre WhatsApp', 'Email', 'Etiquetas', 'Notas', 'Mensajes', 'Ultima Interaccion'];
+        const headers = ['Número Telefónico', 'Nombre', 'Nombre WhatsApp', 'Email', 'Etiquetas', 'Notas', 'Mensajes', 'Ultima Interaccion'];
         const rows = contacts.map(c => [
-            `"${c.id}"`,
+            `"${c.phone || c.id}"`,
             `"${(c.name || '').replace(/"/g, '""')}"`,
             `"${(c.pushName || '').replace(/"/g, '""')}"`,
             `"${(c.email || '').replace(/"/g, '""')}"`,
@@ -726,7 +726,7 @@ export default function CRMUI() {
                                         </button>
                                     </th>
                                     <th className="p-4">Contacto / Cliente</th>
-                                    <th className="p-4">Teléfono & WhatsApp</th>
+                                    <th className="p-4">Número de Teléfono</th>
                                     <th className="p-4">Etiquetas (Tags)</th>
                                     <th className="p-4">Notas Internas</th>
                                     <th className="p-4">Último Mensaje</th>
@@ -736,7 +736,7 @@ export default function CRMUI() {
                             <tbody className="divide-y divide-app-border/30 text-xs">
                                 {filteredContacts.map(contact => {
                                     const isSelected = selectedIds.has(contact.id);
-                                    const initial = (contact.name || contact.id).charAt(0).toUpperCase();
+                                    const initial = (contact.name || contact.phone || contact.id).charAt(0).toUpperCase();
 
                                     return (
                                         <tr 
@@ -767,7 +767,7 @@ export default function CRMUI() {
                                                     </div>
                                                     <div className="min-w-0">
                                                         <div className="font-bold text-white text-sm truncate flex items-center gap-1.5">
-                                                            {contact.name || contact.id}
+                                                            {contact.name || contact.phone || contact.id}
                                                             {contact.isGroup && (
                                                                 <span className="text-[9px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded">Grupo</span>
                                                             )}
@@ -789,13 +789,14 @@ export default function CRMUI() {
                                             {/* Teléfono */}
                                             <td className="p-4">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-mono text-purple-300">{contact.phone || contact.id}</span>
+                                                    <Phone className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                                                    <span className="font-mono text-purple-300 font-semibold">{contact.phone || contact.id}</span>
                                                     <a
-                                                        href={`https://wa.me/${contact.phone || contact.id}`}
+                                                        href={`https://wa.me/${(contact.phone || contact.id).replace(/[^0-9]/g, '')}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="p-1 text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
-                                                        title="Abrir WhatsApp Web"
+                                                        title="Abrir chat en WhatsApp Web"
                                                     >
                                                         <ExternalLink className="w-3.5 h-3.5" />
                                                     </a>
@@ -971,7 +972,7 @@ export default function CRMUI() {
 
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                                        Teléfono / WhatsApp ID *
+                                        Número de Teléfono (WhatsApp) *
                                     </label>
                                     <input
                                         type="text"
