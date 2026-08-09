@@ -148,7 +148,9 @@ export class TunnelService extends EventEmitter {
                         return;
                     }
 
-                    if (output.includes('error') || output.includes('failed')) {
+                    // Filtrar y mostrar solo errores reales (ignorar tablas informativas de precheck de conectividad)
+                    const isPrecheckLog = output.includes('precheck') || output.includes('Connectivity') || output.includes('ping_group_range');
+                    if (!isPrecheckLog && (output.includes('ERR ') || output.includes('error=') || output.includes('FATAL'))) {
                         console.error(`[Tunnel-Log] ${output.trim()}`);
                     }
                 });
