@@ -224,6 +224,21 @@ async function bootstrap() {
 
     const s3 = new Spinner("Desplegando Servidor y Dashboard...");
     s3.start();
+
+    server.on('error', (err: any) => {
+        if (err.code === 'EADDRINUSE') {
+            s3.fail(`El puerto ${PORT} ya está en uso por otro proceso.`);
+            console.error(`\n❌ [PUERTO OCUPADO] No se pudo iniciar el servidor en el puerto ${PORT}.`);
+            console.error(`💡 Sugerencia: Cierra la instancia previa ejecutando en PowerShell:`);
+            console.error(`   Get-Process -Id (Get-NetTCPConnection -LocalPort ${PORT}).OwningProcess | Stop-Process -Force\n`);
+            process.exit(1);
+        } else {
+            s3.fail(`Error al iniciar servidor: ${err.message}`);
+            console.error(err);
+            process.exit(1);
+        }
+    });
+
     server.listen(Number(PORT), '0.0.0.0', async () => {
         s3.succeed("Servidor HTTP Online.");
         const localIP = SystemUtils.getLocalIP();

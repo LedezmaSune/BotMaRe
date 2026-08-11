@@ -366,6 +366,12 @@ Ejecución continua 24/7 en servidores de producción:
 
 ## 🔄 Historial de Actualizaciones (Changelog)
 
+- **[2.3.1] - 2026-08-11:** Soporte Internacional para SMS, Normalización E.164 y Ajustes Dinámicos:
+  - 🌐 **Soporte SMS Internacional (E.164 Global):** Compatibilidad completa para envíos masivos y recordatorios por SMS vía pasarela httpSMS hacia números de cualquier país (EE. UU. `+1`, España `+34`, Argentina `+549`, Colombia `+57`, Chile `+56`, Perú `+51`, Brasil `+55`, Ecuador `+593`, etc.).
+  - 🔄 **Normalización Inteligente de Prefijos:** Limpieza y adaptación automática de prefijos internacionales (`00`, `011`), eliminación de sufijos WhatsApp (`@s.whatsapp.net`) y normalización del prefijo móvil de México (`+521` a `+52`) para garantizar entrega en operadoras móviles.
+  - ⚙️ **Configuración Dinámica de SMS:** Recarga en tiempo real de `HTTPSMS_API_KEY`, `HTTPSMS_FROM_NUMBER` y `HTTPSMS_API_URL` desde los ajustes del panel y base de datos sin requerir reinicio del servidor.
+  - 📋 **Mejoras en el Parser de Contactos:** Preservación del signo `+` en listas de contactos multilínea y archivos CSV para números internacionales.
+  - 🧪 **Suite de Pruebas Unitarias:** Nuevos tests unitarios en Vitest verificando el formateo y normalización de números internacionales para SMS y contactos.
 - **[2.3.0] - 2026-08-09:** CRM Completo, Ecosistema de Plugins JS & Resiliencia de Red:
   - 💼 **CRM y Perfilado de Clientes:** Captura automática de contactos en tiempo real al recibir mensajes, panel visual de prospectos, tarjetas de estadísticas (Total, VIP, Leads, Activos Hoy), notas comerciales internas y descarga de base de datos en CSV.
   - 🏷️ **Gestor de Etiquetas (Tags):** Asignación rápida y creación de etiquetas personalizadas con colores temáticos (VIP, Leads, Cobranza, Soporte, Mayorista).

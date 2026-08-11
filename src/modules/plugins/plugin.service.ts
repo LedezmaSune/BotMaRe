@@ -14,6 +14,17 @@ export interface PluginMetadata {
     error?: string;
 }
 
+export interface PluginContext {
+    text: string;
+    from: string;
+    sender?: string;
+    isGroup?: boolean;
+    pushName?: string;
+    quoted?: any;
+    rawMessage?: any;
+    socket?: any;
+}
+
 export class PluginService {
     private pluginsDir: string;
     private plugins: Map<string, any>;
@@ -43,16 +54,52 @@ export class PluginService {
         this.waService = waService;
         this.loadPlugins();
         
-        // Listen to global messages to dispatch them to plugins
+        // Listen to global messages to dispatch them to plugins as fallback
         globalEvents.on(EVENTS.MESSAGE_RECEIVED, async (data: any) => {
-            const { message, number, isGroup, pushName, quoted } = data;
-            await this.dispatchOnMessage({
-                text: message,
-                from: number,
-                isGroup,
-                pushName,
-                quoted
-            });
+            if (!data) return;
+            // Si data viene como evento crudo de Baileys { messages: [...], type: 'notify' }
+            if (data.messages && Array.isArray(data.messages)) {
+                const msg = data.messages[0];
+                if (!msg || msg.key?.fromMe || !msg.message) return;
+                const jid = msg.key.remoteJid;
+                if (!jid || jid.endsWith('@broadcast') || jid.endsWith('@newsletter')) return;
+
+                const text = msg.message.conversation
+                    || msg.message.extendedTextMessage?.text
+                    || msg.message.listResponseMessage?.singleSelectReply?.selectedRowId
+                    || msg.message.buttonsResponseMessage?.selectedButtonId
+                    || msg.message.imageMessage?.caption
+                    || msg.message.videoMessage?.caption
+                    || msg.message.documentMessage?.caption
+                    || '';
+
+                const participant = msg.key.participant || jid;
+                const pushName = msg.pushName || '';
+                const isGroup = jid.endsWith('@g.us');
+
+                await this.dispatchOnMessage({
+                    text,
+                    from: jid,
+                    sender: participant.split('@')[0],
+                    isGroup,
+                    pushName,
+                    quoted: msg.message.extendedTextMessage?.contextInfo?.quotedMessage,
+                    rawMessage: msg
+                });
+            } else {
+                // Si data viene estructurado { message, number, isGroup, pushName, quoted }
+                const { message, text, from, number, isGroup, pushName, quoted, rawMessage, socket } = data;
+                await this.dispatchOnMessage({
+                    text: text || message || '',
+                    from: from || (number ? (number.includes('@') ? number : `${number}@s.whatsapp.net`) : ''),
+                    sender: pushName || number || '',
+                    isGroup: Boolean(isGroup),
+                    pushName: pushName || '',
+                    quoted,
+                    rawMessage,
+                    socket
+                });
+            }
         });
         
         console.log(`[PluginService] Inicializado con ${this.plugins.size} plugins activos.`);
@@ -89,7 +136,7 @@ export class PluginService {
         }
     }
 
-    private loadSinglePlugin(filename: string) {
+    public loadSinglePlugin(filename: string) {
         const id = filename.replace('.js', '');
         const fullPath = path.join(this.pluginsDir, filename);
         const code = fs.readFileSync(fullPath, 'utf8');
@@ -103,18 +150,42 @@ export class PluginService {
         };
 
         try {
-            // Create a safe sandbox
+            // Create a safe sandbox with Node standard utilities
             const sandbox: any = {
                 console: {
                     log: (...args: any[]) => console.log(`[Plugin:${id}]`, ...args),
                     error: (...args: any[]) => console.error(`[Plugin:${id}]`, ...args),
-                    warn: (...args: any[]) => console.warn(`[Plugin:${id}]`, ...args)
+                    warn: (...args: any[]) => console.warn(`[Plugin:${id}]`, ...args),
+                    info: (...args: any[]) => console.info(`[Plugin:${id}]`, ...args)
                 },
                 setTimeout,
                 clearTimeout,
+                setInterval,
+                clearInterval,
+                Buffer,
+                URL,
+                URLSearchParams,
+                encodeURIComponent,
+                decodeURIComponent,
+                encodeURI,
+                decodeURI,
+                parseInt,
+                parseFloat,
+                isNaN,
+                isFinite,
+                Math,
+                Date,
+                RegExp,
+                Array,
+                Object,
+                String,
+                Number,
+                Boolean,
+                JSON,
+                Promise,
                 axios: axios,
                 require: require,
-                fetch: global.fetch,
+                fetch: global.fetch || fetch,
                 global: this.apiKeysConfig,
                 module: { exports: {} },
                 exports: {}
@@ -122,13 +193,13 @@ export class PluginService {
 
             const context = vm.createContext(sandbox);
             const script = new vm.Script(code);
-            script.runInContext(context, { timeout: 1000 }); // 1 sec timeout for infinite loops
+            script.runInContext(context, { timeout: 3000 }); // 3 sec timeout
 
             const exported = sandbox.module.exports || sandbox.exports;
             
             if (exported.name) meta.name = exported.name;
             if (exported.description) meta.description = exported.description;
-            if (exported.active !== undefined) meta.active = exported.active;
+            if (exported.active !== undefined) meta.active = Boolean(exported.active);
 
             if (meta.active && typeof exported.onMessage === 'function') {
                 this.plugins.set(id, exported);
@@ -152,13 +223,10 @@ export class PluginService {
         if (!meta) throw new Error("Plugin no encontrado");
         
         let newCode = meta.code;
-        if (newCode.includes('active: true') && !active) {
-            newCode = newCode.replace('active: true', 'active: false');
-        } else if (newCode.includes('active: false') && active) {
-            newCode = newCode.replace('active: false', 'active: true');
-        } else if (!newCode.includes('active:')) {
-            // Inject if missing
-            newCode = newCode.replace('module.exports = {', `module.exports = {\n    active: ${active},`);
+        if (/active\s*:\s*(true|false)/i.test(newCode)) {
+            newCode = newCode.replace(/active\s*:\s*(true|false)/i, `active: ${active}`);
+        } else if (/(module\.)?exports\s*=\s*\{/i.test(newCode)) {
+            newCode = newCode.replace(/(module\.)?exports\s*=\s*\{/i, `module.exports = {\n    active: ${active},`);
         }
         
         this.savePlugin(id, newCode);
@@ -179,16 +247,37 @@ export class PluginService {
         this.metadata.delete(id);
     }
 
-    public async dispatchOnMessage(ctx: any) {
-        if (!this.waService) return;
+    public async dispatchOnMessage(ctx: PluginContext): Promise<boolean> {
+        if (!this.waService || !ctx || !ctx.text) return false;
+
+        let handled = false;
 
         // Bridge to interact safely with WhatsApp
         const api = {
-            reply: async (text: string) => await this.waService?.sendMessage(ctx.from, text),
-            sendTo: async (jid: string, text: string) => await this.waService?.sendMessage(jid, text),
-            sendMedia: async (url: string, caption?: string, mediaType: 'image' | 'document' | 'video' | 'audio' = 'image') => {
-                if (this.waService) {
-                    return await this.waService.sendMediaFromUrl(ctx.from, url, caption, mediaType);
+            reply: async (text: string) => {
+                handled = true;
+                return await this.waService?.sendMessage(ctx.from, text);
+            },
+            sendTo: async (jid: string, text: string) => {
+                handled = true;
+                return await this.waService?.sendMessage(jid, text);
+            },
+            sendMedia: async (urlOrPath: string, caption?: string, mediaType: 'image' | 'document' | 'video' | 'audio' = 'image') => {
+                handled = true;
+                if (!this.waService) return;
+                if (urlOrPath.startsWith('http://') || urlOrPath.startsWith('https://')) {
+                    return await this.waService.sendMediaFromUrl(ctx.from, urlOrPath, caption, mediaType);
+                } else if (fs.existsSync(urlOrPath)) {
+                    return await this.waService.sendMedia(ctx.from, urlOrPath, caption);
+                } else {
+                    return await this.waService.sendMediaFromUrl(ctx.from, urlOrPath, caption, mediaType);
+                }
+            },
+            react: async (emoji: string) => {
+                if (ctx.rawMessage && ctx.socket) {
+                    try {
+                        await ctx.socket.sendMessage(ctx.from, { react: { text: emoji, key: ctx.rawMessage.key } });
+                    } catch (e) {}
                 }
             },
             getPlugins: () => this.getPlugins()
@@ -197,11 +286,16 @@ export class PluginService {
         for (const [id, plugin] of this.plugins.entries()) {
             try {
                 if (typeof plugin.onMessage === 'function') {
-                    await Promise.resolve(plugin.onMessage(ctx, api)).catch(e => {
+                    const res = await Promise.resolve(plugin.onMessage(ctx, api)).catch(e => {
                         console.error(`[Plugin:${id}] Runtime error in onMessage:`, e.message);
                     });
+                    if (res === true) handled = true;
                 }
-            } catch(e) {}
+            } catch(e: any) {
+                console.error(`[Plugin:${id}] Exception during execution:`, e.message);
+            }
         }
+
+        return handled;
     }
 }

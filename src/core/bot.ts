@@ -5,6 +5,7 @@ import { MessageController } from '../modules/messages/message.controller';
 import { Router } from './router';
 import { Server } from 'socket.io';
 import { globalEvents, EVENTS } from './events';
+import { PluginService } from '../modules/plugins/plugin.service';
 
 /**
  * CORE LAYER - BOT ENTITY
@@ -26,6 +27,9 @@ export class Bot {
         // 2. Servicios de Módulos
         this.messageService = new MessageService(this.client);
         this.aiService = new AIService();
+
+        // Inicializar motor de Plugins
+        PluginService.getInstance().init(this.messageService);
 
         // 3. Controladores
         this.messageController = new MessageController(this.messageService, this.aiService);

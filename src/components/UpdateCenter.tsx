@@ -16,6 +16,20 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'V 2.3.1',
+        date: '11 Agosto 2026',
+        title: 'Soporte Internacional para SMS, Normalización E.164 y Ajustes Dinámicos',
+        type: 'patch',
+        description: 'Soporte global completo para envíos de SMS masivos y recordatorios internacionales vía pasarela httpSMS, compatibilidad con prefijos de cualquier país, normalización inteligente de números y recarga de configuración en tiempo real.',
+        features: [
+            '🌐 Soporte SMS Internacional (E.164 Global): Capacidad de enviar SMS masivos y recordatorios a números de cualquier país (EE. UU. +1, España +34, Argentina +549, Colombia +57, Chile +56, Perú +51, Brasil +55, Ecuador +593, etc.).',
+            '🔄 Normalización Inteligente de Prefijos SMS: Limpieza y adaptación automática de prefijos de marcado (00, 011), eliminación de sufijos WhatsApp (@s.whatsapp.net) y adaptación del prefijo móvil de México (+521 a +52) para garantizar entrega en operadoras telefónicas.',
+            '⚙️ Configuración Dinámica de SMS en Dashboard: Carga en tiempo real de HTTPSMS_API_KEY, HTTPSMS_FROM_NUMBER y HTTPSMS_API_URL desde los ajustes del panel y base de datos sin requerir reinicio del servidor.',
+            '📋 Preservación de Formatos Internacionales en Parser: Soporte mejorado para contactos con signo + y espacios en listas multilínea o subidas de archivo CSV.',
+            '🧪 Suite de Pruebas Unitarias Robustecida: Nuevos tests unitarios cubriendo validación y formateo de números telefónicos internacionales.'
+        ]
+    },
+    {
         version: 'V 2.3.0',
         date: '09 Agosto 2026',
         title: 'CRM Completo & Etiquetas, Plantillas de Plugins y Blindaje de Router',

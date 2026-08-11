@@ -65,8 +65,9 @@ NVIDIA_MODEL=deepseek-ai/deepseek-v4-pro
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_ALLOWED_USER_IDS=
 
-SMS_API_KEY=
-SMS_PHONES=
+HTTPSMS_API_KEY=
+HTTPSMS_FROM_NUMBER=
+HTTPSMS_API_URL=https://api-sms.apptienda.online/v1/messages/send
 
 PORT=8001
 DASHBOARD_USER=admin
@@ -119,8 +120,9 @@ DASHBOARD_PASS=admin123
             keys: [
                 { id: 'TELEGRAM_BOT_TOKEN', label: 'Telegram Bot Token', desc: 'De @BotFather' },
                 { id: 'TELEGRAM_ALLOWED_USER_IDS', label: 'ID Usuarios Telegram', desc: 'Separados por comas' },
-                { id: 'SMS_API_KEY', label: 'SMS API Key', desc: 'Clave para la pasarela de SMS' },
-                { id: 'SMS_PHONES', label: 'Teléfonos SMS', desc: 'Separados por comas (Ej. 52123,52456)' },
+                { id: 'HTTPSMS_API_KEY', label: 'httpSMS API Key', desc: 'Clave para la pasarela de SMS' },
+                { id: 'HTTPSMS_FROM_NUMBER', label: 'Teléfonos Emisores SMS', desc: 'Separados por comas con código de país (Ej. +52123..., +1234...)' },
+                { id: 'HTTPSMS_API_URL', label: 'httpSMS API URL', desc: 'Default: https://api-sms.apptienda.online/v1/messages/send' },
                 { id: 'PORT', label: 'Puerto Backend', desc: 'Default: 8001' },
             ]
         },

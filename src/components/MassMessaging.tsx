@@ -219,7 +219,7 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, p
                     <textarea 
                         value={contacts}
                         onChange={(e) => setContacts(e.target.value)}
-                        placeholder="8181234567, Nombre&#10;521234567890, Cliente"
+                        placeholder="+528181234567, Nombre&#10;+14155552671, Cliente USA&#10;+34612345678, Cliente España&#10;5512345678, Cliente Local"
                         className="w-full h-80 bg-app-bg dark:bg-background border border-app-border rounded-2xl p-4 text-sm focus:ring-2 focus:ring-orange-500/30 outline-none transition-all resize-none font-mono text-app-text placeholder:text-app-text-muted/50 shadow-inner"
                     />
                 </div>

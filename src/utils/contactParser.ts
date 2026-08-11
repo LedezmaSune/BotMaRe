@@ -36,9 +36,9 @@ export function parseContactList(contactsStr: string): ParsedContact[] {
 
                 // Guess which one is the number
                 if (digits1.length >= 8 || part1.endsWith('@s.whatsapp.net') || part1.endsWith('@lid')) {
-                    return { number: part1.replace(/[^\d@.uslidwatsphnet]/g, ''), name: part2 };
+                    return { number: part1.replace(/[^\d+@.uslidwatsphnet]/g, ''), name: part2 };
                 } else {
-                    return { number: part2.replace(/[^\d@.uslidwatsphnet]/g, ''), name: part1 };
+                    return { number: part2.replace(/[^\d+@.uslidwatsphnet]/g, ''), name: part1 };
                 }
             }
 
@@ -50,8 +50,8 @@ export function parseContactList(contactsStr: string): ParsedContact[] {
                 return { number, name };
             }
 
-            // Fallback: Clean numeric only
-            return { number: line.replace(/\D/g, ''), name: '' };
+            // Fallback: Clean numeric and international prefix
+            return { number: line.replace(/[^\d+@.uslidwatsphnet]/g, ''), name: '' };
         })
-        .filter(c => c.number.length >= 8 || c.number.includes('@'));
+        .filter(c => c.number.replace(/\D/g, '').length >= 8 || c.number.includes('@'));
 }

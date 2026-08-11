@@ -1,6 +1,6 @@
 {
   "name": "botmare-dashboard",
-  "version": "2.1.0",
+  "version": "2.3.1",
   "description": "BotMaRe Dashboard Panel",
   "main": "src/server.ts",
   "scripts": {

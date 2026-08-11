@@ -5,6 +5,7 @@ import { getSettings, isChatPaused } from './memory';
 import { getConfig } from './config';
 import { accessControl } from './accessControl';
 import { crmService } from './crm.service';
+import { PluginService } from '../modules/plugins/plugin.service';
 
 const pausedUsers = new Map<string, number>();
 const processedMessageIds = new Set<string>();
@@ -50,26 +51,14 @@ export class Router {
         const pushName = msg.pushName || '';
         const messageContent = msg.message;
 
-        // Verificar si el Bot de IA está desactivado globalmente (Modo Humano)
-        const aiEnabled = await getConfig('AI_ENABLED', 'true');
-        if (aiEnabled === 'false') {
-            console.log('[Router] Mensaje recibido pero ignorado porque el Bot de IA está desactivado (AI_ENABLED = false).');
-            return;
-        }
-
-        // Verificar si el chat específico tiene la IA pausada (Soporte Técnico Humano)
-        const isPaused = await isChatPaused(jid);
-        if (isPaused) {
-            console.log(`[Router] Mensaje de ${jid} ignorado por la IA porque está en modo soporte humano (pausado).`);
-            return;
-        }
-
-
-        // Extraer texto
+        // Extraer texto (incluyendo captions de imágenes, videos y documentos)
         let text = messageContent.conversation
             || messageContent.extendedTextMessage?.text
             || messageContent.listResponseMessage?.singleSelectReply?.selectedRowId
             || messageContent.buttonsResponseMessage?.selectedButtonId
+            || messageContent.imageMessage?.caption
+            || messageContent.videoMessage?.caption
+            || messageContent.documentMessage?.caption
             || '';
 
         if (!text) return;
@@ -205,6 +194,43 @@ export class Router {
         }
         // ==========================================
 
+        // ==========================================
+        // 2. DISPATCH A PLUGINS DE BOTMARE
+        // ==========================================
+        const pluginContext = {
+            text,
+            from: jid,
+            sender: participantClean,
+            isGroup,
+            pushName,
+            quoted: messageContent.extendedTextMessage?.contextInfo?.quotedMessage,
+            rawMessage: msg,
+            socket
+        };
+
+        const pluginHandled = await PluginService.getInstance().dispatchOnMessage(pluginContext);
+        if (pluginHandled) {
+            console.log(`[Router] ✅ Mensaje de ${participantClean} ("${text.substring(0, 30)}") procesado y respondido por un plugin.`);
+            return; // Terminar procesamiento aquí, no enviar a la IA ni a autoresponders
+        }
+
+        // ==========================================
+        // 3. VERIFICACIÓN DE ESTADO DE LA IA
+        // ==========================================
+        // Verificar si el Bot de IA está desactivado globalmente (Modo Humano)
+        const aiEnabled = await getConfig('AI_ENABLED', 'true');
+        if (aiEnabled === 'false') {
+            console.log('[Router] Mensaje recibido pero ignorado porque el Bot de IA está desactivado (AI_ENABLED = false).');
+            return;
+        }
+
+        // Verificar si el chat específico tiene la IA pausada (Soporte Técnico Humano)
+        const isPaused = await isChatPaused(jid);
+        if (isPaused) {
+            console.log(`[Router] Mensaje de ${jid} ignorado por la IA porque está en modo soporte humano (pausado).`);
+            return;
+        }
+
         // Reaccionar de forma aleatoria para confirmar que el bot está procesando la solicitud
         try {
             const reactions = ['👍', '🤖', '👀', '💡', '✨', '⚙️', '🔍', '🚀', '✅', '⚡'];
@@ -214,7 +240,7 @@ export class Router {
             console.error('[Router] No se pudo enviar la reacción:', err);
         }
 
-        // Delegar al controlador
+        // Delegar al controlador (Autorespondedores + Agente IA)
         await this.messageController.handleIncoming(jid, text, participant, pushName);
     }
 
