@@ -49,4 +49,9 @@ export class DiffusionController {
         const success = this.diffusionService.stopProcessing();
         res.json({ success });
     });
+
+    getStatus = asyncHandler(async (req: Request, res: Response) => {
+        const progress = this.diffusionService.getCurrentProgress();
+        res.json({ success: true, progress, isProcessing: !!progress });
+    });
 }

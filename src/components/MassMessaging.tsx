@@ -13,11 +13,12 @@ interface MassMessagingProps {
     onReview: (text: string, mode?: 'standard' | 'spintax') => Promise<string | null>;
     templates: Template[];
     groups: any[];
+    uploadProgress?: number | null;
     progress?: { current: number, total: number, percentage: number } | null;
     logs?: any[];
 }
 
-export function MassMessaging({ onSend, onCancel, onReview, templates, groups, progress, logs = [] }: MassMessagingProps) {
+export function MassMessaging({ onSend, onCancel, onReview, templates, groups, uploadProgress, progress, logs = [] }: MassMessagingProps) {
     const [contacts, setContacts] = useState('');
     const [message, setMessage] = useState('');
     const [media, setMedia] = useState<File[]>([]);
@@ -335,87 +336,115 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, p
                         )}
                     </motion.div>
 
-                    {/* Barra de Progreso Animada y Premium */}
+                    {/* Barra de Progreso de Subida de Archivos */}
+                    {typeof uploadProgress === 'number' && (
+                        <div className="bg-indigo-950/40 border border-indigo-500/30 p-4 rounded-2xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+                                    <span className="text-xs font-bold text-indigo-200">
+                                        {uploadProgress < 100 ? 'Subiendo archivos multimedia al servidor...' : '¡Archivos cargados! Iniciando cola...'}
+                                    </span>
+                                </div>
+                                <span className="text-xs font-black text-indigo-400 tabular-nums">{uploadProgress}%</span>
+                            </div>
+                            <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden p-0.5">
+                                <div 
+                                    className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 rounded-full transition-all duration-300"
+                                    style={{ width: `${uploadProgress}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Barra de Progreso Animada y Premium de Difusión */}
                     {progress && (
-                        <div className="bg-slate-100 dark:bg-slate-900/60 p-6 rounded-3xl border border-slate-200 dark:border-white/10 animate-in fade-in zoom-in duration-500 shadow-[0_20px_40px_rgba(0,0,0,0.1)] relative overflow-hidden group">
+                        <div className="bg-slate-100 dark:bg-slate-900/80 p-6 rounded-3xl border border-cyan-500/30 dark:border-cyan-500/20 animate-in fade-in zoom-in duration-500 shadow-[0_20px_50px_rgba(6,182,212,0.15)] relative overflow-hidden group">
                             {/* Glow effect background */}
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-30"></div>
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-60 animate-pulse"></div>
                             
                             <div className="flex justify-between items-end mb-4 relative z-10">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></div>
-                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-500">Transmisión en Vivo</p>
+                                        <div className="w-2.5 h-2.5 bg-cyan-400 rounded-full animate-ping"></div>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400">Cola Activa en Tiempo Real</p>
                                     </div>
                                     <h3 className="text-3xl font-black text-app-text tabular-nums flex items-baseline gap-1">
                                         {progress.percentage}
-                                        <span className="text-sm text-app-text-muted font-bold">%</span>
+                                        <span className="text-sm text-cyan-400 font-bold">%</span>
                                     </h3>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] font-bold text-app-text-muted mb-1 uppercase tracking-widest opacity-60">Impacto de Campaña</p>
+                                    <p className="text-[10px] font-bold text-app-text-muted mb-1 uppercase tracking-widest opacity-60">Avance de Campaña</p>
                                     <p className="text-base font-black text-app-text flex items-center justify-end gap-1.5">
                                         <span className="text-cyan-400 tabular-nums">{progress.current}</span>
-                                        <span className="text-app-text-muted/30 text-xs">de</span>
+                                        <span className="text-app-text-muted/40 text-xs">/</span>
                                         <span className="tabular-nums">{progress.total}</span>
                                     </p>
                                 </div>
                             </div>
                             
-                            <div className="h-5 w-full bg-slate-200 dark:bg-slate-800/50 rounded-2xl overflow-hidden p-1 shadow-inner relative">
+                            <div className="h-4 w-full bg-slate-200 dark:bg-slate-800/80 rounded-2xl overflow-hidden p-0.5 shadow-inner relative">
                                 <div 
-                                    className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-600 rounded-xl transition-all duration-1000 ease-out relative shadow-[0_0_15px_rgba(6,182,212,0.4)]"
-                                    style={{ width: `${Math.max(progress.percentage, 2)}%` }}
+                                    className="h-full bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 rounded-xl transition-all duration-700 ease-out relative shadow-[0_0_15px_rgba(6,182,212,0.5)]"
+                                    style={{ width: `${Math.max(progress.percentage, 3)}%` }}
                                 >
                                     {/* Animated Shimmer Over Progress */}
-                                    <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.4)_50%,transparent_100%)] animate-[shimmer_1.5s_infinite] w-full"></div>
+                                    <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.5)_50%,transparent_100%)] animate-[shimmer_1.5s_infinite] w-full"></div>
                                 </div>
                             </div>
                             
                             <div className="flex justify-between items-center mt-4">
-                                <div className="text-[9px] font-bold text-app-text-muted/60 uppercase tracking-[0.15em]">
+                                <div className="text-[10px] font-bold uppercase tracking-wider">
                                     {progress.percentage === 100 ? (
-                                        <span className="text-emerald-500 flex items-center gap-1.5">
-                                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                                        <span className="text-emerald-400 flex items-center gap-1.5 font-black">
+                                            <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
                                             ¡DIFUSIÓN COMPLETADA CON ÉXITO!
                                         </span>
                                     ) : (
-                                        <span className="flex items-center gap-1.5">
-                                            <Loader2 className="animate-spin" size={10} />
-                                            DESPACHANDO COLA EN SEGUNDO PLANO...
+                                        <span className="text-cyan-400 flex items-center gap-1.5 font-bold">
+                                            <Loader2 className="animate-spin" size={12} />
+                                            DESPACHANDO COLA (PROTECCIÓN ANTI-BAN ACTIVA)...
                                         </span>
                                     )}
                                 </div>
-                                <div className="text-[9px] font-black text-app-text-muted/40 uppercase">
-                                    {Math.round(progress.current)} / {progress.total}
+                                <div className="text-[10px] font-mono font-bold text-slate-400">
+                                    {Math.round(progress.current)} de {progress.total}
                                 </div>
                             </div>
 
                             <button 
                                 onClick={(e) => {
                                     e.preventDefault();
-                                    if(confirm('¿Seguro que quieres detener la difusión?')) onCancel();
+                                    if(confirm('¿Seguro que quieres detener y cancelar la difusión actual?')) onCancel();
                                 }}
-                                className="w-full mt-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
+                                className="w-full mt-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 shadow-md shadow-red-500/10"
                             >
-                                <div className="w-2 h-2 bg-red-500 rounded-sm animate-pulse"></div>
-                                Cancelar Difusión
+                                <div className="w-2 h-2 bg-red-400 rounded-sm animate-pulse"></div>
+                                Cancelar y Detener Difusión
                             </button>
 
                             {/* Logs en tiempo real */}
                             {logs.length > 0 && (
-                                <div className="mt-6 space-y-2 pt-4 border-t border-slate-200 dark:border-white/5 animate-in slide-in-from-top-2 duration-500">
-                                    <p className="text-[8px] font-black text-app-text-muted/40 uppercase tracking-[0.2em] mb-3">Actividad Reciente</p>
-                                    <div className="space-y-1.5">
+                                <div className="mt-5 space-y-2 pt-4 border-t border-slate-200 dark:border-white/10 animate-in slide-in-from-top-2 duration-500">
+                                    <p className="text-[9px] font-black text-cyan-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full"></span>
+                                        Historial de Envíos en Vivo (Últimos {logs.length})
+                                    </p>
+                                    <div className="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar pr-1">
                                         {logs.map((log, i) => (
-                                            <div key={`${log.number}-${i}`} className="flex items-center justify-between bg-white/40 dark:bg-black/20 px-3 py-2 rounded-xl border border-white/50 dark:border-white/5 animate-in fade-in slide-in-from-left-4 duration-300">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-                                                    <span className="text-[10px] font-bold text-app-text truncate max-w-[120px]">{log.name || log.number}</span>
+                                            <div key={`${log.number}-${i}`} className="flex items-center justify-between bg-white/40 dark:bg-black/30 px-3 py-2 rounded-xl border border-white/50 dark:border-white/5 animate-in fade-in slide-in-from-left-4 duration-300">
+                                                <div className="flex items-center gap-2 truncate">
+                                                    <div className={`w-1.5 h-1.5 rounded-full ${log.status === 'success' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : (log.status === 'skipped' ? 'bg-amber-400' : 'bg-rose-400')}`}></div>
+                                                    <span className="text-[11px] font-bold text-app-text truncate max-w-[140px]">{log.name || log.number}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-[9px] font-medium text-app-text-muted/60 tabular-nums">{log.number}</span>
-                                                    <span className="text-[8px] font-black px-1.5 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-md uppercase tracking-tighter">Enviado</span>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <span className="text-[10px] font-mono text-app-text-muted/70 tabular-nums">{log.number}</span>
+                                                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                                                        log.status === 'success' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' : (log.status === 'skipped' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20' : 'bg-rose-500/15 text-rose-400 border border-rose-500/20')
+                                                    }`}>
+                                                        {log.status === 'success' ? 'Enviado' : (log.status === 'skipped' ? 'Omitido' : 'Fallo')}
+                                                    </span>
                                                 </div>
                                             </div>
                                         ))}

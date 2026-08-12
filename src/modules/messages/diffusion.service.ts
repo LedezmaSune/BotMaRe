@@ -54,14 +54,16 @@ export class MassDiffusionService {
         globalEvents.emit(EVENTS.DIFFUSION_PROGRESS, this.currentProgress);
         
         const logs: any[] = [];
-        for (const contact of contacts) {
+        for (let i = 0; i < contacts.length; i++) {
+            const contact = contacts[i];
+
             // --- VERIFICACIÓN DE CONEXIÓN ---
             // Si perdemos la conexión, esperamos a que el bot se reconecte antes de seguir
             // para evitar que toda la cola falle en cadena. Solo aplica si es WhatsApp.
             if (channel === 'whatsapp') {
                 while (this.waService.getStatus().state !== 'connected') {
                     console.warn("[Mass] Conexión WA perdida. Pausando cola hasta reconexión...");
-                    await new Promise(r => setTimeout(r, 10000));
+                    await new Promise(r => setTimeout(r, 5000));
                 }
             }
             // --------------------------------
@@ -76,32 +78,52 @@ export class MassDiffusionService {
                 break;
             }
 
-            const logEntry = {
+            const logEntry: {
+                name?: string;
+                number: string;
+                status: 'pending' | 'success' | 'failed' | 'skipped';
+                time: string;
+                error: string | null;
+            } = {
                 name: contact.name,
                 number: contact.number,
                 status: 'pending',
                 time: new Date().toLocaleTimeString(),
-                error: null as string | null
+                error: null
             };
 
-            try {
-                const to = contact.number;
-                if (!to || to.trim() === '') {
-                    logEntry.status = 'skipped';
-                    logEntry.error = 'Invalid number';
-                    logs.push(logEntry);
-                    continue;
-                }
+            const to = contact.number;
+            if (!to || to.trim() === '') {
+                logEntry.status = 'skipped';
+                logEntry.error = 'Número inválido';
+                logs.push(logEntry);
                 
-                const personalizedMessage = processVariables(rawMessage, contact.name || '');
+                this.currentProgress = {
+                    current: logs.length,
+                    total: contacts.length,
+                    percentage: Math.round((logs.length / contacts.length) * 100)
+                };
+                globalEvents.emit(EVENTS.DIFFUSION_PROGRESS, this.currentProgress);
+                globalEvents.emit(EVENTS.DIFFUSION_LOG, {
+                    name: contact.name || 'Sin nombre',
+                    number: to || 'Vacío',
+                    status: 'skipped',
+                    index: logs.length,
+                    total: contacts.length
+                });
+                continue;
+            }
 
-                console.log(`[Mass] Sending to ${to}...`);
+            const personalizedMessage = processVariables(rawMessage, contact.name || '');
+
+            try {
+                console.log(`[Mass] Sending (${logs.length + 1}/${contacts.length}) to ${to}...`);
                 
                 if (mediaFiles && mediaFiles.length > 0) {
                     let sentAny = false;
                     let errors: string[] = [];
-                    for (let i = 0; i < mediaFiles.length; i++) {
-                        const file = mediaFiles[i];
+                    for (let j = 0; j < mediaFiles.length; j++) {
+                        const file = mediaFiles[j];
                         if (fs.existsSync(file.path)) {
                             try {
                                 // Enviar caption solo en el primer archivo multimedia enviado exitosamente
@@ -167,48 +189,49 @@ export class MassDiffusionService {
                 }
 
                 logEntry.status = 'success';
-                logs.push(logEntry);
-
-                // Emitir log individual para el UI
-                globalEvents.emit(EVENTS.DIFFUSION_LOG, {
-                    name: contact.name,
-                    number: contact.number,
-                    status: 'success',
-                    index: logs.length,
-                    total: contacts.length
-                });
-
-                // --- PROTECCIÓN ANTI-BAN MEJORADA CON VARIACIÓN CAÓTICA Y PROPORCIONAL ---
-                const index = logs.length;
-                let delay = 4000 + Math.random() * 4000; // 4-8 segundos base
-                
-                // Retraso adicional proporcional a la longitud del mensaje (simula tiempo de redacción)
-                const charCount = personalizedMessage?.length || 0;
-                const writingJitter = Math.min(charCount * 15, 6000); // Máximo 6 segundos extra
-                delay += writingJitter;
-                
-                // Pausa larga cada 10 mensajes (simular descanso humano)
-                if (index % 10 === 0) {
-                    console.log(`[Mass] Pausa de seguridad larga (Burst Protection)...`);
-                    delay += 15000 + Math.random() * 10000; // +15-25 segundos extra
-                }
-
-                console.log(`[Mass] Esperando ${Math.round(delay / 1000)}s antes de continuar...`);
-                await new Promise(r => setTimeout(r, delay));
-                // -------------------------------------------------------------------------
-
-                // Emitir progreso al bus global
-                this.currentProgress = {
-                    current: logs.length,
-                    total: contacts.length,
-                    percentage: Math.round((logs.length / contacts.length) * 100)
-                };
-                globalEvents.emit(EVENTS.DIFFUSION_PROGRESS, this.currentProgress);
             } catch (error: any) {
                 console.error(`[Mass] Failed to send to ${contact.number}:`, error.message);
                 logEntry.status = 'failed';
                 logEntry.error = error.message;
-                logs.push(logEntry);
+            }
+
+            logs.push(logEntry);
+
+            // Emitir log individual para la interfaz en tiempo real
+            globalEvents.emit(EVENTS.DIFFUSION_LOG, {
+                name: contact.name || 'Sin nombre',
+                number: contact.number,
+                status: logEntry.status,
+                index: logs.length,
+                total: contacts.length,
+                error: logEntry.error
+            });
+
+            // Actualizar y emitir progreso general al bus global
+            this.currentProgress = {
+                current: logs.length,
+                total: contacts.length,
+                percentage: Math.round((logs.length / contacts.length) * 100)
+            };
+            globalEvents.emit(EVENTS.DIFFUSION_PROGRESS, this.currentProgress);
+
+            // --- PROTECCIÓN ANTI-BAN CON PAUSAS INTELIGENTES ---
+            if (i < contacts.length - 1 && !this.shouldStop) {
+                let delay = 3500 + Math.random() * 3500; // 3.5 - 7 segundos base
+                
+                // Retraso adicional proporcional a la longitud del mensaje
+                const charCount = personalizedMessage?.length || 0;
+                const writingJitter = Math.min(charCount * 12, 4000);
+                delay += writingJitter;
+                
+                // Pausa larga cada 10 mensajes (Burst Protection)
+                if ((i + 1) % 10 === 0) {
+                    console.log(`[Mass] Pausa de seguridad Burst Protection (15-20s)...`);
+                    delay += 12000 + Math.random() * 8000;
+                }
+
+                console.log(`[Mass] Esperando ${Math.round(delay / 1000)}s antes del siguiente contacto...`);
+                await new Promise(r => setTimeout(r, delay));
             }
         }
 

@@ -4,7 +4,7 @@ import { useGlobalBotData } from '@/app/BotDataProvider';
 import { MassMessaging } from '@/components/MassMessaging';
 
 export default function MassPage() {
-    const { handleSendMass, handleCancelMass, handleAIGeneration, templates, groups, diffusionProgress, diffusionLogs } = useGlobalBotData();
+    const { handleSendMass, handleCancelMass, handleAIGeneration, templates, groups, uploadProgress, diffusionProgress, diffusionLogs } = useGlobalBotData();
  
      return (
          <MassMessaging 
@@ -13,6 +13,7 @@ export default function MassPage() {
              onReview={handleAIGeneration} 
              templates={templates} 
              groups={groups}
+             uploadProgress={uploadProgress}
              progress={diffusionProgress}
              logs={diffusionLogs}
          />

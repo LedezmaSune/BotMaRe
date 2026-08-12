@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
+import axios from 'axios';
 import { Audit, Reminder, Settings, Template, ConnectionState, Autoresponder } from '../types';
 import { parseContactList } from '../utils/contactParser';
 
@@ -23,6 +24,7 @@ export function useBotData() {
     const [prefillDate, setPrefillDate] = useState<string>('');
     const [prefillReminderId, setPrefillReminderId] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
     const [diffusionProgress, setDiffusionProgress] = useState<{current: number, total: number, percentage: number} | null>(null);
     const [diffusionLogs, setDiffusionLogs] = useState<any[]>([]);
     const [networkStatus, setNetworkStatus] = useState<any>(null);
@@ -72,10 +74,20 @@ export function useBotData() {
                     if (n.success) setNetworkStatus(n.network);
                 }
             }
+
+            // Consultar si hay una difusión masiva en progreso al abrir la pestaña
+            if (currentTab === 'mass' && !diffusionProgress) {
+                try {
+                    const massRes = await axios.get(`${API_BASE}/send-mass/status`);
+                    if (massRes.data?.progress) {
+                        setDiffusionProgress(massRes.data.progress);
+                    }
+                } catch (e) {}
+            }
         } catch (error) {
             console.error('[useBotData] Error fetching data:', error);
         }
-    }, [settings, networkStatus, groups.length]);
+    }, [settings, networkStatus, groups.length, diffusionProgress]);
 
     useEffect(() => {
         // Consultar el estado inicial inmediatamente vía REST
@@ -84,6 +96,13 @@ export function useBotData() {
             .then(data => {
                 if (data?.state) setStatus(data.state);
                 if (data?.qr) setQr(data.qr);
+            })
+            .catch(() => null);
+
+        // Consultar si hay difusión masiva en curso
+        axios.get(`${API_BASE}/send-mass/status`)
+            .then(res => {
+                if (res.data?.progress) setDiffusionProgress(res.data.progress);
             })
             .catch(() => null);
 
@@ -108,11 +127,11 @@ export function useBotData() {
             setTimeout(() => {
                 setDiffusionProgress(null);
                 setDiffusionLogs([]);
-            }, 5000); // Mantener 5 segundos el éxito
+            }, 6000); // Mantener 6 segundos el éxito
         });
 
         socket.on('diffusion_log', (log) => {
-            setDiffusionLogs(prev => [log, ...prev].slice(0, 5)); // Guardar solo los últimos 5
+            setDiffusionLogs(prev => [log, ...prev].slice(0, 10)); // Guardar los últimos 10
         });
 
         return () => { socket.close(); };
@@ -144,6 +163,7 @@ export function useBotData() {
 
     const handleSendMass = async (contacts: string, message: string, media: File[] | File | null, channel: string = 'whatsapp') => {
         setIsLoading(true);
+        setUploadProgress(0);
         try {
             const contactList = parseContactList(contacts);
             const formData = new FormData();
@@ -158,28 +178,26 @@ export function useBotData() {
                 }
             }
 
-            const res = await fetch(`${API_BASE}/send-mass`, {
-                method: 'POST',
-                body: formData
+            const res = await axios.post(`${API_BASE}/send-mass`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+                onUploadProgress: (progressEvent) => {
+                    if (progressEvent.total) {
+                        const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                        setUploadProgress(percent);
+                    }
+                }
             });
 
-            let data;
-            const rawText = await res.text();
-            try {
-                data = JSON.parse(rawText);
-            } catch (jsonError) {
-                alert(`❌ Error del servidor (No es JSON): ${res.status} - ${rawText.substring(0, 100)}`);
-                setIsLoading(false);
-                return;
-            }
-
-            if (data.success) {
-                alert(`✅ Cola iniciada. Procesando ${contactList.length} contactos.`);
+            if (res.data?.success) {
+                setUploadProgress(100);
+                setTimeout(() => setUploadProgress(null), 1000);
             } else {
-                alert(`❌ Error: ${data.error}`);
+                alert(`❌ Error: ${res.data?.error || 'No se pudo iniciar la campaña.'}`);
+                setUploadProgress(null);
             }
         } catch (e: any) {
-            alert(`❌ Error al procesar el envío: ${e.message}`);
+            alert(`❌ Error al procesar el envío: ${e.response?.data?.error || e.message}`);
+            setUploadProgress(null);
         } finally {
             setIsLoading(false);
         }
@@ -187,10 +205,8 @@ export function useBotData() {
 
     const handleCancelMass = async () => {
         try {
-            const res = await fetch(`${API_BASE}/send-mass/cancel`, { method: 'POST' });
-            const data = await res.json();
-            if (data.success) {
-                alert('⏹️ Difusión cancelada.');
+            const res = await axios.post(`${API_BASE}/send-mass/cancel`);
+            if (res.data?.success) {
                 setDiffusionProgress(null);
                 setDiffusionLogs([]);
             }
@@ -372,6 +388,7 @@ export function useBotData() {
         handleCancelMass,
         handleResetWhatsApp,
         handleRequestPairingCode,
+        uploadProgress,
         diffusionProgress,
         diffusionLogs,
         networkStatus
