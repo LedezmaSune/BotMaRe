@@ -37,6 +37,16 @@ export class DeliveryDispatcher {
             const parsedContacts = parseContactList(reminder.chatId);
             let sentCount = 0;
 
+            // Si el canal es WhatsApp, esperar si el cliente está reconectando
+            if (channel === 'whatsapp') {
+                let waitRetries = 0;
+                while (waService.getStatus().state !== 'connected' && waitRetries < 20) {
+                    console.warn(`[DeliveryDispatcher] WhatsApp reconectando... Esperando conexión para recordatorio #${reminderId} (${waitRetries + 1}/20)...`);
+                    await new Promise(res => setTimeout(res, 2000));
+                    waitRetries++;
+                }
+            }
+
             for (const contact of parsedContacts) {
                 const targetId = contact.number;
                 const targetName = contact.name;
