@@ -64,7 +64,9 @@ export class WhatsAppClient {
                 markOnlineOnConnect: false, // Menos tráfico al arrancar
                 connectTimeoutMs: 120000, // Darle 2 minutos para conectar
                 defaultQueryTimeoutMs: 0, // 0 desactiva el timeout interno para consultas lentas iniciales
-                keepAliveIntervalMs: 30000,
+                keepAliveIntervalMs: 15000, // 15s para mantener vivo el socket en VPS/NAT/Firewall
+                retryRequestDelayMs: 500,
+                maxMsgRetryCount: 5,
             });
 
             this.socket.ev.on('creds.update', saveCreds);

@@ -90,11 +90,11 @@ export class Bot {
                         this.disconnectNotifyTimer = null;
                         void NotificationHub.notify({
                             title: '🔴 WhatsApp Desconectado',
-                            message: 'Se ha perdido la sesión con WhatsApp por más de 30 segundos. Intentando reconectar...',
+                            message: 'Se ha perdido la sesión con WhatsApp por más de 1 minuto. El bot está intentando reconectar automáticamente...',
                             type: 'error',
                             source: 'whatsapp'
                         });
-                    }, 30000); // 30 segundos de gracia
+                    }, 60000); // 60 segundos de gracia para evitar falsas alarmas por micro-reconexiones
                 }
             }
         };

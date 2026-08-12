@@ -88,11 +88,29 @@ export async function useSQLiteAuthState(dbPath: string): Promise<{ state: Authe
         },
         purgePreKeys: () => {
             try {
-                const info = db.prepare("DELETE FROM whatsapp_auth WHERE id LIKE 'pre-key-%'").run();
-                console.log(`[SQLite Auth] Purged ${info.changes} pre-keys to reduce DB size.`);
-                db.prepare("VACUUM").run(); // Optimize DB size after deletion
+                // Contar cuántas pre-keys hay almacenadas
+                const countRow = db.prepare("SELECT COUNT(*) as count FROM whatsapp_auth WHERE id LIKE 'pre-key-%'").get() as { count: number };
+                const count = countRow?.count || 0;
+                
+                // Solo purgar si hay más de 300 pre-keys acumuladas, conservando siempre las 100 más recientes
+                if (count > 300) {
+                    const toDelete = count - 100;
+                    const info = db.prepare(`
+                        DELETE FROM whatsapp_auth 
+                        WHERE id IN (
+                            SELECT id FROM whatsapp_auth 
+                            WHERE id LIKE 'pre-key-%' 
+                            ORDER BY rowid ASC 
+                            LIMIT ?
+                        )
+                    `).run(toDelete);
+                    console.log(`[SQLite Auth] Purgadas ${info.changes} pre-keys antiguas (conservadas las 100 más recientes).`);
+                    db.prepare("VACUUM").run();
+                } else {
+                    console.log(`[SQLite Auth] Pre-keys en rango óptimo (${count} keys). Sesión protegida.`);
+                }
             } catch (error: any) {
-                console.error("[SQLite Auth] Error purging pre-keys:", error.message);
+                console.error("[SQLite Auth] Error al optimizar pre-keys:", error.message);
             }
         },
         close: () => {
