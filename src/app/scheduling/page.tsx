@@ -4,12 +4,13 @@ import { useGlobalBotData } from '@/app/BotDataProvider';
 import { Reminders } from '@/components/Reminders';
 
 export default function SchedulingPage() {
-    const { reminders, handleAddReminder, handleDeleteReminder, prefillDate, templates, prefillReminderId, setPrefillReminderId, fetchData } = useGlobalBotData();
+    const { reminders, handleAddReminder, handleAddRemindersBulk, handleDeleteReminder, prefillDate, templates, prefillReminderId, setPrefillReminderId, fetchData } = useGlobalBotData();
 
     return (
         <Reminders
             reminders={reminders}
             onAdd={handleAddReminder}
+            onAddBulk={handleAddRemindersBulk}
             onDelete={handleDeleteReminder}
             initialTime={prefillDate}
             initialId={prefillReminderId}

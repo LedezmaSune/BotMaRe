@@ -44,7 +44,8 @@ export async function getAllConfig(): Promise<Record<string, string>> {
         'NOTIFY_MODELS_TELEGRAM',
         'HTTPSMS_API_KEY',
         'HTTPSMS_FROM_NUMBER',
-        'HTTPSMS_API_URL'
+        'HTTPSMS_API_URL',
+        'AUTO_DEPLOY'
     ];
     
     const merged: Record<string, string> = { ...dbSettings };

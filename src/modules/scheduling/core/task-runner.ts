@@ -6,6 +6,7 @@ import { ReminderCheckerJob } from '../jobs/reminder-checker.job';
 import { FileCleanupJob } from '../jobs/file-cleanup.job';
 import { SheetsSyncJob } from '../jobs/sheets-sync.job';
 import { BaileysMaintenanceJob } from '../jobs/baileys-maintenance.job';
+import { UpdateCheckerJob } from '../jobs/update-checker.job';
 
 export class TaskRunner {
     private isRunning: boolean = false;
@@ -66,9 +67,16 @@ export class TaskRunner {
         });
         this.cronTasks.push(dailyCleanupJob);
 
+        // 6. Verificación periódica de nuevas versiones en GitHub cada 2 horas (cron: '0 */2 * * *')
+        const updateJob = cron.schedule('0 */2 * * *', () => {
+            UpdateCheckerJob.execute().catch(() => {});
+        });
+        this.cronTasks.push(updateJob);
+
         // Disparos iniciales seguros no bloqueantes tras arranque
         setTimeout(() => FileCleanupJob.cleanupUploads().catch(() => {}), 5000);
         setTimeout(() => FileCleanupJob.cleanupOldLogsAndBackups().catch(() => {}), 10000);
+        setTimeout(() => UpdateCheckerJob.execute().catch(() => {}), 15000);
         setTimeout(() => ReminderCheckerJob.execute(this.reminderQueue, this.reminderService).catch(() => {}), 1000);
 
         console.log("[TaskRunner] Todas las tareas programadas han sido inicializadas exitosamente.");

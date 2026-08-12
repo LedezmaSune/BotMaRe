@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { 
     createReminder, 
+    createRemindersBulk,
     listReminders, 
     deleteReminder, 
     updateReminderStatus, 
@@ -13,6 +14,59 @@ import { Reminder } from '../../types';
 export class ReminderService {
     async bulkDelete(userId: string, type: 'all' | 'pending' | 'sent') {
         return await deleteRemindersBulk(userId, type);
+    }
+
+    async createBulk(userId: string, items: Array<{
+        chatId: string;
+        text: string;
+        time: string;
+        mediaPath?: string;
+        mediaType?: string;
+        repeat?: string;
+        repeatInterval?: number;
+        repeatUnit?: string;
+        title?: string;
+        channel?: 'whatsapp' | 'sms';
+    }>) {
+        const preparedItems = items.map(item => {
+            let finalPath = item.mediaPath;
+            let finalType = item.mediaType;
+
+            if (finalPath && !fs.existsSync(finalPath)) {
+                const fileName = path.basename(finalPath);
+                const uploadsDir = path.resolve('data/uploads');
+                let localPath = path.join(uploadsDir, fileName);
+                
+                if (fs.existsSync(localPath)) {
+                    finalPath = localPath;
+                    if (!finalType) {
+                        const ext = path.extname(localPath).toLowerCase();
+                        if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) finalType = 'image';
+                        else if (['.mp4', '.avi', '.mov'].includes(ext)) finalType = 'video';
+                        else if (['.mp3', '.ogg', '.wav'].includes(ext)) finalType = 'audio';
+                        else finalType = 'document';
+                    }
+                }
+            }
+
+            if (finalPath) finalPath = finalPath.replace(/\\/g, '/');
+
+            return {
+                chatId: item.chatId,
+                text: item.text,
+                time: item.time,
+                mediaPath: finalPath,
+                mediaType: finalType,
+                repeat: item.repeat || 'none',
+                repeatInterval: item.repeatInterval,
+                repeatUnit: item.repeatUnit,
+                title: item.title,
+                status: 'pending' as const,
+                channel: item.channel || 'whatsapp'
+            };
+        });
+
+        return await createRemindersBulk(userId, preparedItems);
     }
     async create(userId: string, chatId: string, text: string, time: string, mediaPath?: string, mediaType?: string, repeat?: string, repeatInterval?: number, repeatUnit?: string, title?: string, channel: 'whatsapp' | 'sms' = 'whatsapp') {
         let finalPath = mediaPath;

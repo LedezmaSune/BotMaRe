@@ -43,14 +43,14 @@ export function PendingList({
                 </div>
                 <div className="flex gap-2">
                     <button onClick={async () => { 
-                        if(confirm('¿Reparar fechas viejas al año actual? Los eventos que ya pasaron en este año serán eliminados automáticamente.')) { 
+                        if(confirm('¿Ajustar fechas automáticamente? Los eventos de fechas que ya hayan transcurrido este año se reprogramarán para el próximo año de forma segura sin borrar nada.')) { 
                             try {
                                 const res = await fetch('/api/reminders/bulk/fix-dates', { method: 'POST' });
                                 const data = await res.json();
-                                alert(`✅ Proceso finalizado:\n- ${data.fixed} eventos actualizados al año actual.\n- ${data.deleted} eventos eliminados (ya pasaron este año).`);
+                                alert(`✅ Proceso finalizado:\n- ${data.fixed} recordatorios actualizados a fechas futuras válidas.`);
                                 onRefresh?.();
                             } catch(e) {
-                                alert('Error al reparar.');
+                                alert('Error al reparar fechas.');
                             }
                         } 
                     }} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 text-[10px] font-black text-amber-500 border border-amber-500/20 rounded-lg hover:bg-amber-500/20 transition-all uppercase tracking-widest">

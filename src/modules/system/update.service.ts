@@ -106,6 +106,11 @@ export class UpdateService {
             if (fs.existsSync(dbFile)) {
                 fs.copyFileSync(dbFile, path.join(backupDir, 'database.db'));
             }
+
+            const jsonDbFile = path.resolve('data/database.json');
+            if (fs.existsSync(jsonDbFile)) {
+                fs.copyFileSync(jsonDbFile, path.join(backupDir, 'database.json'));
+            }
             
             const waAuthFile = path.resolve('data/whatsapp_auth.db');
             if (fs.existsSync(waAuthFile)) {

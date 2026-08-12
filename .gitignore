@@ -34,6 +34,7 @@ out/
 .next/
 dist/
 next-env.d.ts
+*.tsbuildinfo
 
 # OS Files
 .DS_Store

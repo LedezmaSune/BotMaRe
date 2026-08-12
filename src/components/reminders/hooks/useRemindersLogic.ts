@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Reminder } from '../../../types';
+import { parseDateFromFilename } from '../../../utils/dateParser';
 
 export function useRemindersLogic(
     reminders: Reminder[],
@@ -18,7 +19,9 @@ export function useRemindersLogic(
     ) => Promise<void>,
     initialTime?: string,
     initialId?: number | null,
-    onClearInitialId?: () => void
+    onClearInitialId?: () => void,
+    onAddBulk?: (items: Array<any>) => Promise<boolean>,
+    onRefresh?: () => void
 ) {
     const [mode, setMode] = useState<'single' | 'bulk'>('single');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -209,98 +212,93 @@ export function useRemindersLogic(
         let uploadFailed = false;
 
         try {
-            // Fase 1: Subida secuencial de archivos (Evita límites de Cloudflare y timeouts)
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
+            // Fase 1: Subida de archivos en lotes (evita sobrecargas y timeouts)
+            const CHUNK_SIZE = 10;
+            const fileList = Array.from(files);
+            for (let i = 0; i < fileList.length; i += CHUNK_SIZE) {
+                const chunk = fileList.slice(i, i + CHUNK_SIZE);
+                const currentEnd = Math.min(i + CHUNK_SIZE, fileList.length);
+
                 setBatchProgress({ 
-                    current: i + 1, 
-                    total: files.length, 
-                    filename: file.name,
+                    current: currentEnd, 
+                    total: fileList.length, 
+                    filename: chunk.map(f => f.name).join(', '),
                     label: "Subiendo Archivos...",
-                    description: "Transfiriendo archivos al servidor uno por uno para evitar desconexiones."
+                    description: `Transfiriendo archivos al servidor (${currentEnd}/${fileList.length}).`
                 });
 
                 const formData = new FormData();
-                formData.append('files', file);
+                chunk.forEach(f => formData.append('files', f));
 
                 try {
                     const res = await fetch('/api/system/upload-multiple', { method: 'POST', body: formData });
                     const d = await res.json();
                     
-                    if (res.ok && d.success && d.files && d.files[0]) {
-                        uploadedFiles.push(d.files[0]);
+                    if (res.ok && d.success && Array.isArray(d.files)) {
+                        uploadedFiles.push(...d.files);
                     } else {
                         const errMsg = d.error?.message || d.error || 'Error desconocido';
-                        if (!confirm(`❌ Falló la subida de: ${file.name}\nMotivo: ${errMsg}\n\n¿Deseas omitir este archivo y continuar con los demás?`)) {
+                        if (!confirm(`❌ Falló la subida de un bloque de archivos.\nMotivo: ${errMsg}\n\n¿Deseas continuar con los que se hayan subido?`)) {
                             uploadFailed = true;
                             break;
                         }
                     }
                 } catch (err: any) {
-                    if (!confirm(`❌ Error de conexión al subir: ${file.name}\n\n¿Deseas omitir este archivo y continuar con los demás?`)) {
+                    if (!confirm(`❌ Error de conexión al subir archivos.\n\n¿Deseas continuar con los ya procesados?`)) {
                         uploadFailed = true;
                         break;
                     }
                 }
             }
 
-            if (uploadFailed || uploadedFiles.length === 0) {
+            if (uploadFailed && uploadedFiles.length === 0) {
                 alert('⚠️ Proceso cancelado o no se subió ningún archivo.');
                 return;
             }
 
-            // Fase 2: Detección y procesamiento de fechas en los nombres de archivo
+            // Fase 2: Detección y procesamiento inteligente de fechas con parseDateFromFilename
             const filesWithDates = uploadedFiles.map((f: any) => {
-                const currentYear = new Date().getFullYear().toString();
-                const isoMatch = f.name.match(/(\d{4})[-._]?(\d{2})[-._]?(\d{2})/);
-                if (isoMatch) {
-                    const [_, _y, m, day] = isoMatch;
-                    const mNum = parseInt(m), dNum = parseInt(day);
-                    if (mNum >= 1 && mNum <= 12 && dNum >= 1 && dNum <= 31) {
-                        return { ...f, date: `${currentYear}-${m}-${day}` }; 
-                    }
-                }
-                const match = f.name.match(/(\d{2})[-._]?(\d{2})(?:[-._]?(\d{4}|\d{2}))?\b/);
-                if (match) {
-                    const [_, day, m, _yStr] = match;
-                    const dNum = parseInt(day);
-                    const mNum = parseInt(m);
-                    if (dNum >= 1 && dNum <= 31 && mNum >= 1 && mNum <= 12) {
-                        return { ...f, date: `${currentYear}-${m}-${day}` };
-                    }
-                }
-                return { ...f, date: null };
+                const parsed = parseDateFromFilename(f.name, batchTime);
+                return {
+                    ...f,
+                    parsed
+                };
             });
 
-            const withDate = filesWithDates.filter((f: any) => f.date);
+            const withDate = filesWithDates.filter((f: any) => f.parsed !== null);
             if (withDate.length > 0) {
-                // Fase 3: Programación secuencial de recordatorios
+                // Fase 3: Programación masiva en lote único
                 setBatchProgress({ 
-                    current: 0, 
+                    current: withDate.length, 
                     total: withDate.length, 
-                    filename: 'Iniciando...',
+                    filename: 'Guardando en agenda...',
                     label: "Programando Mensajes...",
-                    description: "Creando los recordatorios correspondientes uno a uno para asegurar su entrega."
+                    description: "Registrando recordatorios en el sistema..."
                 });
 
-                let current = 0;
-                for (const file of withDate) {
-                    current++;
-                    setBatchProgress({ 
-                        current, 
-                        total: withDate.length, 
-                        filename: file.name,
-                        label: "Programando Mensajes...",
-                        description: "Creando los recordatorios correspondientes uno a uno para asegurar su entrega."
-                    });
-                    const finalTime = `${file.date}T${batchTime}`;
-                    const finalText = batchText.replace('{ARCHIVO}', file.name);
-                    await onAdd(batchChatId, finalText, finalTime, null, 'none', 1, 'days', file.name, file.path, undefined, batchChannel);
+                const bulkItems = withDate.map((file: any) => ({
+                    chatId: batchChatId,
+                    text: batchText.replace('{ARCHIVO}', file.name),
+                    time: file.parsed.time,
+                    title: file.name,
+                    mediaPath: file.path,
+                    repeat: 'none',
+                    channel: batchChannel
+                }));
+
+                if (onAddBulk) {
+                    await onAddBulk(bulkItems);
+                } else {
+                    for (const item of bulkItems) {
+                        await onAdd(item.chatId, item.text, item.time, null, item.repeat, 1, 'days', item.title, item.mediaPath, undefined, item.channel);
+                    }
+                    onRefresh?.();
                 }
+
                 setShowBatchWizard(false);
                 alert(`✅ ${withDate.length} recordatorios programados exitosamente.`);
             } else {
-                alert(`✅ ${uploadedFiles.length} archivos subidos correctamente, pero no se detectaron fechas DDMMYYYY en los nombres para auto-programar.`);
+                alert(`✅ ${uploadedFiles.length} archivos subidos correctamente, pero no se detectaron fechas válidas en los nombres para auto-programar.`);
             }
         } catch (err) {
             alert('❌ Ocurrió un error inesperado al procesar el lote.');
@@ -328,9 +326,7 @@ export function useRemindersLogic(
             if (res.ok && data.success) {
                 alert(`✅ Escaneo completado. Se agregaron ${data.added} nuevos recordatorios desde la carpeta.`);
                 setShowBatchWizard(false);
-                // Trigger a refresh somehow, or the parent component should do it.
-                // Normally the parent refetches every minute, but we can do a window reload for now.
-                window.location.reload();
+                onRefresh?.();
             } else {
                 alert(`❌ Error en el escaneo: ${data.message || data.error || 'Desconocido'}`);
             }

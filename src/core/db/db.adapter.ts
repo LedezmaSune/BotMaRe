@@ -33,6 +33,22 @@ export interface IDatabaseAdapter {
         status?: 'pending' | 'processing' | 'sent' | 'failed',
         channel?: 'whatsapp' | 'sms'
     ): Promise<number>;
+    createRemindersBulk(
+        userId: string,
+        items: Array<{
+            chatId: string;
+            text: string;
+            time: string;
+            mediaPath?: string;
+            mediaType?: string;
+            repeat?: string;
+            repeatInterval?: number;
+            repeatUnit?: string;
+            title?: string;
+            status?: 'pending' | 'processing' | 'sent' | 'failed';
+            channel?: 'whatsapp' | 'sms';
+        }>
+    ): Promise<number[]>;
     listReminders(userId: string, includeProcessed?: boolean): Promise<any[]>;
     deleteReminder(id: number): Promise<void>;
     updateReminderStatus(id: number, status: 'pending' | 'processing' | 'sent' | 'failed'): Promise<void>;

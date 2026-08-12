@@ -48,8 +48,8 @@ export const validateCredentials = (user?: string, pass?: string): boolean => {
  * Middleware para autenticación básica del Dashboard con protección Anti-Fuerza Bruta
  */
 export const basicAuth = (req: Request, res: Response, next: NextFunction) => {
-    // No aplicar a rutas de WebSockets (se maneja en la capa de Socket.io)
-    if (req.path.startsWith('/socket.io')) {
+    // No aplicar a rutas de WebSockets ni Webhooks públicos (GitHub, Zapier, etc.)
+    if (req.path.startsWith('/socket.io') || req.path.startsWith('/api/webhooks')) {
         return next();
     }
 

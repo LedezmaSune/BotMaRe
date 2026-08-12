@@ -194,6 +194,52 @@ export class LowdbAdapter implements IDatabaseAdapter {
         }
     }
 
+    async createRemindersBulk(
+        userId: string,
+        items: Array<{
+            chatId: string;
+            text: string;
+            time: string;
+            mediaPath?: string;
+            mediaType?: string;
+            repeat?: string;
+            repeatInterval?: number;
+            repeatUnit?: string;
+            title?: string;
+            status?: 'pending' | 'processing' | 'sent' | 'failed';
+            channel?: 'whatsapp' | 'sms';
+        }>
+    ): Promise<number[]> {
+        const ids: number[] = [];
+        try {
+            for (const item of items) {
+                const id = generateNumericId();
+                ids.push(id);
+                this.ldb.data.reminders.push({
+                    id,
+                    userId,
+                    chatId: item.chatId,
+                    title: item.title,
+                    text: item.text,
+                    time: item.time,
+                    mediaPath: item.mediaPath,
+                    mediaType: item.mediaType,
+                    status: item.status || 'pending',
+                    repeat: item.repeat || 'none',
+                    repeatInterval: item.repeatInterval,
+                    repeatUnit: item.repeatUnit,
+                    channel: item.channel || 'whatsapp',
+                    timestamp: new Date()
+                });
+            }
+            await this.ldb.write();
+            return ids;
+        } catch (error) {
+            console.error('❌ [DB] Error al crear recordatorios masivos en Lowdb:', error);
+            return ids;
+        }
+    }
+
     async listReminders(userId: string, includeProcessed: boolean = false): Promise<any[]> {
         try {
             let list = this.ldb.data.reminders.filter(r => r.userId === userId);
@@ -263,7 +309,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async listPendingMediaPaths(): Promise<string[]> {
         try {
-            const list = this.ldb.data.reminders.filter(r => r.status === 'pending');
+            const list = this.ldb.data.reminders.filter(r => r.status !== 'sent');
             return list.map((r: any) => r.mediaPath).filter(Boolean);
         } catch (error) {
             return [];
@@ -292,7 +338,15 @@ export class LowdbAdapter implements IDatabaseAdapter {
 
     async checkReminderExistsByMediaPath(mediaPath: string): Promise<boolean> {
         try {
-            return !!this.ldb.data.reminders.find(r => r.mediaPath === mediaPath);
+            if (!mediaPath) return false;
+            const targetNorm = path.normalize(mediaPath).toLowerCase().replace(/\\/g, '/');
+            const targetBase = path.basename(mediaPath).toLowerCase();
+            return !!this.ldb.data.reminders.find(r => {
+                if (!r.mediaPath) return false;
+                const rNorm = path.normalize(r.mediaPath).toLowerCase().replace(/\\/g, '/');
+                const rBase = path.basename(r.mediaPath).toLowerCase();
+                return rNorm === targetNorm || rBase === targetBase || rNorm.endsWith('/' + targetBase);
+            });
         } catch (error) {
             return false;
         }

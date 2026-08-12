@@ -15,6 +15,7 @@ interface RemindersProps {
     reminders: Reminder[];
     templates: Template[];
     onAdd: (chatId: string, text: string, time: string, media: File[] | File | null, repeat?: string, repeatInterval?: number, repeatUnit?: string, title?: string, mediaPath?: string, mediaType?: string) => Promise<void>;
+    onAddBulk?: (items: Array<any>) => Promise<boolean>;
     onDelete: (id: number) => Promise<void>;
     initialTime?: string;
     initialId?: number | null;
@@ -22,7 +23,7 @@ interface RemindersProps {
     onRefresh?: () => void;
 }
 
-export function Reminders({ reminders, templates, onAdd, onDelete, initialTime, initialId, onClearInitialId, onRefresh }: RemindersProps) {
+export function Reminders({ reminders, templates, onAdd, onAddBulk, onDelete, initialTime, initialId, onClearInitialId, onRefresh }: RemindersProps) {
     const {
         mode, setMode,
         viewMode, setViewMode,
@@ -57,7 +58,7 @@ export function Reminders({ reminders, templates, onAdd, onDelete, initialTime, 
         batchProgress,
         handleBatchUploadAndProcess,
         handleScanFolder
-    } = useRemindersLogic(reminders, onAdd, initialTime, initialId, onClearInitialId);
+    } = useRemindersLogic(reminders, onAdd, initialTime, initialId, onClearInitialId, onAddBulk, onRefresh);
 
     return (
         <div className="relative min-h-screen">
@@ -179,13 +180,20 @@ export function Reminders({ reminders, templates, onAdd, onDelete, initialTime, 
                                             try {
                                                 const data = JSON.parse(ev.target?.result as string);
                                                 const toImport = Array.isArray(data) ? data : (data.reminders || []);
+                                                if (toImport.length === 0) return alert('No se encontraron recordatorios en el archivo JSON.');
                                                 if (confirm(`¿Importar ${toImport.length} mensajes?`)) {
-                                                    for (const r of toImport) {
-                                                        await onAdd(r.chatId, r.text, r.time, null, r.repeat, r.repeatInterval, r.repeatUnit, r.title, r.mediaPath, r.mediaType);
+                                                    if (onAddBulk) {
+                                                        const success = await onAddBulk(toImport);
+                                                        if (success) alert(`✅ ${toImport.length} recordatorios importados exitosamente.`);
+                                                    } else {
+                                                        for (const r of toImport) {
+                                                            await onAdd(r.chatId, r.text, r.time, null, r.repeat, r.repeatInterval, r.repeatUnit, r.title, r.mediaPath, r.mediaType);
+                                                        }
+                                                        onRefresh?.();
+                                                        alert('✅ Importado.');
                                                     }
-                                                    alert('✅ Importado.');
                                                 }
-                                            } catch (err) { alert('❌ Error.'); }
+                                            } catch (err) { alert('❌ Error al procesar el archivo JSON.'); }
                                         };
                                         reader.readAsText(file);
                                     }} />

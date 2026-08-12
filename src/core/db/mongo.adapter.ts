@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import path from 'path';
 import { IDatabaseAdapter } from './db.adapter';
 import { 
     UserData, SettingsData, MessageData, AuditData, 
@@ -151,6 +152,53 @@ export class MongoAdapter implements IDatabaseAdapter {
         }
     }
 
+    async createRemindersBulk(
+        userId: string,
+        items: Array<{
+            chatId: string;
+            text: string;
+            time: string;
+            mediaPath?: string;
+            mediaType?: string;
+            repeat?: string;
+            repeatInterval?: number;
+            repeatUnit?: string;
+            title?: string;
+            status?: 'pending' | 'processing' | 'sent' | 'failed';
+            channel?: 'whatsapp' | 'sms';
+        }>
+    ): Promise<number[]> {
+        const ids: number[] = [];
+        const payloads: any[] = [];
+        for (const item of items) {
+            const id = generateNumericId();
+            ids.push(id);
+            payloads.push({
+                id,
+                userId,
+                chatId: item.chatId,
+                title: item.title,
+                text: item.text,
+                time: item.time,
+                mediaPath: item.mediaPath,
+                mediaType: item.mediaType,
+                status: item.status || 'pending',
+                repeat: item.repeat || 'none',
+                repeatInterval: item.repeatInterval,
+                repeatUnit: item.repeatUnit,
+                channel: item.channel || 'whatsapp',
+                timestamp: new Date()
+            });
+        }
+        try {
+            await ReminderModel.insertMany(payloads);
+            return ids;
+        } catch (error) {
+            console.error('❌ [DB] Error al crear recordatorios masivos en MongoDB:', error);
+            return ids;
+        }
+    }
+
     async listReminders(userId: string, includeProcessed: boolean = false): Promise<any[]> {
         try {
             const filter = includeProcessed ? { userId } : { userId, status: 'pending' };
@@ -208,7 +256,7 @@ export class MongoAdapter implements IDatabaseAdapter {
     async listPendingMediaPaths(): Promise<string[]> {
         try {
             const results = await ReminderModel.find(
-                { status: 'pending', mediaPath: { $exists: true, $ne: null } },
+                { status: { $ne: 'sent' }, mediaPath: { $exists: true, $ne: null } },
                 { mediaPath: 1 }
             ).lean();
             return results.map(r => r.mediaPath).filter(Boolean) as string[];
@@ -235,7 +283,14 @@ export class MongoAdapter implements IDatabaseAdapter {
 
     async checkReminderExistsByMediaPath(mediaPath: string): Promise<boolean> {
         try {
-            const exists = await ReminderModel.findOne({ mediaPath }).lean();
+            if (!mediaPath) return false;
+            const targetBase = path.basename(mediaPath);
+            const exists = await ReminderModel.findOne({
+                $or: [
+                    { mediaPath },
+                    { mediaPath: { $regex: targetBase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', $options: 'i' } }
+                ]
+            }).lean();
             return !!exists;
         } catch (error) {
             return false;

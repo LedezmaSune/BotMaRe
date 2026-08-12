@@ -7,6 +7,7 @@ export function createReminderRouter(controller: ReminderController, upload: mul
     
     router.get('/', controller.list);
     router.post('/', controller.create);
+    router.post('/bulk', controller.createBulk);
     router.post('/with-media', upload.array('media', 10), controller.createWithMedia);
     router.post('/bulk/fix-dates', controller.fixDates);
     router.post('/bulk/scan-folder', controller.scanFolder);

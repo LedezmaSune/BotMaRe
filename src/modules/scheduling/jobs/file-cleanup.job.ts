@@ -18,18 +18,23 @@ export class FileCleanupJob {
 
             const mediaPaths = await listPendingMediaPaths();
             const activePaths = new Set(
-                (mediaPaths || []).map((p: string) => path.normalize(p))
+                (mediaPaths || []).map((p: string) => path.resolve(path.normalize(p)).toLowerCase())
+            );
+            const activeBasenames = new Set(
+                (mediaPaths || []).map((p: string) => path.basename(p).toLowerCase())
             );
 
             let deleted = 0;
             for (const file of files) {
                 const fullPath = path.join(uploadDir, file);
-                const normalizedFullPath = path.normalize(fullPath);
+                const normalizedFullPath = path.resolve(path.normalize(fullPath)).toLowerCase();
+                const baseName = file.toLowerCase();
 
                 try {
                     const stats = await fs.promises.stat(fullPath);
                     if (
                         !activePaths.has(normalizedFullPath) &&
+                        !activeBasenames.has(baseName) &&
                         now - Math.max(stats.mtimeMs, stats.ctimeMs) > THIRTY_DAYS_MS
                     ) {
                         await fs.promises.unlink(fullPath);
@@ -60,18 +65,23 @@ export class FileCleanupJob {
 
             const mediaPaths = await listPendingMediaPaths();
             const activePaths = new Set(
-                (mediaPaths || []).map((p: string) => path.normalize(p))
+                (mediaPaths || []).map((p: string) => path.resolve(path.normalize(p)).toLowerCase())
+            );
+            const activeBasenames = new Set(
+                (mediaPaths || []).map((p: string) => path.basename(p).toLowerCase())
             );
 
             let deleted = 0;
             for (const file of files) {
                 const fullPath = path.join(tempDir, file);
-                const normalizedFullPath = path.normalize(fullPath);
+                const normalizedFullPath = path.resolve(path.normalize(fullPath)).toLowerCase();
+                const baseName = file.toLowerCase();
 
                 try {
                     const stats = await fs.promises.stat(fullPath);
                     if (
                         !activePaths.has(normalizedFullPath) &&
+                        !activeBasenames.has(baseName) &&
                         now - Math.max(stats.mtimeMs, stats.ctimeMs) > TEN_MINUTES_MS
                     ) {
                         await fs.promises.unlink(fullPath);

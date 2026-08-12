@@ -270,6 +270,42 @@ export function useBotData() {
         }
     };
 
+    const handleAddRemindersBulk = async (items: Array<{
+        chatId: string;
+        text: string;
+        time: string;
+        mediaPath?: string;
+        mediaType?: string;
+        repeat?: string;
+        repeatInterval?: number;
+        repeatUnit?: string;
+        title?: string;
+        channel?: string;
+    }>): Promise<boolean> => {
+        if (!items || items.length === 0) return false;
+        setIsLoading(true);
+        try {
+            const res = await fetch(`${API_BASE}/reminders/bulk`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                await fetchData(activeTab);
+                return true;
+            } else {
+                alert(`❌ Error al crear recordatorios: ${data.error || 'Desconocido'}`);
+                return false;
+            }
+        } catch (e: any) {
+            alert(`❌ Error de conexión al crear recordatorios masivos: ${e.message}`);
+            return false;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleDeleteReminder = async (id: number) => {
         if (!confirm('¿Seguro que quieres eliminar este recordatorio?')) return;
         const res = await fetch(`${API_BASE}/reminders/${id}`, { method: 'DELETE' });
@@ -381,6 +417,7 @@ export function useBotData() {
         handleSendMass,
         handleAIGeneration,
         handleAddReminder,
+        handleAddRemindersBulk,
         handleDeleteReminder,
         handleUpdateSettings,
         handleToggleGroup,
