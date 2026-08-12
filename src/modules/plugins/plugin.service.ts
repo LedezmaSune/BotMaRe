@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import vm from 'vm';
 import axios from 'axios';
-import { globalEvents, EVENTS } from "../../core/events";
 import { MessageService } from "../messages/message.service";
 
 export interface PluginMetadata {
@@ -53,55 +52,6 @@ export class PluginService {
     public init(waService: MessageService) {
         this.waService = waService;
         this.loadPlugins();
-        
-        // Listen to global messages to dispatch them to plugins as fallback
-        globalEvents.on(EVENTS.MESSAGE_RECEIVED, async (data: any) => {
-            if (!data) return;
-            // Si data viene como evento crudo de Baileys { messages: [...], type: 'notify' }
-            if (data.messages && Array.isArray(data.messages)) {
-                const msg = data.messages[0];
-                if (!msg || msg.key?.fromMe || !msg.message) return;
-                const jid = msg.key.remoteJid;
-                if (!jid || jid.endsWith('@broadcast') || jid.endsWith('@newsletter')) return;
-
-                const text = msg.message.conversation
-                    || msg.message.extendedTextMessage?.text
-                    || msg.message.listResponseMessage?.singleSelectReply?.selectedRowId
-                    || msg.message.buttonsResponseMessage?.selectedButtonId
-                    || msg.message.imageMessage?.caption
-                    || msg.message.videoMessage?.caption
-                    || msg.message.documentMessage?.caption
-                    || '';
-
-                const participant = msg.key.participant || jid;
-                const pushName = msg.pushName || '';
-                const isGroup = jid.endsWith('@g.us');
-
-                await this.dispatchOnMessage({
-                    text,
-                    from: jid,
-                    sender: participant.split('@')[0],
-                    isGroup,
-                    pushName,
-                    quoted: msg.message.extendedTextMessage?.contextInfo?.quotedMessage,
-                    rawMessage: msg
-                });
-            } else {
-                // Si data viene estructurado { message, number, isGroup, pushName, quoted }
-                const { message, text, from, number, isGroup, pushName, quoted, rawMessage, socket } = data;
-                await this.dispatchOnMessage({
-                    text: text || message || '',
-                    from: from || (number ? (number.includes('@') ? number : `${number}@s.whatsapp.net`) : ''),
-                    sender: pushName || number || '',
-                    isGroup: Boolean(isGroup),
-                    pushName: pushName || '',
-                    quoted,
-                    rawMessage,
-                    socket
-                });
-            }
-        });
-        
         console.log(`[PluginService] Inicializado con ${this.plugins.size} plugins activos.`);
     }
 
