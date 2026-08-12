@@ -124,6 +124,7 @@ export class ReminderController {
         const reminders = await listPendingOrFailedReminders();
         
         let fixed = 0;
+        let deleted = 0;
         const now = new Date();
         const currentYear = now.getFullYear();
 
@@ -135,20 +136,24 @@ export class ReminderController {
                 const day = parseInt(dateParts[2], 10);
                 const timePart = parts[1] || '09:00';
 
-                // Si la fecha en el año actual ya pasó, agendamos para el año próximo de manera segura
-                const targetThisYear = new Date(currentYear, month - 1, day, 23, 59, 59);
-                let targetYear = currentYear;
-                if (targetThisYear.getTime() < now.getTime()) {
-                    targetYear = currentYear + 1;
-                }
+                // Evaluar la fecha fijada al año actual
+                const [hours, minutes] = timePart.split(':').map((n: string) => parseInt(n, 10) || 0);
+                const targetDateThisYear = new Date(currentYear, month - 1, day, hours, minutes, 0);
 
-                const newTimeStrLocal = `${targetYear}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${timePart}`;
-                await updateReminder(r.id, { time: newTimeStrLocal, status: 'pending' });
-                fixed++;
+                // Si en el año actual esta fecha ya expiró, se elimina
+                if (targetDateThisYear.getTime() < now.getTime()) {
+                    await deleteReminder(r.id);
+                    deleted++;
+                } else {
+                    // Si aún está por ocurrir en el año actual, se actualiza a este año y se reactiva en pending
+                    const newTimeStrLocal = `${currentYear}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${timePart}`;
+                    await updateReminder(r.id, { time: newTimeStrLocal, status: 'pending' });
+                    fixed++;
+                }
             }
         }
 
-        res.json({ success: true, fixed, deleted: 0 });
+        res.json({ success: true, fixed, deleted });
     });
 
     scanFolder = asyncHandler(async (req: Request, res: Response) => {
