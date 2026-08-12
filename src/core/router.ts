@@ -106,13 +106,17 @@ export class Router {
         }
 
         // Validación de Listas de Acceso (Whitelist/Blacklist)
-        if (!accessControl.canReplyTo(participantClean, false)) {
-            console.log(`[Router] Ignorando mensaje de ${participantClean} por reglas de lista (Contactos).`);
-            return;
-        }
-        if (jid.endsWith('@g.us') && !accessControl.canReplyTo(jid, true)) {
-            console.log(`[Router] Ignorando mensaje en grupo ${jid} por reglas de lista (Grupos).`);
-            return;
+        if (!isGroup) {
+            const contactIdToCheck = directPhone || participantClean;
+            if (!accessControl.canReplyTo(contactIdToCheck, false)) {
+                console.log(`[Router] Ignorando mensaje de ${contactIdToCheck} por reglas de lista (Contactos).`);
+                return;
+            }
+        } else {
+            if (!accessControl.canReplyTo(jid, true)) {
+                console.log(`[Router] Ignorando mensaje en grupo ${jid} por reglas de lista (Grupos).`);
+                return;
+            }
         }
 
         // Lógica de filtrado en grupos

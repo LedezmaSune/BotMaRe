@@ -20,6 +20,9 @@ export class Bot {
     private messageController: MessageController;
     private router: Router;
     private diffusionService: any = null;
+    private disconnectNotifyTimer: NodeJS.Timeout | null = null;
+    private isFirstConnection = true;
+    private wasProlongedOffline = false;
 
     constructor(private io: Server) {
         // 1. Infraestructura
@@ -49,6 +52,7 @@ export class Bot {
         // Actualizaciones de estado hacia el Frontend
         this.client.onStatusUpdate = (data) => {
             this.io.emit('status', data.state);
+            
             if (data.qr) {
                 this.io.emit('qr', data.qr);
                 void NotificationHub.notify({
@@ -57,20 +61,41 @@ export class Bot {
                     type: 'info',
                     source: 'whatsapp'
                 });
-            } else if (data.state === 'connected') {
-                void NotificationHub.notify({
-                    title: '🟢 WhatsApp Conectado',
-                    message: 'El bot se ha vinculado y está listo para enviar y recibir mensajes.',
-                    type: 'success',
-                    source: 'whatsapp'
-                });
+                return;
+            }
+
+            if (data.state === 'connected') {
+                // Cancelar cualquier alerta de desconexión pendiente si fue una reconexión rápida
+                if (this.disconnectNotifyTimer) {
+                    clearTimeout(this.disconnectNotifyTimer);
+                    this.disconnectNotifyTimer = null;
+                }
+
+                // Solo notificar si es la primera conexión exitosa o si se recuperó de una caída prolongada
+                if (this.isFirstConnection || this.wasProlongedOffline) {
+                    void NotificationHub.notify({
+                        title: '🟢 WhatsApp Conectado',
+                        message: 'El bot está vinculado y listo para enviar y recibir mensajes.',
+                        type: 'success',
+                        source: 'whatsapp'
+                    });
+                    this.isFirstConnection = false;
+                    this.wasProlongedOffline = false;
+                }
             } else if (data.state === 'disconnected') {
-                void NotificationHub.notify({
-                    title: '🔴 WhatsApp Desconectado',
-                    message: 'Se ha perdido la sesión con WhatsApp. Intentando reconectar...',
-                    type: 'error',
-                    source: 'whatsapp'
-                });
+                // Evitar notificaciones inmediatas por micro-cortes o reintentos de Baileys
+                if (!this.disconnectNotifyTimer) {
+                    this.disconnectNotifyTimer = setTimeout(() => {
+                        this.wasProlongedOffline = true;
+                        this.disconnectNotifyTimer = null;
+                        void NotificationHub.notify({
+                            title: '🔴 WhatsApp Desconectado',
+                            message: 'Se ha perdido la sesión con WhatsApp por más de 30 segundos. Intentando reconectar...',
+                            type: 'error',
+                            source: 'whatsapp'
+                        });
+                    }, 30000); // 30 segundos de gracia
+                }
             }
         };
 
