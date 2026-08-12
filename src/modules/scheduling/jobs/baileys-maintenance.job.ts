@@ -2,16 +2,25 @@ import { MessageService } from '../../messages/message.service';
 
 export class BaileysMaintenanceJob {
     /**
-     * Purga las claves de sesión pre-compartidas (pre-keys) de Baileys para optimizar la base de datos local.
+     * Mantenimiento diario preventivo de Baileys y SQLite:
+     * - Optimiza índices y checkpoint WAL de SQLite para compactar el archivo en disco (ideal para Termux y VPS).
+     * - Solo si hay más de 1,000 claves acumuladas poda las más antiguas dejando 300 activas.
+     * - Ejecuta recolección de basura de RAM si está disponible.
      */
-    static async execute(waService: MessageService): Promise<void> {
+    static async execute(waService?: MessageService): Promise<void> {
         try {
+            console.log("[BaileysMaintenanceJob] 🛠️ Ejecutando mantenimiento y optimización de base de datos de sesión...");
+            
             if (waService && typeof waService.purgePreKeys === 'function') {
-                console.log("[BaileysMaintenanceJob] Ejecutando purga programada de pre-keys de Baileys...");
                 waService.purgePreKeys();
             }
+
+            if (typeof global.gc === 'function') {
+                global.gc();
+                console.log("[BaileysMaintenanceJob] 🧹 Memoria RAM optimizada.");
+            }
         } catch (error: any) {
-            console.error("[BaileysMaintenanceJob] Error al purgar pre-keys de WhatsApp:", error.message);
+            console.warn("[BaileysMaintenanceJob] Aviso en mantenimiento de Baileys:", error.message);
         }
     }
 }

@@ -5,6 +5,7 @@ import { MessageService } from '../../messages/message.service';
 import { ReminderCheckerJob } from '../jobs/reminder-checker.job';
 import { FileCleanupJob } from '../jobs/file-cleanup.job';
 import { SheetsSyncJob } from '../jobs/sheets-sync.job';
+import { BaileysMaintenanceJob } from '../jobs/baileys-maintenance.job';
 import { UpdateCheckerJob } from '../jobs/update-checker.job';
 
 export class TaskRunner {
@@ -50,11 +51,12 @@ export class TaskRunner {
             });
         }, 3 * 60 * 1000);
 
-        // 4. Limpieza profunda diaria de uploads y purga de logs/backups (cron: '0 4 * * *' - 4:00 AM)
+        // 4. Limpieza profunda diaria de disco, purga de logs y optimización SQLite (cron: '0 4 * * *' - 4:00 AM)
         const dailyCleanupJob = cron.schedule('0 4 * * *', async () => {
-            console.log("[TaskRunner] Ejecutando mantenimiento diario de disco...");
+            console.log("[TaskRunner] Ejecutando mantenimiento diario de disco y optimización de base de datos...");
             await FileCleanupJob.cleanupUploads();
             await FileCleanupJob.cleanupOldLogsAndBackups();
+            await BaileysMaintenanceJob.execute(this.waService);
         });
         this.cronTasks.push(dailyCleanupJob);
 
