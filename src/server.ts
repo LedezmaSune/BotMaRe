@@ -18,6 +18,7 @@ import { Bot } from './core/bot';
 import { SystemUtils } from './core/system';
 import { TunnelService } from './core/tunnel';
 import { NotificationService } from './telegram/notification.service';
+import { NotificationHub } from './core/notificationHub';
 
 // Components
 import { createMainRouter } from './routes/index';
@@ -109,6 +110,9 @@ app.use(loggingMiddleware);
 const bot = new Bot(io);
 const messageService = bot.getMessageService();
 const reminderService = new ReminderService();
+
+// Inicializar NotificationHub
+NotificationHub.init(io, messageService);
 
 // El Dashboard (estático) primero
 const isPkg = (process as any).pkg;

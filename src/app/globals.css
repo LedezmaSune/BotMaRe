@@ -147,11 +147,32 @@ h1, h2, h3, h4, .font-black {
 
 /* Custom Global Smooth Transitions & Premium Animations */
 .hover-glow {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .hover-glow:hover {
-  box-shadow: 0 0 20px var(--app-glow);
-  transform: translateY(-2px);
+  box-shadow: 0 0 25px var(--app-glow);
+  transform: translateY(-3px);
+}
+
+.card-interactive {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+.card-interactive:hover {
+  transform: translateY(-4px);
+  border-color: rgba(6, 182, 212, 0.4);
+  box-shadow: 0 12px 36px -10px rgba(6, 182, 212, 0.15), 0 0 0 1px rgba(6, 182, 212, 0.2);
+}
+
+.btn-modern {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-modern:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+.btn-modern:active {
+  transform: scale(0.96);
 }
 
 @keyframes fadeIn {
@@ -162,11 +183,31 @@ h1, h2, h3, h4, .font-black {
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes bellShake {
+  0%, 100% { transform: rotate(0); }
+  20%, 60% { transform: rotate(15deg); }
+  40%, 80% { transform: rotate(-15deg); }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(6, 182, 212, 0.6);
   }
 }
 
@@ -178,8 +219,20 @@ h1, h2, h3, h4, .font-black {
   animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+.animate-float {
+  animation: floatSlow 5s ease-in-out infinite;
+}
+
+.animate-bell-shake {
+  animation: bellShake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.animate-glow-pulse {
+  animation: glowPulse 3s infinite ease-in-out;
+}
+
 /* Smooth page load backdrop */
 .premium-blur {
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
   transition: backdrop-filter 0.3s ease;
 }

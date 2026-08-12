@@ -164,4 +164,15 @@ export class SystemController {
             res.status(500).json({ error: 'Error al exportar los datos.' });
         }
     });
+
+    getNotifications = asyncHandler(async (req: Request, res: Response) => {
+        const { NotificationHub } = require('../../core/notificationHub');
+        res.json({ success: true, notifications: NotificationHub.getHistory() });
+    });
+
+    clearNotifications = asyncHandler(async (req: Request, res: Response) => {
+        const { NotificationHub } = require('../../core/notificationHub');
+        NotificationHub.clearHistory();
+        res.json({ success: true, message: 'Historial de notificaciones limpiado.' });
+    });
 }

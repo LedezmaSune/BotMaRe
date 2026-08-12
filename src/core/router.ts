@@ -1,6 +1,7 @@
 import { WAMessage } from '@whiskeysockets/baileys';
 import { MessageController } from '../modules/messages/message.controller';
 import { NotificationService } from '../telegram/notification.service';
+import { NotificationHub } from './notificationHub';
 import { getSettings, isChatPaused } from './memory';
 import { getConfig } from './config';
 import { accessControl } from './accessControl';
@@ -179,7 +180,7 @@ export class Router {
                 text: "🤖 _Entendido. He pausado mi sistema automático. Un asesor humano se conectará contigo en breve..._" 
             }, { quoted: msg });
             
-            // Avisar al Admin por Telegram
+            // Avisar al Admin por Telegram y NotificationHub
             const isGroupChat = jid.endsWith('@g.us');
             const phoneToLink = isGroupChat ? participantClean : jid.split('@')[0];
             const waLink = `https://wa.me/${phoneToLink}`;
@@ -189,6 +190,14 @@ export class Router {
                              `👇 *Hablar con el cliente:* \n${waLink}`;
             
             await NotificationService.notifyAdmin(alertMsg);
+            
+            void NotificationHub.notify({
+                title: '👤 Solicitud de Asesor Humano',
+                message: `El cliente ${phoneToLink} (${pushName || 'Sin nombre'}) ha solicitado atención humana. La IA fue pausada.`,
+                type: 'warning',
+                source: 'handoff',
+                link: '/support'
+            });
             
             return; // Terminar procesamiento aquí
         }

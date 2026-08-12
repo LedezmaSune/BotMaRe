@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Puzzle, 
     Plus, 
@@ -390,35 +391,39 @@ A continuación te paso el código del plugin de Baileys. Devuélveme ÚNICAMENT
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {plugins.map((plugin: any) => (
-                        <div 
-                            key={plugin.id} 
-                            className={`premium-glass rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden group ${
+                    {plugins.map((plugin: any, index: number) => (
+                        <motion.div 
+                            key={plugin.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                            whileHover={{ y: -5, scale: 1.01 }}
+                            className={`premium-glass rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden group card-interactive ${
                                 !plugin.active 
                                     ? 'border-app-border/30 opacity-70 hover:opacity-100' 
                                     : plugin.error 
                                         ? 'border-red-500/40 bg-red-950/10' 
-                                        : 'border-purple-500/30 hover:border-purple-500/50 shadow-lg shadow-purple-500/5'
+                                        : 'border-purple-500/30 hover:border-purple-500/60 shadow-lg shadow-purple-500/10'
                             }`}
                         >
                             <div className="p-5 space-y-3">
                                 {/* Plugin Header */}
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex items-center gap-2.5 overflow-hidden">
-                                        <div className={`p-2 rounded-xl border ${plugin.active ? 'bg-purple-500/10 border-purple-500/30 text-purple-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>
+                                        <div className={`p-2 rounded-xl border transition-transform group-hover:scale-105 ${plugin.active ? 'bg-purple-500/10 border-purple-500/30 text-purple-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>
                                             <Code2 className="w-5 h-5" />
                                         </div>
                                         <div className="truncate">
-                                            <h3 className="font-bold text-white truncate text-base">{plugin.name || plugin.id}</h3>
+                                            <h3 className="font-bold text-white truncate text-base group-hover:text-purple-300 transition-colors">{plugin.name || plugin.id}</h3>
                                             <span className="text-[11px] font-mono text-slate-400">id: {plugin.id}.js</span>
                                         </div>
                                     </div>
 
                                     <button 
                                         onClick={() => handleToggle(plugin.id, plugin.active)}
-                                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 border active:scale-95 ${
                                             plugin.active 
-                                                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25' 
+                                                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 shadow-[0_0_12px_rgba(16,185,129,0.2)]' 
                                                 : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'
                                         }`}
                                     >
@@ -434,7 +439,7 @@ A continuación te paso el código del plugin de Baileys. Devuélveme ÚNICAMENT
 
                                 {/* Error alert if present */}
                                 {plugin.error && (
-                                    <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-300 flex items-start gap-2">
+                                    <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-300 flex items-start gap-2 animate-pulse">
                                         <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
                                         <span className="font-mono break-all">{plugin.error}</span>
                                     </div>
@@ -445,20 +450,20 @@ A continuación te paso el código del plugin de Baileys. Devuélveme ÚNICAMENT
                             <div className="px-5 py-3 border-t border-app-border/30 bg-app-card/30 flex items-center justify-between">
                                 <button 
                                     onClick={() => openEditModal(plugin)}
-                                    className="px-3 py-1.5 bg-app-card hover:bg-purple-600/20 border border-app-border hover:border-purple-500/40 text-xs font-medium text-slate-200 hover:text-purple-300 rounded-lg transition-all flex items-center gap-1.5"
+                                    className="px-3 py-1.5 bg-app-card hover:bg-purple-600/20 border border-app-border hover:border-purple-500/40 text-xs font-medium text-slate-200 hover:text-purple-300 rounded-lg transition-all flex items-center gap-1.5 active:scale-95"
                                 >
                                     <Edit3 className="w-3.5 h-3.5" />
                                     Editar Código
                                 </button>
                                 <button 
                                     onClick={() => handleDelete(plugin.id)}
-                                    className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-xs font-medium text-red-400 rounded-lg transition-all flex items-center gap-1.5"
+                                    className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-xs font-medium text-red-400 rounded-lg transition-all flex items-center gap-1.5 active:scale-95"
                                 >
                                     <Trash2 className="w-3.5 h-3.5" />
                                     Eliminar
                                 </button>
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
                 </div>
             )}

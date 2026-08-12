@@ -20,6 +20,8 @@ export function createSystemRouter(controller: SystemController) {
     router.get('/backup', controller.downloadBackup);
     router.get('/export-readable', controller.exportReadable);
     router.get('/telemetry', controller.getTelemetry);
+    router.get('/notifications', controller.getNotifications);
+    router.delete('/notifications', controller.clearNotifications);
     
     router.post('/upload-multiple', secureUpload.any(), (req, res) => {
         const reqFiles = (req.files as any[]) || [];

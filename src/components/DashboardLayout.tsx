@@ -8,6 +8,7 @@ import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Se
 
 import { ConnectionOverlay } from '@/components/ConnectionOverlay';
 import { ThemeToggle, UpdateChecker, AIToggle, AutorespondersToggle, SheetsToggle, GlobalClock } from '@/components/StatusHeader';
+import { NotificationCenter } from '@/components/NotificationCenter';
 import { PageTransition } from '@/components/PageTransition';
 import { siteConfig } from '@/config';
 import { useGlobalBotData } from '@/app/BotDataProvider';
@@ -105,6 +106,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                             <Trash2 size={16} />
                         </button>
                     </div>
+
+                    <NotificationCenter />
 
                     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-widest bg-app-card/50 ${
                         status === 'connected' ? 'border-emerald-500/20 text-emerald-400' : 'border-red-500/20 text-red-400 animate-pulse'

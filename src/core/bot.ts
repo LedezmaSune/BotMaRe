@@ -6,6 +6,7 @@ import { Router } from './router';
 import { Server } from 'socket.io';
 import { globalEvents, EVENTS } from './events';
 import { PluginService } from '../modules/plugins/plugin.service';
+import { NotificationHub } from './notificationHub';
 
 /**
  * CORE LAYER - BOT ENTITY
@@ -50,6 +51,26 @@ export class Bot {
             this.io.emit('status', data.state);
             if (data.qr) {
                 this.io.emit('qr', data.qr);
+                void NotificationHub.notify({
+                    title: '📱 Código QR Generado',
+                    message: 'Nuevo código QR listo para vincular WhatsApp.',
+                    type: 'info',
+                    source: 'whatsapp'
+                });
+            } else if (data.state === 'connected') {
+                void NotificationHub.notify({
+                    title: '🟢 WhatsApp Conectado',
+                    message: 'El bot se ha vinculado y está listo para enviar y recibir mensajes.',
+                    type: 'success',
+                    source: 'whatsapp'
+                });
+            } else if (data.state === 'disconnected') {
+                void NotificationHub.notify({
+                    title: '🔴 WhatsApp Desconectado',
+                    message: 'Se ha perdido la sesión con WhatsApp. Intentando reconectar...',
+                    type: 'error',
+                    source: 'whatsapp'
+                });
             }
         };
 
