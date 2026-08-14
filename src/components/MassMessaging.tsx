@@ -40,6 +40,19 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, u
             .catch(() => {});
     }, []);
 
+    // Soporte para pegar archivos desde el portapapeles (Ctrl+V)
+    useEffect(() => {
+        const handlePaste = (e: ClipboardEvent) => {
+            if (e.clipboardData && e.clipboardData.files.length > 0) {
+                const pastedFiles = Array.from(e.clipboardData.files);
+                setMedia(prev => [...prev, ...pastedFiles]);
+            }
+        };
+
+        window.addEventListener('paste', handlePaste);
+        return () => window.removeEventListener('paste', handlePaste);
+    }, []);
+
     // Cargar contactos de una etiqueta CRM
     const handleLoadCRMTag = async (tagId: string) => {
         if (!tagId) return;
