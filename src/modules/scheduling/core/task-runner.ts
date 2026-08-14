@@ -60,8 +60,8 @@ export class TaskRunner {
         });
         this.cronTasks.push(dailyCleanupJob);
 
-        // 6. Verificación periódica de nuevas versiones en GitHub cada 2 horas (cron: '0 */2 * * *')
-        const updateJob = cron.schedule('0 */2 * * *', () => {
+        // 6. Verificación periódica de nuevas versiones en GitHub cada 6 horas (cron: '0 */6 * * *')
+        const updateJob = cron.schedule('0 */6 * * *', () => {
             UpdateCheckerJob.execute().catch(() => {});
         });
         this.cronTasks.push(updateJob);
