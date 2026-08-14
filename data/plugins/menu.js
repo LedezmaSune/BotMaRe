@@ -5,35 +5,33 @@ module.exports = {
     onMessage: async (ctx, api) => {
         const text = ctx.text || "";
         
-        // --- CONFIGURACIÓN DE PREFIJOS ---
-        // Puedes agregar o quitar prefijos aquí
-        const prefixes = ["!", ".", "/", "#"];
+        // Verificar si el texto es exactamente '!menuplugin'
+        if (text.trim().toLowerCase() !== '!menuplugin') {
+            return; // Salir si no es el comando exacto
+        }
         
-        // Verificar si el texto empieza con alguno de los prefijos y la palabra 'menu', 'help', o 'ayuda'
-        const prefixRegex = new RegExp(`^([${prefixes.join('\\')}])?(menu|help|ayuda)$`, "i");
-        const match = text.trim().match(prefixRegex);
-        
-        if (!match) return; // Si no es comando de menú, salir
-        
-        const usedPrefix = match[1] || ""; // El prefijo que se usó (puede estar vacío si se configuró sin prefijo)
-
-        // Obtener la lista de plugins desde la nueva API
+        // Obtener la lista de plugins activos excluyendo el menú mismo
         const plugins = api.getPlugins ? api.getPlugins() : [];
-        const activePlugins = plugins.filter(p => p.active);
+        const activePlugins = plugins.filter(p => p.active && p.id !== 'menu');
 
-        let menuText = `╭━━━ 🤖 *MENÚ BOTMARE* ━━━╮\n`;
-        menuText += `┃ 🔹 *Prefijo usado:* ${usedPrefix || "(Ninguno)"}\n`;
-        menuText += `┃ 🔹 *Total Plugins:* ${activePlugins.length}\n`;
+        let menuText = `╭━━━ 🤖 *PLUGINS BOTMARE* ━━━╮\n`;
+        menuText += `┃ 🔹 *Total Activos:* ${activePlugins.length}\n`;
         menuText += `╰━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-
-        menuText += `*📚 PLUGINS DISPONIBLES:*\n`;
         
-        activePlugins.forEach((plugin, index) => {
-            menuText += `\n*${index + 1}. ${plugin.name}*\n`;
-            menuText += `> 📝 ${plugin.description}\n`;
+        activePlugins.forEach((plugin) => {
+            // Extraer el comando de uso si está en la descripción (ej: Uso: !fb [link])
+            const matchUso = plugin.description.match(/Uso:\s*([^\s]+)/i);
+            const acronimo = matchUso ? matchUso[1] : `!${plugin.id}`;
+            
+            // Limpiar la descripción de la parte de "Uso: ..." para no ser redundante
+            let desc = plugin.description.replace(/Uso:.*$/i, '').trim();
+            if (desc.length > 50) desc = desc.substring(0, 47) + "..."; // Acortar si es muy larga
+            
+            menuText += `👉 *${acronimo}*\n`;
+            menuText += `   _${plugin.name}_: ${desc}\n\n`;
         });
 
-        menuText += `\n*Nota:* Configura más plugins en la carpeta 'data/plugins/'`;
+        menuText += `*Nota:* Puedes agregar tus propios plugins en 'data/plugins/'`;
 
         await api.reply(menuText);
     }
