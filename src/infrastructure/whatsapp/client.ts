@@ -64,7 +64,7 @@ export class WhatsAppClient {
                 markOnlineOnConnect: false, // Menos tráfico al arrancar
                 connectTimeoutMs: 120000, // Darle 2 minutos para conectar
                 defaultQueryTimeoutMs: 0, // 0 desactiva el timeout interno para consultas lentas iniciales
-                keepAliveIntervalMs: 15000, // 15s para mantener vivo el socket en VPS/NAT/Firewall
+                keepAliveIntervalMs: 45000, // 45s para mantener vivo el socket en VPS/NAT/Firewall y Termux
                 retryRequestDelayMs: 500,
                 maxMsgRetryCount: 5,
             });

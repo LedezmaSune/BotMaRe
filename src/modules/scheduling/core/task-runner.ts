@@ -35,14 +35,14 @@ export class TaskRunner {
             ReminderCheckerJob.execute(this.reminderQueue, this.reminderService).catch(err => {
                 console.error("[TaskRunner] Error no capturado en ReminderCheckerJob:", err.message);
             });
-        }, 30000);
+        }, 60000); // Revisión cada 1 minuto en lugar de 30s para no saturar SQLite
 
         // 2. Sincronización de Google Sheets cada 1 minuto
         this.sheetsIntervalId = setInterval(() => {
             SheetsSyncJob.execute().catch(err => {
                 console.error("[TaskRunner] Error no capturado en SheetsSyncJob:", err.message);
             });
-        }, 60 * 1000);
+        }, 5 * 60 * 1000); // Revisión cada 5 minutos en lugar de 1 minuto
 
         // 3. Limpieza de archivos temporales cada 3 minutos
         this.tempCleanupIntervalId = setInterval(() => {
