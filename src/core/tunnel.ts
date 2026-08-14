@@ -79,10 +79,19 @@ export class TunnelService extends EventEmitter {
             console.log(`\n-----------------------------------------`);
             console.log(`🌍 TUNEL PERSONALIZADO (Dominio Propio): ${domain}`);
             console.log(`-----------------------------------------\n`);
+            
+            // Si el usuario tiene un Token de Cloudflare Zero Trust, iniciamos el proceso del túnel en segundo plano
+            if (process.env.CLOUDFLARE_TUNNEL_TOKEN) {
+                console.log(`[Tunnel] Token detectado. Conectando al túnel seguro de Cloudflare...`);
+                this.retryCount = 0;
+                this.initializeTunnel(port).catch(err => console.error("[Tunnel] Error en túnel de token:", err));
+            }
+            
             this.emit('started', domain);
             return domain;
         }
 
+        // Si NO hay dominio personalizado, levantamos Quick Tunnel (o Token sin dominio fijo)
         this.retryCount = 0;
         return this.initializeTunnel(port);
     }
@@ -103,6 +112,7 @@ export class TunnelService extends EventEmitter {
                 let args: string[];
                 if (process.env.CLOUDFLARE_TUNNEL_TOKEN) {
                     args = ['tunnel', 'run', '--token', process.env.CLOUDFLARE_TUNNEL_TOKEN.trim()];
+                    setTimeout(() => resolve(this.publicUrl || 'Token Tunnel Active'), 3000);
                 } else {
                     // Quick Tunnel temporal por defecto
                     args = ['tunnel', '--url', `http://localhost:${port}`, '--protocol', 'http2'];
