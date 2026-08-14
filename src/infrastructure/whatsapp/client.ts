@@ -34,6 +34,18 @@ export class WhatsAppClient {
 
     async connect() {
         if (this.state === 'connecting') return;
+        
+        // Limpiar listeners del socket viejo para evitar fugas de memoria y duplicaciones
+        if (this.socket) {
+            try { this.socket.ev.removeAllListeners(); } catch (e) {}
+            this.socket = null;
+        }
+
+        // Si había una promesa de conexión pendiente de una sesión anterior fallida, rechazarla o resolverla
+        if (this.resolveConnection) {
+            this.resolveConnection();
+        }
+
         this.state = 'connecting';
         this.onStatusUpdate?.({ state: 'connecting', qr: this.qr || undefined });
         
@@ -57,16 +69,17 @@ export class WhatsAppClient {
                 },
                 logger,
                 printQRInTerminal: false,
-                browser: ['Ubuntu', 'Chrome', '20.0.04'], // Requerido para Pairing Code
+                browser: ['BotMaRe', 'Chrome', '120.0.0'], // Usar un user-agent más moderno para evitar bloqueos
                 syncFullHistory: false, // No descargar todo el historial para evitar Timeouts
                 shouldSyncHistoryMessage: () => false, // No sincronizar mensajes antiguos
                 generateHighQualityLinkPreview: false, // Ahorrar recursos al no generar previsualizaciones pro
-                markOnlineOnConnect: false, // Menos tráfico al arrancar
-                connectTimeoutMs: 120000, // Darle 2 minutos para conectar
+                markOnlineOnConnect: true, // Cambiado a true: WhatsApp Web a veces desconecta si no marcas online
+                connectTimeoutMs: 60000, // Bajar a 60s para que detecte fallos más rápido y reconecte
                 defaultQueryTimeoutMs: 0, // 0 desactiva el timeout interno para consultas lentas iniciales
-                keepAliveIntervalMs: 45000, // 45s para mantener vivo el socket en VPS/NAT/Firewall y Termux
+                keepAliveIntervalMs: 25000, // Bajar a 25s (NAT/Termux cierra puertos silenciosamente rápido)
                 retryRequestDelayMs: 500,
                 maxMsgRetryCount: 5,
+                getMessage: async () => { return { conversation: 'BotMaRe' }; } // Prevenir crash al intentar reenviar un mensaje no cacheado
             });
 
             this.socket.ev.on('creds.update', saveCreds);
@@ -117,7 +130,10 @@ export class WhatsAppClient {
                     const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
                     
                     if (shouldReconnect) {
-                        const delay = 5000; // Esperar 5 segundos antes de reintentar
+                        // Si Baileys solicita explícitamente un reinicio de la conexión interna (515) reanudamos rápido
+                        const isRestartRequired = statusCode === DisconnectReason.restartRequired;
+                        const delay = isRestartRequired ? 500 : 5000; 
+                        
                         console.log(`[Infraestructura WA] Conexión perdida (Causa: ${statusCode}). Reintentando en ${delay/1000}s...`);
                         setTimeout(() => {
                             void this.connect();
