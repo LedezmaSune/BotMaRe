@@ -3,11 +3,22 @@ module.exports = {
     description: "Muestra la lista de plugins activos",
     active: true,
     onMessage: async (ctx, api) => {
-        const text = ctx.text || "";
+        const text = (ctx.text || "").trim().toLowerCase();
         
-        // Verificar si el texto es exactamente '!menuplugin'
-        if (text.trim().toLowerCase() !== '!menuplugin') {
-            return; // Salir si no es el comando exacto
+        const isMenuCommand = text === '!menuplugin';
+        
+        // Si estamos en un grupo, permitimos llamar al menú mencionando al bot solo (ej. @bot, @ia, @botmare, etc.)
+        const isGroupMention = ctx.isGroup && (
+            text === '@bot' || 
+            text === '@ia' || 
+            text === '@ai' || 
+            text === 'botmare' || 
+            text === '@botmare' ||
+            text.startsWith('@')
+        );
+
+        if (!isMenuCommand && !isGroupMention) {
+            return; // Salir si no es el comando exacto ni la mención en grupo
         }
         
         // Obtener la lista de plugins activos excluyendo el menú mismo
