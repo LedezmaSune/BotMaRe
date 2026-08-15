@@ -47,7 +47,7 @@ function getCloudflaredBin(): string | null {
     return null;
 }
 
-import localtunnel from 'localtunnel';
+import { tunnelmole } from 'tunnelmole';
 
 export class TunnelService extends EventEmitter {
     private static instance: TunnelService;
@@ -152,24 +152,22 @@ export class TunnelService extends EventEmitter {
                         }
                     });
                 } else {
-                    // Si no hay token, usamos LocalTunnel como alternativa rápida (ideal para Termux/Local)
-                    console.log("[Tunnel] No se detectó Token de Cloudflare. Usando LocalTunnel como alternativa gratuita...");
-                    localtunnel({ port }).then(tunnel => {
-                        this.publicUrl = tunnel.url;
+                    // Si no hay token, usamos Tunnelmole como alternativa rápida (ideal para Termux/Local)
+                    console.log("[Tunnel] No se detectó Token de Cloudflare. Usando Tunnelmole como alternativa gratuita...");
+                    
+                    tunnelmole({
+                        port: port
+                    }).then((url: string) => {
+                        this.publicUrl = url;
                         console.log(`\n-----------------------------------------`);
-                        console.log(`🌍 TUNEL ACTIVADO: ${tunnel.url}`);
+                        console.log(`🌍 TUNEL ACTIVADO: ${url}`);
                         console.log(`-----------------------------------------\n`);
-                        this.emit('started', tunnel.url);
+                        this.emit('started', url);
                         
-                        tunnel.on('close', () => {
-                            console.log("[Tunnel] LocalTunnel cerrado.");
-                            this.publicUrl = null;
-                        });
-                        
-                        this.ltInstance = tunnel;
-                        resolve(tunnel.url);
-                    }).catch(err => {
-                        console.error("[Tunnel] Error iniciando LocalTunnel:", err);
+                        // En tunnelmole el proceso se mantiene activo internamente en Node.js
+                        resolve(url);
+                    }).catch((err: any) => {
+                        console.error("[Tunnel] Error iniciando Tunnelmole:", err);
                         this.handleRestart(port, resolve, reject);
                     });
                 }
@@ -198,10 +196,7 @@ export class TunnelService extends EventEmitter {
             this.tunnelProcess.kill();
             this.tunnelProcess = null;
         }
-        if (this.ltInstance) {
-            try { this.ltInstance.close(); } catch (e) {}
-            this.ltInstance = null;
-        }
+        // Tunnelmole no expone un método close directo, muere al detener el proceso principal
         this.publicUrl = null;
     }
 
