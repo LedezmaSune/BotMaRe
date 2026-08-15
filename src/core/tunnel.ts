@@ -120,12 +120,16 @@ export class TunnelService extends EventEmitter {
                 
                 this.tunnelProcess = spawn(binPath, args);
 
+                let fullErrorLog = '';
+                
                 this.tunnelProcess.stdout?.on('data', (data) => {
                     const output = data.toString();
+                    fullErrorLog += output;
                 });
 
                 this.tunnelProcess.stderr?.on('data', (data) => {
                     const output = data.toString();
+                    fullErrorLog += output;
                     
                     // Detectar URL en stderr (cloudflared logs there)
                     const urlMatch = output.match(/https:\/\/(?!api\.)[a-z0-9-]+\.trycloudflare\.com/i);
@@ -178,6 +182,9 @@ export class TunnelService extends EventEmitter {
                     
                     if (!this.publicUrl && !this.isAutoRecovering) {
                         console.warn(`[Tunnel] Proceso salió con código ${code} sin generar URL.`);
+                        if (code !== 0 && fullErrorLog.trim()) {
+                            console.error(`\n=== 🚨 [DIAGNÓSTICO CLOUDFLARED] ===\n${fullErrorLog.trim()}\n===================================\n`);
+                        }
                         this.handleRestart(port, resolve, reject);
                     } else {
                         console.log(`[Tunnel] Proceso de túnel terminado.`);
