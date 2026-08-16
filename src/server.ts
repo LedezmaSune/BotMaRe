@@ -214,18 +214,6 @@ async function bootstrap() {
         s1.fail(`Error al inicializar base de datos: ${e.message}`);
     }
 
-    const s2 = new Spinner("Verificando Conectividad y Acceso Global...");
-    s2.start();
-    const tunnel = TunnelService.getInstance();
-    let tunnelUrl = null;
-    try {
-        tunnelUrl = await tunnel.start(Number(PORT));
-        if (tunnelUrl) s2.succeed(`Túnel establecido.`);
-        else s2.info(`Solo acceso local disponible.`);
-    } catch (e) {
-        s2.info(`No se pudo establecer el túnel. Solo acceso local.`);
-    }
-
     const s3 = new Spinner("Desplegando Servidor y Dashboard...");
     s3.start();
 
@@ -245,6 +233,19 @@ async function bootstrap() {
 
     server.listen(Number(PORT), '0.0.0.0', async () => {
         s3.succeed("Servidor HTTP Online.");
+
+        // Iniciar el túnel una vez que el servidor ya está escuchando en el puerto
+        const s2 = new Spinner("Verificando Conectividad y Acceso Global...");
+        s2.start();
+        const tunnel = TunnelService.getInstance();
+        let tunnelUrl = null;
+        try {
+            tunnelUrl = await tunnel.start(Number(PORT));
+            if (tunnelUrl) s2.succeed(`Túnel establecido.`);
+            else s2.info(`Solo acceso local disponible.`);
+        } catch (e) {
+            s2.info(`No se pudo establecer el túnel. Solo acceso local.`);
+        }
         const localIP = SystemUtils.getLocalIP();
         
         console.log(`\n${colors.dim}=======================================================${colors.reset}`);
