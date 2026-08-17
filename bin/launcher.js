@@ -267,7 +267,7 @@ function handleChoice(choice) {
                 } else showMenu();
             });
             break;
-        case '7': runCmd('pnpm', ['install'], showMenu); break;
+        case '7': runCmd('pnpm', ['install', '--ignore-scripts'], showMenu); break;
         case '8': showPM2Menu(); break;
         case '9': showFoldersMenu(); break;
         case '10': showUpdateMenu(); break;
@@ -292,7 +292,7 @@ function handleChoice(choice) {
                 });
             } else {
                 runCmd('pnpm', ['remove', 'cloudflared'], () => {
-                    runCmd('pnpm', ['install', 'cloudflared'], showMenu);
+                    runCmd('pnpm', ['install', 'cloudflared', '--ignore-scripts'], showMenu);
                 });
             }
             break;
