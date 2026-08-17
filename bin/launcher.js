@@ -283,9 +283,18 @@ function handleChoice(choice) {
         case '13':
             console.log(`\n    ${c.bgCyan}${c.bright} 🌐 REINSTALANDO TÚNEL PÚBLICO (CLOUDFLARED DE CERO) ${c.reset}\n`);
             console.log(`    ${c.cyan}Eliminando binario viejo para burlar bloqueos y bajando uno limpio...${c.reset}`);
-            runCmd('pnpm', ['remove', 'cloudflared'], () => {
-                runCmd('pnpm', ['install', 'cloudflared'], showMenu);
-            });
+            
+            const isTermux = fs.existsSync('/data/data/com.termux');
+            if (isTermux) {
+                console.log(`    ${c.yellow}⚠ Entorno Termux/Android detectado. Utilizando gestor de paquetes del sistema (pkg)...${c.reset}\n`);
+                runCmd('pkg', ['uninstall', 'cloudflared', '-y'], () => {
+                    runCmd('pkg', ['install', 'cloudflared', '-y'], showMenu);
+                });
+            } else {
+                runCmd('pnpm', ['remove', 'cloudflared'], () => {
+                    runCmd('pnpm', ['install', 'cloudflared'], showMenu);
+                });
+            }
             break;
         default: invalidChoice(showMenu); break;
     }
