@@ -344,7 +344,8 @@ if pnpm install --ignore-scripts; then
     ok "Módulos de Node.js instalados (scripts omitidos)."
     info "Compilando better-sqlite3 de forma nativa para Termux..."
     
-    if pnpm rebuild better-sqlite3; then
+    # Inyectar banderas en línea para garantizar que Termux compile NDK en lugar de usar binarios precompilados de Linux
+    if pnpm rebuild better-sqlite3 --build-from-source --sqlite="$TERMUX_PREFIX"; then
         ok "¡better-sqlite3 compilado y configurado exitosamente!"
     else
         warn "Fallo al compilar better-sqlite3 con pnpm rebuild. Intentando compilación aislada con npm..."

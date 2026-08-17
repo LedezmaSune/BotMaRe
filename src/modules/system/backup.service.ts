@@ -62,11 +62,10 @@ export class BackupService {
         const authDbFile = path.join(process.cwd(), 'data', 'whatsapp_auth.db');
         if (fs.existsSync(authDbFile)) coreZip.addLocalFile(authDbFile, 'data');
 
-        // 2. Incluir Sesión de WhatsApp (Baileys)
-        const authDir = path.join(process.cwd(), 'auth_info_baileys');
-        if (fs.existsSync(authDir)) {
-            coreZip.addLocalFolder(authDir, 'auth_info_baileys');
-        }
+        // 2. Incluir Sesión de WhatsApp (Baileys) - OMITIDO
+        // Se omiten las credenciales para evitar que adm-zip bloquee el Event Loop leyendo la BD de SQLite temporal de Baileys,
+        // lo que causa que WhatsApp cierre la sesión por TimeOut ("Connection closed").
+        // En caso de catástrofe, es más seguro reescanear el código QR al restaurar la DB.
 
         // 3. Incluir archivo .env
         const envPath = path.join(process.cwd(), '.env');
@@ -135,7 +134,7 @@ export class BackupService {
                                 `⚙️ *Tipo:* ${type}\n\n` +
                                 (isMedia 
                                     ? `🖼️ _Contiene todas las fotos y vídeos de los recordatorios._`
-                                    : `🔐 _Contiene Base de Datos, Sesiones de WhatsApp y Configuración._`) + 
+                                    : `🔐 _Contiene Base de Datos y Configuración (Escanea el QR nuevamente al restaurar)._`) + 
                                 `\n\n🔑 _Usa la contraseña de tu Dashboard para desencriptar._`;
 
                 for (const userId of userIds) {
