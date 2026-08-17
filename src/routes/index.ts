@@ -33,7 +33,7 @@ import { createSupportRouter } from './support.routes';
 import { createAutoresponderRouter } from '../modules/autoresponders/autoresponder.routes';
 import { createSheetsRouter } from '../modules/autoresponders/sheets.routes';
 import accessRouter from './access.routes';
-import webhooksRouter from './webhooks.routes';
+import { createWebhooksRouter } from './webhooks.routes';
 import crmRouter from './crm.routes';
 import { createPluginsRouter } from './plugins.routes';
 import { PluginService } from '../modules/plugins/plugin.service';
@@ -84,7 +84,7 @@ export function createMainRouter(waClient: WhatsAppClient) {
     router.use('/autoresponders', createAutoresponderRouter(autoresponderController));
     router.use('/sheets', createSheetsRouter());
     router.use('/access', accessRouter);
-    router.use('/webhooks', webhooksRouter);
+    router.use('/webhooks', createWebhooksRouter(waService as any));
     router.use('/crm', crmRouter);
     router.use('/plugins', createPluginsRouter());
 

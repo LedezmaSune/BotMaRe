@@ -366,6 +366,11 @@ Ejecución continua 24/7 en servidores de producción:
 
 ## 🔄 Historial de Actualizaciones (Changelog)
 
+- **[2.4.0] - 2026-08-16:** Webhooks Universales, Parches de Seguridad y Renderizado Cliente:
+  - 🔗 **API de Webhooks Universal:** Nuevo endpoint `/api/webhooks/incoming` para recibir eventos desde Zapier, Make, Google Apps Script, Go, y n8n con soporte para JSON y Formularios.
+  - 🔑 **Autenticación Flexible:** Soporte para cabeceras `Authorization: Bearer`, `x-api-key` y parámetros de URL `?apikey=` permitiendo integraciones en ambientes estrictos.
+  - 📝 **Dashboard Interactivo de Snippets:** Nueva interfaz visual Glassmorphism para Webhooks con ejemplos listos para copiar, pegar y ejecutar.
+  - 🛡️ **Parche de Seguridad:** Resolución de 59 vulnerabilidades heredadas actualizando Next.js a `v16.3.1` e imponiendo resoluciones estrictas a `axios`.
 - **[2.3.1] - 2026-08-11:** Soporte Internacional para SMS, Normalización E.164 y Ajustes Dinámicos:
   - 🌐 **Soporte SMS Internacional (E.164 Global):** Compatibilidad completa para envíos masivos y recordatorios por SMS vía pasarela httpSMS hacia números de cualquier país (EE. UU. `+1`, España `+34`, Argentina `+549`, Colombia `+57`, Chile `+56`, Perú `+51`, Brasil `+55`, Ecuador `+593`, etc.).
   - 🔄 **Normalización Inteligente de Prefijos:** Limpieza y adaptación automática de prefijos internacionales (`00`, `011`), eliminación de sufijos WhatsApp (`@s.whatsapp.net`) y normalización del prefijo móvil de México (`+521` a `+52`) para garantizar entrega en operadoras móviles.

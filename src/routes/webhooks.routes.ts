@@ -1,10 +1,33 @@
-import { Router, Request, Response } from 'express';
+import express, { Router, Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { NotificationHub } from '../core/notificationHub';
 import { UpdateService } from '../modules/system/update.service';
+import { MessageService } from '../modules/messages/message.service';
 
-const router = Router();
 const updateService = new UpdateService();
+
+/**
+ * Middleware para validar el API Key del Webhook
+ */
+function requireWebhookAuth(req: Request, res: Response, next: NextFunction) {
+    const validKey = process.env.WEBHOOK_API_KEY || 'botmare_default_secret_key';
+    const providedKey = req.headers['x-api-key'] || 
+                        (req.headers.authorization ? req.headers.authorization.replace('Bearer ', '') : null) || 
+                        req.query.apikey;
+
+    if (!providedKey || providedKey !== validKey) {
+        console.warn(`[Webhooks] 🚫 Acceso denegado a IP ${req.ip} (API Key inválida o faltante).`);
+        return res.status(401).json({ success: false, error: 'No autorizado. Verifica tu API Key' });
+    }
+    next();
+}
+
+/**
+ * Fábrica de rutas de webhooks
+ */
+export function createWebhooksRouter(waService: MessageService) {
+    const router = Router();
+    router.use(express.urlencoded({ extended: true }));
 
 /**
  * Valida la firma HMAC SHA256 de GitHub si está configurado GITHUB_WEBHOOK_SECRET
@@ -127,17 +150,36 @@ router.post('/github', async (req: Request, res: Response) => {
     res.json({ success: true, message: `Evento ${event} recibido.` });
 });
 
-router.post('/incoming', (req, res) => {
-    console.log('[Webhooks] Solicitud genérica entrante recibida.');
-    res.status(200).json({ status: 'success', message: 'Webhook recibido correctamente.' });
-});
-
-router.get('/status', (req, res) => {
-    res.status(200).json({ 
-        status: 'active', 
-        githubWebhookUrl: '/api/webhooks/github',
-        autoDeploy: process.env.AUTO_DEPLOY !== 'false'
+    router.post('/incoming', requireWebhookAuth, async (req: Request, res: Response): Promise<any> => {
+        try {
+            const { phone, message, mediaUrl } = req.body;
+            if (!phone || !message) {
+                return res.status(400).json({ success: false, error: "Faltan parámetros obligatorios: 'phone' y 'message'." });
+            }
+            console.log(`[Webhooks] 🚀 Recibida solicitud Zapier/Make/GAS para ${phone}`);
+            if (mediaUrl) {
+                await waService.sendMediaFromUrl(phone, mediaUrl, message, 'image');
+            } else {
+                await waService.sendMessage(phone, message);
+            }
+            return res.json({ success: true, message: 'Mensaje enviado exitosamente a WhatsApp.' });
+        } catch (error: any) {
+            console.error('[Webhooks] ❌ Error:', error.message);
+            return res.status(500).json({ success: false, error: error.message });
+        }
     });
-});
 
-export default router;
+    router.get('/status', (req: Request, res: Response) => {
+        res.status(200).json({ 
+            status: 'active', 
+            githubWebhookUrl: '/api/webhooks/github',
+            incomingWebhookUrl: '/api/webhooks/incoming',
+            autoDeploy: process.env.AUTO_DEPLOY !== 'false',
+            authMethod: "Bearer Token, x-api-key, or ?apikey"
+        });
+    });
+
+    return router;
+}
+
+export default Router();

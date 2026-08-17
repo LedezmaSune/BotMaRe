@@ -16,6 +16,20 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'V 2.4.0',
+        date: '16 Agosto 2026',
+        title: 'Webhooks Universales, Parches de Seguridad y Renderizado Cliente',
+        type: 'minor',
+        description: 'Lanzamiento de la API de Webhooks para enviar mensajes desde plataformas externas (Zapier, Make, n8n, GAS) y resolución crítica de vulnerabilidades de dependencias.',
+        features: [
+            '🔗 API de Webhooks Universal: Nuevo endpoint `/api/webhooks/incoming` para inyección de mensajes desde cualquier plataforma vía HTTP POST.',
+            '🔑 Autenticación Flexible: Soporte para validar Webhooks mediante cabeceras `Authorization: Bearer`, `x-api-key` o parámetro de URL `?apikey=`.',
+            '📝 Dashboard Interactivo de Snippets: Nueva interfaz Glassmorphism con código listo para copiar y pegar en GAS, Go, Node.js y cURL.',
+            '🛡️ Parche de Seguridad Crítico: Actualización de `next` y anulación de versión vulnerable de `axios` (`^0.31.1`) para resolver 59 vulnerabilidades reportadas.',
+            '🔄 Renderizado Cliente en UI: Solucionado error de Server Components añadiendo la directiva `"use client"` a interfaces con estado.'
+        ]
+    },
+    {
         version: 'V 2.3.1',
         date: '11 Agosto 2026',
         title: 'Soporte Internacional para SMS, Normalización E.164 y Ajustes Dinámicos',
