@@ -267,7 +267,16 @@ function handleChoice(choice) {
                 } else showMenu();
             });
             break;
-        case '7': runCmd('pnpm', ['install'], showMenu); break;
+        case '7':
+            if (fs.existsSync('/data/data/com.termux')) {
+                console.log(`\n    ${c.bgYellow}${c.bright} 📦 ACTUALIZANDO PAQUETES (MODO SEGURO TERMUX) ${c.reset}\n`);
+                console.log(`    ${c.yellow}⚠ Entorno Android detectado. Omitiendo post-instaladores conflictivos...${c.reset}`);
+                runCmd('pnpm', ['install', '--ignore-scripts'], showMenu);
+            } else {
+                console.log(`\n    ${c.bgCyan}${c.bright} 📦 ACTUALIZANDO PAQUETES NATIVOS ${c.reset}\n`);
+                runCmd('pnpm', ['install'], showMenu);
+            }
+            break;
         case '8': showPM2Menu(); break;
         case '9': showFoldersMenu(); break;
         case '10': showUpdateMenu(); break;
