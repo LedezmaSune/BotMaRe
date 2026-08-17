@@ -120,7 +120,7 @@ export class Router {
         }
 
         // Lógica de filtrado en grupos
-        if (jid.endsWith('@g.us')) {
+        if (isGroup) {
             const enableGroups = await getConfig('ENABLE_GROUPS', 'false');
             if (enableGroups !== 'true') {
                 return; // Grupos deshabilitados globalmente
@@ -138,22 +138,10 @@ export class Router {
 
             const isMentioned = await this.checkBotMention(text, messageContent, socket);
             if (!isMentioned) return;
-
-            // Limpiar la etiqueta del bot para que el texto puro llegue a la IA y a los Autorespondedores
-            const genericTriggers = ['@bot', '@ia', '@ai', 'botmare', '@botmare'];
-            let cleanText = text;
-            for (const trigger of genericTriggers) {
-                cleanText = cleanText.replace(new RegExp(trigger, 'gi'), '');
-            }
-            // Limpiar menciones nativas (@numero)
-            const mentions = messageContent.extendedTextMessage?.contextInfo?.mentionedJid || [];
-            mentions.forEach((m: string) => {
-                const num = m.split('@')[0];
-                cleanText = cleanText.replace(new RegExp(`@${num}`, 'gi'), '');
-            });
-            
-            text = cleanText.trim() || text;
         }
+
+        // Limpiar siempre las menciones y triggers del bot para obtener el texto de consulta limpio
+        text = await this.cleanBotMentionsAndTriggers(text, messageContent, socket);
 
         // ==========================================
         // 1. HANDOFF (PAUSA DE IA Y ATENCIÓN HUMANA)
@@ -255,6 +243,62 @@ export class Router {
 
         // Delegar al controlador (Autorespondedores + Agente IA)
         await this.messageController.handleIncoming(jid, text, participant, pushName);
+    }
+
+    /**
+     * Limpia las etiquetas, menciones y nombres del bot del texto para dejar solo el mensaje del usuario.
+     */
+    private async cleanBotMentionsAndTriggers(text: string, messageContent: any, socket: any): Promise<string> {
+        const settings = await getSettings() as any;
+        const botName = settings.bot_name || 'BotMaRe';
+        
+        const botJid = socket.user?.id?.split(':')[0]?.split('@')[0];
+        const botLid = socket.user?.lid?.split('@')[0];
+        const whatsAppName = socket.user?.name;
+        
+        let cleanText = text;
+
+        // 1. Triggers genéricos
+        const genericTriggers = ['@bot', '@ia', '@ai', 'botmare', '@botmare'];
+        for (const trigger of genericTriggers) {
+            const escaped = trigger.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            cleanText = cleanText.replace(new RegExp(escaped, 'gi'), '');
+        }
+
+        // 2. Nombre del bot configurado
+        const cleanBotName = botName.trim();
+        if (cleanBotName) {
+            const escaped = cleanBotName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            cleanText = cleanText.replace(new RegExp(`@${escaped}`, 'gi'), '');
+            cleanText = cleanText.replace(new RegExp(`\\b${escaped}\\b`, 'gi'), '');
+        }
+
+        // 3. Nombre del perfil de WhatsApp
+        if (whatsAppName) {
+            const cleanProfile = whatsAppName.trim();
+            const escaped = cleanProfile.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            cleanText = cleanText.replace(new RegExp(`@${escaped}`, 'gi'), '');
+            cleanText = cleanText.replace(new RegExp(`\\b${escaped}\\b`, 'gi'), '');
+        }
+
+        // 4. JID y LID del bot (con y sin @)
+        if (botJid) {
+            cleanText = cleanText.replace(new RegExp(`@${botJid}`, 'gi'), '');
+            cleanText = cleanText.replace(new RegExp(`\\b${botJid}\\b`, 'gi'), '');
+        }
+        if (botLid) {
+            cleanText = cleanText.replace(new RegExp(`@${botLid}`, 'gi'), '');
+            cleanText = cleanText.replace(new RegExp(`\\b${botLid}\\b`, 'gi'), '');
+        }
+
+        // 5. Menciones nativas de WhatsApp
+        const mentions = messageContent?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+        mentions.forEach((m: string) => {
+            const num = m.split('@')[0];
+            cleanText = cleanText.replace(new RegExp(`@${num}`, 'gi'), '');
+        });
+
+        return cleanText.trim() || text;
     }
 
     /**
