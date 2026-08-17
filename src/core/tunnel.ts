@@ -150,6 +150,7 @@ export class TunnelService extends EventEmitter {
                         if (!this.isAutoRecovering) {
                             this.isAutoRecovering = true;
                             console.warn(`[Tunnel] ⚠️ Sesión de Cloudflare expirada ("Unauthorized: Tunnel not found"). Regenerando nuevo túnel...`);
+                            console.warn(`[Tunnel] 💡 TIP: Si Cloudflare te bloqueó (Ban) y no reconecta, usa la opción [13] del Menú Maestro para reinstalar un túnel limpio.`);
                             this.stop();
                             setTimeout(() => {
                                 this.initializeTunnel(this.currentPort)

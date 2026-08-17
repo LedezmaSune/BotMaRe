@@ -281,8 +281,11 @@ function handleChoice(choice) {
             runCmd('pnpm', ['rebuild', 'better-sqlite3'], showMenu);
             break;
         case '13':
-            console.log(`\n    ${c.bgCyan}${c.bright} 🌐 RECONSTRUYENDO TÚNEL PÚBLICO (CLOUDFLARED) ${c.reset}\n`);
-            runCmd('pnpm', ['rebuild', 'cloudflared'], showMenu);
+            console.log(`\n    ${c.bgCyan}${c.bright} 🌐 REINSTALANDO TÚNEL PÚBLICO (CLOUDFLARED DE CERO) ${c.reset}\n`);
+            console.log(`    ${c.cyan}Eliminando binario viejo para burlar bloqueos y bajando uno limpio...${c.reset}`);
+            runCmd('pnpm', ['remove', 'cloudflared'], () => {
+                runCmd('pnpm', ['install', 'cloudflared'], showMenu);
+            });
             break;
         default: invalidChoice(showMenu); break;
     }
