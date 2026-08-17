@@ -36,7 +36,8 @@ async function showBanner(title = "Control Maestro") {
         c.cyan + "    ██████╦╝██║   ██║   ██║   ██╔████╔██║█████╗  ██████╔╝" + c.reset,
         c.cyan + "    ██╔══██╗██║   ██║   ██║   ██║╚██╔╝██║██╔══╝  ██╔══██╗" + c.reset,
         c.cyan + "    ██████╦╝╚██████╔╝   ██║   ██║ ╚═╝ ██║███████╗██║  ██║" + c.reset,
-        c.cyan + "    ╚═════╝  ╚═════╝    ╚═╝   ╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝" + c.reset
+        c.cyan + "    ╚═════╝  ╚═════╝    ╚═╝   ╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝" + c.reset,
+        c.yellow + "                 ✨ CRM & WEBHOOKS EDITION ✨" + c.reset
     ];
 
     if (!hasAnimatedLogo) {
@@ -87,7 +88,8 @@ async function showMenu() {
     console.log(`    ${c.dim}│${c.reset} ${c.yellow}[8]${c.reset} ⚙️ Gestión de PM2       ${c.dim}(Ejecución 24/7)${c.reset}`);
     console.log(`    ${c.dim}│${c.reset} ${c.yellow}[9]${c.reset} 📁 Explorador           ${c.dim}(Abrir carpetas locales)${c.reset}`);
     console.log(`    ${c.dim}│${c.reset} ${c.yellow}[10]${c.reset} 📥 Git Update        ${c.dim}(Actualización remota)${c.reset}`);
-    console.log(`    ${c.dim}│${c.reset} ${c.yellow}[12]${c.reset} 🔧 Reparar Nativos   ${c.dim}(Fix SQLite y Cloudflared)${c.reset}`);
+    console.log(`    ${c.dim}│${c.reset} ${c.yellow}[12]${c.reset} 🗄️ Reparar SQLite    ${c.dim}(Fix Base de Datos NDK)${c.reset}`);
+    console.log(`    ${c.dim}│${c.reset} ${c.yellow}[13]${c.reset} 🌐 Reparar Túnel     ${c.dim}(Fix Cloudflared Público)${c.reset}`);
     console.log(`    ${c.yellow}╰────────────────────────────────────────${c.reset}\n`);
 
     console.log(`    ${c.red}[11] ❌ Salir del Sistema${c.reset}\n`);
@@ -102,10 +104,10 @@ async function showMenu() {
         console.log(`    ${c.yellow}👉 3. Presiona [1] para Iniciar el Servidor.${c.reset}`);
         console.log(`    ${c.red}⚠️  Nota: Si ves errores de SQLite al iniciar, usa la opción [12].${c.reset}\n`);
     } else {
-        console.log(`    ${c.cyan}💡 Tip: Si acabas de actualizar o tienes errores de base de datos, presiona [12].${c.reset}\n`);
+        console.log(`    ${c.cyan}💡 Tip: Si acabas de actualizar o tienes errores, presiona [12] o [13].${c.reset}\n`);
     }
     
-    rl.question(`    ${c.cyan}${c.bright}➤ Selecciona una acción [1-12]:${c.reset} `, (choice) => {
+    rl.question(`    ${c.cyan}${c.bright}➤ Selecciona una acción [1-13]:${c.reset} `, (choice) => {
         handleChoice(choice.trim());
     });
 }
@@ -275,17 +277,12 @@ function handleChoice(choice) {
             process.exit(0);
             break;
         case '12':
-            console.log(`\n    ${c.bgYellow}${c.bright} 🔧 REPARANDO DEPENDENCIAS NATIVAS (SQLITE / TUNNEL) ${c.reset}\n`);
-            const isAndroid = fs.existsSync('/data/data/com.termux');
-            if (isAndroid) {
-                console.log(`    ${c.yellow}⚠ Entorno Termux/Android detectado. Reconstruyendo únicamente better-sqlite3...${c.reset}`);
-                console.log(`    ${c.yellow}👉 (El túnel de Cloudflare utilizará el binario global del sistema).${c.reset}\n`);
-                runCmd('pnpm', ['rebuild', 'better-sqlite3'], showMenu);
-            } else {
-                runCmd('pnpm', ['rebuild', 'better-sqlite3'], () => {
-                    runCmd('pnpm', ['rebuild', 'cloudflared'], showMenu);
-                });
-            }
+            console.log(`\n    ${c.bgYellow}${c.bright} 🗄️ RECONSTRUYENDO BASE DE DATOS NATIVA (SQLITE) ${c.reset}\n`);
+            runCmd('pnpm', ['rebuild', 'better-sqlite3'], showMenu);
+            break;
+        case '13':
+            console.log(`\n    ${c.bgCyan}${c.bright} 🌐 RECONSTRUYENDO TÚNEL PÚBLICO (CLOUDFLARED) ${c.reset}\n`);
+            runCmd('pnpm', ['rebuild', 'cloudflared'], showMenu);
             break;
         default: invalidChoice(showMenu); break;
     }
