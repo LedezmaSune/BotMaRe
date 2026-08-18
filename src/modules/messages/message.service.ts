@@ -93,7 +93,7 @@ export class MessageService {
             }
         }
 
-        const buffer = fs.readFileSync(filePath);
+        const buffer = await fs.promises.readFile(filePath);
         const message: any = { caption };
         let isAudio = false;
 
@@ -212,7 +212,7 @@ export class MessageService {
             fs.mkdirSync(tempDir, { recursive: true });
         }
         const tempPath = path.join(tempDir, `${Date.now()}_${fileName}`);
-        fs.writeFileSync(tempPath, response.data);
+        await fs.promises.writeFile(tempPath, response.data);
 
         console.log(`[MessageService] Guardado temporalmente en ${tempPath}. Enviando a WhatsApp...`);
 

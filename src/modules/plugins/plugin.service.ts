@@ -134,7 +134,6 @@ export class PluginService {
                 JSON,
                 Promise,
                 axios: axios,
-                require: require,
                 fetch: global.fetch || fetch,
                 global: this.apiKeysConfig,
                 module: { exports: {} },

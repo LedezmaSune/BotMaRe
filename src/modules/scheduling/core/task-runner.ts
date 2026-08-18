@@ -14,6 +14,7 @@ export class TaskRunner {
     private sheetsIntervalId: NodeJS.Timeout | null = null;
     private tempCleanupIntervalId: NodeJS.Timeout | null = null;
     private cronTasks: ScheduledTask[] = [];
+    private initialTimeouts: NodeJS.Timeout[] = [];
 
     constructor(
         private reminderQueue: ReminderQueue,
@@ -67,10 +68,10 @@ export class TaskRunner {
         this.cronTasks.push(updateJob);
 
         // Disparos iniciales seguros no bloqueantes tras arranque
-        setTimeout(() => FileCleanupJob.cleanupUploads().catch(() => {}), 5000);
-        setTimeout(() => FileCleanupJob.cleanupOldLogsAndBackups().catch(() => {}), 10000);
-        setTimeout(() => UpdateCheckerJob.execute().catch(() => {}), 15000);
-        setTimeout(() => ReminderCheckerJob.execute(this.reminderQueue, this.reminderService).catch(() => {}), 1000);
+        this.initialTimeouts.push(setTimeout(() => FileCleanupJob.cleanupUploads().catch(() => {}), 5000));
+        this.initialTimeouts.push(setTimeout(() => FileCleanupJob.cleanupOldLogsAndBackups().catch(() => {}), 10000));
+        this.initialTimeouts.push(setTimeout(() => UpdateCheckerJob.execute().catch(() => {}), 15000));
+        this.initialTimeouts.push(setTimeout(() => ReminderCheckerJob.execute(this.reminderQueue, this.reminderService).catch(() => {}), 1000));
 
         console.log("[TaskRunner] Todas las tareas programadas han sido inicializadas exitosamente.");
     }
@@ -100,6 +101,11 @@ export class TaskRunner {
             task.stop();
         }
         this.cronTasks = [];
+
+        for (const timeout of this.initialTimeouts) {
+            clearTimeout(timeout);
+        }
+        this.initialTimeouts = [];
 
         this.reminderQueue.clear();
         this.isRunning = false;

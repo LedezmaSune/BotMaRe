@@ -61,7 +61,7 @@ export class MassDiffusionService {
             // Si perdemos la conexión, esperamos a que el bot se reconecte antes de seguir
             // para evitar que toda la cola falle en cadena. Solo aplica si es WhatsApp.
             if (channel === 'whatsapp') {
-                while (this.waService.getStatus().state !== 'connected') {
+                while (this.waService.getStatus().state !== 'connected' && !this.shouldStop) {
                     console.warn("[Mass] Conexión WA perdida. Pausando cola hasta reconexión...");
                     await new Promise(r => setTimeout(r, 5000));
                 }

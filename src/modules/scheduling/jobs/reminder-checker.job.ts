@@ -81,8 +81,8 @@ export class ReminderCheckerJob {
                 const diffMinutes = now.diff(rDateTime, 'minutes').minutes;
 
                 if (rDateTime <= now) {
-                    // Si el recordatorio tiene más de 5 minutos de retraso acumulado, no se dispara automáticamente
-                    if (diffMinutes > 5) {
+                    // Si el recordatorio tiene más de 60 minutos de retraso acumulado, no se dispara automáticamente
+                    if (diffMinutes > 60) {
                         console.warn(`[ReminderChecker] Saltando #${r.id}: Fecha expirada (${diffMinutes.toFixed(1)} min de retraso).`);
                         await reminderService.updateStatus(r.id, 'failed');
                         await reminderService.logAudit('system', 'REMINDER_EXPIRED_SKIPPED', {

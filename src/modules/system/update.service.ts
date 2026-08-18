@@ -92,6 +92,7 @@ export class UpdateService {
         const { exec } = require('child_process');
         const { promisify } = require('util');
         const execAsync = promisify(exec);
+        const EXEC_OPTS = { maxBuffer: 1024 * 1024 * 10 }; // 10MB buffer
         
         try {
             console.log('[UpdateService] Iniciando proceso de actualización reforzado...');
@@ -123,18 +124,34 @@ export class UpdateService {
             }
             console.log(`[UpdateService] Respaldo preventivo guardado en: ${backupDir}`);
 
-            // 2. Traer último código de Git
-            await execAsync('git fetch origin main');
-            await execAsync('git reset --hard origin/main');
-            console.log('[UpdateService] Código fuente sincronizado con origin/main.');
+            // 2. Traer último código de Git respetando la rama/tag actual
+            let currentBranch = 'main';
+            try {
+                const branchOutput = await execAsync('git branch --show-current', EXEC_OPTS);
+                const branchName = branchOutput.stdout.trim();
+                if (branchName) currentBranch = branchName;
+            } catch (e) {
+                console.log('[UpdateService] No se pudo determinar la rama actual, usando "main" por defecto.');
+            }
 
-            // 3. Instalar nuevas dependencias
-            console.log('[UpdateService] Instalando dependencias (pnpm install)...');
-            await execAsync('pnpm install');
+            console.log(`[UpdateService] Actualizando desde la rama/tag: ${currentBranch}`);
+            await execAsync(`git fetch origin ${currentBranch}`, EXEC_OPTS);
+            await execAsync(`git reset --hard origin/${currentBranch}`, EXEC_OPTS);
+            console.log(`[UpdateService] Código fuente sincronizado con origin/${currentBranch}.`);
+
+            // 3. Instalar nuevas dependencias (con soporte para Termux)
+            const isTermux = fs.existsSync('/data/data/com.termux');
+            if (isTermux) {
+                console.log('[UpdateService] Entorno Termux detectado. Instalando dependencias (pnpm install --ignore-scripts)...');
+                await execAsync('pnpm install --ignore-scripts', EXEC_OPTS);
+            } else {
+                console.log('[UpdateService] Instalando dependencias (pnpm install)...');
+                await execAsync('pnpm install', EXEC_OPTS);
+            }
 
             // 4. Recompilar Dashboard
             console.log('[UpdateService] Compilando interfaz Next.js (pnpm run build)...');
-            await execAsync('pnpm run build');
+            await execAsync('pnpm run build', EXEC_OPTS);
 
             // 5. Auto-reinicio si se está usando PM2
             if (process.env.PM2_HOME || process.env.pm_id) {

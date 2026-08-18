@@ -32,7 +32,7 @@ export class ReminderService {
             let finalPath = item.mediaPath;
             let finalType = item.mediaType;
 
-            if (finalPath && !fs.existsSync(finalPath)) {
+            if (finalPath && !finalPath.startsWith('http://') && !finalPath.startsWith('https://')) {
                 const fileName = path.basename(finalPath);
                 const uploadsDir = path.resolve('data/uploads');
                 let localPath = path.join(uploadsDir, fileName);
@@ -46,6 +46,8 @@ export class ReminderService {
                         else if (['.mp3', '.ogg', '.wav'].includes(ext)) finalType = 'audio';
                         else finalType = 'document';
                     }
+                } else {
+                    finalPath = undefined;
                 }
             }
 
@@ -72,8 +74,8 @@ export class ReminderService {
         let finalPath = mediaPath;
         let finalType = mediaType;
 
-        // Lógica de "Ruta Portátil": Si la ruta no existe, buscamos el archivo en uploads local
-        if (finalPath && !fs.existsSync(finalPath)) {
+        // Lógica de "Ruta Portátil": Solo permitimos rutas relativas a uploads o URLs
+        if (finalPath && !finalPath.startsWith('http://') && !finalPath.startsWith('https://')) {
             const fileName = path.basename(finalPath);
             const uploadsDir = path.resolve('data/uploads');
             let localPath = path.join(uploadsDir, fileName);
@@ -95,7 +97,7 @@ export class ReminderService {
             }
 
             if (fs.existsSync(localPath)) {
-                console.log(`[Portability] Reparando ruta: ${finalPath} -> ${localPath}`);
+                console.log(`[Portability] Reparando ruta (Directory Jail aplicable): ${finalPath} -> ${localPath}`);
                 finalPath = localPath;
                 
                 if (!finalType) {
@@ -105,6 +107,8 @@ export class ReminderService {
                     else if (['.mp3', '.ogg', '.wav'].includes(ext)) finalType = 'audio';
                     else finalType = 'document';
                 }
+            } else {
+                finalPath = undefined;
             }
         }
 
