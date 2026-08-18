@@ -23,6 +23,11 @@ export async function useSQLiteAuthState(dbPath: string): Promise<{ state: Authe
     }
 
     const db = new Database(dbPath);
+    
+    // WAL Mode para evitar bloqueos y corrupción al reiniciar o si la red falla bruscamente
+    db.pragma('journal_mode = WAL');
+    db.pragma('synchronous = NORMAL');
+    db.pragma('temp_store = MEMORY');
 
     // Initialize tables
     db.exec(`

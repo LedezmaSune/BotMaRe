@@ -9,14 +9,12 @@ export class BaileysMaintenanceJob {
      */
     static async execute(waService?: MessageService): Promise<void> {
         try {
-            console.log("[BaileysMaintenanceJob] 🛠️ Ejecutando mantenimiento y optimización de base de datos de sesión...");
-            
-            if (waService && typeof waService.purgePreKeys === 'function') {
-                waService.purgePreKeys();
-            }
+            // [PAUSADO A PETICIÓN DEL USUARIO]
+            // console.log("[BaileysMaintenanceJob] 🛠️ Ejecutando mantenimiento y optimización de base de datos de sesión...");
+            return;
 
             if (typeof global.gc === 'function') {
-                global.gc();
+                global.gc?.();
                 console.log("[BaileysMaintenanceJob] 🧹 Memoria RAM optimizada.");
             }
         } catch (error: any) {
