@@ -3,6 +3,7 @@ import { listAllPendingReminders } from '../../../core/memory';
 import { ReminderService } from '../../reminders/reminder.service';
 import { ReminderQueue } from '../core/reminder-queue';
 import { Reminder } from '../../../types';
+import { NotificationService } from '../../../telegram/notification.service';
 
 export class ReminderCheckerJob {
     private static readonly TIMEZONE = 'America/Mexico_City';
@@ -81,8 +82,9 @@ export class ReminderCheckerJob {
                 const diffMinutes = now.diff(rDateTime, 'minutes').minutes;
 
                 if (rDateTime <= now) {
-                    // Si el recordatorio tiene más de 60 minutos de retraso acumulado, no se dispara automáticamente
-                    if (diffMinutes > 60) {
+                    const maxDelayMinutes = parseInt(process.env.MAX_DELAY_MINUTES || '120', 10);
+                    // Si el recordatorio tiene mucho retraso acumulado, no se dispara automáticamente
+                    if (diffMinutes > maxDelayMinutes) {
                         console.warn(`[ReminderChecker] Saltando #${r.id}: Fecha expirada (${diffMinutes.toFixed(1)} min de retraso).`);
                         await reminderService.updateStatus(r.id, 'failed');
                         await reminderService.logAudit('system', 'REMINDER_EXPIRED_SKIPPED', {
@@ -90,6 +92,14 @@ export class ReminderCheckerJob {
                             delay: diffMinutes,
                             channel: r.channel || 'whatsapp'
                         });
+                        
+                        try {
+                            await NotificationService.notifyAdmin(
+                                `⚠️ *Recordatorio Expirado*\n\n` +
+                                `El envío programado con ID #${r.id} fue descartado porque acumuló más de ${maxDelayMinutes} minutos de retraso (probablemente por falta de conexión).\n\n` +
+                                `Destino: ${r.chatId}`
+                            );
+                        } catch (e) {}
                         continue;
                     }
 

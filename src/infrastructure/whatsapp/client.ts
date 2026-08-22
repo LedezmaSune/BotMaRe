@@ -227,9 +227,8 @@ export class WhatsAppClient {
     async disconnect() {
         if (this.socket) {
             try {
-                await this.socket.logout();
+                this.socket.end(undefined);
             } catch (e) {}
-            this.socket.end(undefined);
             this.socket = null;
         }
 

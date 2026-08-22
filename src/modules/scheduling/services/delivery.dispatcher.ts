@@ -7,6 +7,7 @@ import { parseContactList } from '../../../utils/contactParser';
 import { RecurrenceService } from './recurrence.service';
 import { MediaResolverService } from './media-resolver.service';
 import { Reminder } from '../../../types';
+import { NotificationService } from '../../../telegram/notification.service';
 
 export interface DispatcherResult {
     success: boolean;
@@ -63,19 +64,31 @@ export class DeliveryDispatcher {
                     }
                 } else {
                     // Flujo WhatsApp
-                    if (reminder.mediaPath) {
-                        const mediaResolution = await MediaResolverService.resolveMediaPath(reminder.mediaPath, reminder.mediaType);
+                    for (let attempt = 1; attempt <= 3; attempt++) {
+                        try {
+                            if (reminder.mediaPath) {
+                                const mediaResolution = await MediaResolverService.resolveMediaPath(reminder.mediaPath, reminder.mediaType);
 
-                        if (mediaResolution.exists && mediaResolution.finalPath) {
-                            await waService.sendMedia(targetId, mediaResolution.finalPath, personalizedText);
-                        } else {
-                            console.warn(`[DeliveryDispatcher] Saltando adjunto para #${reminderId}: ${mediaResolution.warning || 'no encontrado'}`);
-                            await waService.sendMessage(targetId, `${personalizedText}\n\n(No se pudo adjuntar el archivo multimedia)`);
+                                if (mediaResolution.exists && mediaResolution.finalPath) {
+                                    await waService.sendMedia(targetId, mediaResolution.finalPath, personalizedText);
+                                } else {
+                                    console.warn(`[DeliveryDispatcher] Saltando adjunto para #${reminderId}: ${mediaResolution.warning || 'no encontrado'}`);
+                                    await waService.sendMessage(targetId, `${personalizedText}\n\n(No se pudo adjuntar el archivo multimedia)`);
+                                }
+                            } else {
+                                await waService.sendMessage(targetId, personalizedText);
+                            }
+                            sentCount++;
+                            break; // Salir del bucle si fue exitoso
+                        } catch (err: any) {
+                            console.error(`[DeliveryDispatcher] Error enviando a ${targetId} (Intento ${attempt}/3):`, err.message);
+                            if (attempt < 3) {
+                                await new Promise(res => setTimeout(res, 10000)); // 10s de espera
+                            } else {
+                                throw err;
+                            }
                         }
-                    } else {
-                        await waService.sendMessage(targetId, personalizedText);
                     }
-                    sentCount++;
                 }
 
                 // --- PROTECCIÓN ANTI-BAN (Jitter Buffer) ---
@@ -96,6 +109,15 @@ export class DeliveryDispatcher {
                 contactsCount: parsedContacts.length
             });
             console.log(`[DeliveryDispatcher] Recordatorio #${reminderId} enviado con éxito a ${sentCount} contacto(s).`);
+
+            try {
+                await NotificationService.notifyAdmin(
+                    `✅ *Recordatorio Enviado*\n\n` +
+                    `Se ha enviado exitosamente el recordatorio #${reminderId} a ${sentCount} destinatario(s).\n\n` +
+                    `*Mensaje:* \n"${reminder.text}"\n\n` +
+                    `*Destino:* ${reminder.chatId}`
+                );
+            } catch (e) {}
 
             // Fase 4: Recurrencia / Reprogramación
             if (reminder.repeat && reminder.repeat !== 'none') {
