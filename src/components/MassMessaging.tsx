@@ -14,7 +14,7 @@ interface MassMessagingProps {
     templates: Template[];
     groups: any[];
     uploadProgress?: number | null;
-    progress?: { current: number, total: number, percentage: number } | null;
+    progress?: { current: number, total: number, percentage: number, isWaiting?: boolean, waitMs?: number } | null;
     logs?: any[];
 }
 
@@ -27,6 +27,7 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, u
     const [isDragging, setIsDragging] = useState(false);
     const [channel, setChannel] = useState<'whatsapp' | 'sms'>('whatsapp');
     const [crmTags, setCrmTags] = useState<any[]>([]);
+    const [remainingWait, setRemainingWait] = useState<number>(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Cargar etiquetas CRM al iniciar
@@ -39,6 +40,19 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, u
             })
             .catch(() => {});
     }, []);
+
+    // Timer para el Anti-ban
+    useEffect(() => {
+        if (progress?.isWaiting && progress.waitMs) {
+            setRemainingWait(Math.ceil(progress.waitMs / 1000));
+            const interval = setInterval(() => {
+                setRemainingWait(prev => Math.max(0, prev - 1));
+            }, 1000);
+            return () => clearInterval(interval);
+        } else {
+            setRemainingWait(0);
+        }
+    }, [progress?.isWaiting, progress?.waitMs]);
 
     // Soporte para pegar archivos desde el portapapeles (Ctrl+V)
     useEffect(() => {
@@ -399,7 +413,7 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, u
                             
                             <div className="h-4 w-full bg-slate-200 dark:bg-slate-800/80 rounded-2xl overflow-hidden p-0.5 shadow-inner relative">
                                 <div 
-                                    className="h-full bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 rounded-xl transition-all duration-700 ease-out relative shadow-[0_0_15px_rgba(6,182,212,0.5)]"
+                                    className={`h-full rounded-xl transition-all duration-700 ease-out relative ${progress.isWaiting ? 'bg-gradient-to-r from-amber-400 to-orange-500 shadow-[0_0_15px_rgba(251,191,36,0.5)]' : 'bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 shadow-[0_0_15px_rgba(6,182,212,0.5)]'}`}
                                     style={{ width: `${Math.max(progress.percentage, 3)}%` }}
                                 >
                                     {/* Animated Shimmer Over Progress */}
@@ -414,10 +428,15 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, u
                                             <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
                                             ¡DIFUSIÓN COMPLETADA CON ÉXITO!
                                         </span>
+                                    ) : progress.isWaiting ? (
+                                        <span className="text-amber-400 flex items-center gap-1.5 font-bold animate-pulse">
+                                            <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce"></div>
+                                            PAUSA ANTI-BAN: {remainingWait}S RESTANTES...
+                                        </span>
                                     ) : (
                                         <span className="text-cyan-400 flex items-center gap-1.5 font-bold">
                                             <Loader2 className="animate-spin" size={12} />
-                                            DESPACHANDO COLA (PROTECCIÓN ANTI-BAN ACTIVA)...
+                                            ENVIANDO MENSAJE...
                                         </span>
                                     )}
                                 </div>

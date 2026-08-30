@@ -10,7 +10,7 @@ import { SmsService } from '../sms/sms.service';
 export class MassDiffusionService {
     private isProcessing = false;
     private shouldStop = false;
-    private currentProgress: { current: number, total: number, percentage: number } | null = null;
+    private currentProgress: { current: number, total: number, percentage: number, isWaiting?: boolean, waitMs?: number } | null = null;
 
     constructor(private waService: MessageService, private smsService: SmsService) {}
 
@@ -231,7 +231,22 @@ export class MassDiffusionService {
                 }
 
                 console.log(`[Mass] Esperando ${Math.round(delay / 1000)}s antes del siguiente contacto...`);
+                
+                // Informar al frontend que estamos en pausa anti-ban
+                globalEvents.emit(EVENTS.DIFFUSION_PROGRESS, {
+                    ...this.currentProgress,
+                    isWaiting: true,
+                    waitMs: delay
+                });
+
                 await new Promise(r => setTimeout(r, delay));
+
+                // Avisar que la pausa terminó (opcional pero limpio)
+                globalEvents.emit(EVENTS.DIFFUSION_PROGRESS, {
+                    ...this.currentProgress,
+                    isWaiting: false,
+                    waitMs: 0
+                });
             }
         }
 

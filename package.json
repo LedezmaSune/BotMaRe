@@ -1,6 +1,6 @@
 {
   "name": "botmare-dashboard",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "BotMaRe Dashboard Panel",
   "main": "src/server.ts",
   "scripts": {
@@ -58,6 +58,7 @@
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.6.0",
+    "tailwindcss-animate": "^1.0.7",
     "tunnelmole": "^2.4.0"
   },
   "devDependencies": {

@@ -366,6 +366,11 @@ Ejecución continua 24/7 en servidores de producción:
 
 ## 🔄 Historial de Actualizaciones (Changelog)
 
+- **[2.4.1] - 2026-08-29:** Contador Anti-Ban, RAG (Base) y Seguridad en Webhooks:
+  - 🛡️ **Contador Visual Anti-Ban:** Nueva interfaz en el despachador masivo que muestra una cuenta regresiva animada (Glassmorphism Ámbar) al activarse la Protección de Ráfaga.
+  - 🔒 **Seguridad en Webhooks:** Transición de claves de Webhooks a variables de entorno estáticas (`.env`) previniendo exposición en la base de datos.
+  - 🧠 **Base RAG Documentada:** Finalizada la arquitectura teórica e inicial para inyectar PDFs y TXTs al cerebro de la IA.
+  - 🔎 **Auditoría Completa de Código:** Revisión masiva de componentes, enrutadores y sistema Core confirmando la alta resiliencia de la arquitectura Monolito-Modular.
 - **[2.4.0] - 2026-08-16:** Webhooks Universales, Parches de Seguridad y Renderizado Cliente:
   - 🔗 **API de Webhooks Universal:** Nuevo endpoint `/api/webhooks/incoming` para recibir eventos desde Zapier, Make, Google Apps Script, Go, y n8n con soporte para JSON y Formularios.
   - 🔑 **Autenticación Flexible:** Soporte para cabeceras `Authorization: Bearer`, `x-api-key` y parámetros de URL `?apikey=` permitiendo integraciones en ambientes estrictos.

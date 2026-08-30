@@ -25,7 +25,7 @@ export function useBotData() {
     const [prefillReminderId, setPrefillReminderId] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-    const [diffusionProgress, setDiffusionProgress] = useState<{current: number, total: number, percentage: number} | null>(null);
+    const [diffusionProgress, setDiffusionProgress] = useState<{current: number, total: number, percentage: number, isWaiting?: boolean, waitMs?: number} | null>(null);
     const [diffusionLogs, setDiffusionLogs] = useState<any[]>([]);
     const [networkStatus, setNetworkStatus] = useState<any>(null);
 

@@ -16,6 +16,19 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'V 2.4.1',
+        date: '29 Agosto 2026',
+        title: 'Contador Anti-Ban, RAG (Base) y Seguridad en Webhooks',
+        type: 'patch',
+        description: 'Actualización enfocada en la experiencia de usuario (feedback visual) durante los envíos masivos, refuerzo de seguridad para las integraciones y preparación del terreno para IA Avanzada con RAG.',
+        features: [
+            '🛡️ Contador Visual Anti-Ban: Nueva interfaz en el despachador masivo que muestra una cuenta regresiva animada (Glassmorphism Ámbar) al activarse la Protección de Ráfaga.',
+            '🔒 Seguridad en Webhooks: Transición de claves de Webhooks a variables de entorno estáticas (`.env`) previniendo exposición en la base de datos.',
+            '🧠 Base RAG Documentada: Finalizada la arquitectura teórica e inicial de "Retrieval-Augmented Generation" para inyectar PDFs y TXTs al cerebro de la IA.',
+            '🔎 Auditoría Completa de Código: Revisión masiva de componentes, enrutadores y sistema Core confirmando la alta resiliencia de la arquitectura Monolito-Modular.'
+        ]
+    },
+    {
         version: 'V 2.4.0',
         date: '16 Agosto 2026',
         title: 'Webhooks Universales, Parches de Seguridad y Renderizado Cliente',

@@ -8,7 +8,7 @@ export default function WebhooksUI() {
     const [host, setHost] = useState('');
     
     // Configuración base
-    const API_KEY = 'botmare_default_secret_key'; // En producción debería venir de un endpoint seguro
+    const API_KEY = 'TU_API_KEY_DEL_.ENV'; // Reemplazar con WEBHOOK_API_KEY del .env
     const endpointUrl = `${host}/api/webhooks/incoming`;
 
     useEffect(() => {
@@ -145,9 +145,16 @@ curl -X POST "${endpointUrl}" \\
                             {copied === 'key' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-400" />}
                         </button>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">
-                        Puedes enviarla en la cabecera <code className="text-slate-300">x-api-key</code> o como parámetro URL <code className="text-slate-300">?apikey=</code>.
-                    </p>
+                    <div className="text-xs text-slate-500 mt-3 space-y-1 bg-black/20 p-3 rounded-lg border border-white/5">
+                        <strong className="text-emerald-400 mb-1 block">💡 Instrucciones de Uso:</strong>
+                        <p>Tu llave maestra se encuentra en tu archivo <code className="text-slate-300 bg-white/10 px-1 rounded">.env</code> como <code className="text-slate-300 bg-white/10 px-1 rounded">WEBHOOK_API_KEY</code>.</p>
+                        <p>Puedes enviarla en las peticiones de 3 formas distintas:</p>
+                        <ul className="list-disc pl-4 space-y-1 mt-1 text-slate-400">
+                            <li>Como Header: <code className="text-slate-300">x-api-key: tu_llave</code></li>
+                            <li>Como Header: <code className="text-slate-300">Authorization: Bearer tu_llave</code></li>
+                            <li>En la URL: <code className="text-slate-300">?apikey=tu_llave</code></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
