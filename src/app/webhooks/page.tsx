@@ -6,5 +6,6 @@ export const metadata = {
 };
 
 export default function WebhooksPage() {
-    return <WebhooksUI />;
+    const apiKey = process.env.WEBHOOK_API_KEY || 'LLAVE_NO_CONFIGURADA';
+    return <WebhooksUI apiKey={apiKey} />;
 }

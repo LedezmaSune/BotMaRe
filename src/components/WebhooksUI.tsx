@@ -1,14 +1,15 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Webhook, Zap, Link as LinkIcon, Server, Copy, Check, Code, Shield } from 'lucide-react';
+import { Webhook, Zap, Link as LinkIcon, Server, Copy, Check, Code, Shield, Eye, EyeOff } from 'lucide-react';
 
-export default function WebhooksUI() {
+export default function WebhooksUI({ apiKey }: { apiKey: string }) {
     const [copied, setCopied] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'gas' | 'go' | 'node' | 'curl'>('gas');
     const [host, setHost] = useState('');
+    const [showKey, setShowKey] = useState(false);
     
     // Configuración base
-    const API_KEY = 'TU_API_KEY_DEL_.ENV'; // Reemplazar con WEBHOOK_API_KEY del .env
+    const API_KEY = apiKey;
     const endpointUrl = `${host}/api/webhooks/incoming`;
 
     useEffect(() => {
@@ -136,11 +137,19 @@ curl -X POST "${endpointUrl}" \\
                     </div>
                     <div className="flex items-center gap-3 bg-black/40 p-3 rounded-xl border border-white/5">
                         <code className="text-sm text-orange-300 flex-1 font-mono">
-                            ••••••••••••••••••••{API_KEY.slice(-4)}
+                            {showKey ? API_KEY : `••••••••••••••••••••${API_KEY.slice(-4)}`}
                         </code>
+                        <button 
+                            onClick={() => setShowKey(!showKey)}
+                            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                            title={showKey ? "Ocultar" : "Mostrar"}
+                        >
+                            {showKey ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
+                        </button>
                         <button 
                             onClick={() => handleCopy(API_KEY, 'key')}
                             className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                            title="Copiar"
                         >
                             {copied === 'key' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-400" />}
                         </button>
