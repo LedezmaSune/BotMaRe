@@ -196,7 +196,11 @@ export function useBotData() {
                 setUploadProgress(null);
             }
         } catch (e: any) {
-            alert(`❌ Error al procesar el envío: ${e.response?.data?.error || e.message}`);
+            let errorMsg = e.response?.data?.error || e.message;
+            if (typeof errorMsg === 'object') {
+                errorMsg = JSON.stringify(errorMsg);
+            }
+            alert(`❌ Error al procesar el envío: ${errorMsg}`);
             setUploadProgress(null);
         } finally {
             setIsLoading(false);
