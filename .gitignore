@@ -53,6 +53,7 @@ bin/*
 !bin/clean_reminders.js
 !bin/launcher.js
 !bin/clean-logs.js
+!bin/test-llm.ts
 *.bat
 
 # Documentation (Kept locally, excluded from Git/GitHub)

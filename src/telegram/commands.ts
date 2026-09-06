@@ -5,12 +5,14 @@ import { getSettings, updateSettings, listAudits, deleteReminder } from "../core
 import { getConfig } from "../core/config";
 import { BackupService } from "../modules/system/backup.service";
 import { wizardState } from "./state";
+import { runLLMDiagnostic } from "../core/llmTest";
 import os from "os";
 
 async function syncTelegramCommands(bot: Bot, maxRetries = 3, delayMs = 3500) {
   const commandsList = [
     { command: "start", description: "🦊 Iniciar y ver panel" },
     { command: "dashboard", description: "🌌 Ver panel de control web" },
+    { command: "diagnostico", description: "🤖 Diagnóstico de Modelos de IA" },
     { command: "recordatorios", description: "📅 Gestión de recordatorios" },
     { command: "masivo", description: "📣 Enviar difusión masiva" },
     { command: "detenermasivo", description: "🚨 Cancelar difusión masiva activa" },
@@ -49,17 +51,18 @@ export function registerCommands(bot: Bot, waService: WhatsAppService, diffusion
     const keyboard = new InlineKeyboard()
       .text("🌌 Panel Web", "menu_dashboard")
       .text("📱 WhatsApp", "menu_status").row()
-      .text("📅 Recordatorios", "menu_reminders")
-      .text("📣 Difusión Masiva", "menu_masivo").row()
-      .text("🧠 Cerebro IA", "menu_cerebro")
-      .text("📊 Google Sheets", "menu_sheets").row()
-      .text("🛡️ Listas de Acceso", "menu_lista")
-      .text("📋 Auditoría", "menu_auditoria").row()
+      .text("🤖 Estado IA", "menu_diagnostico")
+      .text("📅 Recordatorios", "menu_reminders").row()
+      .text("📣 Difusión Masiva", "menu_masivo")
+      .text("🧠 Cerebro IA", "menu_cerebro").row()
+      .text("📊 Google Sheets", "menu_sheets")
+      .text("🛡️ Listas de Acceso", "menu_lista").row()
+      .text("📋 Auditoría", "menu_auditoria")
       .text("🔔 Notificaciones", "menu_notificaciones").row()
-      .text("🔄 Actualizar", "menu_actualizar").row()
-      .text("🌐 Cloudflare", "menu_tunel")
-      .text("🛡️ Tailscale IP", "menu_tailscale").row()
-      .text("🧑‍💻 Acceso SSH", "menu_ssh")
+      .text("🔄 Actualizar", "menu_actualizar")
+      .text("🌐 Cloudflare", "menu_tunel").row()
+      .text("🛡️ Tailscale IP", "menu_tailscale")
+      .text("🧑‍💻 Acceso SSH", "menu_ssh").row()
       .text("⚙️ Control PM2", "menu_pm2");
     
     const brandName = process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe';
@@ -69,6 +72,16 @@ export function registerCommands(bot: Bot, waService: WhatsAppService, diffusion
       `👇 *Selecciona una opción para comenzar:*`,
       { reply_markup: keyboard, parse_mode: "Markdown" }
     );
+  });
+
+  bot.command(["diagnostico", "testllm", "llm"], async (ctx) => {
+    const loadingMsg = await ctx.reply("⏳ *Ejecutando prueba de salud y diagnóstico de IA...*\n_Probando proveedores y latencia..._", { parse_mode: "Markdown" });
+    try {
+      const { textReport } = await runLLMDiagnostic();
+      await ctx.api.editMessageText(loadingMsg.chat.id, loadingMsg.message_id, textReport, { parse_mode: "Markdown" });
+    } catch (e: any) {
+      await ctx.api.editMessageText(loadingMsg.chat.id, loadingMsg.message_id, `⚠️ *Error al diagnosticar:* ${e.message}`, { parse_mode: "Markdown" });
+    }
   });
 
   bot.command("backup", async (ctx) => {

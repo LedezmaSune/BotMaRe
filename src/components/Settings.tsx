@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Save, Upload, Key, Cpu, Shield, Globe, Terminal, Info, Brain, Download, RefreshCw, Trash2, FileText } from 'lucide-react';
+import { Save, Upload, Key, Cpu, Shield, Globe, Terminal, Info, Brain, Download, RefreshCw, Trash2, FileText, ExternalLink } from 'lucide-react';
 
 interface SettingsProps {
     settings: any;
@@ -10,6 +10,14 @@ interface SettingsProps {
     onUpdate: (settings: any) => Promise<void>;
     onParseEnv: (content: string) => Promise<boolean>;
     onResetWhatsApp: () => Promise<void>;
+}
+
+interface SettingKey {
+    id: string;
+    label: string;
+    desc: string;
+    provider?: string;
+    url?: string;
 }
 
 export const Settings: React.FC<SettingsProps> = ({ settings, networkStatus, onUpdate, onParseEnv, onResetWhatsApp }) => {
@@ -84,16 +92,22 @@ DASHBOARD_PASS=admin123
         URL.revokeObjectURL(url);
     };
 
-    const sections = [
+    const sections: Array<{ title: string; icon: any; keys: SettingKey[] }> = [
         {
             title: 'Modelos de Inteligencia Artificial',
             icon: Cpu,
             keys: [
-                { id: 'GROQ_API_KEY', label: 'Groq API Key', desc: 'Suele empezar con gsk_', provider: 'Groq' },
-                { id: 'GEMINI_API_KEY', label: 'Gemini API Key', desc: 'Google AI Studio', provider: 'Google' },
-                { id: 'OPENROUTER_API_KEY', label: 'OpenRouter API Key', desc: 'Acceso a múltiples modelos', provider: 'OpenRouter' },
-                { id: 'NVIDIA_API_KEY', label: 'Nvidia/DeepSeek Key', desc: 'Para modelos de alto rendimiento', provider: 'Nvidia' },
-                { id: 'OPENAI_API_KEY', label: 'OpenAI API Key', desc: 'GPT-4o, GPT-4o-mini', provider: 'OpenAI' },
+                { id: 'GROQ_API_KEY', label: 'Groq API Key', desc: 'gsk_... (Rápido, Llama 3.3)', provider: 'Groq', url: 'https://console.groq.com/keys' },
+                { id: 'CEREBRAS_API_KEY', label: 'Cerebras API Key', desc: 'csk_... (Ultrarrápido, Llama 3.1 70B gratis)', provider: 'Cerebras', url: 'https://cloud.cerebras.ai' },
+                { id: 'SAMBANOVA_API_KEY', label: 'SambaNova API Key', desc: 'Llave de SambaNova Cloud (Llama 3.3 gratis)', provider: 'SambaNova', url: 'https://cloud.sambanova.ai' },
+                { id: 'SILICONFLOW_API_KEY', label: 'SiliconFlow API Key', desc: 'sk-... (DeepSeek V3/R1 gratis)', provider: 'SiliconFlow', url: 'https://cloud.siliconflow.cn/account/ak' },
+                { id: 'MISTRAL_API_KEY', label: 'Mistral API Key', desc: 'Llave de Mistral Console', provider: 'Mistral', url: 'https://console.mistral.ai/api-keys/' },
+                { id: 'TOGETHER_API_KEY', label: 'Together AI Key', desc: 'Llave de Together AI', provider: 'Together', url: 'https://api.together.xyz/settings/api-keys' },
+                { id: 'GEMINI_API_KEY', label: 'Gemini API Key', desc: 'AIza... (Google AI Studio gratis)', provider: 'Google', url: 'https://aistudio.google.com/app/apikey' },
+                { id: 'DEEPSEEK_API_KEY', label: 'DeepSeek API Key', desc: 'sk-... (DeepSeek Directo)', provider: 'DeepSeek', url: 'https://platform.deepseek.com/api_keys' },
+                { id: 'OPENROUTER_API_KEY', label: 'OpenRouter API Key', desc: 'sk-or-... (Múltiples modelos gratis)', provider: 'OpenRouter', url: 'https://openrouter.ai/keys' },
+                { id: 'NVIDIA_API_KEY', label: 'Nvidia NIM Key', desc: 'nvapi-... (Créditos gratis)', provider: 'Nvidia', url: 'https://build.nvidia.com' },
+                { id: 'OPENAI_API_KEY', label: 'OpenAI API Key', desc: 'sk-... (GPT-4o, GPT-4o-mini)', provider: 'OpenAI', url: 'https://platform.openai.com/api-keys' },
             ]
         },
         {
@@ -109,8 +123,14 @@ DASHBOARD_PASS=admin123
             title: 'Preferencias de Modelos',
             icon: Brain,
             keys: [
-                { id: 'GEMINI_MODEL', label: 'Modelo Gemini', desc: 'Default: gemini-1.5-flash' },
+                { id: 'GROQ_MODEL', label: 'Modelo Groq', desc: 'Default: llama-3.3-70b-versatile' },
+                { id: 'CEREBRAS_MODEL', label: 'Modelo Cerebras', desc: 'Default: llama3.1-70b' },
+                { id: 'SAMBANOVA_MODEL', label: 'Modelo SambaNova', desc: 'Default: Meta-Llama-3.3-70B-Instruct' },
+                { id: 'SILICONFLOW_MODEL', label: 'Modelo SiliconFlow', desc: 'Default: deepseek-ai/DeepSeek-V3' },
+                { id: 'MISTRAL_MODEL', label: 'Modelo Mistral', desc: 'Default: mistral-small-latest' },
+                { id: 'GEMINI_MODEL', label: 'Modelo Gemini', desc: 'Default: gemini-2.5-flash' },
                 { id: 'OPENAI_MODEL', label: 'Modelo OpenAI', desc: 'Default: gpt-4o-mini' },
+                { id: 'OPENROUTER_MODEL', label: 'Modelo OpenRouter', desc: 'Default: meta-llama/llama-3.2-3b-instruct:free' },
                 { id: 'NVIDIA_MODEL', label: 'Modelo Nvidia', desc: 'Default: deepseek-ai/deepseek-v4-pro' },
             ]
         },
@@ -118,7 +138,7 @@ DASHBOARD_PASS=admin123
             title: 'Integraciones & Sistema',
             icon: Globe,
             keys: [
-                { id: 'TELEGRAM_BOT_TOKEN', label: 'Telegram Bot Token', desc: 'De @BotFather' },
+                { id: 'TELEGRAM_BOT_TOKEN', label: 'Telegram Bot Token', desc: 'De @BotFather', url: 'https://t.me/BotFather' },
                 { id: 'TELEGRAM_ALLOWED_USER_IDS', label: 'ID Usuarios Telegram', desc: 'Separados por comas' },
                 { id: 'HTTPSMS_API_KEY', label: 'httpSMS API Key', desc: 'Clave para la pasarela de SMS' },
                 { id: 'HTTPSMS_FROM_NUMBER', label: 'Teléfonos Emisores SMS', desc: 'Separados por comas con código de país (Ej. +52123..., +1234...)' },
@@ -300,9 +320,21 @@ DASHBOARD_PASS=admin123
                         <div className="space-y-6">
                             {section.keys.map((k) => (
                                 <div key={k.id} className="group">
-                                    <label className="block text-xs font-bold text-app-text-muted mb-2 ml-1 group-focus-within:text-cyan-400 transition-colors">
-                                        {k.label}
-                                    </label>
+                                    <div className="flex items-center justify-between mb-2 ml-1">
+                                        <label className="block text-xs font-bold text-app-text-muted group-focus-within:text-cyan-400 transition-colors">
+                                            {k.label}
+                                        </label>
+                                        {k.url && (
+                                            <a 
+                                                href={k.url} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1 text-[11px] font-bold text-cyan-400 hover:text-cyan-300 hover:underline bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-0.5 rounded-full transition-all"
+                                            >
+                                                Obtener Key <ExternalLink size={10} />
+                                            </a>
+                                        )}
+                                    </div>
                                     <div className="relative">
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-app-text/20">
                                             <Key size={16} />

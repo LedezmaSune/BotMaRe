@@ -5,6 +5,7 @@ import { getSettings, updateSettings, listAudits, listReminders, deleteReminder 
 import { getConfig } from "../core/config";
 import { BackupService } from "../modules/system/backup.service";
 import { accessControl } from "../core/accessControl";
+import { runLLMDiagnostic } from "../core/llmTest";
 import { exec } from "child_process";
 import { promisify } from "util";
 import axios from "axios";
@@ -30,6 +31,14 @@ export function registerCallbacks(bot: Bot, waService: WhatsAppService) {
         const tunnelUrl = TunnelService.getInstance().getUrl();
         const targetUrl = tunnelUrl || process.env.DASHBOARD_URL || "http://localhost:8000";
         await ctx.reply(`🌌 *${process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe'} Dashboard*\n🔗 ${targetUrl}`, { parse_mode: "Markdown" });
+      } else if (data === "menu_diagnostico") {
+        const loadingMsg = await ctx.reply("⏳ *Ejecutando prueba de salud y diagnóstico de IA...*\n_Probando proveedores y latencia..._", { parse_mode: "Markdown" });
+        try {
+          const { textReport } = await runLLMDiagnostic();
+          await ctx.api.editMessageText(loadingMsg.chat.id, loadingMsg.message_id, textReport, { parse_mode: "Markdown" });
+        } catch (e: any) {
+          await ctx.api.editMessageText(loadingMsg.chat.id, loadingMsg.message_id, `⚠️ *Error al diagnosticar:* ${e.message}`, { parse_mode: "Markdown" });
+        }
       } else if (data === "menu_status") {
         const status = waService.getStatus();
         const isConnected = status.state === 'connected';

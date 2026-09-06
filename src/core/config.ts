@@ -1,7 +1,10 @@
 import { getSettings } from './memory';
 
 export async function getConfig(key: string, defaultValue: string = ''): Promise<string> {
-    const dbSettings = await getSettings() as any;
+    let dbSettings: any = {};
+    try {
+        dbSettings = (await getSettings()) || {};
+    } catch (e) {}
     
     // 1. Check Database (usar !== undefined para permitir strings vacíos "")
     if (dbSettings[key] !== undefined) {
@@ -17,7 +20,10 @@ export async function getConfig(key: string, defaultValue: string = ''): Promise
 }
 
 export async function getAllConfig(): Promise<Record<string, string>> {
-    const dbSettings = await getSettings() as any;
+    let dbSettings: any = {};
+    try {
+        dbSettings = (await getSettings()) || {};
+    } catch (e) {}
     
     // Common keys we want to expose to the frontend settings page
     const keys = [
@@ -33,6 +39,16 @@ export async function getAllConfig(): Promise<Record<string, string>> {
         'DASHBOARD_PASS',
         'PORT',
         'GROQ_MODEL',
+        'CEREBRAS_API_KEY',
+        'CEREBRAS_MODEL',
+        'SAMBANOVA_API_KEY',
+        'SAMBANOVA_MODEL',
+        'MISTRAL_API_KEY',
+        'MISTRAL_MODEL',
+        'SILICONFLOW_API_KEY',
+        'SILICONFLOW_MODEL',
+        'TOGETHER_API_KEY',
+        'TOGETHER_MODEL',
         'GEMINI_MODEL',
         'OPENAI_MODEL',
         'NVIDIA_MODEL',

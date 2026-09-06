@@ -133,7 +133,29 @@ export async function callLLM(
         try {
             return await tryProvider('Groq', groqKeys, {
                 baseURL: "https://api.groq.com/openai/v1",
-                model: hasVision ? "llama-3.2-11b-vision-instant" : "llama-3.3-70b-versatile"
+                model: hasVision ? "llama-3.2-11b-vision-instant" : (config['GROQ_MODEL'] || "llama-3.3-70b-versatile")
+            }, cleanedMessages, tools, hasVision);
+        } catch (e) {}
+    }
+
+    // 1.1 Intentar Cerebras (Ultrarrápido Gratis - Llama 3.1 70B)
+    const cerebrasKeys = getApiKeys(config['CEREBRAS_API_KEY']);
+    if (cerebrasKeys.length > 0 && !hasVision) {
+        try {
+            return await tryProvider('Cerebras', cerebrasKeys, {
+                baseURL: "https://api.cerebras.ai/v1",
+                model: config['CEREBRAS_MODEL'] || "llama3.1-70b"
+            }, cleanedMessages, tools, hasVision);
+        } catch (e) {}
+    }
+
+    // 1.2 Intentar SambaNova (Llama 3.3 70B Gratis)
+    const sambanovaKeys = getApiKeys(config['SAMBANOVA_API_KEY']);
+    if (sambanovaKeys.length > 0 && !hasVision) {
+        try {
+            return await tryProvider('SambaNova', sambanovaKeys, {
+                baseURL: "https://api.sambanova.ai/v1",
+                model: config['SAMBANOVA_MODEL'] || "Meta-Llama-3.3-70B-Instruct"
             }, cleanedMessages, tools, hasVision);
         } catch (e) {}
     }
@@ -196,6 +218,39 @@ export async function callLLM(
                 temperature: 1,
                 top_p: 0.95,
                 extraBody: { chat_template_kwargs: { thinking: false } }
+            }, cleanedMessages, tools, hasVision);
+        } catch (e) {}
+    }
+
+    // 6. Intentar Mistral AI
+    const mistralKeys = getApiKeys(config['MISTRAL_API_KEY']);
+    if (mistralKeys.length > 0) {
+        try {
+            return await tryProvider('Mistral', mistralKeys, {
+                baseURL: "https://api.mistral.ai/v1",
+                model: config['MISTRAL_MODEL'] || "mistral-small-latest"
+            }, cleanedMessages, tools, hasVision);
+        } catch (e) {}
+    }
+
+    // 7. Intentar SiliconFlow (DeepSeek V3/R1 Gratis)
+    const sfKeys = getApiKeys(config['SILICONFLOW_API_KEY']);
+    if (sfKeys.length > 0) {
+        try {
+            return await tryProvider('SiliconFlow', sfKeys, {
+                baseURL: "https://api.siliconflow.cn/v1",
+                model: config['SILICONFLOW_MODEL'] || "deepseek-ai/DeepSeek-V3"
+            }, cleanedMessages, tools, hasVision);
+        } catch (e) {}
+    }
+
+    // 8. Intentar Together AI
+    const togetherKeys = getApiKeys(config['TOGETHER_API_KEY']);
+    if (togetherKeys.length > 0) {
+        try {
+            return await tryProvider('Together', togetherKeys, {
+                baseURL: "https://api.together.xyz/v1",
+                model: config['TOGETHER_MODEL'] || "meta-llama/Llama-3.3-70B-Instruct-Turbo"
             }, cleanedMessages, tools, hasVision);
         } catch (e) {}
     }

@@ -34,7 +34,7 @@ export async function callLLM(messages: any[], tools?: any[]): Promise<any> {
         try {
             return await tryProvider('Groq', [config['GROQ_API_KEY']], {
                 baseURL: "https://api.groq.com/openai/v1",
-                model: "llama-3.3-70b-versatile"
+                model: config['GROQ_MODEL'] || "llama-3.3-70b-versatile"
             }, messages, tools);
         } catch (e) {}
     }

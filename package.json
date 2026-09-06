@@ -5,6 +5,7 @@
   "main": "src/server.ts",
   "scripts": {
     "dev": "concurrently -n \"ENGINE,UI\" -c \"bgBlue.bold,bgMagenta.bold\" \"tsx src/server.ts\" \"next dev --turbo\"",
+    "test:llm": "tsx bin/test-llm.ts",
     "clean": "rimraf out .next dist",
     "build": "pnpm run clean && next build --webpack",
     "start": "node bin/check-build.js && tsx src/server.ts",
