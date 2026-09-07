@@ -62,7 +62,7 @@ const PROVIDERS = [
         name: 'OpenRouter',
         envKey: 'OPENROUTER_API_KEY',
         modelEnvKey: 'OPENROUTER_MODEL',
-        defaultModel: 'meta-llama/llama-3.2-3b-instruct:free',
+        defaultModel: 'meta-llama/llama-3.3-70b-instruct:free',
         baseURL: 'https://openrouter.ai/api/v1',
     },
     {

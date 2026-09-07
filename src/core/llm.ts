@@ -198,7 +198,7 @@ export async function callLLM(
         try {
             return await tryProvider('OpenRouter', orKeys, {
                 baseURL: "https://openrouter.ai/api/v1",
-                model: config['OPENROUTER_MODEL'] || "meta-llama/llama-3.2-3b-instruct:free",
+                model: config['OPENROUTER_MODEL'] || "meta-llama/llama-3.3-70b-instruct:free",
                 defaultHeaders: {
                     "HTTP-Referer": "http://localhost:8000",
                     "X-Title": "BotMaRe AI",
