@@ -232,6 +232,13 @@ export class TunnelService extends EventEmitter {
     }
 
     public getUrl(): string | null {
+        if (process.env.CUSTOM_DOMAIN) {
+            let domain = process.env.CUSTOM_DOMAIN.trim();
+            if (!domain.startsWith('http')) {
+                domain = 'https://' + domain;
+            }
+            return domain;
+        }
         return this.publicUrl;
     }
 }

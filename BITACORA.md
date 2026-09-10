@@ -5,9 +5,28 @@
 > 
 > *Sistemas de IA multiproveedor, diagnósticos en tiempo real, refactorización del actualizador `update.sh`, mantenimiento pasivo de Baileys/SQLite sin desconexión y actualización de UI.*
 
+## Fecha: 10 de Septiembre de 2026
+
+### ✅ Tareas Completadas (Sesión Actual)
+1. **Refactorización de Configuración y `.env`:**
+   - Se modificó la lectura de configuración en `config.ts` y la inyección en memoria de `.env` en `settings.controller.ts` para que los cambios surtan efecto correctamente al subir un nuevo archivo de entorno.
+2. **Mejoras Visuales (Premium Dark Mode):**
+   - Animaciones y transiciones de páginas mejoradas (`PageTransition.tsx`, `globals.css`).
+   - Implementación de Glassmorphism avanzado, ajustando colores y efectos de resplandor.
+3. **Indicadores de Red y Túnel Dinámicos:**
+   - Se añadió un indicador visual ("TUNNEL ON" / Cloudflare) interactivo en el `DashboardLayout.tsx`.
+   - El servicio del túnel (`TunnelService`) ahora lee dinámicamente `process.env.CUSTOM_DOMAIN` en tiempo real.
+4. **Simplificación del Roadmap de Canales:**
+   - Se redujo la vista de futuros canales (`FutureChannelsUI.tsx`) para centrarse exclusivamente en WhatsApp, Telegram, Instagram y Facebook Messenger.
+   - *Actualización:* A petición, se ha ocultado temporalmente la página de canales del menú lateral para evitar distracciones en la interfaz, conservando el código base intacto para futuras implementaciones.
+5. **Nuevo Comando de Telegram (`/informe`):**
+   - Se implementó un reporte diagnóstico completo en el bot administrador (`commands.ts` y `callbacks.ts`), accesible mediante el menú interactivo o el comando directo.
+
+---
+
 ## Fecha: 7 de Septiembre de 2026
 
-### ✅ Tareas Completadas (Sesión Actual - Release v2.5.0)
+### ✅ Tareas Completadas (Release v2.5.0)
 1. **Infraestructura Multi-LLM y Failover Inteligente:**
    - Soporte ampliado a 11 proveedores de IA (Groq, Cerebras, SambaNova, SiliconFlow, Mistral, Together, Gemini 2.5, DeepSeek, OpenRouter, Nvidia NIM, OpenAI).
    - Sanitización automática de modelos obsoletos mediante `resolveModel()` (ej. migración automática de `llama-3.1-70b-versatile` a `llama-3.3-70b-versatile`).

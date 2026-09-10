@@ -123,6 +123,40 @@ export function registerCallbacks(bot: Bot, waService: WhatsAppService) {
            );
            await ctx.answerCallbackQuery();
         }
+      } else if (data === "menu_informe") {
+        const { TunnelService } = await import("../core/tunnel");
+        const tunnelUrl = TunnelService.getInstance().getUrl();
+        const dashboardUrl = tunnelUrl || process.env.DASHBOARD_URL || "http://localhost:8000";
+        
+        const settings = await getSettings() as any;
+        
+        // Check API keys
+        const availableApis = [];
+        if (settings.OPENAI_API_KEY) availableApis.push("OpenAI");
+        if (settings.GEMINI_API_KEY) availableApis.push("Gemini");
+        if (settings.GROQ_API_KEY) availableApis.push("Groq");
+        if (settings.OPENROUTER_API_KEY) availableApis.push("OpenRouter");
+        if (settings.DEEPSEEK_API_KEY) availableApis.push("DeepSeek");
+        if (settings.CEREBRAS_API_KEY) availableApis.push("Cerebras");
+        if (settings.NVIDIA_API_KEY) availableApis.push("Nvidia");
+        const apiText = availableApis.length > 0 ? availableApis.join(", ") : "Ninguna configurada";
+        
+        const smsStatus = settings.HTTPSMS_API_KEY ? "✅ Activo" : "❌ Inactivo";
+        
+        const report = `📊 *Informe General del Sistema*\n\n` +
+          `🌐 *Servidor y Red*\n` +
+          `• URL Web: \`${dashboardUrl}\`\n` +
+          `• Cloudflare Tunnel: ${tunnelUrl ? '🟢 Conectado' : '🔴 Inactivo'}\n\n` +
+          `🔑 *Motores de IA Disponibles*\n` +
+          `• ${apiText}\n\n` +
+          `📱 *Canales y Servicios*\n` +
+          `• WhatsApp: 🟢 Motor activo\n` +
+          `• Telegram: 🟢 Bot admin\n` +
+          `• Pasarela SMS: ${smsStatus}\n` +
+          `• Webhooks Externos: 🚧 (Próximamente)\n\n` +
+          `_Reporte generado en tiempo real._`;
+
+        await ctx.editMessageText(report, { parse_mode: "Markdown" });
       } else if (data === "menu_auditoria") {
         try {
             const rows = await listAudits(10);

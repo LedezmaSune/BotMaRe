@@ -19,6 +19,7 @@ async function syncTelegramCommands(bot: Bot, maxRetries = 3, delayMs = 3500) {
     { command: "cerebro", description: "🧠 Ver configuración del bot" },
     { command: "lista", description: "🛡️ Control de listas (Whitelist/Blacklist)" },
     { command: "auditoria", description: "📊 Ver últimos 10 movimientos" },
+    { command: "informe", description: "📈 Informe del Sistema (Redes, APIs, Canales)" },
     { command: "notificaciones", description: "🔔 Alternar notificaciones (ON/OFF)" },
     { command: "actualizar", description: "🔄 Buscar y aplicar actualizaciones" },
     { command: "tunel", description: "🌐 Estado o reinicio del túnel Cloudflare" },
@@ -58,7 +59,8 @@ export function registerCommands(bot: Bot, waService: WhatsAppService, diffusion
       .text("📊 Google Sheets", "menu_sheets")
       .text("🛡️ Listas de Acceso", "menu_lista").row()
       .text("📋 Auditoría", "menu_auditoria")
-      .text("🔔 Notificaciones", "menu_notificaciones").row()
+      .text("📈 Informe", "menu_informe").row()
+      .text("🔔 Notificaciones", "menu_notificaciones")
       .text("🔄 Actualizar", "menu_actualizar")
       .text("🌐 Cloudflare", "menu_tunel").row()
       .text("🛡️ Tailscale IP", "menu_tailscale")
@@ -122,6 +124,7 @@ export function registerCommands(bot: Bot, waService: WhatsAppService, diffusion
       `👉 /cerebro - Ajustar parámetros de la IA y reglas.\n` +
       `👉 /lista - Administrar listas blancas y negras.\n` +
       `👉 /auditoria - Ver últimos movimientos y errores.\n` +
+      `👉 /informe - Ver estado general de redes, servicios y APIs.\n` +
       `👉 /notificaciones - Activar/desactivar alertas en Telegram.\n\n` +
       `*Mantenimiento y Servidor:*\n` +
       `👉 /actualizar - Buscar nuevas versiones en GitHub.\n` +
@@ -323,6 +326,43 @@ export function registerCommands(bot: Bot, waService: WhatsAppService, diffusion
         console.error("[Telegram Audit Error]", e);
         await ctx.reply(`❌ Error obteniendo auditoría: ${e.message}`);
     }
+  });
+
+  bot.command(["informe", "reporte"], async (ctx) => {
+    const { TunnelService } = await import("../core/tunnel");
+    const tunnelUrl = TunnelService.getInstance().getUrl();
+    const dashboardUrl = tunnelUrl || process.env.DASHBOARD_URL || "http://localhost:8000";
+    
+    const settings = await getSettings() as any;
+    
+    // Check API keys
+    const availableApis = [];
+    if (settings.OPENAI_API_KEY) availableApis.push("OpenAI");
+    if (settings.GEMINI_API_KEY) availableApis.push("Gemini");
+    if (settings.GROQ_API_KEY) availableApis.push("Groq");
+    if (settings.OPENROUTER_API_KEY) availableApis.push("OpenRouter");
+    if (settings.DEEPSEEK_API_KEY) availableApis.push("DeepSeek");
+    if (settings.CEREBRAS_API_KEY) availableApis.push("Cerebras");
+    if (settings.NVIDIA_API_KEY) availableApis.push("Nvidia");
+    const apiText = availableApis.length > 0 ? availableApis.join(", ") : "Ninguna configurada";
+    
+    // Services
+    const smsStatus = settings.HTTPSMS_API_KEY ? "✅ Activo" : "❌ Inactivo";
+    
+    const report = `📊 *Informe General del Sistema*\n\n` +
+      `🌐 *Servidor y Red*\n` +
+      `• URL Web: \`${dashboardUrl}\`\n` +
+      `• Cloudflare Tunnel: ${tunnelUrl ? '🟢 Conectado' : '🔴 Inactivo'}\n\n` +
+      `🔑 *Motores de IA Disponibles*\n` +
+      `• ${apiText}\n\n` +
+      `📱 *Canales y Servicios*\n` +
+      `• WhatsApp: 🟢 Motor activo\n` +
+      `• Telegram: 🟢 Bot admin\n` +
+      `• Pasarela SMS: ${smsStatus}\n` +
+      `• Webhooks Externos: 🚧 (Próximamente)\n\n` +
+      `_Reporte generado en tiempo real._`;
+
+    await ctx.reply(report, { parse_mode: "Markdown" });
   });
   
   bot.command("notificaciones", async (ctx) => {

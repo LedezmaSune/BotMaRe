@@ -22,7 +22,7 @@ const routes: Array<{ path: string; icon: any; label: string; id: TabId }> = [
     { path: '/autoresponders', icon: Menu, label: 'Menús Rápidos', id: 'autoresponders' },
     { path: '/groups', icon: Users, label: 'Grupos', id: 'groups' },
     { path: '/personality', icon: Brain, label: 'Cerebro IA', id: 'personality' },
-    { path: '/channels', icon: Radio, label: 'Futuros Canales 🚀', id: 'channels' },
+    // { path: '/channels', icon: Radio, label: 'Futuros Canales 🚀', id: 'channels' }, // Oculto temporalmente a petición del usuario
     { path: '/access', icon: Shield, label: 'Listas de Acceso', id: 'access' },
     { path: '/support', icon: ShieldAlert, label: 'Soporte', id: 'support' },
     { path: '/crm', icon: Briefcase, label: 'CRM y Etiquetas', id: 'crm' },
@@ -37,7 +37,7 @@ const routes: Array<{ path: string; icon: any; label: string; id: TabId }> = [
 ];
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-    const { status, qr, pairingCode, handleRequestPairingCode, settings, handleCleanUploads, setActiveTab } = useGlobalBotData();
+    const { status, qr, pairingCode, handleRequestPairingCode, settings, handleCleanUploads, setActiveTab, networkStatus } = useGlobalBotData();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const pathname = usePathname();
     const handleTabChange = (id: TabId) => {
@@ -117,6 +117,22 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                         <div className={`w-1.5 h-1.5 rounded-full ${status === 'connected' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`}></div>
                         <span className="hidden xs:inline">{status}</span>
                     </div>
+
+                    {networkStatus?.cloudflareUrl && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-orange-500/20 text-[9px] font-black uppercase tracking-widest bg-app-card/50 text-orange-400 group relative cursor-help">
+                            <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)] animate-pulse"></div>
+                            <span className="hidden xs:inline">Tunnel On</span>
+                            
+                            {/* Tooltip de Cloudflare Tunnel */}
+                            <div className="absolute top-full right-0 mt-2 w-max p-3 bg-[#131B2C] border border-orange-500/30 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                                <span className="block text-[9px] font-bold text-orange-300/70 mb-2 uppercase tracking-widest">Cloudflare Tunnel (Público)</span>
+                                <div className="text-[11px] text-white font-mono flex items-center gap-2">
+                                    <div className="w-1 h-1 rounded-full bg-orange-400 opacity-50"></div>
+                                    {networkStatus.cloudflareUrl}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {settings?.HTTPSMS_FROM_NUMBER && (
                         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-indigo-500/20 text-[9px] font-black uppercase tracking-widest bg-app-card/50 text-indigo-400 group relative cursor-help">
