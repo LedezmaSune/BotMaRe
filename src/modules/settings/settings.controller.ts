@@ -39,6 +39,13 @@ export class SettingsController {
         const { content } = req.body;
         if (!content) throw new Error("Content is required");
 
+        // 1. Sobreescribir el archivo .env físico para que persista en reinicios
+        try {
+            fs.writeFileSync(path.resolve(process.cwd(), '.env'), content);
+        } catch(e: any) {
+            console.error("[SettingsController] Error escribiendo el archivo .env físico:", e.message);
+        }
+
         const lines = content.split('\n');
         const parsed: Record<string, string> = {};
         
@@ -49,12 +56,17 @@ export class SettingsController {
             const [key, ...valueParts] = trimmed.split('=');
             if (key && valueParts.length > 0) {
                 const value = valueParts.join('=').trim().replace(/^["']|["']$/g, '');
-                parsed[key.trim()] = value;
+                const cleanKey = key.trim();
+                parsed[cleanKey] = value;
+                
+                // 2. Inyectar dinámicamente en process.env para que tenga efecto inmediato sin reiniciar
+                process.env[cleanKey] = value;
             }
         });
 
+        // 3. Actualizar la base de datos para que se refleje de inmediato en el Dashboard
         await updateSettings(parsed);
-        res.json({ success: true, count: Object.keys(parsed).length });
+        res.json({ success: true, count: Object.keys(parsed).length, message: ".env actualizado en disco y memoria" });
     });
 
     testLLM = asyncHandler(async (req: Request, res: Response) => {

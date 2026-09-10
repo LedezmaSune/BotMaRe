@@ -53,24 +53,14 @@ const channels: ChannelCardProps[] = [
         progress: 100
     },
     {
-        name: 'Telegram Bot Admin (Panel Privado)',
-        description: 'Control y supervisión remota del sistema exclusiva para administradores autorizados en TELEGRAM_ALLOWED_USER_IDS.',
+        name: 'Telegram Bot (Admin & Broadcast)',
+        description: 'Control remoto del sistema para administradores y canal público para difusión masiva a usuarios.',
         icon: ShieldCheck,
-        color: 'from-amber-500 to-amber-700',
-        badge: 'Admin Privado',
-        badgeColor: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-        features: ['Diagnósticos `/diagnostico` y test de LLMs', 'Monitoreo de estado y notificaciones del sistema', 'Alertas automáticas de fallos y respaldos', 'Privado para administradores (No clientes)'],
-        progress: 100
-    },
-    {
-        name: 'Telegram Customer Bot & Broadcast',
-        description: 'Canal público de atención al cliente para difusión masiva a canales y respuestas de usuarios.',
-        icon: Send,
         color: 'from-sky-500 to-blue-600',
-        badge: 'En Desarrollo',
+        badge: 'Híbrido',
         badgeColor: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
-        features: ['Broadcast masivo a canales y grupos públicos', 'Botones Inline interactivos para usuarios', 'IA conversacional aislada del panel admin', 'Captura de Leads a CRM'],
-        progress: 60
+        features: ['Control absoluto del panel', 'Broadcast masivo a canales y grupos', 'Botones interactivos para usuarios', 'Alertas y notificaciones del sistema'],
+        progress: 80
     },
     {
         name: 'Instagram Direct Messages',
@@ -91,26 +81,6 @@ const channels: ChannelCardProps[] = [
         badgeColor: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
         features: ['Plantillas con botones interactivos', 'Filtro automático de comentarios a Inbox', 'Derivación a soporte humano', 'Sincronización con catálogo de productos'],
         progress: 30
-    },
-    {
-        name: 'WebChat Widget Flotante',
-        description: 'Widget embebible en HTML/React para instalar el Bot en cualquier página web.',
-        icon: Globe,
-        color: 'from-cyan-500 to-blue-500',
-        badge: 'Planeado',
-        badgeColor: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
-        features: ['Burbuja personalizable con colores del cliente', 'Soporte offline con formulario de captura', 'Transferencia directa a WhatsApp', 'RAG con base de conocimientos en tiempo real'],
-        progress: 20
-    },
-    {
-        name: 'Discord Bot & Webhooks',
-        description: 'Notificaciones de servidor, moderación automática y soporte por tickets.',
-        icon: MessageSquare,
-        color: 'from-purple-600 to-indigo-600',
-        badge: 'Planeado',
-        badgeColor: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
-        features: ['Sistema de tickets para soporte técnico', 'Notificaciones de nuevos prospectos CRM', 'Roles y comandos de comunidad', 'Integración con Webhooks custom'],
-        progress: 15
     }
 ];
 

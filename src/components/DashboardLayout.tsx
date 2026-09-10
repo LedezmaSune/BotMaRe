@@ -59,10 +59,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <div className="min-h-screen bg-background text-foreground font-sans selection:bg-cyan-500/30 transition-colors duration-300">
             <ConnectionOverlay qr={qr} pairingCode={pairingCode} onRequestPairingCode={handleRequestPairingCode} status={status} />
 
-            {/* Fondos Decorativos Animados */}
-            <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
-                <div className="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] bg-cyan-500/15 dark:bg-cyan-500/10 rounded-full blur-[140px] mix-blend-screen animate-pulse" style={{ animationDuration: '8s' }}></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-fuchsia-600/15 dark:bg-purple-600/15 rounded-full blur-[120px] mix-blend-screen animate-pulse" style={{ animationDuration: '12s', animationDelay: '2s' }}></div>
+            {/* Fondos Decorativos Animados (Premium Ambient) */}
+            <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+                <div className="absolute -top-[10%] -left-[5%] w-[60vw] h-[60vw] max-w-[900px] max-h-[900px] bg-cyan-500/20 dark:bg-cyan-600/15 rounded-full blur-[150px] mix-blend-screen animate-float" style={{ animationDuration: '15s' }}></div>
+                <div className="absolute top-[20%] -right-[10%] w-[50vw] h-[50vw] max-w-[700px] max-h-[700px] bg-indigo-500/15 dark:bg-indigo-600/10 rounded-full blur-[130px] mix-blend-screen animate-float" style={{ animationDuration: '12s', animationDelay: '3s' }}></div>
+                <div className="absolute -bottom-[20%] left-[20%] w-[70vw] h-[70vw] max-w-[800px] max-h-[800px] bg-fuchsia-500/15 dark:bg-purple-600/15 rounded-full blur-[140px] mix-blend-screen animate-pulse" style={{ animationDuration: '10s', animationDelay: '1s' }}></div>
             </div>
 
             {/* --- HEADER SUPERIOR COMPACTO --- */}

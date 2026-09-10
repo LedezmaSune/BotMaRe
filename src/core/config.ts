@@ -6,8 +6,8 @@ export async function getConfig(key: string, defaultValue: string = ''): Promise
         dbSettings = (await getSettings()) || {};
     } catch (e) {}
     
-    // 1. Check Database (usar !== undefined para permitir strings vacíos "")
-    if (dbSettings[key] !== undefined) {
+    // 1. Check Database (Ignorar vacíos para que caiga al .env si no hay valor real)
+    if (dbSettings[key] !== undefined && dbSettings[key] !== null && dbSettings[key] !== '') {
         return dbSettings[key];
     }
     

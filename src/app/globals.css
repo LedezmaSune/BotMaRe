@@ -3,13 +3,13 @@
 
 :root {
   --app-bg: #f8fafc;
-  --app-card: rgba(255, 255, 255, 0.8);
+  --app-card: rgba(255, 255, 255, 0.7);
   --app-border: #e2e8f0;
   --app-text: #0f172a;
   --app-text-muted: #64748b;
   
   --app-accent: #06b6d4;
-  --app-glow: rgba(6, 182, 212, 0.3);
+  --app-glow: rgba(6, 182, 212, 0.4);
   
   --background: #f8fafc;
   --foreground: #0f172a;
@@ -24,14 +24,14 @@
 }
 
 .dark {
-  --app-bg: #020617; /* Slate-950 puro */
-  --app-card: rgba(15, 23, 42, 0.4); /* Más transparente para el glassmorphism */
-  --app-border: rgba(255, 255, 255, 0.05); /* Borde sutil */
+  --app-bg: #030712; /* Más oscuro para mayor inmersión */
+  --app-card: rgba(17, 24, 39, 0.45); /* Glass más premium */
+  --app-border: rgba(255, 255, 255, 0.08); /* Borde un poco más visible pero elegante */
   --app-text: #f8fafc;
   --app-text-muted: #94a3b8;
   
   --app-accent: #22d3ee;
-  --app-glow: rgba(34, 211, 238, 0.4);
+  --app-glow: rgba(34, 211, 238, 0.5);
 
   --background: #030712;
   --foreground: #f8fafc;
@@ -40,29 +40,30 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.5s cubic-bezier(0.16, 1, 0.3, 1), color 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 h1, h2, h3, h4, .font-black {
   font-family: 'Outfit', sans-serif;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 
 .glass-effect {
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
   background-color: var(--app-card);
   border: 1px solid var(--app-border);
+  box-shadow: 0 4px 24px -6px rgba(0, 0, 0, 0.2);
 }
 
 .premium-glass {
-  backdrop-filter: blur(40px) saturate(150%);
-  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  backdrop-filter: blur(48px) saturate(180%);
+  -webkit-backdrop-filter: blur(48px) saturate(180%);
   background-color: var(--app-card);
   border: 1px solid var(--app-border);
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.02), 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 12px 40px rgba(0, 0, 0, 0.4);
 }
 
 .glow-border {
