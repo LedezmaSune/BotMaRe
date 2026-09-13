@@ -10,7 +10,7 @@ import { SmsService } from '../sms/sms.service';
 export class MassDiffusionService {
     private isProcessing = false;
     private shouldStop = false;
-    private currentProgress: { current: number, total: number, percentage: number, isWaiting?: boolean, waitMs?: number } | null = null;
+    private currentProgress: { current: number, total: number, percentage: number, isWaiting?: boolean, waitMs?: number, estimatedTimeLeft?: number } | null = null;
 
     constructor(private waService: MessageService, private smsService: SmsService) {}
 
@@ -217,26 +217,33 @@ export class MassDiffusionService {
 
             // --- PROTECCIÓN ANTI-BAN CON PAUSAS INTELIGENTES ---
             if (i < contacts.length - 1 && !this.shouldStop) {
-                let delay = 3500 + Math.random() * 3500; // 3.5 - 7 segundos base
+                // Tiempos más humanos: Base de 15 a 25 segundos
+                let delay = 15000 + Math.random() * 10000; 
                 
                 // Retraso adicional proporcional a la longitud del mensaje
                 const charCount = personalizedMessage?.length || 0;
-                const writingJitter = Math.min(charCount * 12, 4000);
+                const writingJitter = Math.min(charCount * 20, 6000);
                 delay += writingJitter;
                 
-                // Pausa larga cada 10 mensajes (Burst Protection)
-                if ((i + 1) % 10 === 0) {
-                    console.log(`[Mass] Pausa de seguridad Burst Protection (15-20s)...`);
-                    delay += 12000 + Math.random() * 8000;
+                // Pausa larga cada 15 mensajes (Burst Protection)
+                if ((i + 1) % 15 === 0) {
+                    console.log(`[Mass] Pausa de seguridad Burst Protection (2-4 min)...`);
+                    delay += 120000 + Math.random() * 120000; // 2 a 4 minutos extras
                 }
 
                 console.log(`[Mass] Esperando ${Math.round(delay / 1000)}s antes del siguiente contacto...`);
                 
+                // Calcular tiempo estimado restante aproximado
+                const remainingContacts = contacts.length - (i + 1);
+                // Promedio estimado de espera (20s base + posibles ráfagas)
+                const estimatedTimeLeft = remainingContacts * 20000 + delay;
+
                 // Informar al frontend que estamos en pausa anti-ban
                 globalEvents.emit(EVENTS.DIFFUSION_PROGRESS, {
                     ...this.currentProgress,
                     isWaiting: true,
-                    waitMs: delay
+                    waitMs: delay,
+                    estimatedTimeLeft
                 });
 
                 await new Promise(r => setTimeout(r, delay));
@@ -245,7 +252,8 @@ export class MassDiffusionService {
                 globalEvents.emit(EVENTS.DIFFUSION_PROGRESS, {
                     ...this.currentProgress,
                     isWaiting: false,
-                    waitMs: 0
+                    waitMs: 0,
+                    estimatedTimeLeft: remainingContacts * 20000
                 });
             }
         }

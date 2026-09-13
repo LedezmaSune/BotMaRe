@@ -96,6 +96,32 @@ export default function ManualPage() {
                     </div>
                 </section>
 
+                {/* Spintax y Variables */}
+                <section className="bg-app-card border border-app-border rounded-3xl p-8 shadow-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 blur-3xl rounded-full -mr-10 -mt-10 transition-all group-hover:bg-orange-500/10"></div>
+                    <div className="flex items-center gap-3 mb-6">
+                        <Rocket className="text-orange-500" size={24} />
+                        <h2 className="text-xl font-black text-app-text tracking-tight">Variables y Spintax (Anti-Ban)</h2>
+                    </div>
+                    <div className="space-y-4 text-sm text-app-text-muted">
+                        <p>Evita bloqueos de WhatsApp haciendo que cada mensaje masivo sea único.</p>
+                        <ul className="space-y-3">
+                            <li className="flex items-start gap-2">
+                                <ArrowRight size={16} className="text-orange-400 shrink-0 mt-0.5" />
+                                <span><b>Variables de Contacto:</b> Usa <code className="text-orange-400 font-black">{"{NOMBRE}"}</code> o <code className="text-orange-400 font-black">{"{NOMBRE_PILA}"}</code> para que el bot inserte el nombre real de cada persona de la lista.</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <ArrowRight size={16} className="text-orange-400 shrink-0 mt-0.5" />
+                                <span><b>Spintax (Rotación Múltiple):</b> Escribe varias opciones separadas por una barra vertical dentro de llaves. Ej: <code className="text-orange-400 font-black">{"{Hola|Buenos días|Saludos}"}</code>. El bot seleccionará una opción al azar por cada mensaje enviado, evadiendo los filtros anti-spam.</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <ArrowRight size={16} className="text-orange-400 shrink-0 mt-0.5" />
+                                <span><b>Variables Automáticas:</b> Usa <code className="text-orange-400 font-black">{"{SALUDO}"}</code> para que el bot diga automáticamente Hola/Buenos días/Buenas tardes según la hora local, o <code className="text-orange-400 font-black">{"{EMOJI_ALEATORIO}"}</code> para dar dinamismo a tus textos.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </section>
+
                 {/* Difusión Individual */}
                 <section className="bg-app-card border border-app-border rounded-3xl p-8 shadow-xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/5 blur-3xl rounded-full -mr-10 -mt-10 transition-all group-hover:bg-pink-500/10"></div>
