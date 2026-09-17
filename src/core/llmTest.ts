@@ -69,7 +69,7 @@ const PROVIDERS = [
         name: 'Nvidia',
         envKey: 'NVIDIA_API_KEY',
         modelEnvKey: 'NVIDIA_MODEL',
-        defaultModel: 'deepseek-ai/deepseek-v4-pro',
+        defaultModel: 'deepseek-ai/deepseek-r1',
         baseURL: 'https://integrate.api.nvidia.com/v1',
     },
     {
@@ -97,8 +97,15 @@ const PROVIDERS = [
         name: 'CheaperInference',
         envKey: 'CHEAPERINFERENCE_API_KEY',
         modelEnvKey: 'CHEAPERINFERENCE_MODEL',
-        defaultModel: 'gemini-3.7-flash',
+        defaultModel: 'gemini-2.5-flash',
         baseURL: 'https://api.cheaperinference.com/v1',
+    },
+    {
+        name: 'Ollama (Local)',
+        envKey: 'OLLAMA_API_URL', // usamos la URL como llave indicativa
+        modelEnvKey: 'OLLAMA_MODEL',
+        defaultModel: 'llama3',
+        baseURL: 'http://localhost:11434/v1',
     },
 ];
 
@@ -161,7 +168,7 @@ export async function runLLMDiagnostic(): Promise<{ results: DiagnosticResult[];
             } catch (err: any) {
                 const latencyMs = Date.now() - start;
                 const status = err.status ? `[HTTP ${err.status}] ` : '';
-                const msg = err.message ? err.message.split('\n')[0] : String(err);
+                const msg = err.message ? err.message : String(err);
                 
                 results.push({
                     provider: p.name,
@@ -171,7 +178,7 @@ export async function runLLMDiagnostic(): Promise<{ results: DiagnosticResult[];
                     latencyMs,
                     error: `${status}${msg}`
                 });
-                textReport += `  🔴 [Llave ${i + 1}] (${maskedKey}): ${status}_${msg.substring(0, 50)}..._\n`;
+                textReport += `  🔴 [Llave ${i + 1}] (${maskedKey}): ${status}_${msg}_\n`;
             }
         }
         textReport += `\n`;

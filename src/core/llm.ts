@@ -74,6 +74,8 @@ async function tryProvider(
             // Inyectar sugerencias inteligentes según el tipo de error
             if (error.status === 404 || errorMsg.includes('404')) {
                 errorMsg += `\n    💡 SUGERENCIA: El modelo '${config.model}' ya no existe o está mal escrito. Busca el modelo más nuevo y actualiza el archivo .env`;
+            } else if (error.status === 400 || errorMsg.includes('400')) {
+                errorMsg += `\n    💡 SUGERENCIA: Error 400 (Bad Request). Revisa que el modelo sea correcto o que no estés enviando mensajes vacíos. A veces ocurre al usar parámetros no soportados como "max_tokens" en modelos de razonamiento.`;
             } else if (error.status === 429 || errorMsg.includes('429')) {
                 errorMsg += `\n    💡 SUGERENCIA: Te quedaste sin tokens diarios en esta cuenta. Añade una nueva API Key de un correo DIFERENTE en el .env`;
             } else if (error.status === 402 || errorMsg.includes('Insufficient Balance')) {
@@ -223,7 +225,7 @@ export async function callLLM(
         try {
             return await tryProvider('Nvidia', nvidiaKeys, {
                 baseURL: "https://integrate.api.nvidia.com/v1",
-                model: config['NVIDIA_MODEL'] || "deepseek-ai/deepseek-v4-pro",
+                model: config['NVIDIA_MODEL'] || "deepseek-ai/deepseek-r1",
                 max_tokens: 4000,
                 temperature: 1,
                 top_p: 0.95,
@@ -271,7 +273,19 @@ export async function callLLM(
         try {
             return await tryProvider('CheaperInference', ciKeys, {
                 baseURL: "https://api.cheaperinference.com/v1",
-                model: config['CHEAPERINFERENCE_MODEL'] || "gemini-3.7-flash"
+                model: config['CHEAPERINFERENCE_MODEL'] || "gemini-2.5-flash"
+            }, cleanedMessages, tools, hasVision);
+        } catch (e) {}
+    }
+
+    // 10. Intentar Ollama (Local)
+    const ollamaUrl = config['OLLAMA_API_URL'];
+    if (ollamaUrl) {
+        const baseURL = ollamaUrl.endsWith('/v1') ? ollamaUrl : `${ollamaUrl.replace(/\/$/, '')}/v1`;
+        try {
+            return await tryProvider('Ollama', ['ollama-local-key'], {
+                baseURL: baseURL,
+                model: config['OLLAMA_MODEL'] || "llama3"
             }, cleanedMessages, tools, hasVision);
         } catch (e) {}
     }

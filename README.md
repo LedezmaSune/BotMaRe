@@ -131,6 +131,45 @@ docker compose logs -f
 
 ---
 
+## 💻 Requisitos del Sistema y Modelos Locales (Ollama)
+
+BotMaRe está diseñado para ser extremadamente eficiente y puede ejecutarse en hardware modesto (desde 2 núcleos y 4GB de RAM en local, o VPS económicos de 1 vCPU y 2GB RAM). Si deseas utilizar Inteligencia Artificial sin depender de APIs de pago o internet, puedes conectar BotMaRe con **Ollama** para correr modelos localmente.
+
+### 🏆 Modelos recomendados para equipos básicos y VPS baratos:
+Si cuentas con una computadora básica sin tarjeta gráfica dedicada, o estás rentando un servidor en la nube (VPS) muy económico, te recomendamos los siguientes modelos "Ultra Ligeros":
+
+1. **Qwen 2.5 (1.5B o 0.5B)** - *Ideal para respuestas veloces en español sin saturar el CPU.*
+   `ollama pull qwen2.5:1.5b`
+2. **Llama 3.2 (1B)** - *Excelente seguimiento de instrucciones en un tamaño miniatura.*
+   `ollama pull llama3.2:1b`
+3. **Gemma 3 (1B) / Gemma 2 (2B)** - *Arquitectura potente de Google, consume aprox. 1.5GB de RAM activa.*
+   `ollama pull gemma3:1b`
+
+### 🛠️ ¿Cómo instalar Ollama paso a paso?
+Si aún no tienes Ollama en tu computadora o servidor, sigue estos rápidos pasos:
+
+**Para Windows o Mac:**
+1. Ve a la página oficial: **[ollama.com/download](https://ollama.com/download)**
+2. Descarga el instalador para tu sistema operativo y córrelo (Siguiente, Siguiente...).
+3. Abre tu CMD (Símbolo del sistema) o Terminal.
+4. Pega el comando del modelo que quieres (ej. `ollama pull qwen2.5:1.5b`) y presiona Enter.
+
+**Para Linux / Ubuntu / VPS:**
+1. Abre tu terminal y ejecuta el instalador automático:
+   `curl -fsSL https://ollama.com/install.sh | sh`
+2. Una vez que termine, instala el modelo que prefieras:
+   `ollama pull qwen2.5:1.5b`
+
+### ⚙️ Configuración en BotMaRe:
+Una vez que el modelo se haya descargado al 100% en tu terminal con Ollama, solo necesitas actualizar tu archivo `.env`:
+```env
+OLLAMA_API_URL="http://localhost:11434"
+OLLAMA_MODEL="qwen2.5:1.5b" # O el modelo que hayas elegido
+```
+El motor de IA rotará automáticamente a Ollama en caso de que tus otros proveedores fallen o simplemente como motor principal gratuito.
+
+---
+
 ## 🔄 Centro de Actualizaciones
 
 BotMaRe cuenta con un **Centro de Actualizaciones Inteligente** accesible desde 3 canales:

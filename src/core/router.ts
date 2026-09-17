@@ -64,6 +64,11 @@ export class Router {
 
         if (!text) return;
 
+        // Imprimir el mensaje entrante en la terminal para que el usuario pueda verlo
+        const senderLabel = pushName || (participantClean ? participantClean.split('@')[0] : 'Desconocido');
+        const chatType = isGroup ? '👥 Grupo' : '👤 Chat';
+        console.log(`\n💬 [INCOMING - ${chatType}] De: ${senderLabel}\n"${text}"\n`);
+
         // Comandos Administrativos (!lista)
         const ownerNumberConfig = await getConfig('WHATSAPP_OWNER_NUMBER', '');
         const ownerNumbers = ownerNumberConfig.split(',').map((n: string) => n.trim());

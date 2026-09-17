@@ -5,6 +5,22 @@
 > 
 > *Sistemas de IA multiproveedor, diagnósticos en tiempo real, refactorización del actualizador `update.sh`, mantenimiento pasivo de Baileys/SQLite sin desconexión y actualización de UI.*
 
+## Fecha: 17 de Septiembre de 2026
+
+### ✅ Integración Local (Ollama) y Corrección de Bugs
+1. **Soporte Nativo para Ollama (IA Local):**
+   - Se añadió soporte en `src/core/llm.ts` para conectar con modelos locales vía Ollama.
+   - Variables de entorno inyectadas en `.env` y `.env.example`: `OLLAMA_API_URL` y `OLLAMA_MODEL`.
+   - Se añadieron recomendaciones específicas para hardware modesto en el `README.md` (Qwen 2.5 1.5B, Llama 3.2 1B, Gemma 3 1B) y guía de instalación de Ollama.
+2. **Corrección de Errores Críticos (HTTP 400):**
+   - Se arregló un bug que causaba un error 400 Bad Request si los modelos de IA estaban vacíos en `.env`, ajustando los fallbacks por defecto (`gemini-2.5-flash` y `deepseek-r1`).
+   - Se expuso correctamente el texto completo de los errores 400 en la herramienta de diagnóstico (`llmTest.ts`).
+3. **Estabilidad y Mantenimiento de WhatsApp:**
+   - Se desactivó el mantenimiento profundo de SQLite (`BaileysMaintenanceJob` en `task-runner.ts`) que causaba la desconexión abrupta de la sesión de WhatsApp en la madrugada.
+   - Se silenciaron las notificaciones automáticas de "WhatsApp Desconectado" en Telegram y el Panel Web (`src/core/bot.ts`) para evitar spam durante micro-cortes.
+4. **Mejora de Consola:**
+   - Se agregó un log en `router.ts` para imprimir los mensajes entrantes de los clientes (Chats y Grupos) en tiempo real dentro de la consola del sistema.
+
 ## Fecha: 10 de Septiembre de 2026
 
 ### ✅ Tareas Completadas (Sesión Actual)

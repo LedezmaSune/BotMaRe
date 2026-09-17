@@ -88,12 +88,13 @@ export class Bot {
                     this.disconnectNotifyTimer = setTimeout(() => {
                         this.wasProlongedOffline = true;
                         this.disconnectNotifyTimer = null;
-                        void NotificationHub.notify({
+                        // NOTA: Se silenciaron las notificaciones de desconexión a petición del usuario.
+                        /* void NotificationHub.notify({
                             title: '🔴 WhatsApp Desconectado',
                             message: 'Se ha perdido la sesión con WhatsApp por más de 1 minuto. El bot está intentando reconectar automáticamente...',
                             type: 'error',
                             source: 'whatsapp'
-                        });
+                        }); */
                     }, 60000); // 60 segundos de gracia para evitar falsas alarmas por micro-reconexiones
                 }
             }

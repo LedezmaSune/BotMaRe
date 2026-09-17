@@ -57,7 +57,8 @@ export class TaskRunner {
             console.log("[TaskRunner] Ejecutando mantenimiento diario de disco y optimización de base de datos...");
             await FileCleanupJob.cleanupUploads();
             await FileCleanupJob.cleanupOldLogsAndBackups();
-            await BaileysMaintenanceJob.execute(this.waService);
+            // NOTA: Se desactivó el mantenimiento de Baileys (Cachés/Sesiones) porque provocaba desconexiones de WhatsApp.
+            // await BaileysMaintenanceJob.execute(this.waService);
         });
         this.cronTasks.push(dailyCleanupJob);
 
