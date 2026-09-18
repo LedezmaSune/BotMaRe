@@ -57,21 +57,23 @@ export default function SheetsPage() {
         setUploadStatus('uploading');
         try {
             const reader = new FileReader();
-            reader.onload = async (e) => {
-                const text = e.target?.result as string;
-                const credentials = JSON.parse(text);
-                
-                const res = await fetch('/api/sheets/upload-credentials', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(credentials)
-                });
-                
-                if (res.ok) {
-                    setUploadStatus('success');
-                    setSettings({ ...settings, authMethod: 'service_account' });
-                    setActiveTab('service_account');
-                } else {
+            reader.onload = async (event) => {
+                try {
+                    const json = JSON.parse(event.target?.result as string);
+                    const res = await fetch('/api/sheets/upload-credentials', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(json)
+                    });
+                    if (res.ok) {
+                        setUploadStatus('success');
+                        setSettings({ ...settings, authMethod: 'service_account' });
+                        setActiveTab('service_account');
+                    } else {
+                        setUploadStatus('error');
+                        alert('Error al procesar las credenciales (Revisa que el JSON sea de Cuenta de Servicio).');
+                    }
+                } catch (err) {
                     setUploadStatus('error');
                     alert('Error en el formato del JSON.');
                 }

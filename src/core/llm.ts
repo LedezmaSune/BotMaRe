@@ -40,15 +40,22 @@ async function tryProvider(
             if (config.top_p !== undefined) payload.top_p = config.top_p;
 
             const timeout = providerName === 'Nvidia' ? LLM_TIMEOUT_NVIDIA_MS : LLM_TIMEOUT_MS;
-            const timeoutPromise = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error(`Timeout after ${timeout}ms`)), timeout)
-            );
+            
+            let timeoutId: NodeJS.Timeout;
+            const timeoutPromise = new Promise<never>((_, reject) => {
+                timeoutId = setTimeout(() => reject(new Error(`Timeout after ${timeout}ms`)), timeout);
+            });
 
             const startMs = Date.now();
-            const responseWithHeaders = await Promise.race([
-                client.chat.completions.create(payload).withResponse(),
-                timeoutPromise
-            ]) as any;
+            let responseWithHeaders: any;
+            try {
+                responseWithHeaders = await Promise.race([
+                    client.chat.completions.create(payload).withResponse(),
+                    timeoutPromise
+                ]);
+            } finally {
+                clearTimeout(timeoutId!);
+            }
             const latencyMs = Date.now() - startMs;
 
             const remainingTokens = responseWithHeaders.response.headers.get('x-ratelimit-remaining-tokens');

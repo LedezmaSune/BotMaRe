@@ -98,18 +98,21 @@ export default function AccessControlUI() {
     if (loading) return <div className="text-white">Cargando listas de acceso...</div>;
     if (!config) return <div className="text-red-400">Error cargando configuración.</div>;
 
-    const currentList = activeTab === 'contactos' ? config.contacts : config.groups;
+    const currentList = activeTab === 'contactos' ? config?.contacts : config?.groups;
     
-    // Filter lists by search query
-    const filteredWhitelist = currentList.whitelist.filter(id => id.includes(searchQuery.trim()));
-    const filteredBlacklist = currentList.blacklist.filter(id => id.includes(searchQuery.trim()));
+    // Filter lists by search query safely
+    const whitelist = currentList?.whitelist || [];
+    const blacklist = currentList?.blacklist || [];
+    const filteredWhitelist = whitelist.filter((id: string) => id.includes(searchQuery.trim()));
+    const filteredBlacklist = blacklist.filter((id: string) => id.includes(searchQuery.trim()));
     
     // Filter recent interactions by tab
-    const filteredRecent = recentInteractions.filter(r => activeTab === 'grupos' ? r.isGroup : !r.isGroup);
+    const validRecent = Array.isArray(recentInteractions) ? recentInteractions : [];
+    const filteredRecent = validRecent.filter(r => activeTab === 'grupos' ? r.isGroup : !r.isGroup);
 
     const getStatusIndicator = (id: string) => {
-        if (currentList.whitelist.includes(id)) return <div className="w-2 h-2 rounded-full bg-emerald-500" title="En Lista Blanca" />;
-        if (currentList.blacklist.includes(id)) return <div className="w-2 h-2 rounded-full bg-red-500" title="En Lista Negra" />;
+        if (whitelist.includes(id)) return <div className="w-2 h-2 rounded-full bg-emerald-500" title="En Lista Blanca" />;
+        if (blacklist.includes(id)) return <div className="w-2 h-2 rounded-full bg-red-500" title="En Lista Negra" />;
         return <div className="w-2 h-2 rounded-full bg-slate-500" title="No clasificado" />;
     };
 
@@ -156,7 +159,7 @@ export default function AccessControlUI() {
                                     key={mode}
                                     onClick={() => handleModeChange(mode)}
                                     className={`px-4 py-3 rounded-lg border text-sm font-medium transition-all ${
-                                        currentList.mode === mode 
+                                        currentList?.mode === mode 
                                         ? 'bg-blue-500/20 border-blue-500 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.15)]' 
                                         : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500 hover:bg-slate-700'
                                     }`}
@@ -167,7 +170,7 @@ export default function AccessControlUI() {
                         </div>
                         <p className="mt-3 text-sm text-slate-400 flex items-center gap-2">
                             <AlertCircle className="w-4 h-4" />
-                            {getModeDescription(currentList.mode, activeTab === 'grupos')}
+                            {getModeDescription(currentList?.mode || 'all', activeTab === 'grupos')}
                         </p>
                     </section>
 
@@ -218,7 +221,7 @@ export default function AccessControlUI() {
                             <div className="bg-slate-800/30 border border-slate-700 rounded-xl p-4">
                                 <h4 className="text-emerald-400 font-semibold mb-4 flex items-center justify-between">
                                     Lista Blanca
-                                    <span className="bg-emerald-500/20 text-emerald-300 text-xs px-2 py-1 rounded-full">{currentList.whitelist.length}</span>
+                                    <span className="bg-emerald-500/20 text-emerald-300 text-xs px-2 py-1 rounded-full">{whitelist.length}</span>
                                 </h4>
                                 <div className="space-y-2">
                                     {filteredWhitelist.length === 0 ? (
@@ -240,7 +243,7 @@ export default function AccessControlUI() {
                             <div className="bg-slate-800/30 border border-slate-700 rounded-xl p-4">
                                 <h4 className="text-red-400 font-semibold mb-4 flex items-center justify-between">
                                     Lista Negra
-                                    <span className="bg-red-500/20 text-red-300 text-xs px-2 py-1 rounded-full">{currentList.blacklist.length}</span>
+                                    <span className="bg-red-500/20 text-red-300 text-xs px-2 py-1 rounded-full">{blacklist.length}</span>
                                 </h4>
                                 <div className="space-y-2">
                                     {filteredBlacklist.length === 0 ? (

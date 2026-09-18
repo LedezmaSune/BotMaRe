@@ -30,9 +30,7 @@ export default function OllamaSetupUI() {
 
     const fetchHardwareSpecs = async () => {
         try {
-            const res = await fetch('/api/system/hardware', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
+            const res = await fetch('/api/system/hardware');
             const data = await res.json();
             if (data.success) {
                 setHardware(data.hardware);
@@ -47,9 +45,7 @@ export default function OllamaSetupUI() {
 
     const fetchCurrentConfig = async () => {
         try {
-            const res = await fetch('/api/settings', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
+            const res = await fetch('/api/settings');
             const data = await res.json();
             if (data) {
                 if (data.OLLAMA_API_URL) setApiUrl(data.OLLAMA_API_URL);
@@ -66,8 +62,7 @@ export default function OllamaSetupUI() {
             const res = await fetch('/api/settings', {
                 method: 'POST',
                 headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}` 
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     OLLAMA_API_URL: apiUrl,

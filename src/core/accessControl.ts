@@ -44,7 +44,11 @@ class AccessControlService {
         try {
             if (fs.existsSync(this.configPath)) {
                 const data = fs.readFileSync(this.configPath, 'utf8');
-                return JSON.parse(data) as AccessConfig;
+                const parsed = JSON.parse(data);
+                return {
+                    contacts: { ...DEFAULT_CONFIG.contacts, ...(parsed.contacts || {}) },
+                    groups: { ...DEFAULT_CONFIG.groups, ...(parsed.groups || {}) }
+                } as AccessConfig;
             }
         } catch (error) {
             console.error('[AccessControl] Error loading config:', error);
