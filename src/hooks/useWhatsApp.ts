@@ -11,7 +11,9 @@ export function useWhatsApp() {
     const [qr, setQr] = useState<string | null>(null);
 
     useEffect(() => {
-        const newSocket = io(SOCKET_URL);
+        const newSocket = io(SOCKET_URL, {
+            transports: ['websocket']
+        });
 
         newSocket.on('status', (newStatus) => {
             setStatus(newStatus);

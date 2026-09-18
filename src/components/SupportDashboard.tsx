@@ -40,7 +40,9 @@ export function SupportDashboard() {
         }, 10000);
 
         // Listen for socket events
-        const socket = io();
+        const socket = io({
+            transports: ['websocket']
+        });
         socket.on('support_alert', (data) => {
             // New ticket! Refresh data
             fetchData();

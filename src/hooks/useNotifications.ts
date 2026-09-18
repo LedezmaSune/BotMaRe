@@ -78,7 +78,9 @@ export function useNotifications() {
 
     // Conectar WebSocket para recibir notificaciones en tiempo real
     useEffect(() => {
-        const socket = io();
+        const socket = io({
+            transports: ['websocket']
+        });
 
         socket.on('system_notification', (notif: NotificationItem) => {
             // 1. Agregar a lista principal

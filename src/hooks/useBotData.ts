@@ -106,7 +106,9 @@ export function useBotData() {
             })
             .catch(() => null);
 
-        const socket = io(SOCKET_URL);
+        const socket = io(SOCKET_URL, {
+            transports: ['websocket']
+        });
         socket.on('status', (newStatus: ConnectionState) => {
             setStatus(newStatus);
             if (newStatus === 'connected') {
