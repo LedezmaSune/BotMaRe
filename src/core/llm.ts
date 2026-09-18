@@ -164,8 +164,10 @@ export async function callLLM(
             return await tryProvider('Ollama', ['ollama-local-key'], {
                 baseURL: baseURL,
                 model: config['OLLAMA_MODEL'] || "qwen2.5:1.5b",
-                temperature: 0.2, // 🧊 Baja temperatura: Evita alucinaciones y lo hace muy preciso al TXT
-                max_tokens: 250   // ⏱️ num_predict: Limita la respuesta para ahorrar RAM y no inventar de más
+                temperature: 0.3, // Un poco más de creatividad para destrabar el modelo
+                max_tokens: 1500, // Permitimos respuestas largas para que no se corte
+                frequency_penalty: 1.2, // Castiga fuertemente repetir la misma frase (evita bucles)
+                presence_penalty: 1.0   // Fuerza al modelo a avanzar en el texto
             }, cleanedMessages, tools, hasVision);
         } catch (e) {
             // Si falla una URL (ej. ::1 IPv6), intenta con 127.0.0.1 IPv4
