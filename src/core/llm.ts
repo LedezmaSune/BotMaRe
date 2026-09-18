@@ -140,15 +140,26 @@ export async function callLLM(
     const config = await getAllConfig();
 
     // 0. Intentar Ollama (Local) - PROVEEDOR PRINCIPAL
-    const ollamaUrl = config['OLLAMA_API_URL'];
-    if (ollamaUrl) {
-        const baseURL = ollamaUrl.endsWith('/v1') ? ollamaUrl : `${ollamaUrl.replace(/\/$/, '')}/v1`;
+    // Auto-detectar URLs posibles (configurada, 127.0.0.1 IPv4 y localhost IPv6)
+    const rawOllamaUrl = config['OLLAMA_API_URL'] || 'http://127.0.0.1:11434';
+    const ollamaCandidates = [
+        rawOllamaUrl,
+        'http://127.0.0.1:11434',
+        'http://localhost:11434'
+    ];
+    // Eliminar duplicados manteniendo el orden
+    const uniqueOllamaUrls = Array.from(new Set(ollamaCandidates.filter(Boolean)));
+
+    for (const url of uniqueOllamaUrls) {
+        const baseURL = url.endsWith('/v1') ? url : `${url.replace(/\/$/, '')}/v1`;
         try {
             return await tryProvider('Ollama', ['ollama-local-key'], {
                 baseURL: baseURL,
-                model: config['OLLAMA_MODEL'] || "llama3"
+                model: config['OLLAMA_MODEL'] || "qwen2.5:1.5b"
             }, cleanedMessages, tools, hasVision);
-        } catch (e) {}
+        } catch (e) {
+            // Si falla una URL (ej. ::1 IPv6), intenta con 127.0.0.1 IPv4
+        }
     }
 
     // 1. Intentar Groq (Opción 1 - Velocidad y Herramientas)
