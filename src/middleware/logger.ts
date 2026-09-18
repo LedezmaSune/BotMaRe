@@ -32,7 +32,7 @@ export const loggingMiddleware = (req: Request, res: Response, next: NextFunctio
             logger.error(logMessage);
         } else if (statusCode >= 400) {
             logger.warn(logMessage);
-        } else {
+        } else if (method !== 'GET') { // Solo loguear peticiones que no sean GET (como POST, PUT, DELETE) para evitar spam de polling
             logger.info(logMessage);
         }
 
