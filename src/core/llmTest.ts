@@ -143,7 +143,14 @@ export async function runLLMDiagnostic(): Promise<{ results: DiagnosticResult[];
             totalTested++;
             const key = keys[i];
             const maskedKey = key.length > 8 ? `${key.substring(0, 4)}...${key.substring(key.length - 4)}` : '****';
-            const client = new OpenAI({ apiKey: key, baseURL: p.baseURL });
+            
+            // Fix: Usar la URL real de Ollama si está definida en lugar de la hardcodeada
+            let actualBaseURL = p.baseURL;
+            if (p.name.includes('Ollama')) {
+                actualBaseURL = key.endsWith('/v1') ? key : `${key.replace(/\/$/, '')}/v1`;
+            }
+            
+            const client = new OpenAI({ apiKey: key, baseURL: actualBaseURL });
 
             const start = Date.now();
             try {
