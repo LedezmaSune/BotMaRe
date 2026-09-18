@@ -1,5 +1,6 @@
 import { callLLM } from '../../core/llm';
 import { getSettings, getHistory, addMessage } from '../../core/memory';
+import { ResponseGuard } from '../../core/responseGuard';
 
 /**
  * MODULE LAYER - AI SERVICES
@@ -74,7 +75,14 @@ ${text}`;
         }
 
         const response = await callLLM(messages);
-        const replyText = response.content || 'Lo siento, no pude procesar tu mensaje.';
+        let replyText = response.content || 'Lo siento, no pude procesar tu mensaje.';
+
+        // --- RESPONSE GUARD ---
+        const guardResult = ResponseGuard.evaluateResponse(replyText);
+        if (!guardResult.isSafe) {
+            replyText = guardResult.filteredText;
+        }
+        // ----------------------
 
         // Guardar en historial
         await addMessage(jid, 'user', text);
