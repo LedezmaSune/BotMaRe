@@ -11,8 +11,9 @@ function getApiKeys(envValue: string | undefined): string[] {
     return envValue.split(',').map(k => k.trim().replace(/^["']|["']$/g, ''));
 }
 
-const LLM_TIMEOUT_MS = 15000;        // 15s para la mayoría de proveedores
-const LLM_TIMEOUT_NVIDIA_MS = 8000;  // Aumentamos a 8s para NVIDIA/DeepSeek
+const LLM_TIMEOUT_MS = 15000;        // 15s para la mayoría de proveedores en la nube
+const LLM_TIMEOUT_NVIDIA_MS = 8000;  // 8s para NVIDIA/DeepSeek
+const LLM_TIMEOUT_OLLAMA_MS = 90000; // 90s para Ollama Local (cuando le meten muchos TXTs pesa mucho procesar)
 
 /**
  * Intenta realizar una petición a un proveedor específico recorriendo sus llaves.
@@ -39,7 +40,7 @@ async function tryProvider(
             if (config.temperature !== undefined) payload.temperature = config.temperature;
             if (config.top_p !== undefined) payload.top_p = config.top_p;
 
-            const timeout = providerName === 'Nvidia' ? LLM_TIMEOUT_NVIDIA_MS : LLM_TIMEOUT_MS;
+            const timeout = providerName === 'Nvidia' ? LLM_TIMEOUT_NVIDIA_MS : (providerName === 'Ollama' ? LLM_TIMEOUT_OLLAMA_MS : LLM_TIMEOUT_MS);
             
             let timeoutId: NodeJS.Timeout;
             const timeoutPromise = new Promise<never>((_, reject) => {
