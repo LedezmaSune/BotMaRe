@@ -21,6 +21,14 @@
 4. **Mejora de Consola:**
    - Se agregó un log en `router.ts` para imprimir los mensajes entrantes de los clientes (Chats y Grupos) en tiempo real dentro de la consola del sistema.
 
+### ✅ Ajustes Recientes (Configuración de IA)
+1. **Ollama como Motor Principal:**
+   - Se reestructuró la lógica de Failover en `src/core/llm.ts` para intentar siempre primero la IA Local (Ollama) antes que las APIs de pago.
+   - Se actualizó el archivo `.env` configurando el modelo `qwen2.5:1.5b` como motor por defecto para instalaciones locales.
+2. **Diagnóstico y Reparación de Modelos:**
+   - Se actualizaron las cadenas de modelos para todos los proveedores en `.env` respondiendo a los cambios recientes de las empresas (ej. `llama-3.1-8b-instant` en Groq y `gemini-2.0-flash-lite...` en OpenRouter).
+   - Se corrigieron y clarificaron los errores mostrados en el test de diagnóstico en vivo.
+
 ## Fecha: 10 de Septiembre de 2026
 
 ### ✅ Tareas Completadas (Sesión Actual)

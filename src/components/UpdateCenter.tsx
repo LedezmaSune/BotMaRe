@@ -16,6 +16,18 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'V 2.5.1',
+        date: '17 Septiembre 2026',
+        title: 'Ollama Principal & Reparación Multi-IA',
+        type: 'patch',
+        description: 'Actualización rápida enfocada en dar máxima prioridad a la IA Local y reparar los conectores de proveedores de la nube que cambiaron sus modelos gratuitos recientemente.',
+        features: [
+            '🤖 Ollama como Core Principal: El motor de IA ahora intenta siempre conectarse primero a tu modelo local (Ollama) antes de recurrir a servicios en la nube, garantizando 100% privacidad y 0 costo.',
+            '🔄 Reparación de Proveedores Nube: Actualización masiva de las cadenas de modelos para Groq, Cerebras, SambaNova y OpenRouter, restaurando la conectividad tras los cambios de sus versiones gratuitas.',
+            '📊 UI de Ollama: Consolidación de la página de gestión de IA Local directamente en el menú lateral del Dashboard para facilitar descargas y comprobación de estado.'
+        ]
+    },
+    {
         version: 'V 2.5.0',
         date: '07 Septiembre 2026',
         title: 'Super-Failover Multi-IA (11 Proveedores), Diagnóstico Live y Enlaces Directos',

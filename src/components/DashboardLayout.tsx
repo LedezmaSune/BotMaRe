@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users, BookOpen, ShieldAlert, Shield, RefreshCw, Database, Webhook, Briefcase, Activity, Puzzle, Radio } from 'lucide-react';
+import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users, BookOpen, ShieldAlert, Shield, RefreshCw, Database, Webhook, Briefcase, Activity, Puzzle, Radio, Server } from 'lucide-react';
 
 import { ConnectionOverlay } from '@/components/ConnectionOverlay';
 import { ThemeToggle, UpdateChecker, AIToggle, AutorespondersToggle, SheetsToggle, GlobalClock } from '@/components/StatusHeader';
@@ -22,6 +22,7 @@ const routes: Array<{ path: string; icon: any; label: string; id: TabId }> = [
     { path: '/autoresponders', icon: Menu, label: 'Menús Rápidos', id: 'autoresponders' },
     { path: '/groups', icon: Users, label: 'Grupos', id: 'groups' },
     { path: '/personality', icon: Brain, label: 'Cerebro IA', id: 'personality' },
+    { path: '/ollama', icon: Server, label: 'IA Local (Ollama)', id: 'ollama' as any },
     // { path: '/channels', icon: Radio, label: 'Futuros Canales 🚀', id: 'channels' }, // Oculto temporalmente a petición del usuario
     { path: '/access', icon: Shield, label: 'Listas de Acceso', id: 'access' },
     { path: '/support', icon: ShieldAlert, label: 'Soporte', id: 'support' },

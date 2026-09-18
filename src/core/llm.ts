@@ -139,6 +139,18 @@ export async function callLLM(
     // Obtener TODA la configuración de una vez (Optimización)
     const config = await getAllConfig();
 
+    // 0. Intentar Ollama (Local) - PROVEEDOR PRINCIPAL
+    const ollamaUrl = config['OLLAMA_API_URL'];
+    if (ollamaUrl) {
+        const baseURL = ollamaUrl.endsWith('/v1') ? ollamaUrl : `${ollamaUrl.replace(/\/$/, '')}/v1`;
+        try {
+            return await tryProvider('Ollama', ['ollama-local-key'], {
+                baseURL: baseURL,
+                model: config['OLLAMA_MODEL'] || "llama3"
+            }, cleanedMessages, tools, hasVision);
+        } catch (e) {}
+    }
+
     // 1. Intentar Groq (Opción 1 - Velocidad y Herramientas)
     const groqKeys = getApiKeys(config['GROQ_API_KEY']);
     if (groqKeys.length > 0) {
@@ -278,17 +290,6 @@ export async function callLLM(
         } catch (e) {}
     }
 
-    // 10. Intentar Ollama (Local)
-    const ollamaUrl = config['OLLAMA_API_URL'];
-    if (ollamaUrl) {
-        const baseURL = ollamaUrl.endsWith('/v1') ? ollamaUrl : `${ollamaUrl.replace(/\/$/, '')}/v1`;
-        try {
-            return await tryProvider('Ollama', ['ollama-local-key'], {
-                baseURL: baseURL,
-                model: config['OLLAMA_MODEL'] || "llama3"
-            }, cleanedMessages, tools, hasVision);
-        } catch (e) {}
-    }
 
     throw new Error("No hay proveedores de IA configurados o todos han fallado.");
 }

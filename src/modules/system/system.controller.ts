@@ -175,4 +175,67 @@ export class SystemController {
         NotificationHub.clearHistory();
         res.json({ success: true, message: 'Historial de notificaciones limpiado.' });
     });
+
+    getHardwareSpecs = asyncHandler(async (req: Request, res: Response) => {
+        const os = require('os');
+        const cpus = os.cpus();
+        
+        // RAM
+        const totalMemBytes = os.totalmem();
+        const freeMemBytes = os.freemem();
+        const totalMemGb = totalMemBytes / (1024 * 1024 * 1024);
+        const freeMemGb = freeMemBytes / (1024 * 1024 * 1024);
+        const usedMemGb = totalMemGb - freeMemGb;
+        const memoryUsagePercent = (usedMemGb / totalMemGb) * 100;
+
+        // CPU
+        const cpuModel = cpus[0]?.model || 'Desconocido';
+        const coreCount = cpus.length;
+        
+        // Load average (Linux/Mac)
+        const loadAvg = os.loadavg();
+        
+        // Platform
+        const platform = os.platform(); // 'win32', 'linux', 'darwin'
+        const arch = os.arch();
+        
+        // Determinar recomendación de Ollama
+        let recommendedModels = [];
+        if (totalMemGb <= 6) {
+            recommendedModels = ['qwen2.5:0.5b', 'llama3.2:1b'];
+        } else if (totalMemGb <= 10) {
+            recommendedModels = ['qwen2.5:1.5b', 'gemma3:1b', 'llama3.2:3b'];
+        } else if (totalMemGb <= 18) {
+            recommendedModels = ['llama3.1:8b', 'gemma2:9b'];
+        } else {
+            recommendedModels = ['llama3.3:70b-versatile', 'qwen2.5:32b'];
+        }
+
+        res.json({
+            success: true,
+            hardware: {
+                cpu: {
+                    model: cpuModel,
+                    cores: coreCount,
+                    loadAvg
+                },
+                ram: {
+                    totalGb: parseFloat(totalMemGb.toFixed(2)),
+                    freeGb: parseFloat(freeMemGb.toFixed(2)),
+                    usedGb: parseFloat(usedMemGb.toFixed(2)),
+                    usagePercent: parseFloat(memoryUsagePercent.toFixed(1))
+                },
+                os: {
+                    platform,
+                    arch,
+                    uptime: os.uptime()
+                }
+            },
+            ollamaRecommendation: {
+                canRunOllama: true,
+                suggestedModels: recommendedModels,
+                reason: `Basado en tus ${Math.round(totalMemGb)}GB de RAM y procesador de ${coreCount} núcleos.`
+            }
+        });
+    });
 }
