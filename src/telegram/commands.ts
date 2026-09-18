@@ -344,6 +344,7 @@ export function registerCommands(bot: Bot, waService: WhatsAppService, diffusion
     if (settings.DEEPSEEK_API_KEY) availableApis.push("DeepSeek");
     if (settings.CEREBRAS_API_KEY) availableApis.push("Cerebras");
     if (settings.NVIDIA_API_KEY) availableApis.push("Nvidia");
+    if (settings.OLLAMA_API_URL) availableApis.push(`Ollama (${settings.OLLAMA_MODEL || 'Local'})`);
     const apiText = availableApis.length > 0 ? availableApis.join(", ") : "Ninguna configurada";
     
     // Services
