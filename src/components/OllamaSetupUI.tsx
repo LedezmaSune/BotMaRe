@@ -230,23 +230,42 @@ export default function OllamaSetupUI() {
             
             {/* Guía Rápida */}
             <div className="premium-glass p-6 rounded-2xl border border-app-border/30 bg-indigo-900/10">
-                <h3 className="text-lg font-bold text-white mb-3">🛠️ Manual de Instalación Rápida</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-slate-300">
+                <h3 className="text-lg font-bold text-white mb-3">🛠️ Manual de Gestión Ollama</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm text-slate-300">
+                    
+                    {/* Bloque 1: Instalación Windows/Linux */}
                     <div>
-                        <strong className="text-white block mb-2">Para Windows o Mac:</strong>
+                        <strong className="text-white block mb-2 text-indigo-300">1. Instalación Básica</strong>
+                        <p className="mb-2"><strong className="text-white">Windows / Mac:</strong> Descarga desde <a href="https://ollama.com/download" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ollama.com/download</a>. Instala y luego abre tu CMD y ejecuta el comando <code className="text-emerald-400">ollama pull gemma:2b</code>.</p>
+                        <p><strong className="text-white">Linux / VPS:</strong> Ejecuta en terminal: <code className="block bg-black/40 p-2 rounded border border-white/5 text-emerald-400 mt-1 mb-1">curl -fsSL https://ollama.com/install.sh | sh</code> Y luego haz el pull del modelo deseado.</p>
+                    </div>
+
+                    {/* Bloque 2: Mover Modelos a otro Disco */}
+                    <div>
+                        <strong className="text-white block mb-2 text-indigo-300">2. Mover Modelos a otro Disco (Windows)</strong>
+                        <p className="mb-2">Por defecto, Ollama guarda los gigabytes de los modelos en tu disco C:. Para moverlos a otro SSD:</p>
                         <ol className="list-decimal pl-5 space-y-1">
-                            <li>Ve a <a href="https://ollama.com/download" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">ollama.com/download</a> y descarga el instalador.</li>
-                            <li>Instálalo (Siguiente, Siguiente...).</li>
-                            <li>Abre tu CMD (Símbolo del sistema) o Terminal.</li>
-                            <li>Pega el comando del modelo de arriba y presiona Enter.</li>
+                            <li>Abre el <strong>Menú Inicio</strong> y busca "Variables de entorno".</li>
+                            <li>Da clic en <strong>Variables de entorno...</strong></li>
+                            <li>En "Variables del sistema", da clic en <strong>Nueva</strong>.</li>
+                            <li>Nombre: <code className="text-emerald-400">OLLAMA_MODELS</code> | Valor: <code className="text-emerald-400">D:\OllamaModels</code> (o la ruta que desees).</li>
+                            <li>Reinicia tu computadora y listo.</li>
                         </ol>
                     </div>
-                    <div>
-                        <strong className="text-white block mb-2">Para Linux o VPS (Ubuntu/Debian):</strong>
-                        <p className="mb-2">Abre tu terminal y ejecuta el instalador automático:</p>
-                        <code className="block bg-black/40 p-2 rounded border border-white/5 text-emerald-400 mb-2">curl -fsSL https://ollama.com/install.sh | sh</code>
-                        <p>Luego instala el modelo con el comando <code className="text-emerald-400">ollama pull</code>.</p>
+
+                    {/* Bloque 3: Gestión de Memoria */}
+                    <div className="md:col-span-2 bg-black/20 p-4 rounded-xl border border-white/5">
+                        <strong className="text-white block mb-2 text-indigo-300">3. Gestión de Memoria (Auto-Apagado vs Manual)</strong>
+                        <p className="mb-2">
+                            Ollama tiene una función de <strong>Auto-Apagado Inteligente</strong>: si el bot no recibe mensajes por 5 minutos, Ollama descarga automáticamente el modelo de tu memoria RAM para no poner lenta tu PC.
+                        </p>
+                        <p>
+                            Sin embargo, si necesitas liberar tu RAM de forma <strong>inmediata</strong> (ej. para abrir un juego pesado), puedes forzar el apagado abriendo tu consola y ejecutando:
+                        </p>
+                        <code className="block bg-black/40 p-2 rounded border border-white/5 text-emerald-400 w-fit mt-2">ollama stop qwen2.5:1.5b</code>
+                        <p className="text-xs text-slate-500 mt-2">*(Reemplaza el nombre por el modelo que estés usando).*</p>
                     </div>
+
                 </div>
             </div>
         </div>

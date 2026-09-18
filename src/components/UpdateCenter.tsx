@@ -16,6 +16,19 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'V 2.5.2',
+        date: '18 Septiembre 2026',
+        title: 'Optimización de Ollama, Guardián Visual y Corrección de Bucles',
+        type: 'minor',
+        description: 'Actualización enfocada en estabilizar la Inteligencia Artificial Local (Ollama) en PCs con disco rígido (HDD), prevenir bucles en modelos pequeños y añadir controles visuales de seguridad para las respuestas.',
+        features: [
+            '🛡️ Guardián de Respuestas Visual: Nueva sección en Cerebro IA que permite configurar de forma web las palabras prohibidas y el mensaje de emergencia, integrándose con evaluación asíncrona (`await ResponseGuard`).',
+            '⏱️ Tolerancia Extendida para Ollama: Aumento drástico del timeout de lectura de 10s a 90s, permitiendo que computadoras con discos duros lentos puedan cargar el contexto pesado de los archivos `.txt` sin sufrir fallos de conexión.',
+            '🧠 Anti-Bucles para Modelos Pequeños: Ajustes profundos en el núcleo del LLM (incremento de `max_tokens` a 1500, aplicación de `frequency_penalty: 1.2` y `presence_penalty: 1.0`, y `temperature: 0.3`) erradicando las alucinaciones repetitivas en modelos de bajos parámetros como `qwen2.5:1.5b`.',
+            '📚 Manual Expandido en Dashboard: Adición de instrucciones claras para cambiar el disco de instalación de Ollama en Windows (mediante variables de entorno) y comandos de liberación de memoria RAM manual (`ollama stop`).'
+        ]
+    },
+    {
         version: 'V 2.5.1',
         date: '17 Septiembre 2026',
         title: 'Ollama Principal & Reparación Multi-IA',
