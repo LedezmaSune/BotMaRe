@@ -119,6 +119,28 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                         <span className="hidden xs:inline">{status}</span>
                     </div>
 
+                    {settings?.OLLAMA_API_URL && (
+                        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-fuchsia-500/20 text-[9px] font-black uppercase tracking-widest bg-app-card/50 text-fuchsia-400 group relative cursor-help">
+                            <div className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 shadow-[0_0_8px_rgba(217,70,239,0.5)] animate-pulse"></div>
+                            <span className="hidden xs:inline">Ollama On</span>
+                            
+                            {/* Tooltip de Ollama */}
+                            <div className="absolute top-full right-0 mt-2 w-max p-3 bg-[#131B2C] border border-fuchsia-500/30 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                                <span className="block text-[9px] font-bold text-fuchsia-300/70 mb-2 uppercase tracking-widest">IA Local Activa</span>
+                                <div className="text-[11px] text-white font-mono flex flex-col gap-1">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1 h-1 rounded-full bg-fuchsia-400 opacity-50"></div>
+                                        <span>Motor: {settings.OLLAMA_MODEL || 'Local'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1 h-1 rounded-full bg-fuchsia-400 opacity-50"></div>
+                                        <span>URL: {settings.OLLAMA_API_URL}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {networkStatus?.cloudflareUrl && (
                         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-orange-500/20 text-[9px] font-black uppercase tracking-widest bg-app-card/50 text-orange-400 group relative cursor-help">
                             <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)] animate-pulse"></div>
