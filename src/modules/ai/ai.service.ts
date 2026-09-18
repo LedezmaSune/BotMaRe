@@ -78,7 +78,7 @@ ${text}`;
         let replyText = response.content || 'Lo siento, no pude procesar tu mensaje.';
 
         // --- RESPONSE GUARD ---
-        const guardResult = ResponseGuard.evaluateResponse(replyText);
+        const guardResult = await ResponseGuard.evaluateResponse(replyText);
         if (!guardResult.isSafe) {
             replyText = guardResult.filteredText;
         }

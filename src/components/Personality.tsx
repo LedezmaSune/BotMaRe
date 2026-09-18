@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Sparkles, Loader2, Globe, FileText, ChevronDown, CheckCircle2, XCircle, User, BookOpen, Upload } from 'lucide-react';
+import { Brain, Sparkles, Loader2, Globe, FileText, ChevronDown, CheckCircle2, XCircle, User, BookOpen, Upload, ShieldAlert } from 'lucide-react';
 import { Settings as UserSettings } from '../types';
 import { siteConfig } from '../config';
 import { VariableTextarea } from './VariableTextarea';
@@ -320,6 +320,43 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                                     />
                                 </label>
                             </div>
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* Módulo 4: Filtro de Seguridad */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+                    className="bg-app-card border border-app-border rounded-3xl p-8 backdrop-blur-xl shadow-lg mt-6"
+                >
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 bg-red-500/10 rounded-lg text-red-400"><ShieldAlert size={20} /></div>
+                        <h3 className="text-lg font-black text-white tracking-wide">Filtro de Seguridad (Response Guard)</h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div className="space-y-2">
+                            <label className="text-xs uppercase font-black text-red-400 block tracking-[0.1em]">Palabras Prohibidas (separadas por coma)</label>
+                            <input
+                                type="text"
+                                value={settings.guard_forbidden_words || ''}
+                                onChange={(e) => setSettings({...settings, guard_forbidden_words: e.target.value})}
+                                className="w-full bg-black/40 border border-app-border rounded-xl px-5 py-4 text-sm focus:border-red-500/50 focus:ring-2 focus:ring-red-500/30 focus:bg-black/60 outline-none transition-all text-white placeholder:text-white/20"
+                                placeholder="Ej: idiota, imbecil, competencia_1"
+                            />
+                            <p className="text-[10px] text-app-text-muted italic pt-1">Si la IA intenta usar alguna de estas palabras, el mensaje será destruido.</p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <label className="text-xs uppercase font-black text-red-400 block tracking-[0.1em]">Mensaje de Bloqueo (Fallback)</label>
+                            <textarea
+                                value={settings.guard_fallback_message || ''}
+                                onChange={(e) => setSettings({...settings, guard_fallback_message: e.target.value})}
+                                className="w-full bg-black/40 border border-app-border rounded-xl px-5 py-4 text-sm focus:border-red-500/50 focus:ring-2 focus:ring-red-500/30 focus:bg-black/60 outline-none resize-none transition-all text-white placeholder:text-white/20 leading-relaxed"
+                                placeholder="Mi objetivo principal es ayudarte con nuestros servicios. ¿En qué te puedo asesorar hoy?"
+                                rows={3}
+                            />
+                            <p className="text-[10px] text-app-text-muted italic pt-1">Este mensaje se le enviará al usuario si el Guardián intercepta la respuesta original.</p>
                         </div>
                     </div>
                 </motion.div>
