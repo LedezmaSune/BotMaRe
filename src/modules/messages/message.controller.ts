@@ -167,7 +167,9 @@ export class MessageController {
         } catch (error) {
             console.error('[MessageController] Error handling incoming message:', error);
             try {
-                await this.messageService.sendMessage(jid, 'Ups, tuve un error interno al procesar tu mensaje.');
+                if (!isGroup) {
+                    await this.messageService.sendMessage(jid, 'Ups, tuve un error interno al procesar tu mensaje. La inteligencia artificial podría no estar disponible temporalmente.');
+                }
             } catch (sendError) {
                 console.error('[MessageController] Failed to send error feedback message:', sendError);
             }

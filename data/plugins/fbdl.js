@@ -23,28 +23,8 @@ module.exports = {
 
             let videoUrl = "";
 
-            // 1. Intentar con la librería api-dylux instalada en el proyecto
-            try {
-                const dylux = require('api-dylux');
-                const fn = dylux.fbdl || dylux.facebook;
-                if (typeof fn === 'function') {
-                    const data = await fn(url);
-                    if (data) {
-                        if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-                            videoUrl = data.data[0].url || data.data[0].hd || data.data[0].sd;
-                        } else if (data.download && Array.isArray(data.download) && data.download.length > 0) {
-                            videoUrl = data.download[0].url || data.download[0].quality;
-                        } else if (data.urls && data.urls.length > 0) {
-                            videoUrl = data.urls[0]?.hd || data.urls[1]?.sd || data.urls[0]?.sd || (typeof data.urls[0] === 'string' ? data.urls[0] : data.urls[0].url);
-                        } else if (data.videoUrl) videoUrl = data.videoUrl;
-                        else if (data.hd) videoUrl = data.hd;
-                        else if (data.sd) videoUrl = data.sd;
-                        else if (data.url) videoUrl = typeof data.url === 'string' ? data.url : data.url[0];
-                    }
-                }
-            } catch (e) {
-                // Continuar a fallbacks si api-dylux falla
-            }
+            // 1. (REMOVIDO) api-dylux fue descontinuado y eliminado por vulnerabilidades críticas
+
 
             // 2. Fallback API Externa 1
             if (!videoUrl) {

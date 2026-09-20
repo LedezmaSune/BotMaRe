@@ -79,7 +79,7 @@ export class WhatsAppClient {
                 keepAliveIntervalMs: 25000, // Bajar a 25s (NAT/Termux cierra puertos silenciosamente rápido)
                 retryRequestDelayMs: 500,
                 maxMsgRetryCount: 5,
-                getMessage: async () => { return { conversation: 'BotMaRe' }; } // Prevenir crash al intentar reenviar un mensaje no cacheado
+                getMessage: async () => { return undefined; } // Prevenir envío erróneo de texto en reintentos
             });
 
             this.socket.ev.on('creds.update', saveCreds);
