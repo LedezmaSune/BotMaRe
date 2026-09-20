@@ -44,8 +44,10 @@ ${text}`;
         const basePrompt = settings.system_prompt || 'Eres un asistente útil.';
         const knowledge = settings.possible_responses || '';
         
+        const botName = settings.bot_name || 'BotMaRe';
+        
         const didacticPrompt = `
-        NOMBRE DEL BOT: ${settings.bot_name || 'BotMaRe'}
+        NOMBRE DEL BOT: ${botName}
         
         PERSONALIDAD E INSTRUCCIONES:
         ${basePrompt} 
@@ -57,7 +59,8 @@ ${text}`;
         1. Sé directo y evita el relleno innecesario.
         2. Intenta que tus respuestas no superen los 2 párrafos pequeños.
         3. Mantén un tono amigable, humano y profesional según tu personalidad definida.
-        4. No uses introducciones largas, ve directo a la información útil.`;
+        4. No uses introducciones largas, ve directo a la información útil.
+        5. NUNCA antepongas tu nombre ni prefijos como "${botName}:", "Bot:", "Respuesta:", etc. Responde directamente con el mensaje natural.`;
 
         const messages = [
             { role: 'system', content: didacticPrompt },
@@ -76,6 +79,11 @@ ${text}`;
 
         const response = await callLLM(messages);
         let replyText = response.content || 'Lo siento, no pude procesar tu mensaje.';
+
+        // Limpiar prefijos automáticos que algunos modelos (Llama, Ollama, DeepSeek) añaden por formato de diálogo
+        const escapedBotName = botName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const prefixRegex = new RegExp(`^(?:\\[?(?:${escapedBotName}|Bot|Asistente|Assistant|BotMaRe|Respuesta|AI)\\]?\\s*[:\\-–—]?\\s*\\n*)+`, 'i');
+        replyText = replyText.replace(prefixRegex, '').trim();
 
         // --- RESPONSE GUARD ---
         const guardResult = await ResponseGuard.evaluateResponse(replyText);

@@ -21,6 +21,7 @@ ${settings.possible_responses}
 - Responde en máximo 1 o 2 párrafos cortos. No des explicaciones innecesarias.
 - Si puedes responder con una sola frase, hazlo.
 - No uses introducciones largas del tipo "Claro, con gusto te ayudo...". Ve al grano.
+- NUNCA antepongas tu nombre ni prefijos como "BotMaRe:", "Bot:", "Respuesta:", etc. al inicio del mensaje.
 - [🖼️ IMÁGENES]: Si el usuario te pide ver un producto, lugar o concepto visual, DEBES responder incluyendo el formato [IMG: término de búsqueda en inglés] para adjuntarle una foto. Ej: "Aquí tienes una foto: [IMG: sunset in Paris]".
 
 ### INSTRUCCIONES ADICIONALES Y SEGURIDAD
@@ -98,7 +99,12 @@ ${fullAccess ? '' : '- [🔒 PRIVACIDAD Y ALCANCE]: NO menciones que eres un sis
             }
             iterations++;
         } else {
-            const finalContent = response.content || "No pude generar una respuesta.";
+            let finalContent = response.content || "No pude generar una respuesta.";
+            const botName = settings.bot_name || "BotMaRe";
+            const escapedBotName = botName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            const prefixRegex = new RegExp(`^(?:\\[?(?:${escapedBotName}|Bot|Asistente|Assistant|BotMaRe|Respuesta|AI)\\]?\\s*[:\\-–—]?\\s*\\n*)+`, 'i');
+            finalContent = finalContent.replace(prefixRegex, '').trim();
+
             console.log(`[Agent] 🤖 Bot: ${finalContent}\n`);
             await addMessage(chatId, "assistant", finalContent);
             return finalContent;
