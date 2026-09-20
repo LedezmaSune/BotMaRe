@@ -9,6 +9,12 @@ const SOCKET_URL = ''; // En el monolito unificado, el socket vive en la misma U
 
 export type TabId = 'mass' | 'scheduling' | 'calendar' | 'templates' | 'groups' | 'personality' | 'settings' | 'audits' | 'support' | 'manual' | 'updates' | 'autoresponders' | 'sheets' | 'telemetry' | 'access' | 'crm' | 'webhooks' | 'plugins' | 'channels';
 
+export interface LicensingState {
+    plan: 'STARTER' | 'PRO' | 'ENTERPRISE' | 'CUSTOM';
+    enabledModules: string[];
+    allModules?: Array<{ id: string; label: string; description: string; path: string; category: string }>;
+}
+
 export function useBotData() {
     const [status, setStatus] = useState<ConnectionState>('disconnected');
     const [qr, setQr] = useState<string | null>(null);
@@ -28,6 +34,15 @@ export function useBotData() {
     const [diffusionProgress, setDiffusionProgress] = useState<{current: number, total: number, percentage: number, isWaiting?: boolean, waitMs?: number} | null>(null);
     const [diffusionLogs, setDiffusionLogs] = useState<any[]>([]);
     const [networkStatus, setNetworkStatus] = useState<any>(null);
+    const [licensingState, setLicensingState] = useState<LicensingState>({
+        plan: 'ENTERPRISE',
+        enabledModules: [
+            'mass', 'scheduling', 'calendar', 'templates', 'autoresponders', 
+            'groups', 'personality', 'ollama', 'access', 'support', 
+            'crm', 'sheets', 'plugins', 'webhooks', 'settings', 
+            'audits', 'updates', 'telemetry', 'manual'
+        ]
+    });
 
     const fetchData = useCallback(async (currentTab?: TabId) => {
         try {
@@ -74,6 +89,17 @@ export function useBotData() {
                     if (n.success) setNetworkStatus(n.network);
                 }
             }
+
+            // Consultar estado de licenciamiento y módulos activos
+            try {
+                const licRes = await fetch(`${API_BASE}/licensing/modules`);
+                if (licRes.ok) {
+                    const licData = await licRes.json();
+                    if (licData?.enabledModules) {
+                        setLicensingState(licData);
+                    }
+                }
+            } catch (e) {}
 
             // Consultar si hay una difusión masiva en progreso al abrir la pestaña
             if (currentTab === 'mass' && !diffusionProgress) {
@@ -400,6 +426,48 @@ export function useBotData() {
         }
     };
 
+    const fetchLicensingState = async () => {
+        try {
+            const res = await fetch(`${API_BASE}/licensing/modules`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data?.enabledModules) {
+                    setLicensingState(data);
+                }
+            }
+        } catch (e) {
+            console.warn('Error al cargar módulos de licencia:', e);
+        }
+    };
+
+    const isModuleEnabled = useCallback((moduleId: string) => {
+        if (!licensingState || !licensingState.enabledModules) return true;
+        return licensingState.enabledModules.includes(moduleId);
+    }, [licensingState]);
+
+    const handleUpdateLicensing = async (masterKey: string, plan: 'STARTER' | 'PRO' | 'ENTERPRISE' | 'CUSTOM', modules: string[]) => {
+        try {
+            const res = await fetch(`${API_BASE}/licensing/update`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ masterKey, plan, modules })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setLicensingState({
+                    plan: data.plan,
+                    enabledModules: data.enabledModules,
+                    allModules: data.allModules
+                });
+                return { success: true, message: data.message };
+            } else {
+                return { success: false, message: data.message || 'Error al actualizar licencia' };
+            }
+        } catch (e: any) {
+            return { success: false, message: e.message || 'Error de conexión con el servidor' };
+        }
+    };
+
     return {
         status,
         qr,
@@ -434,6 +502,10 @@ export function useBotData() {
         uploadProgress,
         diffusionProgress,
         diffusionLogs,
-        networkStatus
+        networkStatus,
+        licensingState,
+        fetchLicensingState,
+        isModuleEnabled,
+        handleUpdateLicensing
     };
 }

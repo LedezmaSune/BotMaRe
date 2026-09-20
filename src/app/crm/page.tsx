@@ -1,10 +1,13 @@
+'use client';
+
 import CRMUI from '@/components/CRMUI';
 import React from 'react';
-
-export const metadata = {
-    title: 'CRM y Etiquetas | BotMaRe',
-};
+import { ModuleGuard } from '@/components/ModuleGuard';
 
 export default function CRMPage() {
-    return <CRMUI />;
+    return (
+        <ModuleGuard moduleId="crm" moduleName="CRM y Etiquetas">
+            <CRMUI />
+        </ModuleGuard>
+    );
 }

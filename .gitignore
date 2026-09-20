@@ -22,6 +22,7 @@ data/*
 ejemplo_cliente/data/
 backups/
 agenda.json
+plantillas*.json
 .antigravitycli/
 *.db
 *.db-journal

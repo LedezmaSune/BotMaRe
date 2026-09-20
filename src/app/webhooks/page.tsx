@@ -1,11 +1,14 @@
+'use client';
+
 import WebhooksUI from '@/components/WebhooksUI';
 import React from 'react';
-
-export const metadata = {
-    title: 'Webhooks | BotMaRe',
-};
+import { ModuleGuard } from '@/components/ModuleGuard';
 
 export default function WebhooksPage() {
-    const apiKey = process.env.WEBHOOK_API_KEY || 'LLAVE_NO_CONFIGURADA';
-    return <WebhooksUI apiKey={apiKey} />;
+    const apiKey = 'LLAVE_NO_CONFIGURADA';
+    return (
+        <ModuleGuard moduleId="webhooks" moduleName="Webhooks">
+            <WebhooksUI apiKey={apiKey} />
+        </ModuleGuard>
+    );
 }

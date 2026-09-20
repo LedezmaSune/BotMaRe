@@ -26,6 +26,8 @@ import {
     MessageSquare
 } from 'lucide-react';
 
+import { ModuleGuard } from '@/components/ModuleGuard';
+
 const PLUGIN_TEMPLATES = [
     {
         id: 'comando_ping',
@@ -309,7 +311,8 @@ A continuación te paso el código del plugin de Baileys. Devuélveme ÚNICAMENT
     };
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-8">
+        <ModuleGuard moduleId="plugins" moduleName="Plugins JS">
+            <div className="p-6 max-w-7xl mx-auto space-y-8">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-app-border/30 pb-6">
                 <div>
@@ -673,6 +676,7 @@ A continuación te paso el código del plugin de Baileys. Devuélveme ÚNICAMENT
                     </div>
                 </div>
             )}
-        </div>
+            </div>
+        </ModuleGuard>
     );
 }

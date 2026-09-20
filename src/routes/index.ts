@@ -36,6 +36,7 @@ import accessRouter from './access.routes';
 import { createWebhooksRouter } from './webhooks.routes';
 import crmRouter from './crm.routes';
 import { createPluginsRouter } from './plugins.routes';
+import { createLicensingRouter } from './licensing.routes';
 import { PluginService } from '../modules/plugins/plugin.service';
 
 // Setup de Multer removido; ahora se importa secureUpload centralizado.
@@ -87,6 +88,7 @@ export function createMainRouter(waClient: WhatsAppClient) {
     router.use('/webhooks', createWebhooksRouter(waService as any));
     router.use('/crm', crmRouter);
     router.use('/plugins', createPluginsRouter());
+    router.use('/licensing', createLicensingRouter());
 
     return router;
 }

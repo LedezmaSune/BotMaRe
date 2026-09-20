@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Database, RefreshCw, LogOut, Globe, ShieldCheck, KeyRound, UploadCloud, CheckCircle2 } from 'lucide-react';
+import { ModuleGuard } from '@/components/ModuleGuard';
 
 export default function SheetsPage() {
     const [settings, setSettings] = useState<any>({ authMethod: 'public' });
@@ -134,12 +135,12 @@ export default function SheetsPage() {
         setIsCleaning(false);
     };
 
-    if (isLoading) {
-        return <div className="flex items-center justify-center h-[60vh] text-cyan-400 font-bold animate-pulse">Cargando configuración...</div>;
-    }
-
     return (
-        <div className="space-y-6 animate-fade-in pb-20">
+        <ModuleGuard moduleId="sheets" moduleName="Google Sheets">
+            {isLoading ? (
+                <div className="flex items-center justify-center h-[60vh] text-cyan-400 font-bold animate-pulse">Cargando configuración...</div>
+            ) : (
+                <div className="space-y-6 animate-fade-in pb-20">
             {/* Header */}
             <div className="premium-glass p-8 rounded-3xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full group-hover:bg-emerald-500/20 transition-all duration-700"></div>
@@ -508,5 +509,7 @@ export default function SheetsPage() {
                 )}
             </div>
         </div>
+            )}
+        </ModuleGuard>
     );
 }

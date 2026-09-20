@@ -10,6 +10,7 @@ import { ConnectionOverlay } from '@/components/ConnectionOverlay';
 import { ThemeToggle, UpdateChecker, AIToggle, AutorespondersToggle, SheetsToggle, GlobalClock } from '@/components/StatusHeader';
 import { NotificationCenter } from '@/components/NotificationCenter';
 import { PageTransition } from '@/components/PageTransition';
+import { SuperAdminModal } from '@/components/SuperAdminModal';
 import { siteConfig } from '@/config';
 import { useGlobalBotData } from '@/app/BotDataProvider';
 import { TabId } from '@/hooks/useBotData';
@@ -38,9 +39,25 @@ const routes: Array<{ path: string; icon: any; label: string; id: TabId }> = [
 ];
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-    const { status, qr, pairingCode, handleRequestPairingCode, settings, handleCleanUploads, setActiveTab, networkStatus } = useGlobalBotData();
+    const { status, qr, pairingCode, handleRequestPairingCode, settings, handleCleanUploads, setActiveTab, networkStatus, isModuleEnabled } = useGlobalBotData();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isSuperAdminOpen, setIsSuperAdminOpen] = useState(false);
     const pathname = usePathname();
+
+    const visibleRoutes = routes.filter(r => isModuleEnabled(r.id));
+
+    // Atajo de teclado secreto: Ctrl + Shift + S para abrir SuperAdmin
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.shiftKey && (e.key === 'S' || e.key === 's')) {
+                e.preventDefault();
+                setIsSuperAdminOpen(true);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
     const handleTabChange = (id: TabId) => {
         setActiveTab(id);
         setIsMenuOpen(false);
@@ -212,7 +229,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                             </div>
 
                             <div className="flex-1 p-4 space-y-1.5 overflow-y-auto custom-scrollbar">
-                                {routes.map((route, i) => {
+                                {visibleRoutes.map((route, i) => {
                                     const isActive = pathname === route.path || (pathname.startsWith(route.path) && route.path !== '/');
                                     return (
                                         <motion.div
@@ -251,6 +268,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 )}
             </AnimatePresence>
 
+            {/* Modal SuperAdmin para Gestión de Licencias */}
+            <SuperAdminModal 
+                isOpen={isSuperAdminOpen} 
+                onClose={() => setIsSuperAdminOpen(false)} 
+            />
+
             {/* --- CONTENIDO PRINCIPAL --- */}
             <main className="relative z-10 pt-24 pb-4 px-4 sm:pt-28 sm:pb-8 sm:px-8 md:pt-32 md:pb-12 md:px-12 max-w-[1400px] mx-auto w-full min-h-screen flex flex-col">
                 <PageTransition>
@@ -268,9 +291,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                         </div>
                         
                         <div className="flex items-center gap-4">
-                            <div className="px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.15)]">
-                                <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-widest">K 1.3.0</span>
-                            </div>
+                            <button 
+                                onClick={() => setIsSuperAdminOpen(true)}
+                                title="Panel SuperAdmin (Ctrl + Shift + S)"
+                                className="px-3 py-1 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 hover:border-cyan-500/40 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.15)] transition-all cursor-pointer group"
+                            >
+                                <span className="text-[9px] font-bold text-cyan-400 group-hover:text-cyan-300 uppercase tracking-widest flex items-center gap-1">
+                                    K 1.3.0
+                                </span>
+                            </button>
                             <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                 <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">Estable</span>

@@ -1,179 +1,182 @@
 'use client';
 
 import { BookOpen, Rocket, Zap, Brain, ShieldCheck, History, ArrowRight, MessageCircle } from 'lucide-react';
+import { ModuleGuard } from '@/components/ModuleGuard';
 
 export default function ManualPage() {
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <header className="mb-10">
-                <div className="flex items-center gap-4 mb-3">
-                    <div className="w-12 h-12 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-cyan-500/20">
-                        <BookOpen size={24} />
+        <ModuleGuard moduleId="manual" moduleName="Manual de Uso">
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                <header className="mb-10">
+                    <div className="flex items-center gap-4 mb-3">
+                        <div className="w-12 h-12 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-cyan-500/20">
+                            <BookOpen size={24} />
+                        </div>
+                        <div>
+                            <h1 className="text-3xl md:text-4xl font-black text-app-text tracking-tighter">Manual de Usuario</h1>
+                            <p className="text-app-text-muted font-bold text-sm tracking-widest uppercase">{process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || "BotMaRe"} 2026</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-3xl md:text-4xl font-black text-app-text tracking-tighter">Manual de Usuario</h1>
-                        <p className="text-app-text-muted font-bold text-sm tracking-widest uppercase">{process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || "BotMaRe"} 2026</p>
-                    </div>
+                    <p className="text-app-text-muted/80 max-w-2xl leading-relaxed mt-4">
+                        Bienvenido al centro de conocimiento de {process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || "BotMaRe"}. Este manual te guiará para dominar 
+                        las herramientas de automatización, inteligencia artificial y envíos masivos.
+                    </p>
+                </header>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Asistente Inteligente */}
+                    <section className="bg-app-card border border-app-border rounded-3xl p-8 shadow-xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 blur-3xl rounded-full -mr-10 -mt-10 transition-all group-hover:bg-purple-500/10"></div>
+                        <div className="flex items-center gap-3 mb-6">
+                            <Zap className="text-purple-500" size={24} />
+                            <h2 className="text-xl font-black text-app-text tracking-tight">Asistente Masivo (Smart Lote)</h2>
+                        </div>
+                        <div className="space-y-4 text-sm text-app-text-muted">
+                            <p>La carga masiva lee los nombres de tus archivos para auto-programarlos sin esfuerzo.</p>
+                            <ul className="space-y-3">
+                                <li className="flex items-start gap-2">
+                                    <ArrowRight size={16} className="text-purple-400 shrink-0 mt-0.5" />
+                                    <span><b>Detección de Año:</b> Renombra tus archivos como <code className="text-purple-400 font-black">11-05.jpg</code> o <code className="text-purple-400 font-black">1105.jpg</code> y el sistema asumirá automáticamente que es para el año actual.</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <ArrowRight size={16} className="text-purple-400 shrink-0 mt-0.5" />
+                                    <span><b>Año Explícito:</b> Puedes usar <code className="text-purple-400 font-black">11-05-2026.jpg</code> si necesitas programar para años futuros.</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <ArrowRight size={16} className="text-purple-400 shrink-0 mt-0.5" />
+                                    <span><b>Variables:</b> Usa la etiqueta <code className="text-purple-400 font-black">{"{ARCHIVO}"}</code> en tu mensaje global. El bot reemplazará esta etiqueta por el nombre real de cada foto enviada.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    {/* Cerebro IA */}
+                    <section className="bg-app-card border border-app-border rounded-3xl p-8 shadow-xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 blur-3xl rounded-full -mr-10 -mt-10 transition-all group-hover:bg-cyan-500/10"></div>
+                        <div className="flex items-center gap-3 mb-6">
+                            <Brain className="text-cyan-500" size={24} />
+                            <h2 className="text-xl font-black text-app-text tracking-tight">Cerebro IA y Tono</h2>
+                        </div>
+                        <div className="space-y-4 text-sm text-app-text-muted">
+                            <p>Educa a tu bot para que suene exactamente como tu marca y siga tus reglas de negocio.</p>
+                            <ul className="space-y-3">
+                                <li className="flex items-start gap-2">
+                                    <ArrowRight size={16} className="text-cyan-400 shrink-0 mt-0.5" />
+                                    <span><b>Contexto:</b> Define la personalidad. Ej: "Eres Sofía, experta en ventas. Sé amable pero concisa".</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <ArrowRight size={16} className="text-cyan-400 shrink-0 mt-0.5" />
+                                    <span><b>Reglas Estrictas:</b> Ordena restricciones claras. Ej: "Nunca ofrezcas descuentos". El bot jamás romperá esta regla.</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <ArrowRight size={16} className="text-cyan-400 shrink-0 mt-0.5" />
+                                    <span><b>Switch Manual (IA OFF):</b> Usa el botón superior de <b className="text-amber-500">IA OFF</b> cuando necesites tomar el control manual del WhatsApp sin que el bot responda automáticamente.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    {/* Resiliencia */}
+                    <section className="bg-app-card border border-app-border rounded-3xl p-8 shadow-xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl rounded-full -mr-10 -mt-10 transition-all group-hover:bg-emerald-500/10"></div>
+                        <div className="flex items-center gap-3 mb-6">
+                            <ShieldCheck className="text-emerald-500" size={24} />
+                            <h2 className="text-xl font-black text-app-text tracking-tight">Estabilidad y Bloqueos</h2>
+                        </div>
+                        <div className="space-y-4 text-sm text-app-text-muted">
+                            <p>Tu sistema incluye blindaje empresarial anti-caídas.</p>
+                            <ul className="space-y-3">
+                                <li className="flex items-start gap-2">
+                                    <ArrowRight size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                                    <span><b>Rate-Overlimit:</b> El bot tiene una caché de memoria avanzada. Si pides muchos grupos a la vez, recicla la memoria para evitar que WhatsApp te bloquee la cuenta.</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <ArrowRight size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                                    <span><b>Auto-Fix:</b> Si mueves la carpeta del proyecto a otra computadora, el sistema buscará las fotos perdidas y reconstruirá los enlaces solo.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    {/* Spintax y Variables */}
+                    <section className="bg-app-card border border-app-border rounded-3xl p-8 shadow-xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 blur-3xl rounded-full -mr-10 -mt-10 transition-all group-hover:bg-orange-500/10"></div>
+                        <div className="flex items-center gap-3 mb-6">
+                            <Rocket className="text-orange-500" size={24} />
+                            <h2 className="text-xl font-black text-app-text tracking-tight">Variables y Spintax (Anti-Ban)</h2>
+                        </div>
+                        <div className="space-y-4 text-sm text-app-text-muted">
+                            <p>Evita bloqueos de WhatsApp haciendo que cada mensaje masivo sea único.</p>
+                            <ul className="space-y-3">
+                                <li className="flex items-start gap-2">
+                                    <ArrowRight size={16} className="text-orange-400 shrink-0 mt-0.5" />
+                                    <span><b>Variables de Contacto:</b> Usa <code className="text-orange-400 font-black">{"{NOMBRE}"}</code> o <code className="text-orange-400 font-black">{"{NOMBRE_PILA}"}</code> para que el bot inserte el nombre real de cada persona de la lista.</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <ArrowRight size={16} className="text-orange-400 shrink-0 mt-0.5" />
+                                    <span><b>Spintax (Rotación Múltiple):</b> Escribe varias opciones separadas por una barra vertical dentro de llaves. Ej: <code className="text-orange-400 font-black">{"{Hola|Buenos días|Saludos}"}</code>. El bot seleccionará una opción al azar por cada mensaje enviado, evadiendo los filtros anti-spam.</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <ArrowRight size={16} className="text-orange-400 shrink-0 mt-0.5" />
+                                    <span><b>Variables Automáticas:</b> Usa <code className="text-orange-400 font-black">{"{SALUDO}"}</code> para que el bot diga automáticamente Hola/Buenos días/Buenas tardes según la hora local, o <code className="text-orange-400 font-black">{"{EMOJI_ALEATORIO}"}</code> para dar dinamismo a tus textos.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    {/* Difusión Individual */}
+                    <section className="bg-app-card border border-app-border rounded-3xl p-8 shadow-xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/5 blur-3xl rounded-full -mr-10 -mt-10 transition-all group-hover:bg-pink-500/10"></div>
+                        <div className="flex items-center gap-3 mb-6">
+                            <Rocket className="text-pink-500" size={24} />
+                            <h2 className="text-xl font-black text-app-text tracking-tight">Formato y Medios Múltiples</h2>
+                        </div>
+                        <div className="space-y-4 text-sm text-app-text-muted">
+                            <p>Dale estilo a tus mensajes y envía varios archivos a la vez sin complicaciones.</p>
+                            <ul className="space-y-3">
+                                <li className="flex items-start gap-2">
+                                    <ArrowRight size={16} className="text-pink-400 shrink-0 mt-0.5" />
+                                    <span><b>Barra de Formato:</b> En cualquier cuadro de texto verás botones para poner el texto en <b>Negrita</b>, <i>Cursiva</i>, <del>Tachado</del> o <code>Monoespaciado</code>. El sistema pondrá los símbolos automáticamente por ti.</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <ArrowRight size={16} className="text-pink-400 shrink-0 mt-0.5" />
+                                    <span><b>Múltiples Archivos:</b> Puedes agregar varios medios escribiendo varias etiquetas (ej. <code className="text-pink-400 font-black">[IMG: url1] [DOC: url2]</code>). El primer archivo llevará el texto adjunto, y el resto se enviará en secuencia automática.</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <ArrowRight size={16} className="text-pink-400 shrink-0 mt-0.5" />
+                                    <span><b>Corrección AI:</b> Presiona el botón <b className="text-pink-400">Varita Mágica</b> en el redactor y la IA convertirá tu borrador en un texto persuasivo en 1 segundo.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    {/* Menús y Auto-Respuestas */}
+                    <section className="bg-app-card border border-app-border rounded-3xl p-8 shadow-xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl rounded-full -mr-10 -mt-10 transition-all group-hover:bg-blue-500/10"></div>
+                        <div className="flex items-center gap-3 mb-6">
+                            <MessageCircle className="text-blue-500" size={24} />
+                            <h2 className="text-xl font-black text-app-text tracking-tight">Menús y Auto-Respuestas</h2>
+                        </div>
+                        <div className="space-y-4 text-sm text-app-text-muted">
+                            <p>Automatiza respuestas instantáneas y menús interactivos al detectar palabras clave.</p>
+                            <ul className="space-y-3">
+                                <li className="flex items-start gap-2">
+                                    <ArrowRight size={16} className="text-blue-400 shrink-0 mt-0.5" />
+                                    <span><b>Acciones Híbridas:</b> Configura una regla para responder solo con texto fijo (Menú Fijo), inyectar contexto a la IA (IA + Menú), o ignorar el mensaje completamente.</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <ArrowRight size={16} className="text-blue-400 shrink-0 mt-0.5" />
+                                    <span><b>Soporte en Grupos:</b> Si habilitaste el soporte de Grupos en los Ajustes, el bot también responderá a estas palabras clave si lo mencionan en un grupo.</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <ArrowRight size={16} className="text-blue-400 shrink-0 mt-0.5" />
+                                    <span><b>Respaldo JSON:</b> Usa el botón de Respaldar/Importar para descargar todas tus reglas y portarlas a otras instalaciones.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </section>
                 </div>
-                <p className="text-app-text-muted/80 max-w-2xl leading-relaxed mt-4">
-                    Bienvenido al centro de conocimiento de {process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || "BotMaRe"}. Este manual te guiará para dominar 
-                    las herramientas de automatización, inteligencia artificial y envíos masivos.
-                </p>
-            </header>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Asistente Inteligente */}
-                <section className="bg-app-card border border-app-border rounded-3xl p-8 shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 blur-3xl rounded-full -mr-10 -mt-10 transition-all group-hover:bg-purple-500/10"></div>
-                    <div className="flex items-center gap-3 mb-6">
-                        <Zap className="text-purple-500" size={24} />
-                        <h2 className="text-xl font-black text-app-text tracking-tight">Asistente Masivo (Smart Lote)</h2>
-                    </div>
-                    <div className="space-y-4 text-sm text-app-text-muted">
-                        <p>La carga masiva lee los nombres de tus archivos para auto-programarlos sin esfuerzo.</p>
-                        <ul className="space-y-3">
-                            <li className="flex items-start gap-2">
-                                <ArrowRight size={16} className="text-purple-400 shrink-0 mt-0.5" />
-                                <span><b>Detección de Año:</b> Renombra tus archivos como <code className="text-purple-400 font-black">11-05.jpg</code> o <code className="text-purple-400 font-black">1105.jpg</code> y el sistema asumirá automáticamente que es para el año actual.</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <ArrowRight size={16} className="text-purple-400 shrink-0 mt-0.5" />
-                                <span><b>Año Explícito:</b> Puedes usar <code className="text-purple-400 font-black">11-05-2026.jpg</code> si necesitas programar para años futuros.</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <ArrowRight size={16} className="text-purple-400 shrink-0 mt-0.5" />
-                                <span><b>Variables:</b> Usa la etiqueta <code className="text-purple-400 font-black">{"{ARCHIVO}"}</code> en tu mensaje global. El bot reemplazará esta etiqueta por el nombre real de cada foto enviada.</span>
-                            </li>
-                        </ul>
-                    </div>
-                </section>
-
-                {/* Cerebro IA */}
-                <section className="bg-app-card border border-app-border rounded-3xl p-8 shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 blur-3xl rounded-full -mr-10 -mt-10 transition-all group-hover:bg-cyan-500/10"></div>
-                    <div className="flex items-center gap-3 mb-6">
-                        <Brain className="text-cyan-500" size={24} />
-                        <h2 className="text-xl font-black text-app-text tracking-tight">Cerebro IA y Tono</h2>
-                    </div>
-                    <div className="space-y-4 text-sm text-app-text-muted">
-                        <p>Educa a tu bot para que suene exactamente como tu marca y siga tus reglas de negocio.</p>
-                        <ul className="space-y-3">
-                            <li className="flex items-start gap-2">
-                                <ArrowRight size={16} className="text-cyan-400 shrink-0 mt-0.5" />
-                                <span><b>Contexto:</b> Define la personalidad. Ej: "Eres Sofía, experta en ventas. Sé amable pero concisa".</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <ArrowRight size={16} className="text-cyan-400 shrink-0 mt-0.5" />
-                                <span><b>Reglas Estrictas:</b> Ordena restricciones claras. Ej: "Nunca ofrezcas descuentos". El bot jamás romperá esta regla.</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <ArrowRight size={16} className="text-cyan-400 shrink-0 mt-0.5" />
-                                <span><b>Switch Manual (IA OFF):</b> Usa el botón superior de <b className="text-amber-500">IA OFF</b> cuando necesites tomar el control manual del WhatsApp sin que el bot responda automáticamente.</span>
-                            </li>
-                        </ul>
-                    </div>
-                </section>
-
-                {/* Resiliencia */}
-                <section className="bg-app-card border border-app-border rounded-3xl p-8 shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl rounded-full -mr-10 -mt-10 transition-all group-hover:bg-emerald-500/10"></div>
-                    <div className="flex items-center gap-3 mb-6">
-                        <ShieldCheck className="text-emerald-500" size={24} />
-                        <h2 className="text-xl font-black text-app-text tracking-tight">Estabilidad y Bloqueos</h2>
-                    </div>
-                    <div className="space-y-4 text-sm text-app-text-muted">
-                        <p>Tu sistema incluye blindaje empresarial anti-caídas.</p>
-                        <ul className="space-y-3">
-                            <li className="flex items-start gap-2">
-                                <ArrowRight size={16} className="text-emerald-400 shrink-0 mt-0.5" />
-                                <span><b>Rate-Overlimit:</b> El bot tiene una caché de memoria avanzada. Si pides muchos grupos a la vez, recicla la memoria para evitar que WhatsApp te bloquee la cuenta.</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <ArrowRight size={16} className="text-emerald-400 shrink-0 mt-0.5" />
-                                <span><b>Auto-Fix:</b> Si mueves la carpeta del proyecto a otra computadora, el sistema buscará las fotos perdidas y reconstruirá los enlaces solo.</span>
-                            </li>
-                        </ul>
-                    </div>
-                </section>
-
-                {/* Spintax y Variables */}
-                <section className="bg-app-card border border-app-border rounded-3xl p-8 shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 blur-3xl rounded-full -mr-10 -mt-10 transition-all group-hover:bg-orange-500/10"></div>
-                    <div className="flex items-center gap-3 mb-6">
-                        <Rocket className="text-orange-500" size={24} />
-                        <h2 className="text-xl font-black text-app-text tracking-tight">Variables y Spintax (Anti-Ban)</h2>
-                    </div>
-                    <div className="space-y-4 text-sm text-app-text-muted">
-                        <p>Evita bloqueos de WhatsApp haciendo que cada mensaje masivo sea único.</p>
-                        <ul className="space-y-3">
-                            <li className="flex items-start gap-2">
-                                <ArrowRight size={16} className="text-orange-400 shrink-0 mt-0.5" />
-                                <span><b>Variables de Contacto:</b> Usa <code className="text-orange-400 font-black">{"{NOMBRE}"}</code> o <code className="text-orange-400 font-black">{"{NOMBRE_PILA}"}</code> para que el bot inserte el nombre real de cada persona de la lista.</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <ArrowRight size={16} className="text-orange-400 shrink-0 mt-0.5" />
-                                <span><b>Spintax (Rotación Múltiple):</b> Escribe varias opciones separadas por una barra vertical dentro de llaves. Ej: <code className="text-orange-400 font-black">{"{Hola|Buenos días|Saludos}"}</code>. El bot seleccionará una opción al azar por cada mensaje enviado, evadiendo los filtros anti-spam.</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <ArrowRight size={16} className="text-orange-400 shrink-0 mt-0.5" />
-                                <span><b>Variables Automáticas:</b> Usa <code className="text-orange-400 font-black">{"{SALUDO}"}</code> para que el bot diga automáticamente Hola/Buenos días/Buenas tardes según la hora local, o <code className="text-orange-400 font-black">{"{EMOJI_ALEATORIO}"}</code> para dar dinamismo a tus textos.</span>
-                            </li>
-                        </ul>
-                    </div>
-                </section>
-
-                {/* Difusión Individual */}
-                <section className="bg-app-card border border-app-border rounded-3xl p-8 shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/5 blur-3xl rounded-full -mr-10 -mt-10 transition-all group-hover:bg-pink-500/10"></div>
-                    <div className="flex items-center gap-3 mb-6">
-                        <Rocket className="text-pink-500" size={24} />
-                        <h2 className="text-xl font-black text-app-text tracking-tight">Formato y Medios Múltiples</h2>
-                    </div>
-                    <div className="space-y-4 text-sm text-app-text-muted">
-                        <p>Dale estilo a tus mensajes y envía varios archivos a la vez sin complicaciones.</p>
-                        <ul className="space-y-3">
-                            <li className="flex items-start gap-2">
-                                <ArrowRight size={16} className="text-pink-400 shrink-0 mt-0.5" />
-                                <span><b>Barra de Formato:</b> En cualquier cuadro de texto verás botones para poner el texto en <b>Negrita</b>, <i>Cursiva</i>, <del>Tachado</del> o <code>Monoespaciado</code>. El sistema pondrá los símbolos automáticamente por ti.</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <ArrowRight size={16} className="text-pink-400 shrink-0 mt-0.5" />
-                                <span><b>Múltiples Archivos:</b> Puedes agregar varios medios escribiendo varias etiquetas (ej. <code className="text-pink-400 font-black">[IMG: url1] [DOC: url2]</code>). El primer archivo llevará el texto adjunto, y el resto se enviará en secuencia automática.</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <ArrowRight size={16} className="text-pink-400 shrink-0 mt-0.5" />
-                                <span><b>Corrección AI:</b> Presiona el botón <b className="text-pink-400">Varita Mágica</b> en el redactor y la IA convertirá tu borrador en un texto persuasivo en 1 segundo.</span>
-                            </li>
-                        </ul>
-                    </div>
-                </section>
-
-                {/* Menús y Auto-Respuestas */}
-                <section className="bg-app-card border border-app-border rounded-3xl p-8 shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl rounded-full -mr-10 -mt-10 transition-all group-hover:bg-blue-500/10"></div>
-                    <div className="flex items-center gap-3 mb-6">
-                        <MessageCircle className="text-blue-500" size={24} />
-                        <h2 className="text-xl font-black text-app-text tracking-tight">Menús y Auto-Respuestas</h2>
-                    </div>
-                    <div className="space-y-4 text-sm text-app-text-muted">
-                        <p>Automatiza respuestas instantáneas y menús interactivos al detectar palabras clave.</p>
-                        <ul className="space-y-3">
-                            <li className="flex items-start gap-2">
-                                <ArrowRight size={16} className="text-blue-400 shrink-0 mt-0.5" />
-                                <span><b>Acciones Híbridas:</b> Configura una regla para responder solo con texto fijo (Menú Fijo), inyectar contexto a la IA (IA + Menú), o ignorar el mensaje completamente.</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <ArrowRight size={16} className="text-blue-400 shrink-0 mt-0.5" />
-                                <span><b>Soporte en Grupos:</b> Si habilitaste el soporte de Grupos en los Ajustes, el bot también responderá a estas palabras clave si lo mencionan en un grupo.</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <ArrowRight size={16} className="text-blue-400 shrink-0 mt-0.5" />
-                                <span><b>Respaldo JSON:</b> Usa el botón de Respaldar/Importar para descargar todas tus reglas y portarlas a otras instalaciones.</span>
-                            </li>
-                        </ul>
-                    </div>
-                </section>
             </div>
-        </div>
+        </ModuleGuard>
     );
 }
