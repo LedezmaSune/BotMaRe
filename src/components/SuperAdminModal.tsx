@@ -7,7 +7,7 @@ import {
     Sparkles, Save, Layers, Check, RefreshCw 
 } from 'lucide-react';
 import { useGlobalBotData } from '@/app/BotDataProvider';
-import { ALL_MODULES, PLAN_PRESETS, PlanType } from '@/core/licensing.service';
+import { ALL_MODULES, PLAN_PRESETS, PlanType } from '@/types/licensing';
 
 interface SuperAdminModalProps {
     isOpen: boolean;
