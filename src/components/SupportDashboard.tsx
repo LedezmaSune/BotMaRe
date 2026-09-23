@@ -108,11 +108,7 @@ export function SupportDashboard() {
                 {/* Columna Izquierda: Servidor y Telemetría */}
                 <div className="lg:col-span-1 space-y-8">
                     {/* Tarjeta de Servidor */}
-                    <motion.div 
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="bg-app-card/50 border border-app-border rounded-3xl p-6 backdrop-blur-xl shadow-xl shadow-black/20"
-                    >
+                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="bg-app-card/50 border border-app-border rounded-3xl p-6 backdrop-blur-xl shadow-xl shadow-black/20" >
                         <div className="flex items-center gap-3 mb-6 border-b border-app-border/50 pb-4">
                             <Activity className="text-emerald-400" size={24} />
                             <h2 className="text-lg font-black tracking-wide">Telemetría</h2>
@@ -149,12 +145,7 @@ export function SupportDashboard() {
                     </motion.div>
 
                     {/* Visor de Consola Miniatura */}
-                    <motion.div 
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="bg-black/90 border border-app-border rounded-3xl p-6 shadow-xl shadow-black/40 h-80 flex flex-col"
-                    >
+                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} ={{ delay: 0.1 }} className="bg-black/90 border border-app-border rounded-3xl p-6 shadow-xl shadow-black/40 h-80 flex flex-col" >
                         <div className="flex items-center gap-3 mb-4 text-app-text-muted">
                             <Terminal size={18} />
                             <span className="text-xs font-mono font-bold uppercase tracking-wider">Últimas Acciones</span>
@@ -197,12 +188,7 @@ export function SupportDashboard() {
                         ) : (
                             <div className="space-y-4">
                                 {pausedChats.map((chat) => (
-                                    <motion.div 
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        key={chat.chatId} 
-                                        className="bg-app-card/80 border border-app-border hover:border-cyan-500/30 p-5 rounded-2xl transition-all group shadow-sm hover:shadow-cyan-500/10 flex flex-col sm:flex-row justify-between sm:items-center gap-4"
-                                    >
+                                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={chat.chatId} className="bg-app-card/80 border border-app-border hover:border-cyan-500/30 p-5 rounded-2xl group shadow-sm hover:shadow-cyan-500/10 flex flex-col sm:flex-row justify-between sm:items-center gap-4" >
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-3 mb-1">
                                                 <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>

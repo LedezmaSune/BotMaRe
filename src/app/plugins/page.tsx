@@ -395,20 +395,7 @@ A continuación te paso el código del plugin de Baileys. Devuélveme ÚNICAMENT
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {plugins.map((plugin: any, index: number) => (
-                        <motion.div 
-                            key={plugin.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                            whileHover={{ y: -5, scale: 1.01 }}
-                            className={`premium-glass rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden group card-interactive ${
-                                !plugin.active 
-                                    ? 'border-app-border/30 opacity-70 hover:opacity-100' 
-                                    : plugin.error 
-                                        ? 'border-red-500/40 bg-red-950/10' 
-                                        : 'border-purple-500/30 hover:border-purple-500/60 shadow-lg shadow-purple-500/10'
-                            }`}
-                        >
+                        <motion.div key={plugin.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} ={{ delay: index * 0.05, duration: 0.35, ease: [0.16, 1, 0.3, 1] }} whileHover={{ y: -5, scale: 1.01 }} className={`premium-glass rounded-2xl border flex flex-col justify-between overflow-hidden group card-interactive ${ !plugin.active ? 'border-app-border/30 opacity-70 hover:opacity-100' : plugin.error ? 'border-red-500/40 bg-red-950/10' : 'border-purple-500/30 hover:border-purple-500/60 shadow-lg shadow-purple-500/10' }`} >
                             <div className="p-5 space-y-3">
                                 {/* Plugin Header */}
                                 <div className="flex items-start justify-between gap-3">

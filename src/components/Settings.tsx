@@ -180,11 +180,7 @@ DASHBOARD_PASS=admin123
     ];
 
     return (
-        <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-8 pb-12"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-12" >
             
             {/* Header / Import Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -257,12 +253,7 @@ DASHBOARD_PASS=admin123
             </div>
 
             {/* Network & Connectivity Card */}
-            <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-app-card/40 backdrop-blur-xl border border-app-border rounded-3xl p-8 shadow-xl mt-8"
-            >
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} ={{ delay: 0.1 }} className="bg-app-card/40 backdrop-blur-xl border border-app-border rounded-3xl p-8 shadow-xl mt-8" >
                 <div className="flex items-center gap-4 mb-6">
                     <div className="p-3 bg-emerald-500/10 rounded-2xl">
                         <Globe className="text-emerald-400" size={24} />
@@ -323,27 +314,9 @@ DASHBOARD_PASS=admin123
             </motion.div>
 
             {/* Config Groups */}
-            <motion.div 
-                className="grid grid-cols-1 md:grid-cols-2 gap-8"
-                initial="hidden"
-                animate="show"
-                variants={{
-                    hidden: { opacity: 0 },
-                    show: {
-                        opacity: 1,
-                        transition: { staggerChildren: 0.1 }
-                    }
-                }}
-            >
+            <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-8" initial="hidden" animate="show" variants={{ hidden: { opacity: 0 }, show: { opacity: 1, : { staggerChildren: 0.1 } } }} >
                 {sections.map((section, sIdx) => (
-                    <motion.div 
-                        key={sIdx} 
-                        variants={{
-                            hidden: { opacity: 0, scale: 0.95, y: 20 },
-                            show: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
-                        }}
-                        className="bg-app-card/20 backdrop-blur-md border border-app-border rounded-3xl p-8 hover:border-app-border-hover transition-colors shadow-lg"
-                    >
+                    <motion.div key={sIdx} variants={{ hidden: { opacity: 0, scale: 0.95, y: 20 }, show: { opacity: 1, scale: 1, y: 0, : { type: 'spring', stiffness: 300, damping: 24 } } }} className="bg-app-card/20 backdrop-blur-md border border-app-border rounded-3xl p-8 hover:border-app-border-hover shadow-lg" >
                         <div className="flex items-center gap-3 mb-8">
                             <section.icon className="text-app-text-muted" size={20} />
                             <h3 className="text-sm font-black uppercase tracking-[0.2em] text-app-text-muted">{section.title}</h3>

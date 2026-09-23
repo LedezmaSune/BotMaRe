@@ -149,12 +149,7 @@ export function Templates({ templates, onRefresh, onReview }: TemplatesProps) {
 
             <AnimatePresence>
             {showForm && (
-                <motion.section 
-                    initial={{ opacity: 0, scale: 0.95, y: -20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                    className="relative z-50 bg-app-card border border-app-border rounded-3xl p-6 mb-8 shadow-2xl backdrop-blur-xl"
-                >
+                <motion.section initial={{ opacity: 0, scale: 0.95, y: -20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -20 }} className="relative z-50 bg-app-card border border-app-border rounded-3xl p-6 mb-8 shadow-2xl backdrop-blur-xl" >
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label className="text-[10px] uppercase font-black text-app-text-muted mb-1 block tracking-widest">Nombre de la Plantilla</label>
@@ -212,29 +207,10 @@ export function Templates({ templates, onRefresh, onReview }: TemplatesProps) {
             )}
             </AnimatePresence>
 
-            <motion.div 
-                className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                initial="hidden"
-                animate="show"
-                variants={{
-                    hidden: { opacity: 0 },
-                    show: {
-                        opacity: 1,
-                        transition: { staggerChildren: 0.05 }
-                    }
-                }}
-            >
+            <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-4" initial="hidden" animate="show" variants={{ hidden: { opacity: 0 }, show: { opacity: 1, : { staggerChildren: 0.05 } } }} >
                 <AnimatePresence mode="popLayout">
                 {templates.map(t => (
-                    <motion.div 
-                        key={t.id} 
-                        layout
-                        variants={{
-                            hidden: { opacity: 0, scale: 0.95, y: 10 },
-                            show: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
-                        }}
-                        className="bg-app-card border border-app-border rounded-2xl p-5 hover:border-indigo-500/50 transition-all group relative overflow-hidden"
-                    >
+                    <motion.div key={t.id} layout variants={{ hidden: { opacity: 0, scale: 0.95, y: 10 }, show: { opacity: 1, scale: 1, y: 0, : { type: 'spring', stiffness: 300, damping: 24 } } }} className="bg-app-card border border-app-border rounded-2xl p-5 hover:border-indigo-500/50 group relative overflow-hidden" >
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                                 <FileText size={18} className="text-indigo-500" />
@@ -265,10 +241,7 @@ export function Templates({ templates, onRefresh, onReview }: TemplatesProps) {
                 </AnimatePresence>
 
                 {templates.length === 0 && !showForm && (
-                    <motion.div 
-                        variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }}
-                        className="md:col-span-2 py-20 text-center bg-app-bg dark:bg-background/20 rounded-3xl border-2 border-dashed border-app-border"
-                    >
+                    <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="md:col-span-2 py-20 text-center bg-app-bg dark:bg-background/20 rounded-3xl border-2 border-dashed border-app-border" >
                         <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-app-text-muted">
                             <FileText size={32} />
                         </div>

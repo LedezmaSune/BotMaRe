@@ -494,14 +494,7 @@ export function CalendarView({ reminders, onDateSelect, onEventSelect }: Calenda
 
             {currentView === 'month' ? (
                 <AnimatePresence mode="wait">
-                    <motion.div 
-                        key={`month-${currentDate.getFullYear()}-${currentDate.getMonth()}`}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 10 }}
-                        transition={{ duration: 0.3 }}
-                        className="border border-app-border rounded-2xl overflow-hidden relative z-10 bg-app-bg dark:bg-background/50 shadow-inner"
-                    >
+                    <motion.div key={`month-${currentDate.getFullYear()}-${currentDate.getMonth()}`} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} ={{ duration: 0.3 }} className="border border-app-border rounded-2xl overflow-hidden relative z-10 bg-app-bg dark:bg-background/50 shadow-inner" >
                 <div className="grid grid-cols-[30px_repeat(7,minmax(0,1fr))] md:grid-cols-[40px_repeat(7,minmax(0,1fr))] border-b border-app-border bg-slate-50 dark:bg-slate-900/50">
                     <div className="border-r border-app-border flex items-center justify-center">
                         <span className="text-xs font-black text-cyan-600 dark:text-cyan-400">SEM</span>

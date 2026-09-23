@@ -42,29 +42,10 @@ export function HistoryList({
                 </button>
             </div>
             {viewMode === 'grid' ? (
-                <motion.div 
-                    className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                    initial="hidden"
-                    animate="show"
-                    variants={{
-                        hidden: { opacity: 0 },
-                        show: {
-                            opacity: 1,
-                            transition: { staggerChildren: 0.05 }
-                        }
-                    }}
-                >
+                <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-4" initial="hidden" animate="show" variants={{ hidden: { opacity: 0 }, show: { opacity: 1, : { staggerChildren: 0.05 } } }} >
                     <AnimatePresence mode="popLayout">
                     {paginatedHistory.map((r) => (
-                        <motion.div 
-                            key={r.id} 
-                            variants={{
-                                hidden: { opacity: 0, scale: 0.95, y: 10 },
-                                show: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
-                            }}
-                            layout
-                            className="bg-emerald-500/[0.02] border border-emerald-500/10 rounded-3xl p-6 shadow-lg overflow-hidden group"
-                        >
+                        <motion.div key={r.id} variants={{ hidden: { opacity: 0, scale: 0.95, y: 10 }, show: { opacity: 1, scale: 1, y: 0, : { type: 'spring', stiffness: 300, damping: 24 } } }} layout className="bg-emerald-500/[0.02] border border-emerald-500/10 rounded-3xl p-6 shadow-lg overflow-hidden group" >
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-2">
                                     <span className="px-2 py-1 bg-emerald-500/20 text-[10px] font-black text-emerald-400 rounded-lg uppercase tracking-wider">Entregado</span>
@@ -93,31 +74,12 @@ export function HistoryList({
                                 <th className="px-6 py-4 text-[9px] font-black text-app-text-muted uppercase tracking-widest text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <motion.tbody 
-                            className="divide-y divide-app-border"
-                            initial="hidden"
-                            animate="show"
-                            variants={{
-                                hidden: { opacity: 0 },
-                                show: {
-                                    opacity: 1,
-                                    transition: { staggerChildren: 0.05 }
-                                }
-                            }}
-                        >
+                        <motion.tbody className="divide-y divide-app-border" initial="hidden" animate="show" variants={{ hidden: { opacity: 0 }, show: { opacity: 1, : { staggerChildren: 0.05 } } }} >
                             <AnimatePresence mode="popLayout">
                             {paginatedHistory.map((r) => {
                                 const date = new Date(r.time);
                                 return (
-                                    <motion.tr 
-                                        key={r.id} 
-                                        variants={{
-                                            hidden: { opacity: 0, x: -10 },
-                                            show: { opacity: 1, x: 0 }
-                                        }}
-                                        layout
-                                        className="hover:bg-app-bg/30 transition-colors"
-                                    >
+                                    <motion.tr key={r.id} variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} layout className="hover:bg-app-bg/30 " >
                                         <td className="px-6 py-4"><p className="text-xs font-black tabular-nums text-app-text-muted">{date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}</p><p className="text-[10px] text-app-text-muted font-bold">{date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</p></td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">

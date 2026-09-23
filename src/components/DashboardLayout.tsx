@@ -200,22 +200,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <AnimatePresence>
                 {isMenuOpen && (
                     <div className="fixed inset-0 z-[200]">
-                        <motion.div 
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                            onClick={() => setIsMenuOpen(false)}
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} ={{ duration: 0.3 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}
                         />
                         
-                        <motion.nav 
-                            initial={{ x: '-100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '-100%' }}
-                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="absolute top-0 left-0 h-full w-72 md:w-80 premium-glass border-r border-app-border/30 shadow-2xl flex flex-col"
-                        >
+                        <motion.nav initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} ={{ type: "spring", damping: 25, stiffness: 200 }} className="absolute top-0 left-0 h-full w-72 md:w-80 premium-glass border-r border-app-border/30 shadow-2xl flex flex-col" >
                             <div className="p-8 border-b border-app-border flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-8 h-8 bg-gradient-to-tr from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">

@@ -109,21 +109,10 @@ export function SuperAdminModal({ isOpen, onClose }: SuperAdminModalProps) {
             {isOpen && (
                 <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
                     {/* Backdrop */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={handleClose}
-                        className="fixed inset-0 bg-black/80 backdrop-blur-md"
-                    />
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={handleClose} className="fixed inset-0 bg-black/80 backdrop-blur-md" />
 
                     {/* Modal Content */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                        className="relative w-full max-w-2xl bg-[#0d131f] border border-cyan-500/30 rounded-3xl shadow-[0_0_60px_rgba(6,182,212,0.15)] overflow-hidden z-10 flex flex-col max-h-[90vh]"
-                    >
+                    <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} className="relative w-full max-w-2xl bg-[#0d131f] border border-cyan-500/30 rounded-3xl shadow-[0_0_60px_rgba(6,182,212,0.15)] overflow-hidden z-10 flex flex-col max-h-[90vh]" >
                         {/* Header */}
                         <div className="p-6 border-b border-app-border/40 flex items-center justify-between bg-gradient-to-r from-cyan-950/40 via-background to-blue-950/40">
                             <div className="flex items-center gap-3">
