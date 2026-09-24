@@ -2,6 +2,7 @@ const { spawn, exec, execSync } = require('child_process');
 const readline = require('readline');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf8'));
 
@@ -59,6 +60,10 @@ async function showBanner(title = "Control Maestro") {
     console.log(`${c.magenta}    │${c.reset}  ${c.cyan}OS:${c.reset} \x1b[33m${osStr}\x1b[0m ${c.cyan}VER:${c.reset} \x1b[33m${verStr}\x1b[0m ${c.cyan}DIR:${c.reset} \x1b[33m${dirStr}\x1b[0m${c.magenta}│${c.reset}`);
     console.log(`${c.magenta}    ╰───────────────────────────────────────────────────────╯${c.reset}\n`);
 
+    const credsExist = fs.existsSync(path.resolve(__dirname, '../auth_info_baileys/creds.json'));
+    const waStatus = credsExist ? `${c.green}🟢 Sesión WA: Activa${c.reset}` : `${c.yellow}🔴 Sesión WA: Sin vincular (Esperando QR)${c.reset}`;
+    console.log(`    ${waStatus}\n`);
+
     // Alerta de compatibilidad con Node 24 (EPERM / Access Violation)
     if (process.versions.node.startsWith('24.')) {
         console.log(`    ${c.bgRed}${c.bright} ⚠️ ADVERTENCIA DE COMPATIBILIDAD (NODE.JS v24 DETECTADO) ${c.reset}`);
@@ -90,6 +95,9 @@ async function showMenu() {
     console.log(`    ${c.dim}│${c.reset} ${c.yellow}[10]${c.reset} 📥 Git Update        ${c.dim}(Actualización remota)${c.reset}`);
     console.log(`    ${c.dim}│${c.reset} ${c.yellow}[12]${c.reset} 🗄️ Reparar SQLite    ${c.dim}(Fix Base de Datos NDK)${c.reset}`);
     console.log(`    ${c.dim}│${c.reset} ${c.yellow}[13]${c.reset} 🌐 Reparar Túnel     ${c.dim}(Fix Cloudflared Público)${c.reset}`);
+    console.log(`    ${c.dim}│${c.reset} ${c.yellow}[14]${c.reset} 🩺 Diagnóstico Sist. ${c.dim}(Health Check)${c.reset}`);
+    console.log(`    ${c.dim}│${c.reset} ${c.yellow}[15]${c.reset} 📝 Editar .env       ${c.dim}(Configuración)${c.reset}`);
+    console.log(`    ${c.dim}│${c.reset} ${c.yellow}[16]${c.reset} ⏪ Restaurar Backups ${c.dim}(Emergencia)${c.reset}`);
     console.log(`    ${c.yellow}╰────────────────────────────────────────${c.reset}\n`);
 
     console.log(`    ${c.red}[11] ❌ Salir del Sistema${c.reset}\n`);
@@ -150,6 +158,7 @@ async function showPM2Menu() {
     console.log(`    ${c.dim}│${c.reset} ${c.cyan}[4]${c.reset} 📋 Ver Logs      ${c.dim}(pm2:logs)${c.reset}`);
     console.log(`    ${c.dim}│${c.reset} ${c.cyan}[5]${c.reset} 📊 Monitor       ${c.dim}(pm2:monit)${c.reset}`);
     console.log(`    ${c.dim}│${c.reset} ${c.red}[6]${c.reset} 🗑 Eliminar      ${c.dim}(pm2:delete)${c.reset}`);
+    console.log(`    ${c.dim}│${c.reset} ${c.yellow}[7]${c.reset} 🚀 Auto-Arranque ${c.dim}(startup & save)${c.reset}`);
     console.log(`    ${c.cyan}╰────────────────────────────────────────${c.reset}\n`);
     console.log(`    ${c.blue}[0] ⬅ Volver al Menú Principal${c.reset}\n`);
     
@@ -219,6 +228,12 @@ function handlePM2Choice(choice) {
         case '4': runCmd('pnpm', ['run', 'pm2:logs'], showPM2Menu); break;
         case '5': runCmd('pnpm', ['run', 'pm2:monit'], showPM2Menu); break;
         case '6': runCmd('pnpm', ['run', 'pm2:delete'], showPM2Menu); break;
+        case '7': 
+            console.log(`\n    ${c.bgYellow}${c.bright} 🚀 CONFIGURANDO AUTO-ARRANQUE DE PM2 ${c.reset}\n`);
+            runCmd('pm2', ['save'], () => {
+                runCmd('pm2', ['startup'], showPM2Menu);
+            });
+            break;
         case '0': showMenu(); break;
         default: invalidChoice(showPM2Menu); break;
     }
@@ -305,8 +320,104 @@ function handleChoice(choice) {
                 });
             }
             break;
+        case '14': showDiagnostics(); break;
+        case '15': editEnvMenu(); break;
+        case '16': showBackupsMenu(); break;
         default: invalidChoice(showMenu); break;
     }
+}
+
+function showDiagnostics() {
+    console.clear();
+    console.log(`\n    ${c.bgCyan}${c.bright} 🩺 DIAGNÓSTICO DEL SISTEMA ${c.reset}\n`);
+    const totalMem = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
+    const freeMem = (os.freemem() / 1024 / 1024 / 1024).toFixed(2);
+    const uptime = (os.uptime() / 3600).toFixed(1);
+    
+    console.log(`    ${c.cyan}Memoria RAM:${c.reset} ${freeMem} GB libres de ${totalMem} GB`);
+    console.log(`    ${c.cyan}Uptime SO:${c.reset} ${uptime} horas`);
+    
+    const dbPath = path.resolve(__dirname, '../data/whatsapp_auth.db');
+    if (fs.existsSync(dbPath)) {
+        const size = (fs.statSync(dbPath).size / 1024 / 1024).toFixed(2);
+        console.log(`    ${c.cyan}Tamaño BD Auth WA:${c.reset} ${size} MB`);
+    } else {
+        console.log(`    ${c.cyan}Tamaño BD Auth WA:${c.reset} No encontrada`);
+    }
+    
+    rl.question(`\n    ${c.cyan}${c.bright}➤ Presiona ENTER para volver...${c.reset}`, () => showMenu());
+}
+
+function editEnvMenu() {
+    console.clear();
+    console.log(`\n    ${c.bgYellow}${c.bright} 📝 EDITOR RÁPIDO DE .ENV ${c.reset}\n`);
+    const envPath = path.resolve(__dirname, '../.env');
+    if (!fs.existsSync(envPath)) {
+        console.log(`    ${c.red}No se encontró el archivo .env.${c.reset}`);
+        setTimeout(showMenu, 2000);
+        return;
+    }
+    
+    rl.question(`    ${c.cyan}Nuevo DASHBOARD_USER (deja en blanco para omitir):${c.reset} `, (user) => {
+        rl.question(`    ${c.cyan}Nueva DASHBOARD_PASS (deja en blanco para omitir):${c.reset} `, (pass) => {
+            let content = fs.readFileSync(envPath, 'utf8');
+            if (user.trim()) content = content.replace(/DASHBOARD_USER=.*/g, `DASHBOARD_USER=${user.trim()}`);
+            if (pass.trim()) content = content.replace(/DASHBOARD_PASS=.*/g, `DASHBOARD_PASS=${pass.trim()}`);
+            fs.writeFileSync(envPath, content);
+            console.log(`\n    ${c.green}✔ Archivo .env actualizado correctamente.${c.reset}`);
+            setTimeout(showMenu, 1500);
+        });
+    });
+}
+
+function showBackupsMenu() {
+    console.clear();
+    console.log(`\n    ${c.bgBlue}${c.bright} ⏪ RESTAURAR BACKUPS ${c.reset}\n`);
+    const backupsDir = path.resolve(__dirname, '../backups');
+    if (!fs.existsSync(backupsDir)) {
+        console.log(`    ${c.yellow}No hay copias de seguridad en la carpeta backups/.${c.reset}`);
+        setTimeout(showMenu, 2000);
+        return;
+    }
+    
+    const backups = fs.readdirSync(backupsDir).filter(f => fs.statSync(path.join(backupsDir, f)).isDirectory());
+    if (backups.length === 0) {
+        console.log(`    ${c.yellow}No se encontraron carpetas de backup.${c.reset}`);
+        setTimeout(showMenu, 2000);
+        return;
+    }
+    
+    backups.forEach((b, i) => console.log(`    ${c.cyan}[${i + 1}]${c.reset} ${b}`));
+    console.log(`    ${c.cyan}[0] Volver${c.reset}\n`);
+    
+    rl.question(`    ${c.cyan}${c.bright}➤ Selecciona el backup a extraer a data/ [0-${backups.length}]:${c.reset} `, (choice) => {
+        const idx = parseInt(choice) - 1;
+        if (choice === '0') return showMenu();
+        if (backups[idx]) {
+            const bFolder = path.join(backupsDir, backups[idx]);
+            console.log(`\n    ${c.bgRed}${c.bright} ⚠ ESTO SOBREESCRIBIRÁ TU CARPETA data/ ACTUAL ${c.reset}`);
+            rl.question(`    ${c.red}¿Estás seguro? (s/n): ${c.reset}`, (ans) => {
+                if (['s','si','y','yes'].includes(ans.toLowerCase())) {
+                    if (fs.existsSync(path.join(bFolder, 'data_raw'))) {
+                        console.log(`    ${c.cyan}Restaurando carpeta data_raw...${c.reset}`);
+                        runCmd(process.platform === 'win32' ? 'xcopy' : 'cp', 
+                               process.platform === 'win32' ? [path.join(bFolder, 'data_raw') + '\\*', 'data\\', '/E', '/H', '/C', '/I', '/Y'] 
+                               : ['-r', path.join(bFolder, 'data_raw') + '/*', 'data/'], showMenu);
+                    } else if (fs.existsSync(path.join(bFolder, 'data_backup.tar.gz'))) {
+                        console.log(`    ${c.cyan}Extrayendo data_backup.tar.gz...${c.reset}`);
+                        runCmd('tar', ['-xzf', path.join(bFolder, 'data_backup.tar.gz')], showMenu);
+                    } else {
+                        console.log(`    ${c.red}No se encontró contenido restaurable.${c.reset}`);
+                        setTimeout(showMenu, 2000);
+                    }
+                } else {
+                    showMenu();
+                }
+            });
+        } else {
+            invalidChoice(showBackupsMenu);
+        }
+    });
 }
 
 // Iniciar aplicación
