@@ -88,7 +88,11 @@ export function FutureChannelsUI() {
     return (
         <div className="space-y-8 pb-12">
             {/* Header / Hero Section */}
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="relative overflow-hidden p-6 md:p-8 rounded-3xl premium-glass border border-app-border/40 shadow-2xl" >
+            <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative overflow-hidden p-6 md:p-8 rounded-3xl premium-glass border border-app-border/40 shadow-2xl"
+            >
                 <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-cyan-500/10 via-fuchsia-500/10 to-transparent rounded-full blur-3xl pointer-events-none"></div>
 
                 <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -123,7 +127,13 @@ export function FutureChannelsUI() {
                 {channels.map((channel, index) => {
                     const Icon = channel.icon;
                     return (
-                        <motion.div key={channel.name} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} ={{ delay: index * 0.08 }} className="group relative flex flex-col justify-between p-6 rounded-3xl bg-app-card/50 hover:bg-app-card/80 border border-app-border/50 hover:border-cyan-500/40 shadow-lg hover:shadow-cyan-500/10" >
+                        <motion.div
+                            key={channel.name}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.08 }}
+                            className="group relative flex flex-col justify-between p-6 rounded-3xl bg-app-card/50 hover:bg-app-card/80 border border-app-border/50 hover:border-cyan-500/40 transition-all duration-300 shadow-lg hover:shadow-cyan-500/10"
+                        >
                             <div className="space-y-4">
                                 {/* Encabezado de la Tarjeta */}
                                 <div className="flex items-center justify-between">
@@ -178,7 +188,12 @@ export function FutureChannelsUI() {
             </div>
 
             {/* Banner Informativo Bottom */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} ={{ delay: 0.5 }} className="p-6 rounded-3xl bg-gradient-to-r from-cyan-950/40 via-blue-950/30 to-purple-950/40 border border-cyan-500/20 flex flex-col sm:flex-row items-center justify-between gap-4" >
+            <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="p-6 rounded-3xl bg-gradient-to-r from-cyan-950/40 via-blue-950/30 to-purple-950/40 border border-cyan-500/20 flex flex-col sm:flex-row items-center justify-between gap-4"
+            >
                 <div className="flex items-center gap-4">
                     <div className="p-3 rounded-2xl bg-cyan-500/20 text-cyan-400 shrink-0">
                         <Sparkles size={24} />

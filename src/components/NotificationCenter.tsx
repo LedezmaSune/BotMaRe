@@ -96,7 +96,7 @@ export function NotificationCenter() {
                             markAllAsRead();
                         }
                     }}
-                    className={`relative p-2.5 rounded-xl border ${
+                    className={`relative p-2.5 rounded-xl border transition-all duration-300 ${
                         isOpen 
                             ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400 shadow-lg shadow-cyan-500/20' 
                             : 'bg-app-card/60 hover:bg-app-card border-app-border text-app-text hover:text-cyan-400'
@@ -108,7 +108,12 @@ export function NotificationCenter() {
                     {/* Badge contador */}
                     <AnimatePresence>
                         {unreadCount > 0 && (
-                            <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-gradient-to-r from-rose-500 to-red-600 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-lg shadow-red-500/50 border border-white/20" >
+                            <motion.span
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                exit={{ scale: 0 }}
+                                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-gradient-to-r from-rose-500 to-red-600 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-lg shadow-red-500/50 border border-white/20"
+                            >
                                 {unreadCount > 99 ? '99+' : unreadCount}
                             </motion.span>
                         )}
@@ -118,7 +123,13 @@ export function NotificationCenter() {
                 {/* Panel Flotante Desplegable (Flyout Glassmorphism) */}
                 <AnimatePresence>
                     {isOpen && (
-                        <motion.div initial={{ opacity: 0, y: 12, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} ={{ type: 'spring', damping: 24, stiffness: 350 }} className="absolute right-0 mt-3 w-80 sm:w-96 max-w-[calc(100vw-2rem)] rounded-3xl premium-glass border border-app-border shadow-[0_20px_60px_rgba(0,0,0,0.4)] backdrop-blur-2xl z-[150] overflow-hidden flex flex-col" >
+                        <motion.div
+                            initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            transition={{ type: 'spring', damping: 24, stiffness: 350 }}
+                            className="absolute right-0 mt-3 w-80 sm:w-96 max-w-[calc(100vw-2rem)] rounded-3xl premium-glass border border-app-border shadow-[0_20px_60px_rgba(0,0,0,0.4)] backdrop-blur-2xl z-[150] overflow-hidden flex flex-col"
+                        >
                             {/* Cabecera del Panel */}
                             <div className="p-4 border-b border-app-border/40 bg-app-card/40 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
@@ -227,7 +238,7 @@ export function NotificationCenter() {
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: index * 0.03 }}
                                             onClick={() => markAsRead(item.id)}
-                                            className={`group p-3 rounded-2xl border cursor-pointer ${
+                                            className={`group p-3 rounded-2xl border transition-all duration-200 cursor-pointer ${
                                                 item.read 
                                                     ? 'bg-app-card/20 hover:bg-app-card/40 border-app-border/20 opacity-70 hover:opacity-100' 
                                                     : 'bg-gradient-to-r from-cyan-950/30 to-blue-950/20 hover:from-cyan-950/50 hover:to-blue-950/40 border-cyan-500/30 shadow-sm'

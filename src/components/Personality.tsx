@@ -117,7 +117,11 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
     return (
         <div className="max-w-6xl mx-auto space-y-6 pb-20">
             {/* Header */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-app-card border border-app-border rounded-3xl p-8 backdrop-blur-xl shadow-xl shadow-purple-500/5 relative overflow-hidden" >
+            <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-app-card border border-app-border rounded-3xl p-8 backdrop-blur-xl shadow-xl shadow-purple-500/5 relative overflow-hidden"
+            >
                 <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
                 <div className="flex items-center gap-5 relative z-10">
                     <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-purple-500/20 shrink-0">
@@ -135,7 +139,16 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
             {/* Alerta de Feedback Flotante */}
             <AnimatePresence>
                 {feedback && (
-                    <motion.div initial={{ opacity: 0, y: -20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -20, scale: 0.95 }} className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl border shadow-2xl backdrop-blur-md ${ feedback.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : feedback.type === 'error' ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' }`} >
+                    <motion.div
+                        initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                        className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl border shadow-2xl backdrop-blur-md ${
+                            feedback.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 
+                            feedback.type === 'error' ? 'bg-red-500/10 border-red-500/30 text-red-400' :
+                            'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
+                        }`}
+                    >
                         {feedback.type === 'success' ? <CheckCircle2 size={20} /> : feedback.type === 'error' ? <XCircle size={20} /> : <Loader2 className="animate-spin" size={20} />}
                         <span className="font-bold text-sm">{feedback.message}</span>
                     </motion.div>
@@ -145,7 +158,10 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
             <form onSubmit={handleSubmit} className="space-y-6">
                 
                 {/* Módulo 1: Identidad Base */}
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} ={{ delay: 0.1 }} className="bg-app-card border border-app-border rounded-3xl p-8 backdrop-blur-xl shadow-lg" >
+                <motion.div 
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+                    className="bg-app-card border border-app-border rounded-3xl p-8 backdrop-blur-xl shadow-lg"
+                >
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400"><User size={20} /></div>
                         <h3 className="text-lg font-black text-white tracking-wide">1. Identidad y Comportamiento</h3>
@@ -179,7 +195,10 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                 </motion.div>
 
                 {/* Módulo 2: Cerebro de Datos */}
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} ={{ delay: 0.2 }} className="bg-app-card border border-app-border rounded-3xl p-8 backdrop-blur-xl shadow-lg relative overflow-hidden" >
+                <motion.div 
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                    className="bg-app-card border border-app-border rounded-3xl p-8 backdrop-blur-xl shadow-lg relative overflow-hidden"
+                >
                     <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-cyan-500/10 rounded-lg text-cyan-400"><Brain size={20} /></div>
@@ -198,7 +217,12 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
 
                     <AnimatePresence>
                         {showManual && (
-                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mb-6" >
+                            <motion.div 
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden mb-6"
+                            >
                                 <div className="p-5 bg-cyan-950/30 border border-cyan-500/30 rounded-2xl">
                                     <h4 className="text-sm font-bold text-cyan-400 mb-2">Enviar Archivos Multimedia y Documentos</h4>
                                     <p className="text-xs text-cyan-100/70 mb-3">
@@ -236,7 +260,10 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                 </motion.div>
 
                 {/* Módulo 3: Entrenamiento Externo */}
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} ={{ delay: 0.3 }} className="grid grid-cols-1 md:grid-cols-2 gap-6" >
+                <motion.div 
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                >
                     <div className="bg-gradient-to-br from-app-card to-app-bg border border-app-border hover:border-cyan-500/30 rounded-3xl p-6 transition-all group relative overflow-hidden">
                         <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
                             <Globe size={120} />
@@ -298,7 +325,10 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                 </motion.div>
 
                 {/* Módulo 4: Filtro de Seguridad */}
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} ={{ delay: 0.35 }} className="bg-app-card border border-app-border rounded-3xl p-8 backdrop-blur-xl shadow-lg mt-6" >
+                <motion.div 
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+                    className="bg-app-card border border-app-border rounded-3xl p-8 backdrop-blur-xl shadow-lg mt-6"
+                >
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-2 bg-red-500/10 rounded-lg text-red-400"><ShieldAlert size={20} /></div>
                         <h3 className="text-lg font-black text-white tracking-wide">Filtro de Seguridad (Response Guard)</h3>
@@ -332,7 +362,10 @@ export function Personality({ initialSettings, onUpdate }: PersonalityProps) {
                 </motion.div>
 
                 {/* Submit Action */}
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} ={{ delay: 0.4 }} className="pt-6" >
+                <motion.div 
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+                    className="pt-6"
+                >
                     <button
                         type="submit"
                         disabled={loading || learningStatus === 'loading'}

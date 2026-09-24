@@ -12,7 +12,12 @@ interface GroupModalProps {
 export function GroupModal({ groups, groupLoading, onClose, onSelectGroup }: GroupModalProps) {
     return (
         <div className="fixed inset-0 z-[600] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="bg-app-bg dark:bg-slate-900 border border-app-border w-full max-w-md rounded-3xl p-6 shadow-2xl flex flex-col max-h-[80vh] relative overflow-hidden" >
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="bg-app-bg dark:bg-slate-900 border border-app-border w-full max-w-md rounded-3xl p-6 shadow-2xl flex flex-col max-h-[80vh] relative overflow-hidden"
+            >
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-app-text font-black text-xl tracking-tight">Seleccionar Grupo</h3>
                     <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors">

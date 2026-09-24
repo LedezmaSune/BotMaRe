@@ -307,7 +307,13 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, u
                         </div>
                     </div>
 
-                    <motion.div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} animate={{ scale: isDragging ? 1.02 : 1, borderColor: isDragging ? '#06b6d4' : 'rgba(255,255,255,0.05)' }} className={`bg-slate-100 dark:bg-slate-950/40 p-5 rounded-2xl border ${isDragging ? 'border-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.2)]' : 'border-slate-200 dark:border-white/5'} flex flex-col items-center justify-center min-h-[120px] cursor-pointer group`} onClick={() => fileInputRef.current?.click()}
+                    <motion.div 
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        animate={{ scale: isDragging ? 1.02 : 1, borderColor: isDragging ? '#06b6d4' : 'rgba(255,255,255,0.05)' }}
+                        className={`bg-slate-100 dark:bg-slate-950/40 p-5 rounded-2xl border ${isDragging ? 'border-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.2)]' : 'border-slate-200 dark:border-white/5'} transition-all flex flex-col items-center justify-center min-h-[120px] cursor-pointer group`}
+                        onClick={() => fileInputRef.current?.click()}
                     >
                         <input 
                             type="file" 

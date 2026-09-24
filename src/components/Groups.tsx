@@ -58,13 +58,32 @@ export function Groups({ groups, allowedGroups, onToggle, onRefresh }: GroupsPro
                 </div>
             </div>
 
-            <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" initial="hidden" animate="show" variants={{ hidden: { opacity: 0 }, show: { opacity: 1, : { staggerChildren: 0.05 } } }} >
+            <motion.div 
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                initial="hidden"
+                animate="show"
+                variants={{
+                    hidden: { opacity: 0 },
+                    show: {
+                        opacity: 1,
+                        transition: { staggerChildren: 0.05 }
+                    }
+                }}
+            >
                 <AnimatePresence mode="popLayout">
                 {filteredGroups.map((group) => {
                     const isAllowed = allowedGroups.includes(group.id);
                     
                     return (
-                        <motion.div key={group.id} layout variants={{ hidden: { opacity: 0, scale: 0.95, y: 10 }, show: { opacity: 1, scale: 1, y: 0, : { type: 'spring', stiffness: 300, damping: 24 } } }} className={`bg-app-card border rounded-2xl p-5 group relative overflow-hidden flex flex-col justify-between ${isAllowed ? 'border-cyan-500/50 ring-1 ring-cyan-500/20' : 'border-app-border hover:border-app-border-hover'}`} >
+                        <motion.div 
+                            key={group.id} 
+                            layout
+                            variants={{
+                                hidden: { opacity: 0, scale: 0.95, y: 10 },
+                                show: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+                            }}
+                            className={`bg-app-card border rounded-2xl p-5 transition-all group relative overflow-hidden flex flex-col justify-between ${isAllowed ? 'border-cyan-500/50 ring-1 ring-cyan-500/20' : 'border-app-border hover:border-app-border-hover'}`}
+                        >
                             <div>
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
@@ -111,7 +130,10 @@ export function Groups({ groups, allowedGroups, onToggle, onRefresh }: GroupsPro
                 </AnimatePresence>
 
                 {filteredGroups.length === 0 && (
-                    <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="col-span-full py-20 text-center bg-app-card/20 rounded-3xl border-2 border-dashed border-app-border" >
+                    <motion.div 
+                        variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }}
+                        className="col-span-full py-20 text-center bg-app-card/20 rounded-3xl border-2 border-dashed border-app-border"
+                    >
                         <Users size={48} className="mx-auto mb-4 text-app-text-muted opacity-20" />
                         <p className="text-app-text-muted font-bold uppercase text-xs tracking-widest">No se encontraron grupos</p>
                     </motion.div>

@@ -15,7 +15,14 @@ const AutoresponderNode = ({ rule, allRules, handleOpenForm, handleToggle, handl
     const children = allRules.filter((r: any) => r.parentId === rule.id);
     
     return (
-        <motion.div layout variants={{ hidden: { opacity: 0, x: -20 }, show: { opacity: 1, x: 0, : { type: 'spring', stiffness: 300, damping: 24 } } }} className="flex flex-col relative" >
+        <motion.div 
+            layout
+            variants={{
+                hidden: { opacity: 0, x: -20 },
+                show: { opacity: 1, x: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+            }}
+            className="flex flex-col relative"
+        >
             <div className={`premium-glass p-6 rounded-2xl relative overflow-hidden transition-all duration-300 border ${rule.isActive ? 'border-emerald-500/30 bg-emerald-500/5 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'border-app-border opacity-70'}`}>
                 {/* Status bar */}
                 <div className={`absolute top-0 left-0 w-full h-1 ${rule.isActive ? 'bg-gradient-to-r from-emerald-400 to-teal-500' : 'bg-app-border'}`}></div>
@@ -310,7 +317,11 @@ export function AutorespondersPanel({ autoresponders, onRefresh }: Autoresponder
 
             {/* Global Disabled Banner */}
             {!isGlobalEnabled && (
-                <motion.div initial={{ opacity: 0, y: -20, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} className="premium-glass p-6 rounded-3xl relative overflow-hidden border border-red-500/30 bg-red-500/5 shadow-[0_0_30px_rgba(239,68,68,0.1)]" >
+                <motion.div 
+                    initial={{ opacity: 0, y: -20, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                    className="premium-glass p-6 rounded-3xl relative overflow-hidden border border-red-500/30 bg-red-500/5 shadow-[0_0_30px_rgba(239,68,68,0.1)]"
+                >
                     <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20 text-red-400">
@@ -334,9 +345,23 @@ export function AutorespondersPanel({ autoresponders, onRefresh }: Autoresponder
             )}
 
             {/* Flow Builder / Tree View */}
-            <motion.div className={`flex flex-col gap-6 pb-20 ${!isGlobalEnabled ? 'opacity-40 grayscale-[50%] pointer-events-none' : ''}`} initial="hidden" animate="show" variants={{ hidden: { opacity: 0 }, show: { opacity: 1, : { staggerChildren: 0.05 } } }} >
+            <motion.div 
+                className={`flex flex-col gap-6 transition-all duration-500 pb-20 ${!isGlobalEnabled ? 'opacity-40 grayscale-[50%] pointer-events-none' : ''}`}
+                initial="hidden"
+                animate="show"
+                variants={{
+                    hidden: { opacity: 0 },
+                    show: {
+                        opacity: 1,
+                        transition: { staggerChildren: 0.05 }
+                    }
+                }}
+            >
                 {autoresponders.length === 0 && (
-                    <motion.div variants={{ hidden: { opacity: 0, scale: 0.95 }, show: { opacity: 1, scale: 1 } }} className="premium-glass p-12 rounded-3xl flex flex-col items-center justify-center text-center" >
+                    <motion.div 
+                        variants={{ hidden: { opacity: 0, scale: 0.95 }, show: { opacity: 1, scale: 1 } }}
+                        className="premium-glass p-12 rounded-3xl flex flex-col items-center justify-center text-center"
+                    >
                         <div className="w-20 h-20 bg-app-card rounded-full flex items-center justify-center mb-4 border border-app-border">
                             <MessageCircle className="text-app-text-muted" size={32} />
                         </div>

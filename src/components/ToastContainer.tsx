@@ -40,7 +40,15 @@ export function ToastContainer({ toasts, onClose }: ToastContainerProps) {
         <div className="fixed bottom-6 right-6 z-[999] flex flex-col gap-3 pointer-events-none max-w-sm w-full px-4 sm:px-0">
             <AnimatePresence mode="popLayout">
                 {toasts.map((toast) => (
-                    <motion.div key={toast.id} layout initial={{ opacity: 0, y: 30, scale: 0.9, rotateX: -10 }} animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }} exit={{ opacity: 0, x: 100, scale: 0.85, : { duration: 0.2 } }} ={{ type: 'spring', damping: 25, stiffness: 350 }} className={`pointer-events-auto backdrop-blur-xl border rounded-2xl p-4 shadow-2xl shadow-black/50 flex flex-col gap-2 ${getBorderColor(toast.type)}`} >
+                    <motion.div
+                        key={toast.id}
+                        layout
+                        initial={{ opacity: 0, y: 30, scale: 0.9, rotateX: -10 }}
+                        animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+                        exit={{ opacity: 0, x: 100, scale: 0.85, transition: { duration: 0.2 } }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                        className={`pointer-events-auto backdrop-blur-xl border rounded-2xl p-4 shadow-2xl shadow-black/50 flex flex-col gap-2 ${getBorderColor(toast.type)}`}
+                    >
                         <div className="flex items-start justify-between gap-3">
                             <div className="flex items-start gap-3 flex-1 min-w-0">
                                 <div className="mt-0.5">{getIcon(toast.type)}</div>
