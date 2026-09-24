@@ -179,8 +179,14 @@ BotMaRe cuenta con un **Centro de Actualizaciones Inteligente** accesible desde 
    - Aplica actualizaciones con un solo clic con respaldo automático preventivo.
 2. **🦊 Desde Telegram:**
    - Envía el comando `/actualizar` para buscar nuevas versiones y aplicarlas al instante.
-3. **💻 Desde la Terminal:**
+3. **💻 Desde la Terminal (Menú Interactivo):**
    - Ejecuta `pnpm run menu` y selecciona la opción `[10] Git Update`.
+4. **⚙️ Actualización Manual (Recomendado para solucionar conflictos):**
+   - Si tu entorno es Termux o tienes errores de compilación, ejecuta directamente:
+     ```bash
+     git pull origin main
+     pnpm run build
+     ```
 
 ---
 
