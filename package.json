@@ -4,11 +4,11 @@
   "description": "BotMaRe Dashboard Panel",
   "main": "src/server.ts",
   "scripts": {
-    "dev": "concurrently -n \"ENGINE,UI\" -c \"bgBlue.bold,bgMagenta.bold\" \"tsx src/server.ts\" \"next dev --turbo\"",
+    "dev": "concurrently -n \"ENGINE,UI\" -c \"bgBlue.bold,bgMagenta.bold\" \"tsx --dns-result-order=ipv4first src/server.ts\" \"next dev --turbo\"",
     "test:llm": "tsx bin/test-llm.ts",
     "clean": "rimraf out .next dist",
     "build": "pnpm run clean && next build --webpack",
-    "start": "node bin/check-build.js && tsx src/server.ts",
+    "start": "node bin/check-build.js && tsx --dns-result-order=ipv4first src/server.ts",
     "setup": "node -e \"const fs=require('fs'); if(!fs.existsSync('.env')) fs.copyFileSync('.env.example', '.env')\" && pnpm install",
     "reset:wa": "rimraf data/whatsapp_auth.db auth_info_baileys",
     "tunnel": "cloudflared tunnel --url http://localhost:8000",
