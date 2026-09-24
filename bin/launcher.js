@@ -358,16 +358,48 @@ function editEnvMenu() {
         return;
     }
     
-    rl.question(`    ${c.cyan}Nuevo DASHBOARD_USER (deja en blanco para omitir):${c.reset} `, (user) => {
-        rl.question(`    ${c.cyan}Nueva DASHBOARD_PASS (deja en blanco para omitir):${c.reset} `, (pass) => {
-            let content = fs.readFileSync(envPath, 'utf8');
-            if (user.trim()) content = content.replace(/DASHBOARD_USER=.*/g, `DASHBOARD_USER=${user.trim()}`);
-            if (pass.trim()) content = content.replace(/DASHBOARD_PASS=.*/g, `DASHBOARD_PASS=${pass.trim()}`);
+    let content = fs.readFileSync(envPath, 'utf8');
+    const lines = content.split(/\r?\n/);
+    const keys = [];
+    
+    for (const line of lines) {
+        if (line.trim() && !line.startsWith('#')) {
+            const match = line.match(/^([^=]+)=/);
+            if (match) {
+                keys.push(match[1].trim());
+            }
+        }
+    }
+    
+    if (keys.length === 0) {
+        console.log(`    ${c.yellow}El archivo .env está vacío o no tiene variables válidas.${c.reset}`);
+        setTimeout(showMenu, 2000);
+        return;
+    }
+
+    console.log(`    ${c.dim}Presiona ENTER en cualquier opción para dejar su valor actual intacto.${c.reset}\n`);
+
+    let i = 0;
+    function askNext() {
+        if (i >= keys.length) {
             fs.writeFileSync(envPath, content);
             console.log(`\n    ${c.green}✔ Archivo .env actualizado correctamente.${c.reset}`);
             setTimeout(showMenu, 1500);
+            return;
+        }
+        
+        const key = keys[i];
+        rl.question(`    ${c.cyan}Nuevo valor para ${key}:${c.reset} `, (val) => {
+            if (val.trim()) {
+                const regex = new RegExp(`^${key}=.*`, 'm');
+                content = content.replace(regex, `${key}=${val.trim()}`);
+            }
+            i++;
+            askNext();
         });
-    });
+    }
+    
+    askNext();
 }
 
 function showBackupsMenu() {
