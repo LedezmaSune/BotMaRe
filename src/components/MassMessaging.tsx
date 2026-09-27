@@ -364,7 +364,7 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, u
                     </motion.div>
 
                     {/* Barra de Progreso de Subida de Archivos */}
-                    {typeof uploadProgress === 'number' && (
+                    {typeof uploadProgress === 'number' && !progress && (
                         <div className="bg-indigo-950/40 border border-indigo-500/30 p-4 rounded-2xl animate-in fade-in slide-in-from-bottom-2 duration-300">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
@@ -456,30 +456,60 @@ export function MassMessaging({ onSend, onCancel, onReview, templates, groups, u
                                 Cancelar y Detener Difusión
                             </button>
 
-                            {/* Logs en tiempo real */}
-                            {logs.length > 0 && (
+                            {/* Lista completa en tiempo real */}
+                            {contacts && (
                                 <div className="mt-5 space-y-2 pt-4 border-t border-slate-200 dark:border-white/10 animate-in slide-in-from-top-2 duration-500">
                                     <p className="text-[9px] font-black text-cyan-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
                                         <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full"></span>
-                                        Historial de Envíos en Vivo (Últimos {logs.length})
+                                        Estado de Contactos
                                     </p>
                                     <div className="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar pr-1">
-                                        {logs.map((log, i) => (
-                                            <div key={`${log.number}-${i}`} className="flex items-center justify-between bg-white/40 dark:bg-black/30 px-3 py-2 rounded-xl border border-white/50 dark:border-white/5 animate-in fade-in slide-in-from-left-4 duration-300">
-                                                <div className="flex items-center gap-2 truncate">
-                                                    <div className={`w-1.5 h-1.5 rounded-full ${log.status === 'success' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : (log.status === 'skipped' ? 'bg-amber-400' : 'bg-rose-400')}`}></div>
-                                                    <span className="text-[11px] font-bold text-app-text truncate max-w-[140px]">{log.name || log.number}</span>
+                                        {contacts.split('\n').map(c => c.trim()).filter(c => c).map((contactLine, index) => {
+                                            const parts = contactLine.split(',');
+                                            const targetNumber = parts[0].trim();
+                                            const log = logs.find(l => l.number === targetNumber || (l.name && l.name === targetNumber));
+                                            
+                                            let status = 'pending';
+                                            if (log) status = log.status;
+                                            else if (progress && progress.current === index + 1) status = 'sending';
+
+                                            return (
+                                                <div key={`${targetNumber}-${index}`} className={`flex items-center justify-between px-3 py-2 rounded-xl border ${
+                                                    status === 'sending' ? 'bg-cyan-500/10 border-cyan-500/30 dark:border-cyan-500/20' :
+                                                    status === 'success' ? 'bg-emerald-500/10 border-emerald-500/20' : 
+                                                    status === 'pending' ? 'bg-white/40 dark:bg-black/30 border-white/50 dark:border-white/5' :
+                                                    status === 'skipped' ? 'bg-amber-500/10 border-amber-500/20' :
+                                                    'bg-rose-500/10 border-rose-500/20'
+                                                }`}>
+                                                    <div className="flex items-center gap-2 truncate">
+                                                        {status === 'sending' && <Loader2 size={12} className="text-cyan-400 animate-spin shrink-0" />}
+                                                        {status === 'success' && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)] shrink-0"></div>}
+                                                        {status === 'skipped' && <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></div>}
+                                                        {status === 'fail' && <div className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0"></div>}
+                                                        {status === 'pending' && <div className="w-1.5 h-1.5 rounded-full bg-slate-400/50 shrink-0"></div>}
+                                                        
+                                                        <span className={`text-[11px] font-bold truncate max-w-[140px] ${status === 'pending' ? 'text-app-text-muted' : 'text-app-text'}`}>
+                                                            {parts[1]?.trim() || targetNumber}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 shrink-0">
+                                                        <span className="text-[10px] font-mono text-app-text-muted/70 tabular-nums">{targetNumber}</span>
+                                                        <span className={`text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                                                            status === 'sending' ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/20' :
+                                                            status === 'success' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' : 
+                                                            status === 'pending' ? 'bg-slate-500/15 text-slate-400 border border-slate-500/20' :
+                                                            status === 'skipped' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20' : 
+                                                            'bg-rose-500/15 text-rose-400 border border-rose-500/20'
+                                                        }`}>
+                                                            {status === 'sending' ? 'Enviando...' : 
+                                                             status === 'success' ? 'Enviado' : 
+                                                             status === 'pending' ? 'Pendiente' :
+                                                             status === 'skipped' ? 'Omitido' : 'Fallo'}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-2 shrink-0">
-                                                    <span className="text-[10px] font-mono text-app-text-muted/70 tabular-nums">{log.number}</span>
-                                                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ${
-                                                        log.status === 'success' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' : (log.status === 'skipped' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20' : 'bg-rose-500/15 text-rose-400 border border-rose-500/20')
-                                                    }`}>
-                                                        {log.status === 'success' ? 'Enviado' : (log.status === 'skipped' ? 'Omitido' : 'Fallo')}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}

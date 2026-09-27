@@ -65,6 +65,7 @@ export async function getAllConfig(): Promise<Record<string, string>> {
         'CHEAPERINFERENCE_MODEL',
         'OLLAMA_API_URL',
         'OLLAMA_MODEL',
+        'OLLAMA_API_KEY',
         'AUTO_DEPLOY'
     ];
     

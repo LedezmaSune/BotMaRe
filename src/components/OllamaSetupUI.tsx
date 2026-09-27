@@ -20,6 +20,7 @@ export default function OllamaSetupUI() {
     const [loading, setLoading] = useState(true);
     const [apiUrl, setApiUrl] = useState('http://localhost:11434');
     const [model, setModel] = useState('');
+    const [apiKey, setApiKey] = useState('');
     const [saving, setSaving] = useState(false);
     const [copied, setCopied] = useState<string | null>(null);
 
@@ -50,6 +51,7 @@ export default function OllamaSetupUI() {
             if (data) {
                 if (data.OLLAMA_API_URL) setApiUrl(data.OLLAMA_API_URL);
                 if (data.OLLAMA_MODEL) setModel(data.OLLAMA_MODEL);
+                if (data.OLLAMA_API_KEY) setApiKey(data.OLLAMA_API_KEY);
             }
         } catch (error) {
             console.error("Error fetching config:", error);
@@ -66,7 +68,8 @@ export default function OllamaSetupUI() {
                 },
                 body: JSON.stringify({
                     OLLAMA_API_URL: apiUrl,
-                    OLLAMA_MODEL: model
+                    OLLAMA_MODEL: model,
+                    OLLAMA_API_KEY: apiKey
                 })
             });
             if (res.ok) {
@@ -214,6 +217,18 @@ export default function OllamaSetupUI() {
                         />
                         <p className="text-xs text-slate-500">El nombre exacto del modelo que descargaste con el comando pull.</p>
                     </div>
+
+                    <div className="space-y-2 lg:col-span-2">
+                        <label className="text-sm font-medium text-slate-300">API Key (Opcional)</label>
+                        <input 
+                            type="password" 
+                            value={apiKey}
+                            onChange={(e) => setApiKey(e.target.value)}
+                            className="w-full bg-black/40 border border-app-border/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                            placeholder="sk-..."
+                        />
+                        <p className="text-xs text-slate-500">Útil si tu Ollama está detrás de un proxy (ej. Open WebUI) u otro servidor externo que pida autorización.</p>
+                    </div>
                 </div>
 
                 <div className="mt-6 flex justify-end">
@@ -264,6 +279,19 @@ export default function OllamaSetupUI() {
                         </p>
                         <code className="block bg-black/40 p-2 rounded border border-white/5 text-emerald-400 w-fit mt-2">ollama stop qwen2.5:1.5b</code>
                         <p className="text-xs text-slate-500 mt-2">*(Reemplaza el nombre por el modelo que estés usando).*</p>
+                    </div>
+
+                    {/* Bloque 4: Conexión con Open WebUI */}
+                    <div className="md:col-span-2 bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/20">
+                        <strong className="text-white block mb-2 text-indigo-300">4. Conexión Externa (Ej. Open WebUI en un VPS)</strong>
+                        <p className="mb-2">
+                            Si instalaste Ollama en un VPS y lo aseguraste con <strong>Open WebUI</strong> (o algún proxy) que genera API Keys, conecta BotMaRe así:
+                        </p>
+                        <ol className="list-decimal pl-5 space-y-2 mt-3">
+                            <li>En <strong>URL del Servidor</strong>, escribe la dirección de tu interfaz web añadiendo <code className="text-emerald-400">/api</code> al final (Ej: <em>https://mi-servidor.com/api</em>).</li>
+                            <li>En <strong>API Key</strong>, ve a los ajustes de tu Open WebUI, genera un Token de cuenta y pégalo aquí (normalmente empieza con <em>sk-...</em>).</li>
+                            <li>Guarda la configuración y BotMaRe ahora enviará las peticiones a través del túnel autenticado hacia tu VPS.</li>
+                        </ol>
                     </div>
 
                 </div>

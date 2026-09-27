@@ -159,7 +159,7 @@ export function useBotData() {
         });
 
         socket.on('diffusion_log', (log) => {
-            setDiffusionLogs(prev => [log, ...prev].slice(0, 10)); // Guardar los últimos 10
+            setDiffusionLogs(prev => [log, ...prev].slice(0, 5000)); // Guardar hasta 5000 para historial completo
         });
 
         return () => { socket.close(); };

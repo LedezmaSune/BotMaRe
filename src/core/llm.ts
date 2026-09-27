@@ -157,11 +157,13 @@ export async function callLLM(
     ];
     // Eliminar duplicados manteniendo el orden
     const uniqueOllamaUrls = Array.from(new Set(ollamaCandidates.filter(Boolean)));
+    const ollamaKeys = getApiKeys(config['OLLAMA_API_KEY']);
+    const ollamaAuthKeys = ollamaKeys.length > 0 ? ollamaKeys : ['ollama-local-key'];
 
     for (const url of uniqueOllamaUrls) {
         const baseURL = url.endsWith('/v1') ? url : `${url.replace(/\/$/, '')}/v1`;
         try {
-            return await tryProvider('Ollama', ['ollama-local-key'], {
+            return await tryProvider('Ollama', ollamaAuthKeys, {
                 baseURL: baseURL,
                 model: config['OLLAMA_MODEL'] || "qwen2.5:1.5b",
                 temperature: 0.3, // Un poco más de creatividad para destrabar el modelo
