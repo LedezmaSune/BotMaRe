@@ -152,13 +152,15 @@ router.post('/github', async (req: Request, res: Response) => {
 
     router.post('/incoming', requireWebhookAuth, async (req: Request, res: Response): Promise<any> => {
         try {
-            const { phone, message, mediaUrl } = req.body;
+            const { phone, message, mediaUrl, mediaType } = req.body;
             if (!phone || !message) {
                 return res.status(400).json({ success: false, error: "Faltan parámetros obligatorios: 'phone' y 'message'." });
             }
             console.log(`[Webhooks] 🚀 Recibida solicitud Zapier/Make/GAS para ${phone}`);
             if (mediaUrl) {
-                await waService.sendMediaFromUrl(phone, mediaUrl, message, 'image');
+                // Detecta automáticamente si es documento (PDF) o imagen, o respeta mediaType explícito
+                const type = mediaType || (mediaUrl.includes('download') || mediaUrl.includes('.pdf') ? 'document' : 'image');
+                await waService.sendMediaFromUrl(phone, mediaUrl, message, type as any);
             } else {
                 await waService.sendMessage(phone, message);
             }
