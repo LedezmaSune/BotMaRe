@@ -1,5 +1,5 @@
 import { MessageService } from "../modules/messages/message.service";
-import { getSettings, getActiveEngine, listTemplates, listAutoresponders } from "../core/dbManager";
+import { getSettings, updateSettings, getActiveEngine, listTemplates, listAutoresponders } from "../core/dbManager";
 import os from "os";
 
 let waService: MessageService;
@@ -93,6 +93,35 @@ export const dashboardTools = {
                 process.exit(1);
             }, 2000);
             return "Comando de reinicio recibido. El sistema se reiniciará en 2 segundos (PM2 lo levantará de nuevo).";
+        }
+    },
+    update_bot_settings: {
+        definition: {
+            name: "update_bot_settings",
+            description: "Actualiza la configuración del bot en la base de datos (nombre, rol y conocimiento).",
+            parameters: {
+                type: "object",
+                properties: {
+                    bot_name: { type: "string", description: "El nombre del bot." },
+                    system_prompt: { type: "string", description: "El prompt del sistema (personalidad y rol principal)." },
+                    possible_responses: { type: "string", description: "Conocimiento base, preguntas frecuentes o reglas de respuesta." }
+                }
+            }
+        },
+        handler: async (args: any) => {
+            try {
+                const toUpdate: Record<string, string> = {};
+                if (args.bot_name) toUpdate.bot_name = args.bot_name;
+                if (args.system_prompt) toUpdate.system_prompt = args.system_prompt;
+                if (args.possible_responses) toUpdate.possible_responses = args.possible_responses;
+                
+                if (Object.keys(toUpdate).length === 0) return "No se enviaron campos válidos para actualizar.";
+                
+                await updateSettings(toUpdate);
+                return "Configuración del bot actualizada correctamente en la base de datos.";
+            } catch (error: any) {
+                return `Error al actualizar la configuración: ${error.message}`;
+            }
         }
     }
 };

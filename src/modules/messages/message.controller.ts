@@ -69,7 +69,7 @@ export class MessageController {
         return true;
     }
 
-    async handleIncoming(jid: string, text: string, sender: string, senderName: string = '') {
+    async handleIncoming(jid: string, text: string, sender: string, senderName: string = '', imageBase64?: string, documentContent?: string) {
         const isGroup = jid.endsWith('@g.us');
         const chatType = isGroup ? 'GRUPO' : 'PERSONAL';
         
@@ -150,8 +150,8 @@ export class MessageController {
             }
 
             // 1. Obtener respuesta de la IA
-            const finalTextToAI = text + extraAIContext;
-            const response = await this.aiService.runAgent(jid, finalTextToAI, sender);
+            const finalTextToAI = text + extraAIContext + (documentContent || '');
+            const response = await this.aiService.runAgent(jid, finalTextToAI, sender, imageBase64);
             
             console.log(`\n=================== RESPUESTA IA [${chatType}] ===================`);
             console.log(`🎯 Para:      ${jid}`);

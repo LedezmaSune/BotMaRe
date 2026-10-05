@@ -37,9 +37,7 @@ export async function handleTelegramVoice(ctx: Context) {
     // Process with Agent
     await ctx.replyWithChatAction("typing");
     
-    const adminContext = `\n\n[SISTEMA: Eres el Asistente de Administración de BotMaRe. Estás hablando con el dueño del sistema desde Telegram por nota de voz. Tienes acceso a herramientas para consultar el servidor. Obedece sus órdenes técnicas. Confirma de forma breve.]`;
-    
-    const agentResponse = await runAgent(userId, text + adminContext, userId, undefined, true);
+    const agentResponse = await runAgent(userId, text, userId, undefined, true);
     const needsVoice = /voz|audio|habla|dímelo|escuchar/i.test(text);
 
     if (needsVoice) {

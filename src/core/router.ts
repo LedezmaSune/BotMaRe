@@ -1,4 +1,4 @@
-import { WAMessage } from '@whiskeysockets/baileys';
+import { WAMessage, downloadMediaMessage } from '@whiskeysockets/baileys';
 import { MessageController } from '../modules/messages/message.controller';
 import { NotificationService } from '../telegram/notification.service';
 import { NotificationHub } from './notificationHub';
@@ -247,8 +247,48 @@ export class Router {
             console.error('[Router] No se pudo enviar la reacción:', err);
         }
 
+        // Extracción de multimedia para IA
+        let imageBase64: string | undefined = undefined;
+        let documentContent: string = '';
+
+        if (messageContent.imageMessage) {
+            try {
+                const buffer = await downloadMediaMessage(msg, 'buffer', {}, { 
+                    logger: console as any,
+                    reuploadRequest: socket.updateMediaMessage
+                }) as Buffer;
+                imageBase64 = buffer.toString('base64');
+            } catch (e) {
+                console.error('[Router] Error al descargar imagen para la IA:', e);
+            }
+        }
+
+        if (messageContent.documentMessage) {
+            const doc = messageContent.documentMessage;
+            const ext = doc.fileName?.toLowerCase().split('.').pop() || '';
+            const validExts = ['txt', 'md', 'csv', 'pdf', 'docx', 'xlsx', 'xls'];
+            
+            if (doc.mimetype === 'text/plain' || validExts.includes(ext)) {
+                try {
+                    const buffer = await downloadMediaMessage(msg, 'buffer', {}, { 
+                        logger: console as any,
+                        reuploadRequest: socket.updateMediaMessage
+                    }) as Buffer;
+                    
+                    const { parseDocument } = await import('../utils/documentParser');
+                    const parsedText = await parseDocument(buffer, doc.fileName || 'document.txt');
+                    
+                    if (parsedText) {
+                        documentContent = `\n\n[CONTENIDO DEL DOCUMENTO ${doc.fileName}]:\n${parsedText.substring(0, 50000)}`;
+                    }
+                } catch (e) {
+                    console.error('[Router] Error al procesar documento para la IA:', e);
+                }
+            }
+        }
+
         // Delegar al controlador (Autorespondedores + Agente IA)
-        await this.messageController.handleIncoming(jid, text, participant, pushName);
+        await this.messageController.handleIncoming(jid, text, participant, pushName, imageBase64, documentContent);
     }
 
     /**

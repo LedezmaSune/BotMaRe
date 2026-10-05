@@ -14,7 +14,8 @@ export const allTools = [
     supportTool,
     dashboardTools.get_system_stats,
     dashboardTools.manage_wa_session,
-    dashboardTools.restart_bot_service
+    dashboardTools.restart_bot_service,
+    dashboardTools.update_bot_settings
 ];
 
 export const restrictedTools = [
