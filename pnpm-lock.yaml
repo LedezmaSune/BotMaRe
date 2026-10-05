@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@whiskeysockets/baileys': 6.7.23
+  '@whiskeysockets/baileys': 6.7.24
   axios: ^0.31.1
 
 importers:
@@ -13,8 +13,8 @@ importers:
   .:
     dependencies:
       '@whiskeysockets/baileys':
-        specifier: 6.7.23
-        version: 6.7.23(audio-decode@2.2.3)(sharp@0.35.5(@types/node@26.6.3))
+        specifier: 6.7.24
+        version: 6.7.24(audio-decode@2.2.3)(sharp@0.35.5(@types/node@26.6.3))
       adm-zip:
         specifier: ^0.6.1
         version: 0.6.1
@@ -1502,8 +1502,8 @@ packages:
   '@wasm-audio-decoders/opus-ml@0.0.3':
     resolution: {integrity: sha512-SEeTmk0eb3q5etJA/NHCRWW6BivTx9tqvNTmG0kg2ynuATEQRUZnwQE6Ibvl1BBvqIGHqI57+qyJMWmJBwb5XQ==}
 
-  '@whiskeysockets/baileys@6.7.23':
-    resolution: {integrity: sha512-UDbysXJpFKHC2S27qy4oABQc2uZekhUcCNi+Nvzev7wZkOhC72wqezzM2cfYB3PHJdy3Jadc2VkVv8eQeywIUw==}
+  '@whiskeysockets/baileys@6.7.24':
+    resolution: {integrity: sha512-Ljq7si+gsNIE9d5dP69E99TTQp+BxxPgitWvmZMXExGc1Ctr0SCDLFZmxRLUDC5HB0/Itw5uk+HJeBONrLP99Q==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       audio-decode: ^2.1.3
@@ -5497,7 +5497,7 @@ snapshots:
       '@wasm-audio-decoders/common': 9.0.7
     optional: true
 
-  '@whiskeysockets/baileys@6.7.23(audio-decode@2.2.3)(sharp@0.35.5(@types/node@26.6.3))':
+  '@whiskeysockets/baileys@6.7.24(audio-decode@2.2.3)(sharp@0.35.5(@types/node@26.6.3))':
     dependencies:
       '@cacheable/node-cache': 1.7.6
       '@hapi/boom': 9.1.4
