@@ -413,6 +413,11 @@ Ejecución continua 24/7 en servidores de producción:
 
 ## 🔄 Historial de Actualizaciones (Changelog)
 
+- **[2.6.0] - 2026-10-04:** Motor de Voz y Gestión Documental Inteligente:
+  - 🎙️ **Soporte de Voz Nativas:** BotMaRe ahora escucha (transcribe con Whisper) y responde con audio (Text-to-Speech) tanto en WhatsApp como en Telegram de forma conversacional.
+  - 📄 **Lectura de Medios Citados (Reply):** Extracción profunda de PDFs, Excel, Word e Imágenes cuando el usuario utiliza la función de "Responder" en WhatsApp y Telegram.
+  - 🛡️ **Gestor de Listas por IA:** La IA de Telegram ahora tiene una nueva herramienta (`manage_access_lists`) para añadir o bloquear usuarios y grupos mediante lenguaje natural.
+  - 🔐 **Escudo de Prompt Injection:** Sandbox de aislamiento de mensajes (`<<<INICIO>>>`) que blinda a la IA contra ataques de inyección y sobreescritura de instrucciones.
 - **[2.5.0] - 2026-09-07:** Motor Multi-IA, Mantenimiento Seguro y Servidor SMS `.site`:
   - 🤖 **Conexión Multi-IA (11 Proveedores):** Integración con Groq, Cerebras, SambaNova, SiliconFlow, Mistral, Together, Gemini 2.5, DeepSeek, OpenRouter, Nvidia NIM y OpenAI con sanitizador dinámico `resolveModel()`.
   - 📡 **Actualización de Pasarela SMS (`apptienda.site`):** Migración de la URL base del servidor httpSMS a `https://api-sms.apptienda.site/v1/messages/send` para mayor velocidad y aislamiento de dominio.
