@@ -23,14 +23,21 @@ export async function handleTelegramVoice(ctx: Context) {
     const text = await transcribeAudio(buffer);
     console.log(`[Audio Transcribed] ${userId}: ${text}`);
 
-    // Send transcription back to user (optional but helpful)
+    const lowerText = text.trim().toLowerCase();
+    const isBotmareKeyword = lowerText.startsWith("botmare") || lowerText.startsWith("sistema") || lowerText.startsWith("ia");
+    
+    if (!isBotmareKeyword) {
+      await ctx.reply(`📝 _"${text}"_\n\n(Audio ignorado. Para órdenes por voz, inicia tu frase con "BotMaRe", "IA" o "Sistema").`, { parse_mode: "Markdown" });
+      return;
+    }
+
+    // Send transcription back to user
     await ctx.reply(`📝 _"${text}"_`, { parse_mode: "Markdown" });
 
     // Process with Agent
     await ctx.replyWithChatAction("typing");
     
-    // Inyectamos contexto para que el agente sepa que está hablando con el Admin en Telegram
-    const adminContext = `\n\n[SISTEMA: Estás hablando con el Administrador principal desde el bot de Telegram. Tienes permisos totales (fullAccess). Si la instrucción en el audio te pide agendar un recordatorio, modificar listas o realizar alguna acción técnica, asume que es una orden directa y usa tus herramientas (tools) inmediatamente para ejecutarla. Confírmale al administrador de forma breve y concisa que la tarea fue realizada.]`;
+    const adminContext = `\n\n[SISTEMA: Eres el Asistente de Administración de BotMaRe. Estás hablando con el dueño del sistema desde Telegram por nota de voz. Tienes acceso a herramientas para consultar el servidor. Obedece sus órdenes técnicas. Confirma de forma breve.]`;
     
     const agentResponse = await runAgent(userId, text + adminContext, userId, undefined, true);
     const needsVoice = /voz|audio|habla|dímelo|escuchar/i.test(text);

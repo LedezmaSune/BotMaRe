@@ -42,7 +42,7 @@ export class NotificationService {
     /**
      * Notificación específica para eventos de IA / Modelos
      */
-    static async notifyModelEvent(provider: string, model: string, status: 'success' | 'fail' | 'warning', details?: string) {
+    static async notifyModelEvent(provider: string, model: string, status: 'success' | 'fail' | 'warning', details?: string, metadata?: { senderId?: string; prompt?: string }) {
         // Solo notificar si está habilitado en el entorno (por defecto false para no saturar)
         const isEnabled = await getConfig('NOTIFY_MODELS_TELEGRAM', 'false');
         if (isEnabled !== 'true') return;
@@ -58,12 +58,17 @@ export class NotificationService {
             statusText = 'Advertencia';
         }
 
-        const message = `${emoji} *Notificación de IA*\n\n` +
-                        `*Proveedor:* ${provider}\n` +
-                        `*Modelo:* \`${model}\`\n` +
-                        `*Estado:* ${statusText}\n` +
-                        (details ? `\n*Detalles:*\n_${details}_` : '');
+        const safePrompt = metadata?.prompt ? metadata.prompt.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+        const safeDetails = details ? details.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
 
-        await this.notifyAdmin(message);
+        const message = `${emoji} <b>Notificación de IA</b>\n\n` +
+                        `<b>Proveedor:</b> ${provider}\n` +
+                        `<b>Modelo:</b> <code>${model}</code>\n` +
+                        `<b>Estado:</b> ${statusText}\n` +
+                        (metadata?.senderId ? `<b>Usuario:</b> <a href="https://wa.me/${metadata.senderId}">${metadata.senderId}</a>\n` : '') +
+                        (safePrompt ? `<b>Preguntó:</b>\n<i>${safePrompt.substring(0, 800)}</i>\n` : '') +
+                        (safeDetails ? `\n<b>Detalles:</b>\n<i>${safeDetails}</i>` : '');
+
+        await this.notifyAdmin(message, { parse_mode: 'HTML' });
     }
 }

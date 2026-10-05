@@ -8,12 +8,26 @@ export async function handleTelegramMessage(ctx: Context) {
   const text = ctx.message?.text;
   if (!userId || !text) return;
 
-  console.log(`[Telegram] Message from ${userId}: ${text.substring(0, 50)}...`);
+  const lowerText = text.trim().toLowerCase();
+  const isCommand = lowerText.startsWith("/ia ") || lowerText.startsWith("/dash ") || lowerText === "/ia" || lowerText === "/dash";
+  
+  if (!isCommand) {
+    return;
+  }
+
+  const iaPrompt = text.replace(/^\/(ia|dash)\s*/i, '').trim();
+  if (!iaPrompt) {
+      await ctx.reply("🤖 Por favor, escribe tu instrucción después del comando. Ejemplo: `/ia ¿cuántos mensajes se enviaron hoy?`", { parse_mode: "Markdown" });
+      return;
+  }
+
+  console.log(`[Telegram] AI Command from ${userId}: ${iaPrompt.substring(0, 50)}...`);
   await ctx.replyWithChatAction("typing");
 
   try {
-    const agentResponse = await runAgent(userId, text, userId, undefined, true);
-    const needsVoice = /voz|audio|habla|dímelo|escuchar/i.test(text);
+    const adminContext = `\n\n[SISTEMA: Eres el Asistente de Administración de BotMaRe. Estás hablando con el dueño del sistema desde Telegram. Tienes acceso a herramientas para consultar el servidor. Tu objetivo es obedecer sus órdenes técnicas y reportar datos con precisión.]`;
+    const agentResponse = await runAgent(userId, iaPrompt + adminContext, userId, undefined, true);
+    const needsVoice = /voz|audio|habla|dímelo|escuchar/i.test(iaPrompt);
 
     if (needsVoice) {
       await handleTelegramVoiceResponse(ctx, agentResponse);

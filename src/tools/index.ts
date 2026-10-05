@@ -3,6 +3,7 @@ import { remindersTool } from "./reminders";
 import { webBrowserTool } from "./web_browser";
 import { whatsappTools, initWhatsAppTools } from "./whatsapp";
 import { supportTool } from "./support";
+import { dashboardTools, initDashboardTools } from "./dashboard";
 import { MessageService } from "../modules/messages/message.service";
 
 export const allTools = [
@@ -10,7 +11,10 @@ export const allTools = [
     remindersTool,
     webBrowserTool,
     whatsappTools.list_groups,
-    supportTool
+    supportTool,
+    dashboardTools.get_system_stats,
+    dashboardTools.manage_wa_session,
+    dashboardTools.restart_bot_service
 ];
 
 export const restrictedTools = [
@@ -22,6 +26,7 @@ export const restrictedTools = [
 
 export function initTools(waService: MessageService) {
     initWhatsAppTools(waService);
+    initDashboardTools(waService);
 }
 
 export const allToolsDefinition = allTools.map(t => ({

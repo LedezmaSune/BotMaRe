@@ -26,6 +26,21 @@ async function tryProvider(
     tools: any[] | undefined,
     hasVision: boolean
 ): Promise<any> {
+    let metadataObj: { senderId?: string, prompt?: string } | undefined;
+    try {
+        const sysMsg = messages.find((m: any) => m.role === 'system')?.content || '';
+        const sMatch = typeof sysMsg === 'string' ? sysMsg.match(/SENDER_ID:\s*(\d+)/) : null;
+        const uMsgs = messages.filter((m: any) => m.role === 'user');
+        const lMsg = uMsgs[uMsgs.length - 1];
+        let pTxt = '';
+        if (lMsg) {
+            if (typeof lMsg.content === 'string') pTxt = lMsg.content;
+            else if (Array.isArray(lMsg.content)) pTxt = lMsg.content.find((c: any) => c.type === 'text')?.text || '';
+        }
+        pTxt = pTxt.replace(/<<<INICIO DEL MENSAJE>>>/g, '').replace(/<<<FIN DEL MENSAJE>>>/g, '').trim();
+        metadataObj = { senderId: sMatch ? sMatch[1] : undefined, prompt: pTxt };
+    } catch(e) {}
+
     for (const key of keys) {
         try {
             const client = new OpenAI({ ...config, apiKey: key });
@@ -65,7 +80,7 @@ async function tryProvider(
                 console.log(logMsg);
                 // Notificar si quedan pocos tokens (ej. menos de 1000)
                 if (parseInt(remainingTokens) < 1000) {
-                    NotificationService.notifyModelEvent(providerName, config.model, 'warning', `Límite diario bajo: ${remainingTokens} tokens restantes.`);
+                    NotificationService.notifyModelEvent(providerName, config.model, 'warning', `Límite diario bajo: ${remainingTokens} tokens restantes.`, metadataObj);
                 }
             }
 
@@ -74,7 +89,7 @@ async function tryProvider(
             telemetry.recordLLMRequest(providerName, totalTokens, latencyMs);
 
             console.log(`[LLM] ${providerName} (${config.model}) Respondió con éxito. Tokens: ${totalTokens}, Latencia: ${latencyMs}ms`);
-            NotificationService.notifyModelEvent(providerName, config.model, 'success');
+            NotificationService.notifyModelEvent(providerName, config.model, 'success', undefined, metadataObj);
             return responseWithHeaders.data.choices[0]?.message;
         } catch (error: any) {
             let errorMsg = error.message || String(error);
@@ -91,7 +106,7 @@ async function tryProvider(
             }
 
             console.warn(`[LLM] ${providerName} falló con una llave: ${errorMsg}`);
-            NotificationService.notifyModelEvent(providerName, config.model, 'fail', errorMsg);
+            NotificationService.notifyModelEvent(providerName, config.model, 'fail', errorMsg, metadataObj);
             continue; // Intentar con la siguiente llave del mismo proveedor
         }
     }
