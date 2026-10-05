@@ -69,7 +69,7 @@ export class MessageController {
         return true;
     }
 
-    async handleIncoming(jid: string, text: string, sender: string, senderName: string = '', imageBase64?: string, documentContent?: string) {
+    async handleIncoming(jid: string, text: string, sender: string, senderName: string = '', imageBase64?: string, documentContent?: string, isVoiceNote: boolean = false) {
         const isGroup = jid.endsWith('@g.us');
         const chatType = isGroup ? 'GRUPO' : 'PERSONAL';
         
@@ -161,7 +161,29 @@ export class MessageController {
             // 2. Enviar respuesta vía WhatsApp (Interceptar etiquetas de medios)
             const sentMedia = await this.processMediaTags(jid, response);
             if (!sentMedia) {
-                await this.messageService.sendMessage(jid, response);
+                const needsVoice = isVoiceNote || /voz|audio|habla|dímelo|escuchar/i.test(text);
+                if (needsVoice && !response.includes('[IMG:') && !response.includes('[DOC:')) {
+                    const { textToSpeech } = await import('../../core/voice');
+                    const voiceBuffer = await textToSpeech(response);
+                    if (voiceBuffer) {
+                        const fs = require('fs');
+                        const path = require('path');
+                        const tempDir = path.resolve('data/temp');
+                        if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+                        const tempPath = path.join(tempDir, `reply_${Date.now()}.mp3`);
+                        
+                        fs.writeFileSync(tempPath, voiceBuffer);
+                        try {
+                            await this.messageService.sendMedia(jid, tempPath, undefined, 'audio/mpeg');
+                        } finally {
+                            if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+                        }
+                    } else {
+                        await this.messageService.sendMessage(jid, response);
+                    }
+                } else {
+                    await this.messageService.sendMessage(jid, response);
+                }
             }
 
         } catch (error) {

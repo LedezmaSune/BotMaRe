@@ -38,15 +38,13 @@ export async function handleTelegramVoice(ctx: Context) {
     await ctx.replyWithChatAction("typing");
     
     const agentResponse = await runAgent(userId, text, userId, undefined, true);
-    const needsVoice = /voz|audio|habla|dímelo|escuchar/i.test(text);
 
-    if (needsVoice) {
-      const voiceBuffer = await textToSpeech(agentResponse);
-      if (voiceBuffer) {
-        await ctx.replyWithChatAction("upload_voice");
-        await ctx.replyWithVoice(new InputFile(voiceBuffer, "reply.mp3"));
-        return;
-      }
+    // Siempre responder con voz si el usuario envió una nota de voz
+    const voiceBuffer = await textToSpeech(agentResponse);
+    if (voiceBuffer) {
+      await ctx.replyWithChatAction("upload_voice");
+      await ctx.replyWithVoice(new InputFile(voiceBuffer, "reply.mp3"));
+      return;
     }
 
     await ctx.reply(agentResponse);

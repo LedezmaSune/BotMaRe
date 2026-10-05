@@ -6,10 +6,12 @@ import { bot } from "../bot";
 
 export async function handleTelegramMessage(ctx: Context) {
   const userId = ctx.from?.id.toString();
-  let text = ctx.message?.text || ctx.message?.caption || "";
-  if (!userId) return;
+  const rawChatId = ctx.chat?.id.toString();
+  if (!userId || !rawChatId) return;
+  const chatId = `tg_${rawChatId}`;
 
-  const hasMedia = !!(ctx.message?.photo || ctx.message?.document);
+  let text = ctx.message?.text || ctx.message?.caption || "";
+  const hasMedia = !!(ctx.message?.photo || ctx.message?.document || ctx.message?.reply_to_message?.photo || ctx.message?.reply_to_message?.document);
   let isCommand = false;
   let iaPrompt = text;
 
@@ -33,8 +35,9 @@ export async function handleTelegramMessage(ctx: Context) {
     let imageBase64: string | undefined = undefined;
 
     // 1. Procesar Imágenes (Fotos)
-    if (ctx.message?.photo) {
-        const photo = ctx.message.photo[ctx.message.photo.length - 1]; // Mayor resolución
+    const targetPhoto = ctx.message?.photo || ctx.message?.reply_to_message?.photo;
+    if (targetPhoto) {
+        const photo = targetPhoto[targetPhoto.length - 1]; // Mayor resolución
         const file = await ctx.api.getFile(photo.file_id);
         const url = `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${file.file_path}`;
         const response = await axios.get(url, { responseType: 'arraybuffer' });
@@ -42,8 +45,9 @@ export async function handleTelegramMessage(ctx: Context) {
     }
     
     // 2. Procesar Documentos (Archivos de Texto, PDF, Word, Excel)
-    if (ctx.message?.document) {
-        const doc = ctx.message.document;
+    const targetDoc = ctx.message?.document || ctx.message?.reply_to_message?.document;
+    if (targetDoc) {
+        const doc = targetDoc;
         const ext = doc.file_name?.toLowerCase().split('.').pop() || '';
         const validExts = ['txt', 'md', 'csv', 'pdf', 'docx', 'xlsx', 'xls'];
         
@@ -70,7 +74,7 @@ export async function handleTelegramMessage(ctx: Context) {
       return;
     }
 
-    const agentResponse = await runAgent(userId, iaPrompt, userId, imageBase64, true);
+    const agentResponse = await runAgent(chatId, iaPrompt, userId, imageBase64, true);
     const needsVoice = /voz|audio|habla|dímelo|escuchar/i.test(iaPrompt);
 
     if (needsVoice) {

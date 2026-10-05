@@ -123,5 +123,28 @@ export const dashboardTools = {
                 return `Error al actualizar la configuración: ${error.message}`;
             }
         }
+    },
+    manage_access_lists: {
+        definition: {
+            name: "manage_access_lists",
+            description: "Administra las listas de acceso (whitelist/blacklist) de contactos y grupos de WhatsApp.",
+            parameters: {
+                type: "object",
+                properties: {
+                    action: { type: "string", enum: ["add", "ban", "remove", "mode"], description: "Acción: add (Añadir a Whitelist), ban (Añadir a Blacklist), remove (Quitar de ambas), mode (Cambiar modo global)." },
+                    target: { type: "string", description: "El número telefónico (ej. 521...), ID de grupo, o el modo deseado (all, whitelist, blacklist, none)." },
+                    isGroup: { type: "boolean", description: "True si afecta a grupos, False si es para contactos individuales." }
+                },
+                required: ["action", "target", "isGroup"]
+            }
+        },
+        handler: async (args: { action: string, target: string, isGroup: boolean }) => {
+            try {
+                const { accessControl } = require('../core/accessControl');
+                return accessControl.processAdminCommand(`!lista ${args.action} ${args.target}`, args.isGroup);
+            } catch (e: any) {
+                return `Error al modificar listas: ${e.message}`;
+            }
+        }
     }
 };

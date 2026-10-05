@@ -62,7 +62,33 @@ export class Router {
             || messageContent.documentMessage?.caption
             || '';
 
-        if (!text) return;
+        const quotedMsg = messageContent.extendedTextMessage?.contextInfo?.quotedMessage;
+        
+        if (!text && !messageContent.imageMessage && !messageContent.documentMessage && !messageContent.audioMessage &&
+            !quotedMsg?.imageMessage && !quotedMsg?.documentMessage && !quotedMsg?.audioMessage) {
+            return;
+        }
+
+        const audioMsgToProcess = messageContent.audioMessage ? msg : (quotedMsg?.audioMessage ? { key: { remoteJid: msg.key.remoteJid, id: messageContent.extendedTextMessage?.contextInfo?.stanzaId }, message: quotedMsg } : null);
+
+        let isVoiceNote = false;
+        if (audioMsgToProcess) {
+            try {
+                isVoiceNote = true;
+                const buffer = await downloadMediaMessage(audioMsgToProcess as WAMessage, 'buffer', {}, { 
+                    logger: console as any,
+                    reuploadRequest: socket.updateMediaMessage
+                }) as Buffer;
+                
+                const { transcribeAudio } = await import('./llm');
+                const textFromAudio = await transcribeAudio(buffer);
+                if (textFromAudio) {
+                    text = textFromAudio;
+                }
+            } catch (e) {
+                console.error('[Router] Error al procesar audio para la IA:', e);
+            }
+        }
 
         const participantClean = participant.split('@')[0];
         const isGroup = jid.endsWith('@g.us');
@@ -251,9 +277,11 @@ export class Router {
         let imageBase64: string | undefined = undefined;
         let documentContent: string = '';
 
-        if (messageContent.imageMessage) {
+        const imageMsgToProcess = messageContent.imageMessage ? msg : (quotedMsg?.imageMessage ? { key: { remoteJid: msg.key.remoteJid, id: messageContent.extendedTextMessage?.contextInfo?.stanzaId }, message: quotedMsg } : null);
+
+        if (imageMsgToProcess) {
             try {
-                const buffer = await downloadMediaMessage(msg, 'buffer', {}, { 
+                const buffer = await downloadMediaMessage(imageMsgToProcess as WAMessage, 'buffer', {}, { 
                     logger: console as any,
                     reuploadRequest: socket.updateMediaMessage
                 }) as Buffer;
@@ -263,32 +291,37 @@ export class Router {
             }
         }
 
-        if (messageContent.documentMessage) {
-            const doc = messageContent.documentMessage;
-            const ext = doc.fileName?.toLowerCase().split('.').pop() || '';
-            const validExts = ['txt', 'md', 'csv', 'pdf', 'docx', 'xlsx', 'xls'];
-            
-            if (doc.mimetype === 'text/plain' || validExts.includes(ext)) {
-                try {
-                    const buffer = await downloadMediaMessage(msg, 'buffer', {}, { 
-                        logger: console as any,
-                        reuploadRequest: socket.updateMediaMessage
-                    }) as Buffer;
-                    
-                    const { parseDocument } = await import('../utils/documentParser');
-                    const parsedText = await parseDocument(buffer, doc.fileName || 'document.txt');
-                    
-                    if (parsedText) {
-                        documentContent = `\n\n[CONTENIDO DEL DOCUMENTO ${doc.fileName}]:\n${parsedText.substring(0, 50000)}`;
+        const docMsgToProcess = messageContent.documentMessage ? msg : (quotedMsg?.documentMessage ? { key: { remoteJid: msg.key.remoteJid, id: messageContent.extendedTextMessage?.contextInfo?.stanzaId }, message: quotedMsg } : null);
+
+        if (docMsgToProcess) {
+            const actualMsgContent = (docMsgToProcess as any).message;
+            const doc = actualMsgContent?.documentMessage;
+            if (doc) {
+                const ext = doc.fileName?.toLowerCase().split('.').pop() || '';
+                const validExts = ['txt', 'md', 'csv', 'pdf', 'docx', 'xlsx', 'xls'];
+                
+                if (doc.mimetype === 'text/plain' || validExts.includes(ext)) {
+                    try {
+                        const buffer = await downloadMediaMessage(docMsgToProcess as WAMessage, 'buffer', {}, { 
+                            logger: console as any,
+                            reuploadRequest: socket.updateMediaMessage
+                        }) as Buffer;
+                        
+                        const { parseDocument } = await import('../utils/documentParser');
+                        const parsedText = await parseDocument(buffer, doc.fileName || 'document.txt');
+                        
+                        if (parsedText) {
+                            documentContent = `\n\n[CONTENIDO DEL DOCUMENTO ${doc.fileName}]:\n${parsedText.substring(0, 50000)}`;
+                        }
+                    } catch (e) {
+                        console.error('[Router] Error al procesar documento para la IA:', e);
                     }
-                } catch (e) {
-                    console.error('[Router] Error al procesar documento para la IA:', e);
                 }
             }
         }
 
         // Delegar al controlador (Autorespondedores + Agente IA)
-        await this.messageController.handleIncoming(jid, text, participant, pushName, imageBase64, documentContent);
+        await this.messageController.handleIncoming(jid, text, participant, pushName, imageBase64, documentContent, isVoiceNote);
     }
 
     /**
