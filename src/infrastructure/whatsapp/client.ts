@@ -2,7 +2,8 @@ import makeWASocket, {
     fetchLatestBaileysVersion, 
     makeCacheableSignalKeyStore, 
     ConnectionState,
-    DisconnectReason
+    DisconnectReason,
+    proto
 } from '@whiskeysockets/baileys';
 import { useSQLiteAuthState } from './sqlite-auth';
 import path from 'path';
@@ -11,47 +12,109 @@ import pino from 'pino';
 const logger = pino({ level: 'silent' });
 
 /**
+ * Almacén en memoria de mensajes recientes para responder a solicitudes de reintento de descifrado (Signal Protocol E2EE).
+ * Evita que el cliente de WhatsApp del destinatario se quede indefinidamente con "Esperando el mensaje. Esto puede tomar tiempo".
+ */
+class MessageLRUCache {
+    private cache = new Map<string, proto.IMessage>();
+    private readonly maxSize: number;
+
+    constructor(maxSize = 1000) {
+        this.maxSize = maxSize;
+    }
+
+    set(id: string, msg: proto.IMessage): void {
+        if (!id || !msg) return;
+        if (this.cache.size >= this.maxSize) {
+            const firstKey = this.cache.keys().next().value;
+            if (firstKey) this.cache.delete(firstKey);
+        }
+        this.cache.set(id, msg);
+    }
+
+    get(id: string): proto.IMessage | undefined {
+        return id ? this.cache.get(id) : undefined;
+    }
+
+    clear(): void {
+        this.cache.clear();
+    }
+}
+
+/**
  * INFRASTRUCTURE LAYER
  * Este cliente solo se encarga de la conexión pura con Baileys.
  * No sabe nada de lógica de negocio (IA, recordatorios, etc).
  */
 export class WhatsAppClient {
-    private socket: any;
+    private socket: any = null;
     private state: 'connecting' | 'connected' | 'disconnected' = 'disconnected';
     private qr: string | null = null;
     private groupCache: any = null;
     private groupCacheTime: number = 0;
     private groupFetchPromise: Promise<any> | null = null;
+
+    // Control de sincronización de conexión
     private connectionPromise: Promise<void> | null = null;
     private resolveConnection: (() => void) | null = null;
+    private rejectConnection: ((err: Error) => void) | null = null;
+    private reconnectTimeout: NodeJS.Timeout | null = null;
+    private isConnecting = false;
+
+    // Control de sesión SQLite
     private authCloseFn: (() => void) | null = null;
     private authClearFn: (() => void) | null = null;
     private purgePreKeysFn: (() => void) | null = null;
+
+    // Almacén en memoria para reintentos criptográficos
+    private messageCache = new MessageLRUCache(1000);
 
     // Callbacks para desacoplar el cliente del resto de la app
     public onStatusUpdate?: (data: { state: string, qr?: string }) => void;
     public onMessage?: (data: any) => void;
 
-    async connect() {
-        if (this.state === 'connecting') return;
-        
-        // Limpiar listeners del socket viejo para evitar fugas de memoria y duplicaciones
+    async connect(): Promise<void> {
+        // Evitar múltiples ejecuciones de connect() simultáneas
+        if (this.isConnecting || this.state === 'connected') {
+            return;
+        }
+        this.isConnecting = true;
+
+        // Cancelar cualquier temporizador de reconexión pendiente
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
+        }
+
+        // Limpiar listeners y socket anterior para evitar sockets huérfanos en background
         if (this.socket) {
-            try { this.socket.ev.removeAllListeners(); } catch (e) {}
+            try {
+                this.socket.ev.removeAllListeners();
+                this.socket.end(undefined);
+            } catch (e) {}
             this.socket = null;
         }
 
-        // Si había una promesa de conexión pendiente de una sesión anterior fallida, rechazarla o resolverla
+        // Cerrar manejador SQLite anterior si quedó abierto para evitar bloqueos y fugas
+        if (this.authCloseFn) {
+            try { this.authCloseFn(); } catch (e) {}
+            this.authCloseFn = null;
+        }
+
+        // Si había una promesa de conexión pendiente anterior, resolverla
         if (this.resolveConnection) {
             this.resolveConnection();
+            this.resolveConnection = null;
+            this.rejectConnection = null;
         }
 
         this.state = 'connecting';
         this.onStatusUpdate?.({ state: 'connecting', qr: this.qr || undefined });
         
-        // Crear una promesa que se resolverá cuando estemos conectados
-        this.connectionPromise = new Promise((resolve) => {
+        // Crear una promesa fresca que se resolverá cuando la conexión esté en estado 'open'
+        this.connectionPromise = new Promise((resolve, reject) => {
             this.resolveConnection = resolve;
+            this.rejectConnection = reject;
         });
 
         try {
@@ -69,17 +132,24 @@ export class WhatsAppClient {
                 },
                 logger,
                 printQRInTerminal: false,
-                browser: ['BotMaRe', 'Chrome', '120.0.0'], // Usar un user-agent más moderno para evitar bloqueos
-                syncFullHistory: false, // No descargar todo el historial para evitar Timeouts
-                shouldSyncHistoryMessage: () => false, // No sincronizar mensajes antiguos
-                generateHighQualityLinkPreview: false, // Ahorrar recursos al no generar previsualizaciones pro
-                markOnlineOnConnect: true, // Cambiado a true: WhatsApp Web a veces desconecta si no marcas online
-                connectTimeoutMs: 60000, // Bajar a 60s para que detecte fallos más rápido y reconecte
-                defaultQueryTimeoutMs: 0, // 0 desactiva el timeout interno para consultas lentas iniciales
-                keepAliveIntervalMs: 25000, // Bajar a 25s (NAT/Termux cierra puertos silenciosamente rápido)
+                browser: ['BotMaRe', 'Chrome', '120.0.0'],
+                syncFullHistory: false,
+                shouldSyncHistoryMessage: () => false,
+                generateHighQualityLinkPreview: false,
+                markOnlineOnConnect: true,
+                connectTimeoutMs: 60000,
+                defaultQueryTimeoutMs: 0,
+                keepAliveIntervalMs: 25000,
                 retryRequestDelayMs: 500,
                 maxMsgRetryCount: 5,
-                getMessage: async () => { return undefined; } // Prevenir envío erróneo de texto en reintentos
+                // Función esencial para que WhatsApp pueda renegociar claves cuando el dispositivo del destinatario envía un msg-retry
+                getMessage: async (key) => {
+                    if (key?.id) {
+                        const cached = this.messageCache.get(key.id);
+                        if (cached) return cached;
+                    }
+                    return proto.Message.fromObject({});
+                }
             });
 
             this.socket.ev.on('creds.update', saveCreds);
@@ -96,80 +166,108 @@ export class WhatsAppClient {
                 if (connection === 'open') {
                     this.state = 'connected';
                     this.qr = null;
+                    this.isConnecting = false;
                     this.onStatusUpdate?.({ state: 'connected' });
-                    // Resolver la promesa de conexión
-                    this.resolveConnection?.();
                     
-                    // Sincronizar grupos y guardar la promesa
-                    console.log("[WhatsAppClient] Sincronizando lista de grupos...");
+                    // Resolver la promesa de conexión activa
+                    this.resolveConnection?.();
+                    this.resolveConnection = null;
+                    this.rejectConnection = null;
+                    
+                    // Sincronizar grupos de forma pasiva
                     this.groupFetchPromise = this.getGroups().catch(() => null);
 
                     // Sincronizar automáticamente el nombre de perfil de WhatsApp con el bot_name configurado
-                    // Agregamos un retraso de 3 segundos para asegurar que el estado de la sesión esté completamente cargado en Baileys
                     setTimeout(() => {
                         try {
                             const { getSettings } = require('../../core/memory');
                             getSettings().then((settings: any) => {
                                 const botName = settings.bot_name || 'BotMaRe';
                                 if (this.socket && typeof this.socket.updateProfileName === 'function') {
-                                    console.log(`[WhatsAppClient] Sincronizando nombre de perfil en WhatsApp con settings: ${botName}`);
                                     this.socket.updateProfileName(botName).catch((e: any) => {
                                         console.warn('[WhatsAppClient] No se pudo actualizar el nombre del perfil en WhatsApp:', e.message);
                                     });
                                 }
                             }).catch(() => null);
                         } catch (e: any) {
-                            console.warn('[WhatsAppClient] Error al cargar getSettings para sincronizar perfil:', e.message);
+                            console.warn('[WhatsAppClient] Error al sincronizar nombre de perfil:', e.message);
                         }
                     }, 3000);
                 } else if (connection === 'close') {
                     this.state = 'disconnected';
+                    this.isConnecting = false;
+
+                    // Invalidar la promesa de conexión previa para evitar lecturas obsoletas
+                    if (this.rejectConnection) {
+                        this.rejectConnection(new Error('Conexión cerrada por WhatsApp'));
+                        this.rejectConnection = null;
+                        this.resolveConnection = null;
+                    }
+                    this.connectionPromise = null;
+
                     this.onStatusUpdate?.({ state: 'disconnected' });
                     
                     const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
                     const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
                     
                     if (shouldReconnect) {
-                        // Si Baileys solicita explícitamente un reinicio de la conexión interna (515) reanudamos rápido
                         const isRestartRequired = statusCode === DisconnectReason.restartRequired;
-                        const delay = isRestartRequired ? 500 : 5000; 
+                        const delay = isRestartRequired ? 1000 : 5000; 
                         
-                        console.log(`[Infraestructura WA] Conexión perdida (Causa: ${statusCode}). Reintentando en ${delay/1000}s...`);
-                        setTimeout(() => {
+                        console.log(`[WhatsAppClient] Conexión cerrada (Código: ${statusCode || 'desconocido'}). Reintentando en ${delay/1000}s...`);
+                        this.reconnectTimeout = setTimeout(() => {
                             void this.connect();
                         }, delay);
                     } else {
-                        console.log('[Infraestructura WA] Sesión cerrada permanentemente. Generando nuevo código QR...');
+                        console.log('[WhatsAppClient] Sesión cerrada permanentemente (Logged Out). Limpiando credenciales para nuevo QR...');
                         this.qr = null;
                         this.authClearFn?.();
-                        setTimeout(() => {
+                        this.reconnectTimeout = setTimeout(() => {
                             void this.connect();
                         }, 1000);
                     }
                 }
             });
 
-            // Emitimos los mensajes crudos para que el Router los procese
+            // Emitimos los mensajes y los guardamos en caché para resolver posibles reintentos de cifrado
             this.socket.ev.on('messages.upsert', (data: any) => {
+                if (data?.messages) {
+                    for (const msg of data.messages) {
+                        if (msg?.key?.id && msg?.message) {
+                            this.messageCache.set(msg.key.id, msg.message);
+                        }
+                    }
+                }
                 this.onMessage?.(data);
             });
 
         } catch (error) {
-            console.error('[Infraestructura WA] Error al conectar:', error);
+            console.error('[WhatsAppClient] Error al conectar:', error);
             this.state = 'disconnected';
+            this.isConnecting = false;
+            if (this.rejectConnection) {
+                this.rejectConnection(error as Error);
+                this.rejectConnection = null;
+                this.resolveConnection = null;
+            }
+            this.connectionPromise = null;
             this.onStatusUpdate?.({ state: 'disconnected' });
         }
     }
 
-    async sendRaw(jid: string, content: any) {
-        // Si no estamos conectados, esperamos un máximo de 10 segundos
+    async sendRaw(jid: string, content: any): Promise<any> {
+        // Si no estamos conectados, esperamos con un timeout controlado de 15 segundos
         if (this.state !== 'connected') {
-            console.log(`[WhatsAppClient] Esperando conexión para enviar a ${jid}...`);
+            console.log(`[WhatsAppClient] Esperando conexión activa para enviar a ${jid}...`);
             if (this.connectionPromise) {
-                await Promise.race([
-                    this.connectionPromise,
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout esperando conexión')), 10000))
-                ]);
+                try {
+                    await Promise.race([
+                        this.connectionPromise,
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout esperando conexión')), 15000))
+                    ]);
+                } catch (e) {
+                    throw new Error(`WhatsApp Client no disponible (${(e as Error).message})`);
+                }
             }
         }
 
@@ -177,34 +275,27 @@ export class WhatsAppClient {
             throw new Error('WhatsApp Client not connected');
         }
 
-        // Si es un grupo, intentamos asegurar que el bot lo "conoce"
-        if (jid.endsWith('@g.us')) {
-            // Esperar a que la sincronización inicial termine si está en curso
-            if (this.groupFetchPromise) {
-                console.log(`[WhatsAppClient] Esperando fin de sincronización de grupos para ${jid}...`);
-                await this.groupFetchPromise.catch(() => null);
-            }
-
-            try {
-                // Forzar la carga de metadatos del grupo
-                await this.socket.groupMetadata(jid);
-                // Truco: Simular que "vemos" el chat antes de escribir
-                await this.socket.readMessages([{ remoteJid: jid, fromMe: false, id: '1' }]).catch(() => null);
-                await new Promise(r => setTimeout(r, 1000));
-            } catch (e: any) {
-                // Hacemos que el fallo de obtención de metadatos sea no-bloqueante
-                console.warn(`[WhatsAppClient] No se pudieron obtener metadatos para ${jid}: ${e.message}. Continuando intento de envío...`);
-            }
+        // Si es un grupo y hay una sincronización en curso, esperar que concluya
+        if (jid.endsWith('@g.us') && this.groupFetchPromise) {
+            await this.groupFetchPromise.catch(() => null);
         }
 
         try {
-            return await this.socket.sendMessage(jid, content);
+            const sentResult = await this.socket.sendMessage(jid, content);
+            if (sentResult?.key?.id && sentResult?.message) {
+                this.messageCache.set(sentResult.key.id, sentResult.message);
+            }
+            return sentResult;
         } catch (error: any) {
-            // Si falla con not-acceptable en un grupo, esperamos un poco y reintentamos una vez
-            if (error.message?.includes('not-acceptable') && jid.endsWith('@g.us')) {
-                console.log(`[WhatsAppClient] Reintentando envío a grupo ${jid} tras error not-acceptable...`);
-                await new Promise(r => setTimeout(r, 3000));
-                return await this.socket.sendMessage(jid, content);
+            // Si falla con not-acceptable en un grupo, reintentamos de forma segura una vez
+            if (error?.message?.includes('not-acceptable') && jid.endsWith('@g.us')) {
+                console.warn(`[WhatsAppClient] Reintentando envío a grupo ${jid} tras error not-acceptable...`);
+                await new Promise(r => setTimeout(r, 2500));
+                const retryResult = await this.socket.sendMessage(jid, content);
+                if (retryResult?.key?.id && retryResult?.message) {
+                    this.messageCache.set(retryResult.key.id, retryResult.message);
+                }
+                return retryResult;
             }
             throw error;
         }
@@ -225,8 +316,14 @@ export class WhatsAppClient {
     }
 
     async disconnect() {
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
+        }
+
         if (this.socket) {
             try {
+                this.socket.ev.removeAllListeners();
                 this.socket.end(undefined);
             } catch (e) {}
             this.socket = null;
@@ -240,15 +337,26 @@ export class WhatsAppClient {
             this.authCloseFn = null;
         }
 
+        this.messageCache.clear();
+        this.connectionPromise = null;
+        this.resolveConnection = null;
+        this.rejectConnection = null;
+        this.isConnecting = false;
         this.state = 'disconnected';
     }
 
     async resetSession() {
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
+        }
+
         if (this.socket) {
             try {
                 await this.socket.logout().catch(() => null);
             } catch (e) {}
             try {
+                this.socket.ev.removeAllListeners();
                 this.socket.end(undefined);
             } catch (e) {}
             this.socket = null;
@@ -269,6 +377,11 @@ export class WhatsAppClient {
             this.authCloseFn = null;
         }
 
+        this.messageCache.clear();
+        this.connectionPromise = null;
+        this.resolveConnection = null;
+        this.rejectConnection = null;
+        this.isConnecting = false;
         this.qr = null;
         this.state = 'disconnected';
         this.onStatusUpdate?.({ state: 'disconnected' });
@@ -300,11 +413,10 @@ export class WhatsAppClient {
                 }
                 return groups || this.groupCache || {};
             } catch (e: any) {
-                // Manejar errores conocidos silenciosamente para evitar spam en consola
                 if (e.message?.includes('rate-overlimit') || e?.output?.payload?.message === 'rate-overlimit') {
-                    console.warn('[Infraestructura WA] Límite de tasa excedido en grupos (rate-overlimit). Usando caché o devolviendo vacío.');
+                    console.warn('[WhatsAppClient] Límite de tasa excedido en grupos (rate-overlimit). Usando caché o devolviendo vacío.');
                 } else if (!e.message?.includes('Connection Closed')) {
-                    console.error('[Infraestructura WA] Error al obtener grupos:', e);
+                    console.error('[WhatsAppClient] Error al obtener grupos:', e.message);
                 }
                 return this.groupCache || {};
             } finally {
@@ -324,10 +436,8 @@ export class WhatsAppClient {
             throw new Error('El motor de WhatsApp aún se está inicializando. Por favor espera unos segundos.');
         }
 
-        // Limpiar cualquier carácter no numérico
         let clean = phoneNumber.replace(/\D/g, '');
         
-        // Si el usuario ingresa 10 dígitos (México), agregar prefijo internacional 521
         if (clean.length === 10) {
             clean = `521${clean}`;
         } else if (clean.length === 12 && clean.startsWith('52') && !clean.startsWith('521')) {
