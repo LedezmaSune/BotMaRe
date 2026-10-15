@@ -8,18 +8,24 @@ export class SheetsSyncJob {
     static async execute(): Promise<void> {
         try {
             const settings = await (dbManager as any).getSheetSyncSettings();
-            if (!settings || !settings.isActive || settings.syncInterval === 'manual') {
+            if (!settings || !settings.isActive || !settings.spreadsheetId) {
                 return;
             }
 
             const now = new Date();
-            const lastSync = settings.lastSyncTime ? new Date(settings.lastSyncTime) : new Date(0);
-            const diffMinutes = (now.getTime() - lastSync.getTime()) / 60000;
+            const lastSync = settings.lastSyncTime ? new Date(settings.lastSyncTime) : null;
 
             let shouldSync = false;
-            if (settings.syncInterval === '15m' && diffMinutes >= 15) shouldSync = true;
-            if (settings.syncInterval === '1h' && diffMinutes >= 60) shouldSync = true;
-            if (settings.syncInterval === '12h' && diffMinutes >= 720) shouldSync = true;
+
+            // Si nunca se ha sincronizado pero está activo, ejecutar la sincronización inicial
+            if (!lastSync) {
+                shouldSync = true;
+            } else if (settings.syncInterval && settings.syncInterval !== 'manual') {
+                const diffMinutes = (now.getTime() - lastSync.getTime()) / 60000;
+                if (settings.syncInterval === '15m' && diffMinutes >= 15) shouldSync = true;
+                if (settings.syncInterval === '1h' && diffMinutes >= 60) shouldSync = true;
+                if (settings.syncInterval === '12h' && diffMinutes >= 720) shouldSync = true;
+            }
 
             if (shouldSync) {
                 console.log("[SheetsSyncJob] Ejecutando sincronización automática de Google Sheets...");

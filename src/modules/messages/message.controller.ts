@@ -58,7 +58,16 @@ export class MessageController {
             // Solo añadir el caption al PRIMER archivo
             const caption = i === 0 && textWithoutMedia ? textWithoutMedia : undefined;
             
-            await this.messageService.sendMediaFromUrl(jid, mediaUrl, caption, mediaCategory);
+            try {
+                await this.messageService.sendMediaFromUrl(jid, mediaUrl, caption, mediaCategory);
+            } catch (mediaErr: any) {
+                console.warn(`[MessageController] No se pudo enviar multimedia [${tagType}], enviando mensaje y enlace directo:`, mediaErr.message);
+                if (caption) {
+                    await this.messageService.sendMessage(jid, `${caption}\n\n📎 Enlace al archivo adjunto:\n${mediaUrl}`);
+                } else {
+                    await this.messageService.sendMessage(jid, `📎 Enlace al archivo adjunto:\n${mediaUrl}`);
+                }
+            }
             
             // Pausa de 1 segundo entre archivos para no saturar WhatsApp y mantener orden
             if (i < matches.length - 1) {
@@ -108,10 +117,16 @@ export class MessageController {
                     let fileUrl = null;
                     try {
                         if (autoresponderMatch.options) {
-                            const parsed = JSON.parse(autoresponderMatch.options);
-                            if (parsed.image) fileUrl = parsed.image;
+                            const parsed = typeof autoresponderMatch.options === 'string'
+                                ? JSON.parse(autoresponderMatch.options)
+                                : autoresponderMatch.options;
+                            fileUrl = parsed.image || parsed.file || parsed.url || null;
                         }
-                    } catch(e) {}
+                    } catch(e) {
+                        if (typeof autoresponderMatch.options === 'string' && (autoresponderMatch.options.startsWith('http') || autoresponderMatch.options.startsWith('['))) {
+                            fileUrl = autoresponderMatch.options;
+                        }
+                    }
 
                     if (fileUrl) {
                         let mediaType: 'image' | 'document' | 'video' | 'audio' = 'image';
@@ -129,7 +144,7 @@ export class MessageController {
                         } else {
                             // Detección tradicional si es URL directa
                             const lowerUrl = fileUrl.toLowerCase();
-                            if (lowerUrl.includes('.pdf') || lowerUrl.includes('.doc') || lowerUrl.includes('.xls') || lowerUrl.includes('drive.google.com')) {
+                            if (lowerUrl.includes('.pdf') || lowerUrl.includes('.doc') || lowerUrl.includes('.xls') || lowerUrl.includes('drive.google.com') || lowerUrl.includes('docs.google.com')) {
                                 mediaType = 'document';
                             } else if (lowerUrl.includes('.mp4') || lowerUrl.includes('.avi')) {
                                 mediaType = 'video';
@@ -138,7 +153,14 @@ export class MessageController {
                             }
                         }
 
-                        await this.messageService.sendMediaFromUrl(jid, finalUrl, processedResponse, mediaType);
+                        try {
+                            await this.messageService.sendMediaFromUrl(jid, finalUrl, processedResponse, mediaType);
+                        } catch (mediaError: any) {
+                            console.warn(`[MessageController] Error al enviar archivo de Sheets (${finalUrl}), enviando texto y link de respaldo:`, mediaError.message);
+                            // Fallback de alta confiabilidad: enviar el mensaje de texto junto con el enlace al archivo
+                            const fallbackMsg = `${processedResponse}\n\n📎 Enlace al archivo adjunto:\n${finalUrl}`;
+                            await this.messageService.sendMessage(jid, fallbackMsg);
+                        }
                     } else {
                         await this.messageService.sendMessage(jid, processedResponse);
                     }
@@ -190,7 +212,7 @@ export class MessageController {
             console.error('[MessageController] Error handling incoming message:', error);
             try {
                 if (!isGroup) {
-                    await this.messageService.sendMessage(jid, 'Ups, tuve un error interno al procesar tu mensaje. La inteligencia artificial podría no estar disponible temporalmente.');
+                    await this.messageService.sendMessage(jid, 'Ups, ocurrió un inconveniente temporal al procesar tu solicitud. Por favor intenta de nuevo en un momento.');
                 }
             } catch (sendError) {
                 console.error('[MessageController] Failed to send error feedback message:', sendError);

@@ -1,7 +1,103 @@
 import { google } from 'googleapis';
 import * as dbManager from '../../core/dbManager';
 
+export interface ParsedSheetRow {
+  keyword: string;
+  reply: string;
+  matchType: 'contains' | 'exact';
+  fileUrl: string | null;
+}
 
+/**
+ * Extrae el Spreadsheet ID y el GID (pestaña) si el usuario ingresó una URL completa o con parámetros
+ */
+export function extractSheetInfo(rawInput: string): { spreadsheetId: string; gid?: string } {
+  if (!rawInput) return { spreadsheetId: '' };
+  const trimmed = rawInput.trim();
+
+  // Extraer gid si viene en el enlace (#gid=12345 o ?gid=12345)
+  const gidMatch = trimmed.match(/[#&?]gid=([0-9]+)/i);
+  const gid = gidMatch ? gidMatch[1] : undefined;
+
+  // Extraer spreadsheetId de enlaces docs.google.com/spreadsheets/d/ID/...
+  const idMatch = trimmed.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/i);
+  if (idMatch && idMatch[1]) {
+    return { spreadsheetId: idMatch[1], gid };
+  }
+
+  // Si viene solo el ID o con parámetros anexos
+  const cleanId = trimmed.split('/')[0].split('?')[0].split('#')[0].trim();
+  return { spreadsheetId: cleanId, gid };
+}
+
+/**
+ * Determina si una fila parece ser el encabezado de la hoja de cálculo
+ */
+function isHeaderRow(row: string[]): boolean {
+  if (!row || row.length === 0) return false;
+  const col0 = (row[0] || '').toLowerCase().trim();
+  const col1 = (row[1] || '').toLowerCase().trim();
+  return col0.includes('palabra') || 
+         col0.includes('keyword') || 
+         col0.includes('disparador') || 
+         col0.includes('pregunta') || 
+         col0 === 'columna a' || 
+         col1.includes('respuesta') || 
+         col1 === 'columna b';
+}
+
+/**
+ * Parsea una fila de Google Sheets de forma flexible (soporta 2, 3 o 4 columnas)
+ */
+function parseRow(row: string[]): ParsedSheetRow | null {
+  if (!row || row.length < 2) return null;
+  const col0 = row[0]?.trim();
+  const col1 = row[1]?.trim();
+  const col2 = row[2]?.trim() || '';
+  const col3 = row[3]?.trim() || '';
+
+  // Se requiere al menos palabra clave y respuesta
+  if (!col0 || !col1) return null;
+
+  const isUrlOrMediaTag = (val: string) => {
+    if (!val) return false;
+    return /^https?:\/\//i.test(val) || 
+           val.includes('drive.google.com') || 
+           val.includes('docs.google.com') || 
+           /^\[(IMG|DOC|VIDEO|AUDIO|MEDIA):/i.test(val);
+  };
+
+  let matchType: 'contains' | 'exact' = 'contains';
+  let fileUrl: string | null = null;
+
+  if (isUrlOrMediaTag(col2) && !col3) {
+    // Caso: Hoja de 3 columnas (Col A: Keyword, Col B: Respuesta, Col C: Archivo)
+    fileUrl = col2;
+    matchType = 'contains';
+  } else {
+    // Caso estándar: Col C es tipo de coincidencia (1 = exacta, 2 = contiene)
+    const cLower = col2.toLowerCase();
+    if (cLower === '1' || cLower.includes('exact') || cLower === 'igual') {
+      matchType = 'exact';
+    } else {
+      // Por defecto o si es '2', 'contiene', 'parcial', o está vacía: contiene
+      matchType = 'contains';
+    }
+
+    if (col3) {
+      fileUrl = col3;
+    } else if (isUrlOrMediaTag(col2)) {
+      fileUrl = col2;
+    }
+  }
+
+  return {
+    keyword: col0,
+    reply: col1,
+    matchType,
+    fileUrl: fileUrl || null
+  };
+}
 
 export class GoogleSheetsService {
   
@@ -15,35 +111,58 @@ export class GoogleSheetsService {
 
       const authMethod = settings.authMethod || 'oauth';
       let rows: string[][] = [];
-      const cleanSpreadsheetId = settings.spreadsheetId.trim();
+      const { spreadsheetId: cleanSpreadsheetId, gid } = extractSheetInfo(settings.spreadsheetId);
+
+      if (!cleanSpreadsheetId) {
+        return { success: false, message: 'El ID o enlace de la Hoja de Cálculo proporcionado no es válido.' };
+      }
 
       if (authMethod === 'public') {
-        // Option A: Public Sheet using CSV Export
-        const url = `https://docs.google.com/spreadsheets/d/${cleanSpreadsheetId}/export?format=csv`;
+        // Opción A: Hoja pública mediante exportación CSV
+        let url = `https://docs.google.com/spreadsheets/d/${cleanSpreadsheetId}/export?format=csv`;
+        if (gid) {
+          url += `&gid=${gid}`;
+        }
+
         const axios = require('axios');
         let axiosRes;
         let retries = 3;
         
         while (retries > 0) {
             try {
-                axiosRes = await axios.get(url, { responseType: 'text', validateStatus: () => true, timeout: 10000 });
-                break; // Si tiene éxito salimos del bucle
+                axiosRes = await axios.get(url, { 
+                  responseType: 'text', 
+                  validateStatus: () => true, 
+                  timeout: 15000,
+                  headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                  }
+                });
+                break;
             } catch (err: any) {
                 retries--;
                 if (retries === 0) {
-                    return { success: false, message: `Error de red reiterado al conectar con Google Sheets: ${err.message}` };
+                    return { success: false, message: `Error de red al conectar con Google Sheets: ${err.message}` };
                 }
-                // Esperar 2 segundos antes de reintentar
                 await new Promise(res => setTimeout(res, 2000));
             }
         }
         
         if (!axiosRes || axiosRes.status !== 200) {
-           return { success: false, message: `No se pudo acceder a la hoja pública. Código HTTP: ${axiosRes ? axiosRes.status : 'Desconocido'}. Verifica que el ID sea correcto y el enlace sea público.` };
+           return { success: false, message: `No se pudo acceder a la hoja pública (Código HTTP: ${axiosRes ? axiosRes.status : 'Desconocido'}). Verifica que el ID sea correcto y que el enlace esté compartido públicamente como 'Lector'.` };
         }
-        const text = axiosRes.data;
         
-        // CSV Parser robusto para soportar saltos de línea y comas dentro del texto
+        const text = axiosRes.data;
+
+        // Validar si Google devolvió HTML (pantalla de inicio de sesión o permiso denegado)
+        if (typeof text === 'string' && (text.includes('<!DOCTYPE html') || text.includes('<html') || text.includes('ServiceLogin'))) {
+           return { 
+             success: false, 
+             message: 'Google denegó el acceso público a la hoja. Asegúrate de hacer clic en "Compartir" en tu hoja de Google Sheets, cambiar el acceso general a "Cualquier persona con el enlace" y rol "Lector".' 
+           };
+        }
+        
+        // CSV Parser robusto para soportar saltos de línea y comas dentro del texto entrecomillado
         const parsedRows: string[][] = [];
         let currentRow: string[] = [];
         let currentCell = '';
@@ -88,12 +207,12 @@ export class GoogleSheetsService {
       } else {
         let sheets;
         if (authMethod === 'service_account') {
-          // Option B: Service Account JSON
+          // Opción B: Cuenta de servicio JSON
           const path = require('path');
           const fs = require('fs');
           const keyPath = path.join(process.cwd(), 'data', 'credentials.json');
           if (!fs.existsSync(keyPath)) {
-            return { success: false, message: 'No se encontró el archivo credentials.json de la Cuenta de Servicio.' };
+            return { success: false, message: 'No se encontró el archivo credentials.json de la Cuenta de Servicio en data/.' };
           }
           const auth = new google.auth.GoogleAuth({
             keyFile: keyPath,
@@ -101,9 +220,9 @@ export class GoogleSheetsService {
           });
           sheets = google.sheets({ version: 'v4', auth });
         } else {
-          // Option C: OAuth 2.0 (Default)
+          // Opción C: OAuth 2.0 (Login de Google)
           if (!settings.refreshToken) {
-            return { success: false, message: 'No hay token de sesión OAuth. Inicia sesión con Google.' };
+            return { success: false, message: 'No hay token de sesión OAuth. Inicia sesión con Google en el panel.' };
           }
           const oauth2Client = new google.auth.OAuth2(
             process.env.GOOGLE_CLIENT_ID,
@@ -120,9 +239,11 @@ export class GoogleSheetsService {
           return { success: false, message: 'No se pudo leer la estructura de la hoja de cálculo.' };
         }
 
+        // Encapsular el nombre de la hoja entre comillas simples para evitar fallos de sintaxis con espacios (ej: 'Hoja 1'!A:D)
+        const safeSheetRange = `'${firstSheetName.replace(/'/g, "\\'")}'!A:D`;
         const response = await sheets.spreadsheets.values.get({
           spreadsheetId: cleanSpreadsheetId,
-          range: `${firstSheetName}!A:D`, // <-- Fetching A:D
+          range: safeSheetRange,
         });
 
         rows = response.data.values || [];
@@ -135,7 +256,7 @@ export class GoogleSheetsService {
       return { success: true, rows };
     } catch (error: any) {
       console.error('❌ Error al acceder a Google Sheets:', error);
-      return { success: false, message: `Error de conexión: ${error.message}` };
+      return { success: false, message: `Error al acceder a Google Sheets: ${error.message}` };
     }
   }
 
@@ -146,13 +267,19 @@ export class GoogleSheetsService {
     try {
       const settings = await dbManager.getSheetSyncSettings();
 
-      if (!settings || !settings.isActive) {
-        return { success: false, message: 'Google Sheets no está configurado o está desactivado globalmente.' };
+      if (!settings || !settings.spreadsheetId) {
+        return { success: false, message: 'Falta configurar el ID o enlace de la Hoja de Cálculo.' };
+      }
+
+      // Si el usuario sincroniza manualmente, nos aseguramos de que el módulo quede activo
+      if (!settings.isActive) {
+        settings.isActive = true;
+        await dbManager.saveSheetSyncSettings(settings);
       }
 
       const result = await this.fetchRows();
       if (!result.success || !result.rows) {
-        return { success: false, message: result.message || 'Error desconocido' };
+        return { success: false, message: result.message || 'Error desconocido al leer la hoja' };
       }
 
       const rows = result.rows;
@@ -160,29 +287,24 @@ export class GoogleSheetsService {
       // Borramos TODAS las auto-respuestas anteriores que provengan de Google Sheets
       await this.cleanSynced();
 
-      // Iteramos e insertamos las nuevas (Saltando la primera fila si parece un encabezado)
+      // Iteramos e insertamos las nuevas
       let importedCount = 0;
       for (let i = 0; i < rows.length; i++) {
-        const keyword = rows[i][0]?.trim();
-        const reply = rows[i][1]?.trim();
-        const matchCol = rows[i][2]?.trim();
-        const imageUrl = rows[i][3]?.trim();
+        const rawRow = rows[i];
+        if (i === 0 && isHeaderRow(rawRow)) continue;
 
-        // Ignoramos filas si falta alguna de las 3 columnas
-        if (!keyword || !reply || !matchCol) continue;
-        if (i === 0 && keyword.toLowerCase().includes('palabra')) continue;
+        const parsed = parseRow(rawRow);
+        if (!parsed) continue;
 
-        const matchType = matchCol === '2' ? 'contains' : 'exact';
-
-        // Insertamos en Lowdb
+        // Insertamos en el almacén de datos (Lowdb o MongoDB)
         await dbManager.createAutoresponder(
-          keyword,
-          matchType, 
-          reply,
-          'menu_only', // 'menu_only' significa que se enviará la respuesta directamente sin pasar por la IA
-          true, // isActive
+          parsed.keyword,
+          parsed.matchType, 
+          parsed.reply,
+          'menu_only', // Respuesta directa
+          true,        // isActive
           null,
-          JSON.stringify({ source: 'sheets_synced', image: imageUrl || null }) // Opciones extendidas
+          JSON.stringify({ source: 'sheets_synced', image: parsed.fileUrl || null })
         );
         importedCount++;
       }
@@ -191,7 +313,8 @@ export class GoogleSheetsService {
       settings.lastSyncTime = new Date();
       await dbManager.saveSheetSyncSettings(settings);
 
-      return { success: true, message: `Sincronización exitosa.`, count: importedCount };
+      console.log(`[GoogleSheetsService] Sincronización exitosa: ${importedCount} auto-respuestas guardadas.`);
+      return { success: true, message: `Sincronización exitosa. Se importaron ${importedCount} respuestas.`, count: importedCount };
 
     } catch (error: any) {
       console.error('❌ Error al sincronizar Google Sheets:', error);
@@ -211,20 +334,20 @@ export class GoogleSheetsService {
     const preview = [];
     let count = 0;
     for (let i = 0; i < result.rows.length; i++) {
-      const keyword = result.rows[i][0]?.trim();
-      const reply = result.rows[i][1]?.trim();
-      const matchCol = result.rows[i][2]?.trim();
-      const fileUrl = result.rows[i][3]?.trim() || '';
+      const rawRow = result.rows[i];
+      if (i === 0 && isHeaderRow(rawRow)) continue;
 
-      // Ignoramos si falta alguna de las primeras 3 columnas principales
-      if (!keyword || !reply || !matchCol) continue;
-      if (i === 0 && keyword.toLowerCase().includes('palabra')) continue;
+      const parsed = parseRow(rawRow);
+      if (!parsed) continue;
 
-      const matchType = matchCol === '2' ? 'Contiene (2)' : 'Exacta (1)';
-
-      preview.push({ keyword, reply, matchType, fileUrl });
+      preview.push({
+        keyword: parsed.keyword,
+        reply: parsed.reply,
+        matchType: parsed.matchType === 'contains' ? 'Contiene (2)' : 'Exacta (1)',
+        fileUrl: parsed.fileUrl || ''
+      });
       count++;
-      if (count >= 200) break; // Mostramos hasta 200
+      if (count >= 200) break; // Límite de vista previa
     }
 
     return { success: true, preview };
@@ -247,3 +370,4 @@ export class GoogleSheetsService {
     }
   }
 }
+

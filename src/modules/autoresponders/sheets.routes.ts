@@ -71,6 +71,14 @@ export function createSheetsRouter() {
                 authMethod: req.body.authMethod || current?.authMethod || 'oauth'
             };
             await dbManager.saveSheetSyncSettings(newSettings);
+
+            // Sincronización automática de fondo si el módulo está activado y tiene ID
+            if (newSettings.isActive && newSettings.spreadsheetId) {
+                sheetsService.syncNow().catch((err: any) => {
+                    console.warn('[SheetsRouter] Sincronización automática de fondo falló:', err.message);
+                });
+            }
+
             res.json(newSettings);
         } catch (error: any) {
             res.status(500).json({ error: error.message });

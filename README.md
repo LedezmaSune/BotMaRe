@@ -1,16 +1,16 @@
 <div align="center">
-  <img src="https://img.shields.io/badge/BotMaRe-AI_Agent-6366f1?style=for-the-badge&logo=probot" alt="BotMaRe Banner"/>
+  <img src="https://img.shields.io/badge/BotMaRe-v2.7.0-6366f1?style=for-the-badge&logo=probot" alt="BotMaRe Banner"/>
   <h1>🦊 BotMaRe - Dashboard</h1>
   <p><strong>La plataforma definitiva de automatización para WhatsApp impulsada por Inteligencia Artificial, Orquestación Multi-Proveedor y Despliegue Multi-Plataforma.</strong></p>
 
   <p>
-    <img src="https://img.shields.io/badge/Node.js-18+-339933?logo=nodedotjs&logoColor=white" alt="Node.js"/>
-    <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs" alt="Next.js"/>
-    <img src="https://img.shields.io/badge/Express-5-000000?logo=express" alt="Express"/>
-    <img src="https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white" alt="TypeScript"/>
-    <img src="https://img.shields.io/badge/Terraform-1.5+-844FBA?logo=terraform&logoColor=white" alt="Terraform"/>
-    <img src="https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white" alt="Docker"/>
-    <img src="https://img.shields.io/badge/License-ISC-blue" alt="License"/>
+    <img src="https://img.shields.io/badge/Version-2.7.0-indigo?style=flat-square" alt="Version 2.7.0"/>
+    <img src="https://img.shields.io/badge/Tests-52%20Passed-success?style=flat-square" alt="Tests 52 Passed"/>
+    <img src="https://img.shields.io/badge/Node.js-18+-339933?logo=nodedotjs&logoColor=white&style=flat-square" alt="Node.js"/>
+    <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&style=flat-square" alt="Next.js"/>
+    <img src="https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white&style=flat-square" alt="TypeScript"/>
+    <img src="https://img.shields.io/badge/Baileys-6.7.24%20(E2EE%20Hardened)-25D366?logo=whatsapp&logoColor=white&style=flat-square" alt="Baileys"/>
+    <img src="https://img.shields.io/badge/License-ISC-blue?style=flat-square" alt="License"/>
   </p>
   <p>
     <i>Automatiza, difunde y responde como un humano 24/7 en Android, Linux, Windows y la Nube.</i>
@@ -57,15 +57,15 @@
 | Característica | Descripción |
 | :--- | :--- |
 | 🧠 **IA Multi-Proveedor (11 IAs)** | Groq, Cerebras, SambaNova, SiliconFlow (DeepSeek V3/R1), Mistral, Together, Gemini 2.5, DeepSeek, OpenRouter, Nvidia NIM y OpenAI con Failover automático. |
+| 🛡️ **Blindaje Criptográfico Signal / Baileys** | Transporte E2EE con resolución segura de reintentos (`getMessage`), eliminando bloqueos de *"Esperando mensaje"* y protegiendo la conexión durante reconexiones en caliente. |
 | ⚡ **Diagnóstico de IAs Live** | Pruebas de latencia y estado desde consola (`pnpm test:llm`), Telegram (`/diagnostico`) y Web (`⚡ Probar Conexiones IA`). |
-| 🔗 **Enlaces Directos en Dashboard** | Botones `Obtener Key ↗` en la interfaz web para acceder a consolas de desarrollo en 1 clic. |
-| 🧩 **Plugins JS en Sandbox** | Entorno seguro Node.js VM con plantillas prediseñadas, comandos, APIs y multimedia. |
-| 📱 **WhatsApp Agent** | Comprensión de imágenes (Visión), transcripción de audio (Whisper), documentos y QR/Pairing Code instantáneo. |
-| 🦊 **Asistente Telegram** | Control remoto total por comandos (`/diagnostico`, `/backup`, `/start`) y botones interactivos. |
-| 📢 **Difusión con Spintax** | Campañas masivas anti-spam con variación de frases y macros de contacto. |
-| 📅 **Recordatorios Inteligentes** | Programación individual y grupal con frecuencias configurables (horas, días, semanas, meses). |
+| 🧩 **Plugins JS con IA Nativa** | Entorno seguro Node.js VM con helper `api.callAI()` y 6 plugins oficiales (Búsqueda web, Resumen de textos, Traductor, Inspector URL, Webhooks y Google Sheets). |
+| 📊 **Sincronización Google Sheets** | Actualización automática periódica (15m, 1h, 12h o manual) de auto-respuestas y plantillas desde hojas de cálculo de Google. |
+| 📱 **WhatsApp Agent** | Comprensión de imágenes (Visión), transcripción de notas de voz (Whisper), documentos y QR/Pairing Code instantáneo. |
+| 🦊 **Asistente Telegram** | Control remoto total por comandos (`/diagnostico`, `/actualizar`, `/backup`, `/start`) y botones interactivos. |
+| 📢 **Difusión con Spintax** | Campañas masivas anti-spam con variación de frases y macros de contacto dinámicas. |
+| 📅 **Recordatorios Inteligentes** | Programación individual y grupal con frecuencias configurables y verificación de conexión activa. |
 | 🛡️ **Blindaje Anti-Ban** | Retardos progresivos, pausas y simulación humana ("Escribiendo...", "Grabando audio..."). |
-| 📦 **Sincronización Sheets** | Auto-respuestas y plantillas sincronizadas automáticamente desde Google Sheets. |
 | ☁️ **Infraestructura como Código** | Archivos `main.tf` listos para aprovisionar VPS en AWS, Hetzner, DigitalOcean u Oracle Cloud. |
 
 ---
@@ -215,16 +215,34 @@ module.exports = {
 * `ctx.pushName`: Nombre público del perfil de WhatsApp.
 * `ctx.quoted`: Información del mensaje citado o respondido (si existe).
 
-#### 🛠️ Métodos del Objeto `api` (Interacción con WhatsApp):
+#### 🛠️ Métodos del Objeto `api` (Interacción con WhatsApp e IA):
 * `await api.reply(texto)`: Envía una respuesta al chat actual.
 * `await api.sendTo(jid, texto)`: Envía un mensaje a cualquier chat o grupo específico.
 * `await api.sendMedia(url, caption, tipo)`: Descarga y envía archivos (`'image' | 'video' | 'audio' | 'document'`).
+* `await api.react(emoji)`: Reacciona con un emoji al mensaje recibido (ej: `🔍`, `📝`, `🌐`, `⚡`).
+* `await api.callAI(prompt, systemPrompt?)`: Delega tareas de análisis, resumen o traducción directamente en el motor LLM configurado en BotMaRe.
 * `api.getPlugins()`: Devuelve la lista y estado de todos los plugins instalados.
 
 #### 🌐 Librerías Globales Disponibles en Sandbox (Sin `import`/`require`):
 * `axios` y `fetch`: Para consumir servicios web y APIs REST en tiempo real.
+* `Buffer`, `URL`, `Math`, `Date`, `JSON`: Utilidades estándar de Node.js y JavaScript.
 * `console`: Métodos `log`, `warn`, `error` con prefijo `[Plugin:<id>]`.
 * `global.APIs` y `global.APIKeys`: Llaves y endpoints inyectados automáticamente.
+
+---
+
+### 📦 Catálogo de Plugins Preinstalados (`data/plugins/`)
+
+| Plugin | Archivo | Comando | Descripción |
+| :--- | :--- | :--- | :--- |
+| **Búsqueda Web** | `google-search.js` | `!google [consulta]` | Consulta DuckDuckGo Instant Answers, Wikipedia en Español y síntesis con IA. |
+| **Resumidor Inteligente** | `summarize-text.js` | `!resumir [texto o cita]` | Extrae idea principal y viñetas ejecutivas de textos o citas con IA. |
+| **Traductor Multilingüe** | `translate.js` | `!traducir [idioma] [texto]` | Traduce entre múltiples idiomas (`en`, `es`, `fr`, `pt`, `de`, `ja`, etc.) con IA. |
+| **Inspector de Enlaces** | `url-info.js` | `!url [enlace]` | Extrae título, descripción, tarjeta OpenGraph e imagen de cualquier página. |
+| **Integrador Webhook** | `webhook.js` | `!webhook <url> [payload]` | Envía eventos HTTP POST en tiempo real hacia Zapier, Make, n8n o endpoints propios. |
+| **Google Sheets** | `google-sheets.js` | `!sheets [url]` | Inspecciona y resume filas y columnas de hojas de cálculo de Google. |
+| **Clima en Tiempo Real** | `clima.js` | `!clima [ciudad]` | Información meteorológica actualizada al instante. |
+| **Menú Principal** | `menu.js` | `!menuplugin` | Lista todos los plugins instalados y sus comandos disponibles. |
 
 ---
 
@@ -413,6 +431,16 @@ Ejecución continua 24/7 en servidores de producción:
 
 ## 🔄 Historial de Actualizaciones (Changelog)
 
+- **[2.7.0] - 2026-10-15:** Blindaje Criptográfico Baileys E2EE, Reconexión Atómica y Ecosistema de Plugins IA:
+  - 🛡️ **Erradicación de "Esperando Mensaje" en WhatsApp:** Corrección crítica en la gestión criptográfica Signal de Baileys (`getMessage` devuelve `undefined` en lugar de objeto vacío), evitando que retransmisiones corruptas bloqueen el chat del receptor.
+  - ⚡ **Reconexión Atómica:** Renovación de la promesa de sincronización durante reconexiones en caliente y margen de estabilización de 500ms para pre-claves criptográficas antes del despacho de recordatorios.
+  - 🧩 **Ecosistema de Plugins con IA Nativa:** Inyección del helper `api.callAI()` en el sandbox de plugins (VM), permitiendo a cualquier plugin delegar tareas en los LLM configurados sin duplicar claves.
+  - 🌐 **6 Nuevos Plugins Oficiales:** Incorporación de `google-search.js` (Búsqueda web), `summarize-text.js` (Resumen inteligente), `translate.js` (Traductor multilingüe), `url-info.js` (Inspector OpenGraph), `webhook.js` (Despachador HTTP POST) y `google-sheets.js` (Inspector de hojas).
+  - 🧪 **Suite de Pruebas Unitarias Robustecida:** Cobertura automatizada de pruebas para el compilador de plugins y validadores con 52 tests pasando en Vitest.
+- **[2.6.1] - 2026-10-10:** Sincronización Inteligente de Google Sheets y Tolerancia de Formatos:
+  - 📊 **Sincronización Automática Periódica:** Nuevo job programado (`SheetsSyncJob`) para actualizar respuestas de Sheets en intervalos configurables (15m, 1h, 12h o manual).
+  - 🔍 **Extracción Inteligente de Spreadsheet ID y GID:** Soporte para URLs completas de Google Docs, pestañas específicas con `#gid=` o IDs limpios.
+  - 📋 **Parser Flexible de Columnas:** Detección automática de encabezados y compatibilidad con hojas de 2, 3 o 4 columnas con adjuntos multimedia (`fileUrl`).
 - **[2.6.0] - 2026-10-04:** Motor de Voz y Gestión Documental Inteligente:
   - 🎙️ **Soporte de Voz Nativas:** BotMaRe ahora escucha (transcribe con Whisper) y responde con audio (Text-to-Speech) tanto en WhatsApp como en Telegram de forma conversacional.
   - 📄 **Lectura de Medios Citados (Reply):** Extracción profunda de PDFs, Excel, Word e Imágenes cuando el usuario utiliza la función de "Responder" en WhatsApp y Telegram.

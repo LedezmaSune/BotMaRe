@@ -176,7 +176,7 @@ export default function SheetsPage() {
                         
                         <button 
                             onClick={handleSync}
-                            disabled={!settings.spreadsheetId || isSyncing || !settings.isActive}
+                            disabled={!settings.spreadsheetId || isSyncing}
                             className="px-6 py-3 bg-emerald-500/20 text-emerald-400 rounded-xl hover:bg-emerald-500/30 transition-all font-black flex items-center gap-2 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)] disabled:opacity-50 disabled:grayscale"
                         >
                             <RefreshCw size={20} className={isSyncing ? 'animate-spin' : ''} />
@@ -246,9 +246,9 @@ export default function SheetsPage() {
                                             value={settings.spreadsheetId || ''}
                                             onChange={(e) => setSettings({ ...settings, spreadsheetId: e.target.value })}
                                             className="input-field font-mono text-cyan-400 text-sm w-full"
-                                            placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+                                            placeholder="Pega el enlace de Google Sheets o el ID (ej: 1BxiMVs...)"
                                         />
-                                        <p className="text-xs text-app-text-muted">Es el código largo que aparece en la URL de tu Google Sheet.</p>
+                                        <p className="text-xs text-app-text-muted">Puedes pegar la URL completa de tu Google Sheet (ej: https://docs.google.com/spreadsheets/d/...) o solo su ID.</p>
                                     </div>
                                 </div>
                             )}
@@ -310,7 +310,7 @@ export default function SheetsPage() {
                                             value={settings.spreadsheetId || ''}
                                             onChange={(e) => setSettings({ ...settings, spreadsheetId: e.target.value })}
                                             className="input-field font-mono text-cyan-400 text-sm w-full"
-                                            placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+                                            placeholder="Pega el enlace de Google Sheets o el ID (ej: 1BxiMVs...)"
                                         />
                                     </div>
                                 </div>
@@ -362,7 +362,7 @@ export default function SheetsPage() {
                                             value={settings.spreadsheetId || ''}
                                             onChange={(e) => setSettings({ ...settings, spreadsheetId: e.target.value })}
                                             className="input-field font-mono text-cyan-400 text-sm w-full"
-                                            placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+                                            placeholder="Pega el enlace de Google Sheets o el ID (ej: 1BxiMVs...)"
                                         />
                                     </div>
                                 </div>

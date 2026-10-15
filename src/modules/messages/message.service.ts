@@ -37,6 +37,9 @@ export class MessageService {
     }
 
     async sendMessage(jid: string, text: string) {
+        if (!text || typeof text !== 'string' || text.trim() === '') {
+            throw new Error('[MessageService] No se puede enviar un mensaje con texto vacío.');
+        }
         const target = this.formatJid(jid);
         
         // Simular escritura solo para chats individuales
@@ -66,7 +69,7 @@ export class MessageService {
         let resolvedMimeType = mimeType || 'application/octet-stream';
         
         // Corregir mimetypes genéricos basados en la extensión real del archivo
-        if (resolvedMimeType === 'application/octet-stream' || !resolvedMimeType) {
+        if (resolvedMimeType === 'application/octet-stream' || !resolvedMimeType || resolvedMimeType.includes('html')) {
             const mimeMap: Record<string, string> = {
                 '.pdf': 'application/pdf',
                 '.doc': 'application/msword',
@@ -133,27 +136,80 @@ export class MessageService {
     async sendMediaFromUrl(jid: string, url: string, caption?: string, mediaType: 'image' | 'document' | 'video' | 'audio' = 'image') {
         const target = this.formatJid(jid);
         
-        // Transformar automáticamente enlaces de Google Drive normales a descarga directa
-        const driveMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+        let downloadUrl = url.trim();
+
+        // 1. Transformar automáticamente enlaces de Google Drive normales a descarga directa
+        const driveRegex = /(?:drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)|drive\.google\.com\/.*[?&]id=)([a-zA-Z0-9_-]+)/i;
+        const driveMatch = downloadUrl.match(driveRegex);
         if (driveMatch) {
-            url = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+            const fileId = driveMatch[1];
+            downloadUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=download&confirm=t`;
         }
 
-        console.log(`[MessageService] Descargando multimedia desde URL (${url.substring(0, 60)}...) para enviar a ${target}`);
+        // 2. Transformar Google Docs / Sheets / Slides para exportar a PDF automáticamente
+        const docMatch = downloadUrl.match(/docs\.google\.com\/document\/d\/([a-zA-Z0-9_-]+)/i);
+        if (docMatch) {
+            downloadUrl = `https://docs.google.com/document/d/${docMatch[1]}/export?format=pdf`;
+            mediaType = 'document';
+        }
+        const sheetMatch = downloadUrl.match(/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/i);
+        if (sheetMatch) {
+            downloadUrl = `https://docs.google.com/spreadsheets/d/${sheetMatch[1]}/export?format=pdf`;
+            mediaType = 'document';
+        }
+        const slideMatch = downloadUrl.match(/docs\.google\.com\/presentation\/d\/([a-zA-Z0-9_-]+)/i);
+        if (slideMatch) {
+            downloadUrl = `https://docs.google.com/presentation/d/${slideMatch[1]}/export?format=pdf`;
+            mediaType = 'document';
+        }
+
+        // 3. Transformar Dropbox para descarga directa
+        if (downloadUrl.includes('dropbox.com') && downloadUrl.includes('dl=0')) {
+            downloadUrl = downloadUrl.replace('dl=0', 'dl=1');
+        }
+
+        console.log(`[MessageService] Descargando multimedia desde URL (${downloadUrl.substring(0, 80)}...) para enviar a ${target}`);
         
         let response;
         try {
-            response = await axios.get(url, {
+            response = await axios.get(downloadUrl, {
                 responseType: 'arraybuffer',
-                timeout: 25000, // 25s timeout para la descarga
+                timeout: 30000,
+                maxRedirects: 5,
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                     'Accept': '*/*'
                 }
             });
         } catch (error: any) {
-            console.error(`[MessageService] Error al descargar de URL (${url}):`, error.message);
-            throw new Error(`Error al descargar archivo: ${error.message}`);
+            // Si falló el endpoint principal de Drive, reintentar con el endpoint secundario
+            if (driveMatch) {
+                try {
+                    const fallbackDriveUrl = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}&confirm=t`;
+                    response = await axios.get(fallbackDriveUrl, {
+                        responseType: 'arraybuffer',
+                        timeout: 30000,
+                        maxRedirects: 5,
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                            'Accept': '*/*'
+                        }
+                    });
+                } catch (retryError: any) {
+                    console.error(`[MessageService] Error al descargar de Google Drive (${downloadUrl}):`, retryError.message);
+                    throw new Error(`Error al descargar archivo de Google Drive: ${retryError.message}`);
+                }
+            } else {
+                console.error(`[MessageService] Error al descargar de URL (${downloadUrl}):`, error.message);
+                throw new Error(`Error al descargar archivo: ${error.message}`);
+            }
+        }
+
+        // Validar si el servidor devolvió una página HTML en lugar del archivo binario
+        const buffer = Buffer.from(response.data);
+        const headerPreview = buffer.subarray(0, 500).toString('utf-8').toLowerCase();
+        if (headerPreview.includes('<!doctype html') || headerPreview.includes('<html')) {
+            throw new Error('El enlace devolvió una página web de Google en lugar de un archivo directo. Asegúrate de que el archivo esté compartido públicamente como "Lector".');
         }
 
         // Obtener mimetype
@@ -202,8 +258,18 @@ export class MessageService {
         }
 
         // Si es PDF y no tiene la extensión asignada, se la forzamos
-        if (mimeType === 'application/pdf' && !fileName.toLowerCase().endsWith('.pdf')) {
+        if ((mimeType === 'application/pdf' || mediaType === 'document') && !fileName.toLowerCase().endsWith('.pdf')) {
             fileName += '.pdf';
+            mimeType = 'application/pdf';
+        }
+
+        // Corregir mimeType si vino vacío o genérico
+        if (!mimeType || mimeType === 'text/html' || mimeType === 'application/octet-stream') {
+            if (fileName.toLowerCase().endsWith('.pdf') || mediaType === 'document') mimeType = 'application/pdf';
+            else if (fileName.toLowerCase().endsWith('.png')) mimeType = 'image/png';
+            else if (fileName.toLowerCase().endsWith('.jpg') || fileName.toLowerCase().endsWith('.jpeg')) mimeType = 'image/jpeg';
+            else if (fileName.toLowerCase().endsWith('.mp4')) mimeType = 'video/mp4';
+            else if (fileName.toLowerCase().endsWith('.mp3')) mimeType = 'audio/mpeg';
         }
 
         // Guardar temporalmente en data/temp
@@ -212,7 +278,7 @@ export class MessageService {
             fs.mkdirSync(tempDir, { recursive: true });
         }
         const tempPath = path.join(tempDir, `${Date.now()}_${fileName}`);
-        await fs.promises.writeFile(tempPath, response.data);
+        await fs.promises.writeFile(tempPath, buffer);
 
         console.log(`[MessageService] Guardado temporalmente en ${tempPath}. Enviando a WhatsApp...`);
 

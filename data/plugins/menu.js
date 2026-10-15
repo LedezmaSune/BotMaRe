@@ -7,14 +7,13 @@ module.exports = {
         
         const isMenuCommand = text === '!menuplugin';
         
-        // Si estamos en un grupo, permitimos llamar al menú mencionando al bot solo (ej. @bot, @ia, @botmare, etc.)
+        // Si estamos en un grupo, permitimos llamar al menú mencionando explícitamente al bot
         const isGroupMention = ctx.isGroup && (
             text === '@bot' || 
             text === '@ia' || 
             text === '@ai' || 
             text === 'botmare' || 
-            text === '@botmare' ||
-            text.startsWith('@')
+            text === '@botmare'
         );
 
         if (!isMenuCommand && !isGroupMention) {

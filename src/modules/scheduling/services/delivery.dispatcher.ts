@@ -46,12 +46,23 @@ export class DeliveryDispatcher {
                     await new Promise(res => setTimeout(res, 2000));
                     waitRetries++;
                 }
+
+                if (waService.getStatus().state !== 'connected') {
+                    throw new Error(`WhatsApp no disponible tras esperar reconexión. Recordatorio #${reminderId} suspendido.`);
+                }
+                // Margen de estabilización de pre-claves criptográficas tras conexión
+                await new Promise(res => setTimeout(res, 500));
             }
 
             for (const contact of parsedContacts) {
                 const targetId = contact.number;
                 const targetName = contact.name;
                 const personalizedText = processVariables(reminder.text, targetName);
+
+                if (!personalizedText || personalizedText.trim() === '') {
+                    console.warn(`[DeliveryDispatcher] Texto vacío para #${reminderId} tras procesar variables. Omitiendo mensaje.`);
+                    continue;
+                }
 
                 if (channel === 'sms') {
                     try {

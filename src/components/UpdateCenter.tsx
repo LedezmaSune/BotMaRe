@@ -16,6 +16,44 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'V 2.7.0',
+        date: '15 Octubre 2026',
+        title: 'Blindaje Criptográfico E2EE Baileys, Reconexión Atómica y Ecosistema de Plugins IA',
+        type: 'major',
+        description: 'Actualización mayor enfocada en la resiliencia del transporte de WhatsApp, erradicación de errores de descifrado en mensajes programados y expansión del motor de plugins con acceso directo a IA.',
+        features: [
+            '🛡️ Erradicación de "Esperando Mensaje" en WhatsApp: Corrección crítica en el protocolo Signal de Baileys (`getMessage` devuelve `undefined` en lugar de objeto vacío), evitando que retransmisiones corruptas bloqueen el chat del receptor.',
+            '⚡ Reconexión Atómica y Estabilización: Renovación de la promesa de sincronización durante desconexiones temporales y margen de estabilización de 500ms para pre-claves criptográficas antes del despacho de recordatorios.',
+            '🧩 Ecosistema de Plugins con IA Nativa: Inyección del helper `api.callAI()` en el entorno seguro de plugins (VM), permitiendo a cualquier plugin delegar tareas en los LLM configurados sin claves adicionales.',
+            '🌐 6 Nuevos Plugins Oficiales: Incorporación de `google-search` (Búsqueda web), `summarize-text` (Resumen de textos y citas), `translate` (Traductor multilingüe), `url-info` (Inspector OpenGraph), `webhook` (Despachador HTTP POST) y `google-sheets` (Inspector de hojas).',
+            '🧪 Suite de Pruebas Unitarias Robustecida: Cobertura automatizada de pruebas para el compilador de plugins y validadores con 52 tests pasando en Vitest.'
+        ]
+    },
+    {
+        version: 'V 2.6.1',
+        date: '10 Octubre 2026',
+        title: 'Sincronización Inteligente de Google Sheets y Tolerancia de Columnas',
+        type: 'minor',
+        description: 'Mejoras en la integración de Google Sheets para auto-respuestas y plantillas, soportando enlaces con GID y esquemas flexibles de columnas.',
+        features: [
+            '📊 Sincronización Automática Periódica: Nuevo job programado (`SheetsSyncJob`) para actualizar respuestas de Sheets en intervalos configurables (15m, 1h, 12h o manual).',
+            '🔍 Extracción Inteligente de Spreadsheet ID y GID: Soporte para URLs completas de Google Docs, pestañas específicas con `#gid=` o IDs limpios.',
+            '📋 Parser Flexible de Columnas: Detección automática de encabezados y compatibilidad con hojas de 2, 3 o 4 columnas con adjuntos multimedia (`fileUrl`).'
+        ]
+    },
+    {
+        version: 'V 2.6.0',
+        date: '04 Octubre 2026',
+        title: 'Motor de Voz Conversacional (Whisper / TTS) y Gestión Documental',
+        type: 'major',
+        description: 'Integración completa de notas de voz bidireccionales y lectura de documentos adjuntos.',
+        features: [
+            '🎙️ Transcripción y Voz Nativa: BotMaRe ahora escucha audios con Whisper y responde con notas de voz realistas vía Text-to-Speech.',
+            '📄 Lectura de Medios Citados: Extracción y análisis de texto en PDFs, Excel, Word e imágenes cuando el usuario cita un mensaje en WhatsApp o Telegram.',
+            '🛡️ Escudo Anti-Prompt Injection: Sandboxing de mensajes (`<<<INICIO>>>`) que blinda al agente contra sobreescritura de instrucciones del sistema.'
+        ]
+    },
+    {
         version: 'V 2.5.2',
         date: '18 Septiembre 2026',
         title: 'Optimización de Ollama, Guardián Visual y Corrección de Bucles',

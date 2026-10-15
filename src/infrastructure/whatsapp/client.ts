@@ -148,7 +148,9 @@ export class WhatsAppClient {
                         const cached = this.messageCache.get(key.id);
                         if (cached) return cached;
                     }
-                    return proto.Message.fromObject({});
+                    // CRÍTICO: Debe retornar undefined si no se encuentra. 
+                    // Retornar un objeto vacío ({}) hace que Baileys transmita un proto sin contenido que bloquea permanentemente el chat del receptor en "Esperando mensaje".
+                    return undefined;
                 }
             });
 
@@ -203,7 +205,11 @@ export class WhatsAppClient {
                         this.rejectConnection = null;
                         this.resolveConnection = null;
                     }
-                    this.connectionPromise = null;
+                    // Crear una nueva connectionPromise para que cualquier sendRaw encolado espere la reconexión
+                    this.connectionPromise = new Promise((resolve, reject) => {
+                        this.resolveConnection = resolve;
+                        this.rejectConnection = reject;
+                    });
 
                     this.onStatusUpdate?.({ state: 'disconnected' });
                     
@@ -256,6 +262,11 @@ export class WhatsAppClient {
     }
 
     async sendRaw(jid: string, content: any): Promise<any> {
+        // Validación defensiva: Evitar payloads nulos o textos vacíos que generen mensajes en blanco
+        if (!content || (content.text !== undefined && typeof content.text === 'string' && content.text.trim() === '')) {
+            throw new Error('[WhatsAppClient] Intento de envío de mensaje con contenido vacío o inválido.');
+        }
+
         // Si no estamos conectados, esperamos con un timeout controlado de 15 segundos
         if (this.state !== 'connected') {
             console.log(`[WhatsAppClient] Esperando conexión activa para enviar a ${jid}...`);
@@ -281,6 +292,8 @@ export class WhatsAppClient {
         }
 
         try {
+            const contentType = content.text ? 'text' : (content.image ? 'image' : (content.video ? 'video' : (content.audio ? 'audio' : 'other')));
+            console.log(`[WhatsAppClient:Send] Transmitiendo a ${jid} | Tipo: ${contentType}`);
             const sentResult = await this.socket.sendMessage(jid, content);
             if (sentResult?.key?.id && sentResult?.message) {
                 this.messageCache.set(sentResult.key.id, sentResult.message);

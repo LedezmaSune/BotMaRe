@@ -229,6 +229,21 @@ export class PluginService {
                     } catch (e) {}
                 }
             },
+            callAI: async (prompt: string, systemPrompt?: string): Promise<string> => {
+                try {
+                    const { callLLM } = await import('../../core/llm');
+                    const messages: any[] = [];
+                    if (systemPrompt) {
+                        messages.push({ role: 'system', content: systemPrompt });
+                    }
+                    messages.push({ role: 'user', content: prompt });
+                    const res = await callLLM(messages);
+                    return res?.content || '';
+                } catch (e: any) {
+                    console.error('[PluginService:callAI] Error invocando LLM:', e.message);
+                    return '';
+                }
+            },
             getPlugins: () => this.getPlugins()
         };
 
