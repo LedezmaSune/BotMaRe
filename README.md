@@ -242,7 +242,7 @@ module.exports = {
 | **Integrador Webhook** | `webhook.js` | `!webhook <url> [payload]` | Envía eventos HTTP POST en tiempo real hacia Zapier, Make, n8n o endpoints propios. |
 | **Google Sheets** | `google-sheets.js` | `!sheets [url]` | Inspecciona y resume filas y columnas de hojas de cálculo de Google. |
 | **Clima en Tiempo Real** | `clima.js` | `!clima [ciudad]` | Información meteorológica actualizada al instante. |
-| **Menú Principal** | `menu.js` | `!menuplugin` | Lista todos los plugins instalados y sus comandos disponibles. |
+| **Menú Principal** | `menu.js` | `!menup` | Lista todos los plugins instalados y sus comandos disponibles. |
 
 ---
 

@@ -54,4 +54,28 @@ describe('PluginService & Plugins Validation', () => {
 
         expect(handled).toBe(false);
     });
+
+    it('debe responder exitosamente a !menup y no enviarlo a la IA', async () => {
+        const mockReply = vi.fn().mockResolvedValue({ key: { id: 'msg-123' } });
+        const mockWaService: any = {
+            sendMessage: mockReply,
+            sendMedia: vi.fn(),
+            sendMediaFromUrl: vi.fn(),
+            getStatus: () => ({ state: 'connected' })
+        };
+
+        const pluginService = PluginService.getInstance();
+        pluginService.init(mockWaService);
+
+        const handled = await pluginService.dispatchOnMessage({
+            text: '!menup',
+            from: '1234567890@s.whatsapp.net',
+            isGroup: false
+        });
+
+        expect(handled).toBe(true);
+        expect(mockReply).toHaveBeenCalledTimes(1);
+        const replyArg = mockReply.mock.calls[0][1];
+        expect(replyArg).toContain('PLUGINS BOTMARE');
+    });
 });

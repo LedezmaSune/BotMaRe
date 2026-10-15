@@ -1,11 +1,12 @@
 module.exports = {
     name: "Menú Principal",
-    description: "Muestra la lista de plugins activos",
+    description: "Muestra la lista de plugins activos. Uso: !menup",
     active: true,
     onMessage: async (ctx, api) => {
         const text = (ctx.text || "").trim().toLowerCase();
         
-        const isMenuCommand = text === '!menuplugin';
+        // Soporta !menup (pedido por el usuario), !menu, !menuplugin y prefijos flexibles (.menup, /menup, #menup)
+        const isMenuCommand = /^[!./#]?(menup|menuplugin|menu)$/i.test(text);
         
         // Si estamos en un grupo, permitimos llamar al menú mencionando explícitamente al bot
         const isGroupMention = ctx.isGroup && (
@@ -17,7 +18,7 @@ module.exports = {
         );
 
         if (!isMenuCommand && !isGroupMention) {
-            return; // Salir si no es el comando exacto ni la mención en grupo
+            return false;
         }
         
         // Obtener la lista de plugins activos excluyendo el menú mismo
@@ -44,5 +45,6 @@ module.exports = {
         menuText += `*Nota:* Puedes agregar tus propios plugins en 'data/plugins/'`;
 
         await api.reply(menuText);
+        return true;
     }
 };
