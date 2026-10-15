@@ -4,16 +4,16 @@ module.exports = {
     active: true,
     onMessage: async (ctx, api) => {
         const text = (ctx.text || "").trim().toLowerCase();
-        
+
         // Soporta !menup, menup, .menup, /menup, !menu, !comandos, !help, !ayuda
-        const isMenuCommand = /^[!./#]?(menup|menuplugin|menu|comandos|help|ayuda)$/i.test(text);
-        
+        const isMenuCommand = /^[!./#]?(menup|menuplugin|comandos)$/i.test(text);
+
         // Si estamos en un grupo, permitimos llamar al menú mencionando explícitamente al bot
         const isGroupMention = ctx.isGroup && (
-            text === '@bot' || 
-            text === '@ia' || 
-            text === '@ai' || 
-            text === 'botmare' || 
+            text === '@bot' ||
+            text === '@ia' ||
+            text === '@ai' ||
+            text === 'botmare' ||
             text === '@botmare'
         );
 
