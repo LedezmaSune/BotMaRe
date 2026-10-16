@@ -50,15 +50,19 @@ export const validateCredentials = (user?: string, pass?: string): boolean => {
  */
 export const basicAuth = (req: Request, res: Response, next: NextFunction) => {
     // Exenciones de Basic Auth:
-    // 1. WebSockets
+    // 1. Healthcheck público
+    if (req.path === '/healthz') {
+        return next();
+    }
+    // 2. WebSockets
     if (req.path.startsWith('/socket.io')) {
         return next();
     }
-    // 2. Webhook de GitHub (se defiende exclusivamente con firma HMAC SHA-256 sobre cuerpo crudo)
+    // 3. Webhook de GitHub (se defiende exclusivamente con firma HMAC SHA-256 sobre cuerpo crudo)
     if (req.path === '/api/webhooks/github') {
         return next();
     }
-    // 3. Webhooks protegidos por API Key (se autentican en requireWebhookAuth)
+    // 4. Webhooks protegidos por API Key (se autentican en requireWebhookAuth)
     if (req.path === '/api/webhooks/status' || req.path === '/api/webhooks/incoming') {
         return next();
     }

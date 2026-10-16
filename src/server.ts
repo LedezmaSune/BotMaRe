@@ -43,11 +43,18 @@ process.on('unhandledRejection', (reason, promise) => {
 
 const app = express();
 const server = http.createServer(app);
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+
 const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
+    ...(allowedOrigins.length > 0 ? {
+        cors: {
+            origin: allowedOrigins,
+            methods: ["GET", "POST"],
+            credentials: true
+        }
+    } : {})
 });
 
 // Middleware de Autenticación para WebSockets
@@ -73,29 +80,74 @@ io.use((socket, next) => {
     return next(err);
 });
 
-app.use(cors({
-    origin: true,
-    credentials: true
-}));
+// CORS restringido por ALLOWED_ORIGINS (por defecto sin CORS, mismo origen estricto)
+if (allowedOrigins.length > 0) {
+    app.use(cors({
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error('No permitido por CORS'));
+            }
+        },
+        credentials: true
+    }));
+}
 
-app.set('trust proxy', 1);
+// Configuración de Proxy Reverso (por defecto 'loopback' en vez de número ciego)
+const trustProxyEnv = process.env.TRUST_PROXY;
+let trustProxySetting: any = 'loopback';
+if (trustProxyEnv !== undefined && trustProxyEnv.trim() !== '') {
+    const trimmed = trustProxyEnv.trim();
+    if (trimmed === 'true') trustProxySetting = true;
+    else if (trimmed === 'false') trustProxySetting = false;
+    else if (!isNaN(Number(trimmed))) trustProxySetting = Number(trimmed);
+    else trustProxySetting = trimmed;
+}
+app.set('trust proxy', trustProxySetting);
 
 
 // 1. Seguridad de Cabeceras (Configuración Pro-Dashboard)
+const isProd = process.env.NODE_ENV === 'production';
+const scriptSrcDirectives = isProd
+    ? ["'self'", "'unsafe-inline'"]
+    : ["'self'", "'unsafe-inline'", "'unsafe-eval'"];
+const connectSrcDirectives = ["'self'", "wss:", "ws:", ...allowedOrigins];
+
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+            scriptSrc: scriptSrcDirectives,
             styleSrc: ["'self'", "'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "blob:", "https:"],
-            connectSrc: ["'self'", "wss:", "ws:", "http:", "https:"],
+            connectSrc: connectSrcDirectives,
             upgradeInsecureRequests: null,
         },
     },
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
+
+// Endpoint público de salud (sin autenticación ni datos internos)
+let appVersion = '2.7.0';
+try {
+    const pkgPath = path.join(process.cwd(), 'package.json');
+    if (fs.existsSync(pkgPath)) {
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+        if (pkg.version) appVersion = pkg.version;
+    }
+} catch {
+    // Mantener versión por defecto
+}
+
+app.get('/healthz', (_req, res) => {
+    res.status(200).json({
+        status: 'ok',
+        uptime: Math.floor(process.uptime()),
+        version: appVersion
+    });
+});
 
 // 2. Limitador de Peticiones Global
 app.use('/api', globalLimiter);
@@ -111,6 +163,9 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // --- LOGGING ---
 app.use(loggingMiddleware);
 
+// --- AUTENTICACIÓN OBLIGATORIA (Protege Dashboard y API contra accesos anónimos) ---
+app.use(basicAuth);
+
 // --- NUEVA ARQUITECTURA MODULAR ---
 const bot = new Bot(io);
 const messageService = bot.getMessageService();
@@ -119,7 +174,7 @@ const reminderService = new ReminderService();
 // Inicializar NotificationHub
 NotificationHub.init(io, messageService);
 
-// El Dashboard (estático) primero
+// El Dashboard (estático) servido detrás de basicAuth
 const isPkg = (process as any).pkg;
 const frontendPath = isPkg 
     ? path.join(path.dirname(process.execPath), 'frontend')
@@ -131,16 +186,13 @@ if (process.env.NODE_ENV === 'development' && !isPkg) {
         changeOrigin: true,
         ws: true,
         pathFilter: (path: string) => {
-            const isApi = path.startsWith('/api') || path.startsWith('/socket.io');
+            const isApi = path.startsWith('/api') || path.startsWith('/socket.io') || path === '/healthz';
             return !isApi;
         }
     }));
 } else {
     app.use(express.static(frontendPath));
 }
-
-// La seguridad SOLO para la API y rutas sensibles
-app.use(basicAuth);
 
 // Routes Configuration
 app.use('/api', createMainRouter(bot.getSocketAdapter()));
