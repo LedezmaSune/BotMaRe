@@ -359,11 +359,6 @@ export function UpdateCenter() {
     const [releasesError, setReleasesError] = useState<string | null>(null);
     const [expandedVersion, setExpandedVersion] = useState<string | null>(null);
 
-    // Cargar releases al montar el componente
-    useEffect(() => {
-        fetchReleases();
-    }, []);
-
     const fetchReleases = async () => {
         setLoadingReleases(true);
         setReleasesError(null);
@@ -408,6 +403,11 @@ export function UpdateCenter() {
             setLoadingReleases(false);
         }
     };
+
+    // Cargar releases al montar el componente
+    useEffect(() => {
+        fetchReleases();
+    }, []);
 
     const handleCheckUpdate = async () => {
         setChecking(true);

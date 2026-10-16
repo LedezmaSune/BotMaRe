@@ -1,35 +1,57 @@
-# Base image
-FROM node:20-alpine
+# ═══════════════════════════════════════════════════════════════════
+#  STAGE 1: Compilación y dependencias (Builder)
+# ═══════════════════════════════════════════════════════════════════
+FROM node:20-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Install build tools and python for better-sqlite3
+# Herramientas de compilación para módulos nativos (better-sqlite3)
 RUN apk add --no-cache python3 make g++
 
-# Enable Corepack to use pnpm
+# Habilitar Corepack para usar pnpm
 RUN corepack enable
 
-# Copy package.json and pnpm-lock.yaml (if exists)
-COPY package.json pnpm-lock.yaml* ./
+# Copiar manifiesto y lockfile para instalación determinista
+COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile || pnpm install
+# Instalación estricta sin fallback permisivo
+RUN pnpm install --frozen-lockfile
 
-# Copy all source files
+# Copiar código fuente
 COPY . .
 
-# Build the Next.js UI
+# Compilar Next.js Dashboard
 RUN pnpm run build
 
-# Expose the ports (Next.js Dashboard and Express API)
-EXPOSE 3000
-EXPOSE 8000
+# ═══════════════════════════════════════════════════════════════════
+#  STAGE 2: Imagen Final Segura de Producción (Runner)
+# ═══════════════════════════════════════════════════════════════════
+FROM node:20-alpine AS runner
 
-# Set environment variables for production
+WORKDIR /app
+
+# Instalar curl únicamente para el healthcheck
+RUN apk add --no-cache curl
+
+RUN corepack enable
+
 ENV NODE_ENV=production
 
-# Start both Next.js UI and the Backend Engine
-# Note: We use concurrently directly via pnpm run dev for simplicity, 
-# or pnpm run start if we want to run the production build.
+# Copiar aplicación construida desde el stage anterior
+COPY --from=builder /app ./
+
+# Asegurar permisos de escritura para usuario node en directorios de persistencia
+RUN mkdir -p data backups out .next && chown -R node:node /app
+
+# Ejecutar como usuario no privilegiado (no-root)
+USER node
+
+# Puerto del servidor BotMaRe
+EXPOSE 8000
+
+# Verificación de salud del contenedor
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD curl -fs http://localhost:8000/healthz || exit 1
+
+# Comando de arranque
 CMD ["pnpm", "run", "start"]

@@ -181,10 +181,6 @@ export default function PluginsPage() {
     const [copied, setCopied] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        fetchPlugins();
-    }, []);
-
     const fetchPlugins = async () => {
         setLoading(true);
         try {
@@ -198,6 +194,10 @@ export default function PluginsPage() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchPlugins();
+    }, []);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();

@@ -272,8 +272,8 @@ if ! [[ "$NODE_VERSION" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
-if [ "$NODE_VERSION" -lt 18 ]; then
-    fail "Node.js v$NODE_VERSION detectado. Se requiere v18 o superior (v20 recomendado)."
+if [ "$NODE_VERSION" -lt 20 ]; then
+    fail "Node.js v$NODE_VERSION detectado. Se requiere v20.19.0 o superior (v20 LTS recomendado)."
     exit 1
 fi
 

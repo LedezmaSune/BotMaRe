@@ -5,8 +5,8 @@
 
   <p>
     <img src="https://img.shields.io/badge/Version-2.7.0-indigo?style=flat-square" alt="Version 2.7.0"/>
-    <img src="https://img.shields.io/badge/Tests-52%20Passed-success?style=flat-square" alt="Tests 52 Passed"/>
-    <img src="https://img.shields.io/badge/Node.js-18+-339933?logo=nodedotjs&logoColor=white&style=flat-square" alt="Node.js"/>
+    <img src="https://img.shields.io/badge/Tests-133%20Passed-success?style=flat-square" alt="Tests 133 Passed"/>
+    <img src="https://img.shields.io/badge/Node.js-20.19.0+-339933?logo=nodedotjs&logoColor=white&style=flat-square" alt="Node.js"/>
     <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&style=flat-square" alt="Next.js"/>
     <img src="https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white&style=flat-square" alt="TypeScript"/>
     <img src="https://img.shields.io/badge/Baileys-6.7.24%20(E2EE%20Hardened)-25D366?logo=whatsapp&logoColor=white&style=flat-square" alt="Baileys"/>

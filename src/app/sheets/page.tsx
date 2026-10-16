@@ -18,10 +18,6 @@ export default function SheetsPage() {
     const [jsonFile, setJsonFile] = useState<File | null>(null);
     const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
 
-    useEffect(() => {
-        fetchSettings();
-    }, []);
-
     const fetchSettings = async () => {
         setIsLoading(true);
         const res = await fetch('/api/sheets/settings');
@@ -34,6 +30,10 @@ export default function SheetsPage() {
         }
         setIsLoading(false);
     };
+
+    useEffect(() => {
+        fetchSettings();
+    }, []);
 
     const handleSave = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
