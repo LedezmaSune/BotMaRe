@@ -19,6 +19,7 @@ data/*
 !data/.gitkeep
 !data/plugins/
 !data/plugins/**
+data_backup_*/
 ejemplo_cliente/data/
 backups/
 agenda.json

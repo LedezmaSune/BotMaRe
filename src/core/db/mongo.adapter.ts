@@ -18,8 +18,14 @@ function generateNumericId(): number {
 }
 
 export class MongoAdapter implements IDatabaseAdapter {
-    async initDB(): Promise<void> {
-        const mongoUri = process.env.MONGO_URI;
+    private customUri?: string;
+
+    constructor(customUri?: string) {
+        this.customUri = customUri;
+    }
+
+    async initDB(customUri?: string): Promise<void> {
+        const mongoUri = customUri || this.customUri || process.env.MONGO_URI;
         if (!mongoUri || mongoUri === 'tu_url_de_atlas_aqui') {
             throw new Error("MONGO_URI no configurado o inválido.");
         }

@@ -148,6 +148,23 @@ pnpm run setup:secrets
 
 ---
 
+### 🧪 7. Pruebas y Suite de Contrato (`IDatabaseAdapter`)
+
+BotMaRe incluye pruebas unitarias, de integración y pruebas de contrato para garantizar consistencia entre motores de persistencia:
+
+```bash
+# Ejecutar suite de pruebas completa:
+pnpm test
+
+# Ejecutar pruebas de contrato contra Lowdb (por defecto):
+pnpm test tests/contract
+
+# Ejecutar pruebas de contrato contra MongoDB Atlas o local (requiere base de datos de prueba):
+MONGO_URI_TEST="mongodb://localhost:27017/botmare_test" pnpm test tests/contract
+```
+
+---
+
 ## 💻 Requisitos del Sistema y Modelos Locales (Ollama)
 
 BotMaRe está diseñado para ser extremadamente eficiente y puede ejecutarse en hardware modesto (desde 2 núcleos y 4GB de RAM en local, o VPS económicos de 1 vCPU y 2GB RAM). Si deseas utilizar Inteligencia Artificial sin depender de APIs de pago o internet, puedes conectar BotMaRe con **Ollama** para correr modelos localmente.

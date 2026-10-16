@@ -11,7 +11,7 @@ import {
 } from './interfaces';
 
 export interface IDatabaseAdapter {
-    initDB(): Promise<void>;
+    initDB(customPathOrUri?: string): Promise<void>;
     
     saveUser(id: string, data: Partial<UserData>): Promise<UserData | null>;
     getUser(id: string): Promise<UserData | null>;
@@ -52,6 +52,12 @@ export interface IDatabaseAdapter {
     listReminders(userId: string, includeProcessed?: boolean): Promise<any[]>;
     deleteReminder(id: number): Promise<void>;
     updateReminderStatus(id: number, status: 'pending' | 'processing' | 'sent' | 'failed'): Promise<void>;
+    /**
+     * Eliminación masiva de recordatorios según su estado:
+     * - 'pending': elimina los recordatorios no finalizados ('pending', 'processing', 'failed'). Conserva únicamente 'sent'.
+     * - 'sent': elimina únicamente los recordatorios finalizados ('sent'). Conserva los pendientes, en proceso y fallidos.
+     * - 'all': elimina todos los recordatorios del usuario independientemente de su estado.
+     */
     deleteRemindersBulk(userId: string, type: 'all' | 'pending' | 'sent'): Promise<void>;
     getReminderById(id: number): Promise<any | null>;
     listAllPendingReminders(): Promise<any[]>;

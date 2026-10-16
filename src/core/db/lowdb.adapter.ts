@@ -28,10 +28,15 @@ function generateNumericId(): number {
 
 export class LowdbAdapter implements IDatabaseAdapter {
     private ldb!: Low<Schema>;
+    private customDbPath?: string;
 
-    async initDB(): Promise<void> {
+    constructor(customDbPath?: string) {
+        this.customDbPath = customDbPath;
+    }
+
+    async initDB(customPath?: string): Promise<void> {
         try {
-            const dbPath = path.resolve('data/database.json');
+            const dbPath = path.resolve(customPath || this.customDbPath || 'data/database.json');
             const adapter = new JSONFile<Schema>(dbPath);
             const defaultData: Schema = {
                 users: [], settings: [], reminders: [], messages: [], 
@@ -42,7 +47,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
             await this.ldb.read();
             await this.ldb.write();
             
-            console.log('✅ [DB] Base de datos local Lowdb inicializada correctamente en data/database.json.');
+            console.log(`✅ [DB] Base de datos local Lowdb inicializada correctamente en ${dbPath}.`);
         } catch (err) {
             console.error('❌ [DB] Error crítico al inicializar Lowdb:', err);
             throw err;
