@@ -20,11 +20,11 @@ export class UpdateCheckerJob {
             }
 
             this.lastNotifiedCommit = status.remoteCommit;
-            const isAutoDeploy = process.env.AUTO_DEPLOY !== 'false'; // Default TRUE
+            const isAutoDeploy = process.env.AUTO_DEPLOY === 'true'; // Solo activo si es estrictamente 'true'
 
             if (isAutoDeploy) {
                 this.isUpdating = true;
-                console.log(`[UpdateCheckerJob] 🚀 Nueva versión detectada [${status.remoteCommit}]. Iniciando auto-deploy por defecto...`);
+                console.log(`[UpdateCheckerJob] 🚀 Nueva versión detectada [${status.remoteCommit}]. Iniciando auto-deploy...`);
 
                 await NotificationHub.notify({
                     title: '🚀 Auto-Deploy Iniciado',

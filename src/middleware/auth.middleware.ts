@@ -49,8 +49,17 @@ export const validateCredentials = (user?: string, pass?: string): boolean => {
  * Middleware para autenticación básica del Dashboard con protección Anti-Fuerza Bruta
  */
 export const basicAuth = (req: Request, res: Response, next: NextFunction) => {
-    // No aplicar a rutas de WebSockets ni Webhooks públicos (GitHub, Zapier, etc.)
-    if (req.path.startsWith('/socket.io') || req.path.startsWith('/api/webhooks')) {
+    // Exenciones de Basic Auth:
+    // 1. WebSockets
+    if (req.path.startsWith('/socket.io')) {
+        return next();
+    }
+    // 2. Webhook de GitHub (se defiende exclusivamente con firma HMAC SHA-256 sobre cuerpo crudo)
+    if (req.path === '/api/webhooks/github') {
+        return next();
+    }
+    // 3. Webhooks protegidos por API Key (se autentican en requireWebhookAuth)
+    if (req.path === '/api/webhooks/status' || req.path === '/api/webhooks/incoming') {
         return next();
     }
 

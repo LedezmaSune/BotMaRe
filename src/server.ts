@@ -100,7 +100,12 @@ app.use(helmet({
 // 2. Limitador de Peticiones Global
 app.use('/api', globalLimiter);
 
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({
+    limit: '50mb',
+    verify: (req, _res, buf) => {
+        (req as any).rawBody = buf;
+    }
+}));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // --- LOGGING ---
