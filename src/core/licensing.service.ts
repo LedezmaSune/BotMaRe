@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { getSettings, updateSettings } from './memory';
 import { ModuleDefinition, PlanType, ALL_MODULES, PLAN_PRESETS } from '../types/licensing';
 
@@ -15,11 +16,28 @@ export class LicensingService {
     }
 
     /**
-     * Valida si la clave maestra de SuperAdmin coincide
+     * Comprueba si la clave maestra de SuperAdmin está configurada en las variables de entorno
+     */
+    public isMasterKeyConfigured(): boolean {
+        const key = process.env.SUPERADMIN_KEY;
+        return typeof key === 'string' && key.trim().length > 0;
+    }
+
+    /**
+     * Valida si la clave maestra de SuperAdmin coincide con comparación en tiempo constante
      */
     public verifyMasterKey(key: string): boolean {
-        const configuredKey = process.env.SUPERADMIN_KEY || 'botmare_admin';
-        return !!key && key.trim() === configuredKey.trim();
+        if (!this.isMasterKeyConfigured() || !key) {
+            return false;
+        }
+        const configuredKey = process.env.SUPERADMIN_KEY!.trim();
+        const bufA = Buffer.from(key.trim());
+        const bufB = Buffer.from(configuredKey);
+        if (bufA.length !== bufB.length) {
+            crypto.timingSafeEqual(bufA, bufA);
+            return false;
+        }
+        return crypto.timingSafeEqual(bufA, bufB);
     }
 
     /**

@@ -9,11 +9,34 @@ export class SystemUtils {
     }
 
     static validateEnv() {
-        const required: string[] = []; // PORT es opcional
-        const missing = required.filter(key => !process.env[key]);
+        const required = [
+            'DASHBOARD_USER',
+            'DASHBOARD_PASS',
+            'WEBHOOK_API_KEY',
+            'SUPERADMIN_KEY',
+            'BACKUP_ENCRYPTION_KEY'
+        ];
+
+        const invalidDefaults: Record<string, string[]> = {
+            DASHBOARD_PASS: ['tu_contrasena_segura', 'admin123'],
+        };
+
+        const missing = required.filter(key => {
+            const val = process.env[key];
+            if (!val || val.trim() === '') return true;
+            if (val.includes('CAMBIA_ESTO')) return true;
+            if (invalidDefaults[key] && invalidDefaults[key].includes(val.trim())) return true;
+            return false;
+        });
         
         if (missing.length > 0) {
-            console.error(`[Fase 0] Error: Faltan variables de entorno: ${missing.join(', ')}`);
+            console.error('\n🚨 [Seguridad] ERROR FATAL: Faltan variables de entorno obligatorias para el arranque seguro:');
+            missing.forEach(key => {
+                console.error(`   ❌ ${key}: no configurada, vacía o contiene valor inseguro por defecto.`);
+            });
+            console.error('\n💡 Solución inmediata:');
+            console.error('   Ejecuta: pnpm run setup:secrets');
+            console.error('   para generar automáticamente secretos criptográficos fuertes en tu archivo .env.\n');
             process.exit(1);
         }
     }

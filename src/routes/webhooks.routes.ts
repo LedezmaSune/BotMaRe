@@ -10,7 +10,11 @@ const updateService = new UpdateService();
  * Middleware para validar el API Key del Webhook
  */
 function requireWebhookAuth(req: Request, res: Response, next: NextFunction) {
-    const validKey = process.env.WEBHOOK_API_KEY || 'botmare_default_secret_key';
+    const validKey = process.env.WEBHOOK_API_KEY;
+    if (!validKey) {
+        console.warn(`[Webhooks] 🚫 Acceso denegado a IP ${req.ip} (WEBHOOK_API_KEY no configurada en el servidor).`);
+        return res.status(503).json({ success: false, error: 'Servicio no disponible: WEBHOOK_API_KEY no configurada' });
+    }
     const providedKey = req.headers['x-api-key'] || 
                         (req.headers.authorization ? req.headers.authorization.replace('Bearer ', '') : null) || 
                         req.query.apikey;

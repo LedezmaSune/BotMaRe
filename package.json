@@ -11,6 +11,7 @@
     "build": "pnpm run clean && next build --webpack",
     "start": "node bin/check-build.js && tsx --dns-result-order=ipv4first src/server.ts",
     "setup": "node -e \"const fs=require('fs'); if(!fs.existsSync('.env')) fs.copyFileSync('.env.example', '.env')\" && pnpm install",
+    "setup:secrets": "node bin/generate-secrets.js",
     "reset:wa": "rimraf data/whatsapp_auth.db auth_info_baileys",
     "tunnel": "cloudflared tunnel --url http://localhost:8000",
     "pm2:start": "node bin/check-build.js && pm2 start ecosystem.config.js",

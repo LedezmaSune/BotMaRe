@@ -18,6 +18,10 @@ export function createLicensingRouter(): Router {
     // Validar clave maestra para abrir el panel SuperAdmin
     router.post('/verify', (req: Request, res: Response) => {
         try {
+            if (!service.isMasterKeyConfigured()) {
+                return res.status(503).json({ success: false, message: 'Función deshabilitada: SUPERADMIN_KEY no configurada' });
+            }
+
             const { masterKey } = req.body;
             if (!masterKey) {
                 return res.status(400).json({ success: false, message: 'La clave maestra es requerida' });
@@ -37,6 +41,10 @@ export function createLicensingRouter(): Router {
     // Guardar cambios de módulos y plan (protegido por clave maestra)
     router.post('/update', async (req: Request, res: Response) => {
         try {
+            if (!service.isMasterKeyConfigured()) {
+                return res.status(503).json({ success: false, message: 'Función deshabilitada: SUPERADMIN_KEY no configurada' });
+            }
+
             const { masterKey, plan, modules } = req.body;
 
             if (!masterKey || !service.verifyMasterKey(masterKey)) {

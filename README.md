@@ -33,6 +33,7 @@
    - [🪟 Windows Local](#-3-windows-local)
    - [☁️ Despliegue en la Nube con Terraform](#-4-despliegue-en-la-nube-con-terraform)
    - [🐳 Docker / Docker Compose](#-5-docker--docker-compose)
+   - [🔐 Seguridad y Secretos (.env)](#-6-configuración-de-seguridad-y-secretos-env)
 3. [🔄 Centro de Actualizaciones](#-centro-de-actualizaciones)
 4. [🧩 Sistema de Plugins JS](#-sistema-de-plugins-js-sandbox)
    - [📁 Estructura de un Plugin](#-estructura-de-un-plugin-datapluginsidjs)
@@ -127,6 +128,22 @@ docker compose up -d --build
 
 # Ver logs en tiempo real:
 docker compose logs -f
+```
+
+---
+
+### 🔐 6. Configuración de Seguridad y Secretos (.env)
+
+BotMaRe implementa **validación estricta al arranque**. Si faltan variables obligatorias o se detectan contraseñas por defecto inseguras (`tu_contrasena_segura`, `admin123`, etc.), el servidor abortará el proceso inmediatamente para prevenir despliegues vulnerables.
+
+Para generar o autocompletar automáticamente todas las claves criptográficas obligatorias (`DASHBOARD_PASS`, `WEBHOOK_API_KEY`, `SUPERADMIN_KEY`, `BACKUP_ENCRYPTION_KEY`):
+
+```bash
+# 1. Copiar plantilla si aún no tienes .env:
+cp .env.example .env
+
+# 2. Autogenerar claves y secretos criptográficamente seguros:
+pnpm run setup:secrets
 ```
 
 ---

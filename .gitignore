@@ -55,6 +55,7 @@ bin/*
 !bin/launcher.js
 !bin/clean-logs.js
 !bin/test-llm.ts
+!bin/generate-secrets.js
 *.bat
 
 # Documentation (Kept locally, excluded from Git/GitHub)

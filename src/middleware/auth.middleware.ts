@@ -39,8 +39,9 @@ function safeCompare(a: string, b: string): boolean {
  */
 export const validateCredentials = (user?: string, pass?: string): boolean => {
     if (!user || !pass) return false;
-    const expectedUser = process.env.DASHBOARD_USER || 'admin';
-    const expectedPass = process.env.DASHBOARD_PASS || 'admin123';
+    const expectedUser = process.env.DASHBOARD_USER;
+    const expectedPass = process.env.DASHBOARD_PASS;
+    if (!expectedUser || !expectedPass) return false;
     return safeCompare(user, expectedUser) && safeCompare(pass, expectedPass);
 };
 

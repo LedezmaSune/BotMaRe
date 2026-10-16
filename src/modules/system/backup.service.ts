@@ -10,8 +10,11 @@ import { InputFile } from 'grammy';
 const ENCRYPTION_ALGORITHM = 'aes-256-cbc';
 
 function getEncryptionKey() {
-    const password = process.env.DASHBOARD_PASS || 'admin123';
-    return crypto.scryptSync(password, 'salt-botmare', 32);
+    const key = process.env.BACKUP_ENCRYPTION_KEY;
+    if (!key || key.trim() === '') {
+        throw new Error('BACKUP_ENCRYPTION_KEY no está configurada.');
+    }
+    return crypto.scryptSync(key.trim(), 'salt-botmare', 32);
 }
 
 function encryptFile(inputPath: string, outputPath: string) {
@@ -135,7 +138,7 @@ export class BackupService {
                                 (isMedia 
                                     ? `🖼️ _Contiene todas las fotos y vídeos de los recordatorios._`
                                     : `🔐 _Contiene Base de Datos y Configuración (Escanea el QR nuevamente al restaurar)._`) + 
-                                `\n\n🔑 _Usa la contraseña de tu Dashboard para desencriptar._`;
+                                `\n\n🔑 _Usa BACKUP_ENCRYPTION_KEY para desencriptar._`;
 
                 for (const userId of userIds) {
                     try {
