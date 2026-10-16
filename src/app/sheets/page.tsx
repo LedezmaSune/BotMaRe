@@ -331,7 +331,7 @@ export default function SheetsPage() {
                                         </ol>
                                     </div>
                                     
-                                    {!settings?.refreshToken ? (
+                                    {!(settings?.hasToken || settings?.refreshToken) ? (
                                         <div className="mt-8">
                                             <a 
                                                 href="/api/sheets/auth/login"
@@ -347,7 +347,7 @@ export default function SheetsPage() {
                                                 ✅ Cuenta Vinculada Correctamente
                                             </div>
                                             <button type="button" onClick={() => {
-                                                setSettings({...settings, refreshToken: null});
+                                                setSettings({...settings, refreshToken: null, hasToken: false});
                                                 handleSave();
                                             }} className="text-red-400 text-sm hover:underline font-bold flex items-center gap-1">
                                                 <LogOut size={16} /> Desvincular Cuenta

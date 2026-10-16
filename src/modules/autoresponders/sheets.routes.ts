@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import fs from 'fs';
+import path from 'path';
 import { google } from 'googleapis';
 import * as dbManager from '../../core/dbManager';
 import { GoogleSheetsService } from './sheets.service';
@@ -52,8 +54,27 @@ export function createSheetsRouter() {
 
     router.get('/settings', async (req, res) => {
         try {
-            const settings = await dbManager.getSheetSyncSettings();
-            res.json(settings || { isActive: false });
+            const settings: any = (await dbManager.getSheetSyncSettings()) || {};
+            const { refreshToken, ...safeSettings } = settings;
+
+            // Verificar si existe cuenta de servicio configurada sin exponer private_key
+            const credPath = path.join(process.cwd(), 'data', 'credentials.json');
+            let hasPrivateKey = false;
+            let clientEmail = '';
+            if (fs.existsSync(credPath)) {
+                try {
+                    const creds = JSON.parse(fs.readFileSync(credPath, 'utf8'));
+                    hasPrivateKey = !!creds.private_key;
+                    clientEmail = creds.client_email || '';
+                } catch {}
+            }
+
+            res.json({
+                ...safeSettings,
+                hasToken: !!refreshToken,
+                hasPrivateKey,
+                clientEmail: clientEmail || (safeSettings as any).clientEmail
+            });
         } catch (error: any) {
             res.status(500).json({ error: error.message });
         }
@@ -62,9 +83,17 @@ export function createSheetsRouter() {
     router.post('/settings', async (req, res) => {
         try {
             let current = await dbManager.getSheetSyncSettings();
+            let refreshToken = current?.refreshToken || '';
+
+            if (req.body.refreshToken === null || req.body.refreshToken === '') {
+                refreshToken = '';
+            } else if (req.body.refreshToken && typeof req.body.refreshToken === 'string' && !req.body.refreshToken.startsWith('•••')) {
+                refreshToken = req.body.refreshToken;
+            }
+
             const newSettings = {
                 spreadsheetId: req.body.spreadsheetId !== undefined ? req.body.spreadsheetId : (current?.spreadsheetId || ''),
-                refreshToken: req.body.refreshToken !== undefined ? req.body.refreshToken : (current?.refreshToken || ''),
+                refreshToken,
                 syncInterval: req.body.syncInterval || current?.syncInterval || 'manual',
                 isActive: typeof req.body.isActive === 'boolean' ? req.body.isActive : !!current?.isActive,
                 lastSyncTime: current?.lastSyncTime,
@@ -79,7 +108,11 @@ export function createSheetsRouter() {
                 });
             }
 
-            res.json(newSettings);
+            const { refreshToken: _token, ...safeResponse } = newSettings;
+            res.json({
+                ...safeResponse,
+                hasToken: !!refreshToken
+            });
         } catch (error: any) {
             res.status(500).json({ error: error.message });
         }
