@@ -7,7 +7,8 @@ import {
     deleteReminder, 
     updateReminderStatus, 
     logAudit,
-    deleteRemindersBulk
+    deleteRemindersBulk,
+    recoverOrphanedProcessingReminders
 } from '../../core/memory';
 import { Reminder } from '../../types';
 
@@ -132,5 +133,9 @@ export class ReminderService {
 
     async logAudit(userId: string, action: string, details: any) {
         return await logAudit(userId, action, details);
+    }
+
+    async recoverOrphanedProcessingReminders(): Promise<number> {
+        return await recoverOrphanedProcessingReminders();
     }
 }

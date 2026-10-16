@@ -32,9 +32,13 @@ import { initTools } from './tools/index';
 import { BackupService } from './modules/system/backup.service';
 import { initDB } from './core/dbManager';
 
-// Prevenir caídas del servidor por excepciones no controladas o promesas rechazadas
+// SEGURIDAD: Ante una excepción no controlada, el estado en memoria de la aplicación
+// (conexiones de sockets, estados de base de datos, memoria del bot) ya no es confiable.
+// Continuar ejecutando puede derivar en corrupción de datos, carreras o fugas.
+// Se registra el fallo fatal y se termina el proceso (exit 1) para que el orquestador (Docker/PM2) lo reinicie limpiamente.
 process.on('uncaughtException', (err) => {
     console.error('💥 [CRÍTICO] Excepción no controlada (Uncaught Exception):', err);
+    process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
@@ -268,7 +272,9 @@ async function bootstrap() {
         await initDB();
         s1.succeed("Base de Datos y Caché listos.");
     } catch (e: any) {
-        s1.fail(`Error al inicializar base de datos: ${e.message}`);
+        s1.fail(`Error fatal al inicializar base de datos: ${e.message}`);
+        console.error('💥 [FATAL] La aplicación no puede operar de forma segura sin base de datos:', e);
+        process.exit(1);
     }
 
     const s3 = new Spinner("Desplegando Servidor y Dashboard...");
@@ -318,7 +324,7 @@ async function bootstrap() {
         s4.start();
         initTools(messageService as any);
         initTelegramBot(messageService as any, reminderService, messageService as any);
-        Scheduler.init(messageService as any, reminderService);
+        await Scheduler.init(messageService as any, reminderService);
         BackupService.initScheduledBackup();
         s4.succeed("Telegram, Programadores y Herramientas listos.");
 

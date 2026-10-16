@@ -93,7 +93,7 @@ ${settings.possible_responses}
                 
                 try {
                     await logAudit(senderId, "TOOL_START", { tool: name, args });
-                    const result = await executeTool(name, args, senderId, chatId); 
+                    const result = await executeTool(name, args, senderId, chatId, fullAccess); 
                     await logAudit(senderId, "TOOL_SUCCESS", { tool: name, result });
                     
                     messages.push({

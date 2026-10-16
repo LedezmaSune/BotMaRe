@@ -99,6 +99,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
             const loaded = rows.reduce((acc: any, row: any) => ({ ...acc, [row.key]: row.value }), {});
             return { ...defaultSettings, ...loaded };
         } catch (error) {
+            console.warn('⚠️ [DB:LowdbAdapter.getSettings] Error al leer configuraciones:', error);
             return defaultSettings;
         }
     }
@@ -137,6 +138,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
                 role: row.role as any, content: row.content
             }));
         } catch (error) {
+            console.warn(`⚠️ [DB:LowdbAdapter.getHistory] Error al obtener historial de ${userId}:`, error);
             return [];
         }
     }
@@ -252,6 +254,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
                 return list.sort((a: any, b: any) => a.time.localeCompare(b.time) || a.id - b.id);
             }
         } catch (error) {
+            console.warn(`⚠️ [DB:LowdbAdapter.listReminders] Error al listar recordatorios para ${userId}:`, error);
             return [];
         }
     }
@@ -295,6 +298,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
         try {
             return this.ldb.data.reminders.find(r => r.id === id) || null;
         } catch (error) {
+            console.warn(`⚠️ [DB:LowdbAdapter.getReminderById] Error al buscar recordatorio #${id}:`, error);
             return null;
         }
     }
@@ -303,6 +307,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
         try {
             return this.ldb.data.reminders.filter(r => r.status === 'pending');
         } catch (error) {
+            console.warn('⚠️ [DB:LowdbAdapter.listAllPendingReminders] Error al listar recordatorios pendientes:', error);
             return [];
         }
     }
@@ -312,6 +317,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
             const list = this.ldb.data.reminders.filter(r => r.status !== 'sent');
             return list.map((r: any) => r.mediaPath).filter(Boolean);
         } catch (error) {
+            console.warn('⚠️ [DB:LowdbAdapter.listPendingMediaPaths] Error al listar rutas multimedia:', error);
             return [];
         }
     }
@@ -332,6 +338,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
         try {
             return this.ldb.data.reminders.filter(r => ['pending', 'failed'].includes(r.status));
         } catch (error) {
+            console.warn('⚠️ [DB:LowdbAdapter.listPendingOrFailedReminders] Error al listar recordatorios pendientes/fallidos:', error);
             return [];
         }
     }
@@ -348,6 +355,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
                 return rNorm === targetNorm || rBase === targetBase || rNorm.endsWith('/' + targetBase);
             });
         } catch (error) {
+            console.warn(`⚠️ [DB:LowdbAdapter.checkReminderExistsByMediaPath] Error al verificar multimedia ${mediaPath}:`, error);
             return false;
         }
     }
@@ -357,6 +365,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
             const list = [...this.ldb.data.templates];
             return list.sort((a: any, b: any) => a.name.localeCompare(b.name));
         } catch (error) {
+            console.warn('⚠️ [DB:LowdbAdapter.listTemplates] Error al listar plantillas:', error);
             return [];
         }
     }
@@ -433,7 +442,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
                 return false;
             }
         } catch (error) {
-            return false;
+            console.error(`❌ [DB:LowdbAdapter.isChatPaused] Error al verificar estado de pausa del chat ${chatId}:`, error);
+            throw error;
         }
     }
 
@@ -442,6 +452,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
             const list = [...this.ldb.data.paused_chats];
             return list.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         } catch (error) {
+            console.warn('⚠️ [DB:LowdbAdapter.listPausedChats] Error al listar chats pausados:', error);
             return [];
         }
     }
@@ -451,6 +462,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
             const list = [...this.ldb.data.autoresponders];
             return list.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         } catch (error) {
+            console.warn('⚠️ [DB:LowdbAdapter.listAutoresponders] Error al listar autorespondedores:', error);
             return [];
         }
     }
@@ -518,6 +530,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
             const row = this.ldb.data.user_states.find(s => s.chatId === chatId);
             return row ? (row.currentMenuId ?? null) : null;
         } catch (error) {
+            console.warn(`⚠️ [DB:LowdbAdapter.getUserState] Error al obtener estado para ${chatId}:`, error);
             return null;
         }
     }
@@ -549,6 +562,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
         try {
             return this.ldb.data.sheet_sync_settings || null;
         } catch (error) {
+            console.warn('⚠️ [DB:LowdbAdapter.getSheetSyncSettings] Error al leer configuración de Google Sheets:', error);
             return null;
         }
     }
@@ -559,6 +573,22 @@ export class LowdbAdapter implements IDatabaseAdapter {
             await this.ldb.write();
         } catch (error) {
             console.error('❌ [DB] Error al guardar configuracion de Google Sheets en Lowdb:', error);
+        }
+    }
+
+    async recoverOrphanedProcessingReminders(): Promise<number> {
+        try {
+            const processing = (this.ldb.data.reminders || []).filter(r => r.status === 'processing');
+            if (processing.length === 0) return 0;
+            for (const rem of processing) {
+                rem.status = 'pending';
+            }
+            await this.ldb.write();
+            console.log(`[Scheduler] 🔄 Recuperados ${processing.length} recordatorios huérfanos de 'processing' a 'pending'.`);
+            return processing.length;
+        } catch (error) {
+            console.error('❌ [DB:LowdbAdapter.recoverOrphanedProcessingReminders] Error al recuperar recordatorios huérfanos:', error);
+            return 0;
         }
     }
 }

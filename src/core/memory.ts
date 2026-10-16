@@ -47,3 +47,4 @@ export const getReminderById = dbManager.getReminderById;
 export const updateReminder = dbManager.updateReminder;
 export const listPendingOrFailedReminders = dbManager.listPendingOrFailedReminders;
 export const checkReminderExistsByMediaPath = dbManager.checkReminderExistsByMediaPath;
+export const recoverOrphanedProcessingReminders = dbManager.recoverOrphanedProcessingReminders;

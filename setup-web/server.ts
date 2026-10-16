@@ -1,6 +1,7 @@
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { TunnelService } from '../src/core/tunnel';
 
 export async function startSetupServer(): Promise<void> {
@@ -8,8 +9,13 @@ export async function startSetupServer(): Promise<void> {
         const app = express();
         const PORT = process.env.PORT || 8000;
 
-        // Generar PIN de seguridad de 6 dígitos
+        // Generar PIN de seguridad de 6 dígitos aleatorio por sesión
         const SECURITY_PIN = Math.floor(100000 + Math.random() * 900000).toString();
+        let failedAttempts = 0;
+        const MAX_FAILED_ATTEMPTS = 5;
+        let blockedUntil = 0;
+        const PIN_TTL_MS = 15 * 60 * 1000; // 15 minutos
+        let lastActivity = Date.now();
 
         app.use(express.json());
 
@@ -21,12 +27,47 @@ export async function startSetupServer(): Promise<void> {
         // API para guardar los datos
         app.post('/api/setup', (req, res) => {
             try {
+                const now = Date.now();
+
+                // Verificar bloqueo por fuerza bruta
+                if (now < blockedUntil) {
+                    const remainingSeconds = Math.ceil((blockedUntil - now) / 1000);
+                    return res.status(429).json({ 
+                        error: `Demasiados intentos fallidos. Bloqueado temporalmente. Intente de nuevo en ${remainingSeconds} segundos.` 
+                    });
+                }
+
+                // Verificar expiración por inactividad (15 min)
+                if (now - lastActivity > PIN_TTL_MS) {
+                    return res.status(401).json({ 
+                        error: 'El PIN de seguridad ha expirado tras 15 minutos de inactividad. Reinicie el bot para generar uno nuevo.' 
+                    });
+                }
+
+                lastActivity = now;
+
                 const { username, password, aiProvider, apiKey, telegramToken, telegramUsers, rawEnvContent, securityPin } = req.body;
                 
-                // Validar PIN de seguridad
-                if (securityPin !== SECURITY_PIN) {
-                    return res.status(401).json({ error: 'PIN de seguridad incorrecto' });
+                // Validar PIN de seguridad en tiempo constante
+                const pinInput = String(securityPin || '');
+                const expectedBuf = Buffer.from(SECURITY_PIN, 'utf8');
+                const actualBuf = Buffer.from(pinInput, 'utf8');
+                const isValidPin = expectedBuf.length === actualBuf.length && crypto.timingSafeEqual(expectedBuf, actualBuf);
+
+                if (!isValidPin) {
+                    failedAttempts++;
+                    if (failedAttempts >= MAX_FAILED_ATTEMPTS) {
+                        blockedUntil = Date.now() + 15 * 60 * 1000; // Bloqueo de 15 minutos
+                        failedAttempts = 0;
+                        console.warn('⚠️ [Setup] 5 intentos fallidos consecutivos de PIN. Bloqueando acceso por 15 minutos.');
+                        return res.status(429).json({ error: 'Demasiados intentos incorrectos. El acceso ha sido bloqueado por 15 minutos.' });
+                    }
+                    const remaining = MAX_FAILED_ATTEMPTS - failedAttempts;
+                    return res.status(401).json({ error: `PIN de seguridad incorrecto. Intentos restantes: ${remaining}` });
                 }
+
+                // PIN válido: resetear contador
+                failedAttempts = 0;
 
                 const envPath = path.join(process.cwd(), '.env');
 

@@ -258,7 +258,13 @@ export class Router {
         }
 
         // Verificar si el chat específico tiene la IA pausada (Soporte Técnico Humano)
-        const isPaused = await isChatPaused(jid);
+        let isPaused = false;
+        try {
+            isPaused = await isChatPaused(jid);
+        } catch (error) {
+            console.error(`❌ [Router] Error al consultar estado de pausa para ${jid}. Por seguridad se detiene procesamiento para evitar respuestas indebidas:`, error);
+            return;
+        }
         if (isPaused) {
             console.log(`[Router] Mensaje de ${jid} ignorado por la IA porque está en modo soporte humano (pausado).`);
             return;

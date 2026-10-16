@@ -241,6 +241,7 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             return await ReminderModel.findOne({ id }).lean();
         } catch (error) {
+            console.warn(`⚠️ [DB:MongoAdapter.getReminderById] Error al buscar recordatorio #${id}:`, error);
             return null;
         }
     }
@@ -249,6 +250,7 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             return await ReminderModel.find({ status: 'pending' }).lean();
         } catch (error) {
+            console.warn('⚠️ [DB:MongoAdapter.listAllPendingReminders] Error al listar recordatorios pendientes:', error);
             return [];
         }
     }
@@ -261,6 +263,7 @@ export class MongoAdapter implements IDatabaseAdapter {
             ).lean();
             return results.map(r => r.mediaPath).filter(Boolean) as string[];
         } catch (error) {
+            console.warn('⚠️ [DB:MongoAdapter.listPendingMediaPaths] Error al listar rutas multimedia:', error);
             return [];
         }
     }
@@ -277,6 +280,7 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             return await ReminderModel.find({ status: { $in: ['pending', 'failed'] } }).lean();
         } catch (error) {
+            console.warn('⚠️ [DB:MongoAdapter.listPendingOrFailedReminders] Error al listar recordatorios pendientes/fallidos:', error);
             return [];
         }
     }
@@ -293,6 +297,7 @@ export class MongoAdapter implements IDatabaseAdapter {
             }).lean();
             return !!exists;
         } catch (error) {
+            console.warn(`⚠️ [DB:MongoAdapter.checkReminderExistsByMediaPath] Error al verificar multimedia ${mediaPath}:`, error);
             return false;
         }
     }
@@ -301,6 +306,7 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             return await TemplateModel.find().sort({ name: 1 }).lean();
         } catch (error) {
+            console.warn('⚠️ [DB:MongoAdapter.listTemplates] Error al listar plantillas:', error);
             return [];
         }
     }
@@ -366,7 +372,8 @@ export class MongoAdapter implements IDatabaseAdapter {
                 return false;
             }
         } catch (error) {
-            return false;
+            console.error(`❌ [DB:MongoAdapter.isChatPaused] Error al verificar si el chat ${chatId} está pausado:`, error);
+            throw error;
         }
     }
 
@@ -374,6 +381,7 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             return await PausedChatModel.find().sort({ timestamp: -1 }).lean();
         } catch (error) {
+            console.warn('⚠️ [DB:MongoAdapter.listPausedChats] Error al listar chats pausados:', error);
             return [];
         }
     }
@@ -382,6 +390,7 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             return await AutoresponderModel.find().sort({ timestamp: -1 }).lean();
         } catch (error) {
+            console.warn('⚠️ [DB:MongoAdapter.listAutoresponders] Error al listar autorespondedores:', error);
             return [];
         }
     }
@@ -439,6 +448,7 @@ export class MongoAdapter implements IDatabaseAdapter {
             const row = await UserStateModel.findOne({ chatId }).lean() as UserStateData | null;
             return row ? (row.currentMenuId ?? null) : null;
         } catch (error) {
+            console.warn(`⚠️ [DB:MongoAdapter.getUserState] Error al obtener estado para ${chatId}:`, error);
             return null;
         }
     }
@@ -470,5 +480,22 @@ export class MongoAdapter implements IDatabaseAdapter {
 
     async saveSheetSyncSettings(settings: SheetSyncSettings): Promise<void> {
         console.warn('⚠️ [DB] SheetSyncSettings no está implementado nativamente en MongoDB Atlas aún.');
+    }
+
+    async recoverOrphanedProcessingReminders(): Promise<number> {
+        try {
+            const result = await ReminderModel.updateMany(
+                { status: 'processing' },
+                { $set: { status: 'pending' } }
+            );
+            const count = result.modifiedCount || 0;
+            if (count > 0) {
+                console.log(`[Scheduler] 🔄 Recuperados ${count} recordatorios huérfanos de 'processing' a 'pending'.`);
+            }
+            return count;
+        } catch (error) {
+            console.error('❌ [DB:MongoAdapter.recoverOrphanedProcessingReminders] Error al recuperar recordatorios huérfanos:', error);
+            return 0;
+        }
     }
 }

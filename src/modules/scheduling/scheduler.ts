@@ -22,10 +22,18 @@ export class Scheduler {
     /**
      * Inicializa el sistema de scheduling completo.
      */
-    static init(waService: MessageService, reminderService: ReminderService): void {
+    static async init(waService: MessageService, reminderService: ReminderService): Promise<void> {
         this.waService = waService;
         this.reminderService = reminderService;
         this.smsService = new SmsService();
+
+        // SEGURIDAD: Recuperar recordatorios que hayan quedado congelados en 'processing'
+        // debido a un reinicio abrupto o crash del bot, devolviéndolos a 'pending'.
+        try {
+            await this.reminderService.recoverOrphanedProcessingReminders();
+        } catch (err) {
+            console.error('[Scheduler] Error al recuperar recordatorios huérfanos:', err);
+        }
 
         // Inicializar cola de procesamiento
         this.queue = new ReminderQueue(this.waService, this.smsService, this.reminderService);

@@ -41,8 +41,15 @@ export const restrictedToolsDefinition = restrictedTools.map(t => ({
     function: t.definition
 }));
 
-export async function executeTool(name: string, args: any, userId: string, chatId: string) {
-    const tool = allTools.find(t => t.definition.name === name);
-    if (!tool) throw new Error(`Tool ${name} not found`);
+export async function executeTool(name: string, args: any, userId: string, chatId: string, fullAccess: boolean = false) {
+    const allowedTools = fullAccess ? allTools : restrictedTools;
+    const tool = allowedTools.find(t => t.definition.name === name);
+    if (!tool) {
+        const isPrivileged = allTools.some(t => t.definition.name === name);
+        if (isPrivileged) {
+            throw new Error(`Acceso denegado: La herramienta '${name}' requiere privilegios elevados (fullAccess).`);
+        }
+        throw new Error(`Tool ${name} not found`);
+    }
     return await (tool.handler as any)(args, userId, chatId);
 }

@@ -18,39 +18,41 @@ export let ldb: any = null;
 let adapter: IDatabaseAdapter;
 
 export async function initDB(): Promise<void> {
+    const dbEngine = (process.env.DB_ENGINE || '').toLowerCase().trim();
     const mongoUri = process.env.MONGO_URI;
+    const hasMongoConfig = Boolean(mongoUri && mongoUri !== 'tu_url_de_atlas_aqui');
 
-    if (mongoUri && mongoUri !== 'tu_url_de_atlas_aqui') {
-        try {
-            adapter = new MongoAdapter();
-            await adapter.initDB();
-            isMongo = true;
-            
-            // Execute automigrator once Mongo is ready
-            const { runMigration } = require('./migrator');
-            await runMigration();
-            return;
-        } catch (error) {
-            console.warn('⚠️ [DB] Falló la conexión a MongoDB Atlas. Iniciando Fallback a Lowdb...');
+    // SEGURIDAD: Sin fallback silencioso de Mongo a Lowdb.
+    // Si DB_ENGINE === 'mongodb' o si MONGO_URI está configurada (y DB_ENGINE no es explícitamente 'lowdb'),
+    // se DEBE usar MongoDB. Si falla la conexión a Mongo, se lanza error para abortar el arranque.
+    const shouldUseMongo = dbEngine === 'mongodb' || (hasMongoConfig && dbEngine !== 'lowdb');
+
+    if (shouldUseMongo) {
+        if (!hasMongoConfig) {
+            throw new Error('[DB] Motor configurado como MongoDB pero MONGO_URI no está configurada o es inválida.');
         }
-    } else {
-        console.warn('⚠️ [DB] MONGO_URI no configurado en el .env. Iniciando Fallback a Lowdb...');
-    }
-
-    // Lowdb Fallback initialization
-    try {
-        const lowAdapter = new LowdbAdapter();
-        await lowAdapter.initDB();
-        adapter = lowAdapter;
-        isMongo = false;
-        ldb = lowAdapter.getRawDb();
+        console.log('🔄 [DB] Conectando a MongoDB Atlas...');
+        adapter = new MongoAdapter();
+        await adapter.initDB();
+        isMongo = true;
         
-        // Execute automigrator
+        // Execute automigrator once Mongo is ready
         const { runMigration } = require('./migrator');
         await runMigration();
-    } catch (err) {
-        console.error('❌ [DB] Error crítico al inicializar Lowdb:', err);
+        return;
     }
+
+    // Lowdb solo se inicializa si DB_ENGINE === 'lowdb' o en ausencia de MONGO_URI
+    console.log('🔄 [DB] Inicializando motor local Lowdb...');
+    const lowAdapter = new LowdbAdapter();
+    await lowAdapter.initDB();
+    adapter = lowAdapter;
+    isMongo = false;
+    ldb = lowAdapter.getRawDb();
+    
+    // Execute automigrator
+    const { runMigration } = require('./migrator');
+    await runMigration();
 }
 
 export function generateNumericId(): number {
@@ -160,3 +162,9 @@ export const getSheetSyncSettings = () => adapter.getSheetSyncSettings();
 export const saveSheetSyncSettings = (settings: any) => adapter.saveSheetSyncSettings(settings);
 
 export const getActiveEngine = () => adapter.getActiveEngine();
+export const recoverOrphanedProcessingReminders = async (): Promise<number> => {
+    if (adapter && typeof adapter.recoverOrphanedProcessingReminders === 'function') {
+        return await adapter.recoverOrphanedProcessingReminders();
+    }
+    return 0;
+};

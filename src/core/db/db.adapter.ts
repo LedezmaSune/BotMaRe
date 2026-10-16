@@ -89,4 +89,5 @@ export interface IDatabaseAdapter {
     saveSheetSyncSettings(settings: SheetSyncSettings): Promise<void>;
 
     getActiveEngine(): 'mongodb' | 'lowdb' | 'none';
+    recoverOrphanedProcessingReminders?(): Promise<number>;
 }
