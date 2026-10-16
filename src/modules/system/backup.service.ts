@@ -7,37 +7,67 @@ import { bot } from '../../telegram/bot';
 import { getSettings } from '../../core/memory';
 import { InputFile } from 'grammy';
 
-const ENCRYPTION_ALGORITHM = 'aes-256-cbc';
+const ENCRYPTION_ALGORITHM = 'aes-256-gcm';
+const MAGIC_HEADER = Buffer.from('BMENC2'); // Encabezado de verificación de formato (GCM)
+const SALT_LENGTH = 16;
+const IV_LENGTH = 12; // 96 bits recomendado para GCM
+const TAG_LENGTH = 16; // 128 bits auth tag
 
-function getEncryptionKey() {
+function getEncryptionKey(salt: Buffer): Buffer {
     const key = process.env.BACKUP_ENCRYPTION_KEY;
     if (!key || key.trim() === '') {
         throw new Error('BACKUP_ENCRYPTION_KEY no está configurada.');
     }
-    return crypto.scryptSync(key.trim(), 'salt-botmare', 32);
+    return crypto.scryptSync(key.trim(), salt, 32);
 }
 
-function encryptFile(inputPath: string, outputPath: string) {
-    const initVector = crypto.randomBytes(16);
-    const key = getEncryptionKey();
-    const cipher = crypto.createCipheriv(ENCRYPTION_ALGORITHM, key, initVector);
+export function encryptFile(inputPath: string, outputPath: string) {
+    const salt = crypto.randomBytes(SALT_LENGTH);
+    const iv = crypto.randomBytes(IV_LENGTH);
+    const key = getEncryptionKey(salt);
+    const cipher = crypto.createCipheriv(ENCRYPTION_ALGORITHM, key, iv);
     const input = fs.readFileSync(inputPath);
-    const encrypted = Buffer.concat([initVector, cipher.update(input), cipher.final()]);
-    fs.writeFileSync(outputPath, encrypted);
+    const encrypted = Buffer.concat([cipher.update(input), cipher.final()]);
+    const tag = cipher.getAuthTag();
+
+    // Formato de archivo: MAGIC (6B) + SALT (16B) + IV (12B) + TAG (16B) + CIPHERTEXT
+    const outputBuffer = Buffer.concat([MAGIC_HEADER, salt, iv, tag, encrypted]);
+    fs.writeFileSync(outputPath, outputBuffer);
 }
 
-function decryptFile(inputPath: string, outputPath: string) {
+export function decryptFile(inputPath: string, outputPath: string) {
+    const input = fs.readFileSync(inputPath);
+    const minLength = MAGIC_HEADER.length + SALT_LENGTH + IV_LENGTH + TAG_LENGTH;
+    if (input.length < minLength) {
+        throw new Error('El archivo de respaldo está corrupto o tiene un tamaño inválido.');
+    }
+
+    const magic = input.subarray(0, MAGIC_HEADER.length);
+    if (!magic.equals(MAGIC_HEADER)) {
+        throw new Error('Formato de cifrado inválido. Se requiere un archivo cifrado con aes-256-gcm.');
+    }
+
+    let offset = MAGIC_HEADER.length;
+    const salt = input.subarray(offset, offset + SALT_LENGTH);
+    offset += SALT_LENGTH;
+
+    const iv = input.subarray(offset, offset + IV_LENGTH);
+    offset += IV_LENGTH;
+
+    const tag = input.subarray(offset, offset + TAG_LENGTH);
+    offset += TAG_LENGTH;
+
+    const ciphertext = input.subarray(offset);
+
+    const key = getEncryptionKey(salt);
+    const decipher = crypto.createDecipheriv(ENCRYPTION_ALGORITHM, key, iv);
+    decipher.setAuthTag(tag);
+
     try {
-        const input = fs.readFileSync(inputPath);
-        const initVector = input.subarray(0, 16);
-        const encryptedData = input.subarray(16);
-        const key = getEncryptionKey();
-        const decipher = crypto.createDecipheriv(ENCRYPTION_ALGORITHM, key, initVector);
-        const decrypted = Buffer.concat([decipher.update(encryptedData), decipher.final()]);
+        const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
         fs.writeFileSync(outputPath, decrypted);
     } catch (error) {
-        console.error('❌ Error al desencriptar archivo:', error);
-        throw new Error('La contraseña de desencriptado es incorrecta o el archivo está corrupto.');
+        throw new Error('La clave de desencriptado es incorrecta o la integridad del archivo ha sido alterada.');
     }
 }
 
@@ -69,12 +99,6 @@ export class BackupService {
         // Se omiten las credenciales para evitar que adm-zip bloquee el Event Loop leyendo la BD de SQLite temporal de Baileys,
         // lo que causa que WhatsApp cierre la sesión por TimeOut ("Connection closed").
         // En caso de catástrofe, es más seguro reescanear el código QR al restaurar la DB.
-
-        // 3. Incluir archivo .env
-        const envPath = path.join(process.cwd(), '.env');
-        if (fs.existsSync(envPath)) {
-            coreZip.addLocalFile(envPath);
-        }
 
         const coreFilename = `backup-P1-SISTEMA-${timestamp}.zip.enc`;
         const coreFilePath = path.join(this.backupDir, coreFilename);
@@ -110,6 +134,60 @@ export class BackupService {
         this.cleanOldUploads(3);
 
         return backupPaths;
+    }
+
+    /**
+     * Valida si una ruta interna de archivo dentro del ZIP es segura y restaurable.
+     * Solo permite base de datos, templates y uploads.
+     * Rechaza estrictamente plugins, .env, auth_info_baileys y path traversal.
+     */
+    static isPathRestorable(entryPath: string): boolean {
+        const normalized = entryPath.replace(/\\/g, '/').replace(/^\/+/, '');
+
+        // 1. Bloquear path traversal
+        if (normalized.includes('..') || path.isAbsolute(normalized)) {
+            return false;
+        }
+
+        // 2. Bloquear explícitamente rutas sensibles y ejecutables
+        if (normalized.startsWith('data/plugins') || normalized.includes('plugins/') || normalized === 'data/plugins') {
+            return false;
+        }
+        if (normalized === '.env' || normalized.endsWith('/.env') || normalized.includes('.env')) {
+            return false;
+        }
+        if (normalized.startsWith('auth_info_baileys') || normalized.includes('auth_info_baileys')) {
+            return false;
+        }
+
+        // 3. Directorios estructurales base
+        if (
+            normalized === 'data' || 
+            normalized === 'data/' || 
+            normalized === 'data/uploads' || 
+            normalized === 'data/uploads/'
+        ) {
+            return true;
+        }
+
+        // 4. Archivos de base de datos permitidos
+        if (
+            normalized === 'data/database.db' ||
+            normalized === 'data/database.json' ||
+            normalized === 'data/whatsapp_auth.db'
+        ) {
+            return true;
+        }
+
+        // 5. Carpetas de multimedia y plantillas
+        if (normalized.startsWith('data/uploads/')) {
+            return true;
+        }
+        if (normalized.startsWith('data/templates')) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -209,67 +287,99 @@ export class BackupService {
     }
 
     /**
-     * Restaura un respaldo desde un archivo ZIP
+     * Restaura un respaldo desde un archivo ZIP cifrado (.enc) validando índices contra allowlist.
      */
     static async restoreBackup(zipFilePath: string): Promise<{ success: boolean; message: string }> {
+        // 1. Exigir que el archivo esté cifrado (.enc)
+        if (!zipFilePath.endsWith('.enc')) {
+            return {
+                success: false,
+                message: 'Restauración rechazada: el archivo no está cifrado. Solo se admiten archivos cifrados (.enc).'
+            };
+        }
+
+        const runId = Date.now();
+        const tempDecryptedPath = path.join(this.backupDir, `temp_decrypted_${runId}.zip`);
+        const tempExtractPath = path.join(this.backupDir, `temp_restore_${runId}`);
+
         try {
-            const tempDecryptedPath = path.join(this.backupDir, 'temp_decrypted.zip');
-            
-            // Si viene cifrado (.enc), descifrarlo primero
-            if (zipFilePath.endsWith('.enc')) {
-                decryptFile(zipFilePath, tempDecryptedPath);
-            } else {
-                fs.copyFileSync(zipFilePath, tempDecryptedPath);
+            if (!fs.existsSync(this.backupDir)) {
+                fs.mkdirSync(this.backupDir, { recursive: true });
             }
+            
+            // 2. Descifrar el archivo principal
+            decryptFile(zipFilePath, tempDecryptedPath);
 
             const zip = new AdmZip(tempDecryptedPath);
-            const tempExtractPath = path.join(this.backupDir, 'temp_restore');
-            
+            const entries = zip.getEntries();
+
+            // 3. Validar entradas del zip contra la allowlist antes de extraer
+            for (const entry of entries) {
+                const entryName = entry.entryName.replace(/\\/g, '/');
+
+                // Si es un archivo de parte anidada (ej. backup-P1-SISTEMA.zip.enc)
+                if (entryName.endsWith('.enc')) {
+                    continue;
+                }
+
+                if (!this.isPathRestorable(entryName)) {
+                    if (fs.existsSync(tempDecryptedPath)) fs.unlinkSync(tempDecryptedPath);
+                    return {
+                        success: false,
+                        message: `Restauración rechazada: el archivo contiene rutas no autorizadas o potencialmente peligrosas ("${entryName}").`
+                    };
+                }
+            }
+
+            // 4. Extraer a carpeta temporal
             if (fs.existsSync(tempExtractPath)) {
                 fs.rmSync(tempExtractPath, { recursive: true, force: true });
             }
             fs.mkdirSync(tempExtractPath, { recursive: true });
-
-            // 1. Extraer a carpeta temporal
             zip.extractAllTo(tempExtractPath, true);
 
-            // 2. Si el zip contiene archivos .enc (es un zip maestro), procesarlos
+            // 5. Procesar y validar archivos .enc anidados (multi-parte)
             const extractedFiles = fs.readdirSync(tempExtractPath);
             for (const file of extractedFiles) {
                 if (file.endsWith('.enc')) {
                     const nestedEncPath = path.join(tempExtractPath, file);
                     const nestedDecryptedPath = path.join(tempExtractPath, file.replace('.enc', ''));
                     decryptFile(nestedEncPath, nestedDecryptedPath);
+
                     const nestedZip = new AdmZip(nestedDecryptedPath);
+                    for (const nestedEntry of nestedZip.getEntries()) {
+                        const nestedName = nestedEntry.entryName.replace(/\\/g, '/');
+                        if (!this.isPathRestorable(nestedName)) {
+                            fs.rmSync(tempExtractPath, { recursive: true, force: true });
+                            if (fs.existsSync(tempDecryptedPath)) fs.unlinkSync(tempDecryptedPath);
+                            return {
+                                success: false,
+                                message: `Restauración rechazada: el archivo de parte contiene rutas no autorizadas o peligrosas ("${nestedName}").`
+                            };
+                        }
+                    }
+
                     nestedZip.extractAllTo(tempExtractPath, true);
                     fs.unlinkSync(nestedDecryptedPath);
                 }
             }
 
-            // 3. Reemplazar carpeta data (si existe en el zip)
+            // 6. Aplicar restauración segura únicamente sobre las rutas autorizadas de data
             const extractedDataPath = path.join(tempExtractPath, 'data');
             if (fs.existsSync(extractedDataPath)) {
                 const currentDataPath = path.join(process.cwd(), 'data');
                 if (!fs.existsSync(currentDataPath)) fs.mkdirSync(currentDataPath, { recursive: true });
-                fs.cpSync(extractedDataPath, currentDataPath, { recursive: true });
+
+                const dataItems = fs.readdirSync(extractedDataPath);
+                for (const item of dataItems) {
+                    const itemRelPath = `data/${item}`;
+                    if (this.isPathRestorable(itemRelPath) || item === 'uploads' || item.startsWith('templates')) {
+                        fs.cpSync(path.join(extractedDataPath, item), path.join(currentDataPath, item), { recursive: true });
+                    }
+                }
             }
 
-            // 4. Reemplazar carpeta auth_info_baileys (si existe en el zip)
-            const extractedAuthPath = path.join(tempExtractPath, 'auth_info_baileys');
-            if (fs.existsSync(extractedAuthPath)) {
-                const currentAuthPath = path.join(process.cwd(), 'auth_info_baileys');
-                if (fs.existsSync(currentAuthPath)) fs.rmSync(currentAuthPath, { recursive: true, force: true });
-                fs.cpSync(extractedAuthPath, currentAuthPath, { recursive: true });
-            }
-
-            // 5. Reemplazar archivo .env (si existe en el backup)
-            const extractedEnvPath = path.join(tempExtractPath, '.env');
-            if (fs.existsSync(extractedEnvPath)) {
-                const currentEnvPath = path.join(process.cwd(), '.env');
-                fs.copyFileSync(extractedEnvPath, currentEnvPath);
-            }
-
-            // 6. Limpieza
+            // 7. Limpieza
             fs.rmSync(tempExtractPath, { recursive: true, force: true });
             if (fs.existsSync(tempDecryptedPath)) {
                 fs.unlinkSync(tempDecryptedPath);
@@ -280,6 +390,8 @@ export class BackupService {
                 message: 'Información y archivos multimedia restaurados con éxito. El bot debe reiniciarse para aplicar todos los cambios.' 
             };
         } catch (error: any) {
+            if (fs.existsSync(tempExtractPath)) fs.rmSync(tempExtractPath, { recursive: true, force: true });
+            if (fs.existsSync(tempDecryptedPath)) fs.unlinkSync(tempDecryptedPath);
             console.error('❌ Error en restauración:', error);
             return { success: false, message: error.message || 'Error desconocido durante la restauración.' };
         }
@@ -340,7 +452,8 @@ export class BackupService {
     }
 
     /**
-     * Crea un respaldo legible (TXT + Carpeta de Medios) sin cifrar
+     * Crea un respaldo legible (TXT + JSON + Carpeta de Medios) y lo cifra con la clave de respaldo.
+     * Elimina refreshToken, private_key y contraseñas del archivo JSON.
      */
     static async createHumanReadableBackup(): Promise<string> {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
@@ -348,9 +461,19 @@ export class BackupService {
         
         // 1. Obtener datos de la base de datos
         const { getSettings, listTemplates, listReminders } = require('../../core/memory');
-        const settings = await getSettings();
+        const rawSettings = (await getSettings()) || {};
         const templates = await listTemplates();
         const reminders = await listReminders('owner', true);
+
+        // Eliminar secretos sensibles del respaldo legible
+        const {
+            refreshToken,
+            private_key,
+            DASHBOARD_PASS,
+            SUPERADMIN_KEY,
+            BACKUP_ENCRYPTION_KEY,
+            ...safeSettings
+        } = rawSettings;
 
         // 2. Crear archivo de texto de resumen
         let summary = `=================================================\n`;
@@ -359,49 +482,57 @@ export class BackupService {
         summary += `=================================================\n\n`;
 
         summary += `--- CONFIGURACIÓN GENERAL ---\n`;
-        summary += `Nombre del Bot: ${settings.bot_name}\n`;
-        summary += `IA Activada: ${settings.AI_ENABLED}\n`;
-        summary += `Grupos Permitidos: ${settings.ALLOWED_GROUPS || 'Ninguno'}\n\n`;
+        summary += `Nombre del Bot: ${safeSettings.bot_name || 'BotMaRe'}\n`;
+        summary += `IA Activada: ${safeSettings.AI_ENABLED}\n`;
+        summary += `Grupos Permitidos: ${safeSettings.ALLOWED_GROUPS || 'Ninguno'}\n\n`;
 
         summary += `--- PERSONALIDAD (SYSTEM PROMPT) ---\n`;
-        summary += `${settings.system_prompt}\n\n`;
+        summary += `${safeSettings.system_prompt || ''}\n\n`;
 
         summary += `--- CEREBRO DE DATOS (CONOCIMIENTO) ---\n`;
-        summary += `${settings.possible_responses}\n\n`;
+        summary += `${safeSettings.possible_responses || ''}\n\n`;
 
         summary += `--- PLANTILLAS DE MENSAJES ---\n`;
-        templates.forEach((t: any) => {
+        (templates || []).forEach((t: any) => {
             summary += `> [${t.name}]\n${t.content}\n\n`;
         });
 
         summary += `--- RECORDATORIOS PROGRAMADOS ---\n`;
-        reminders.forEach((r: any) => {
+        (reminders || []).forEach((r: any) => {
             summary += `[${r.status.toUpperCase()}] Para: ${r.chatId} - Fecha: ${r.time}\nTexto: ${r.text}\n\n`;
         });
 
         exportZip.addFile('RESUMEN_BOTMARE.txt', Buffer.from(summary, 'utf8'));
 
-        // 2.5 Añadir JSON para restauración técnica
+        // 2.5 Añadir JSON para restauración técnica (sin secretos)
         const technicalData = {
-            settings,
+            settings: safeSettings,
             templates,
             reminders,
-            version: '1.1.0',
+            version: '2.7.0',
             timestamp: new Date().toISOString()
         };
         exportZip.addFile('datos_para_restaurar.json', Buffer.from(JSON.stringify(technicalData, null, 2), 'utf8'));
 
-        // 3. Incluir Multimedia (sin cifrar)
+        // 3. Incluir Multimedia
         const uploadsDir = path.join(process.cwd(), 'data', 'uploads');
         if (fs.existsSync(uploadsDir) && fs.readdirSync(uploadsDir).length > 0) {
             exportZip.addLocalFolder(uploadsDir, 'multimedia');
         }
 
-        const exportFilename = `Exportacion-LEGIBLE-${timestamp}.zip`;
-        const exportFilePath = path.join(this.backupDir, exportFilename);
+        if (!fs.existsSync(this.backupDir)) {
+            fs.mkdirSync(this.backupDir, { recursive: true });
+        }
+
+        const exportEncFilename = `Exportacion-LEGIBLE-${timestamp}.zip.enc`;
+        const exportEncFilePath = path.join(this.backupDir, exportEncFilename);
+        const tempZip = path.join(this.backupDir, `temp-export-${timestamp}-${Date.now()}.zip`);
         
-        exportZip.writeZip(exportFilePath);
-        return exportFilePath;
+        exportZip.writeZip(tempZip);
+        encryptFile(tempZip, exportEncFilePath);
+        fs.unlinkSync(tempZip);
+
+        return exportEncFilePath;
     }
 
     static getBackupDir() {
