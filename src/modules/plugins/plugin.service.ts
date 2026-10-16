@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import vm from 'vm';
-import axios from 'axios';
+import { safeHttpRequest } from '../../utils/safeHttp';
 import { MessageService } from "../messages/message.service";
 
 export interface PluginMetadata {
@@ -133,7 +133,6 @@ export class PluginService {
                 Boolean,
                 JSON,
                 Promise,
-                axios: axios,
                 fetch: global.fetch || fetch,
                 global: this.apiKeysConfig,
                 module: { exports: {} },
@@ -243,6 +242,12 @@ export class PluginService {
                     console.error('[PluginService:callAI] Error invocando LLM:', e.message);
                     return '';
                 }
+            },
+            httpGet: async (url: string, opts: any = {}) => {
+                return await safeHttpRequest(url, { method: 'GET', ...opts });
+            },
+            httpPost: async (url: string, body: any, opts: any = {}) => {
+                return await safeHttpRequest(url, { method: 'POST', data: body, ...opts });
             },
             getPlugins: () => this.getPlugins()
         };

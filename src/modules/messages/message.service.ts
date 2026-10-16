@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { getSettings } from '../../core/memory';
 import axios from 'axios';
+import { safeDownload } from '../../utils/safeHttp';
 import { formatWhatsAppJid } from '../../utils/formatters';
 
 /**
@@ -170,11 +171,10 @@ export class MessageService {
 
         console.log(`[MessageService] Descargando multimedia desde URL (${downloadUrl.substring(0, 80)}...) para enviar a ${target}`);
         
-        let response;
+        let response: { data: Buffer; headers: Record<string, any>; contentType?: string };
         try {
-            response = await axios.get(downloadUrl, {
-                responseType: 'arraybuffer',
-                timeout: 30000,
+            response = await safeDownload(downloadUrl, {
+                timeoutMs: 30000,
                 maxRedirects: 5,
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -186,9 +186,8 @@ export class MessageService {
             if (driveMatch) {
                 try {
                     const fallbackDriveUrl = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}&confirm=t`;
-                    response = await axios.get(fallbackDriveUrl, {
-                        responseType: 'arraybuffer',
-                        timeout: 30000,
+                    response = await safeDownload(fallbackDriveUrl, {
+                        timeoutMs: 30000,
                         maxRedirects: 5,
                         headers: {
                             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -206,7 +205,7 @@ export class MessageService {
         }
 
         // Validar si el servidor devolvió una página HTML en lugar del archivo binario
-        const buffer = Buffer.from(response.data);
+        const buffer = response.data;
         const headerPreview = buffer.subarray(0, 500).toString('utf-8').toLowerCase();
         if (headerPreview.includes('<!doctype html') || headerPreview.includes('<html')) {
             throw new Error('El enlace devolvió una página web de Google en lugar de un archivo directo. Asegúrate de que el archivo esté compartido públicamente como "Lector".');

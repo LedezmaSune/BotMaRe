@@ -4,7 +4,9 @@ export async function scrapeUrl(url: string): Promise<string> {
     try {
         // Utilizamos un servicio externo que renderiza JavaScript y extrae Markdown limpio (ideal para IA)
         const response = await axios.get(`https://r.jina.ai/${url}`, {
-            timeout: 15000,
+            timeout: 10000,
+            maxContentLength: 5 * 1024 * 1024, // 5 MB máximo
+            maxBodyLength: 5 * 1024 * 1024,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                 // Solicitar formato limpio en markdown

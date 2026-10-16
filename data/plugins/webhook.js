@@ -60,8 +60,8 @@ module.exports = {
                 } catch (e) {}
             }
 
-            const response = await axios.post(targetUrl, dataToSend, {
-                timeout: 10000,
+            const response = await api.httpPost(targetUrl, dataToSend, {
+                timeoutMs: 10000,
                 headers: {
                     'Content-Type': 'application/json',
                     'User-Agent': 'BotMaRe-Webhook-Dispatcher/2.5'
