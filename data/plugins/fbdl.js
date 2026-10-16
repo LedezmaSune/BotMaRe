@@ -39,9 +39,9 @@ module.exports = {
             // 3. Fallback API Externa 2 (LolHuman API)
             if (!videoUrl) {
                 try {
-                    const lolKey = (global && global.APIKeys && global.APIKeys['https://api.lolhuman.xyz']) || 'GataDios';
-                    const apiHost = (global && global.APIs && global.APIs.lol) || 'https://api.lolhuman.xyz';
-                    const lolRes = await axios.get(`${apiHost}/api/facebook?apikey=${lolKey}&url=${encodeURIComponent(url)}`);
+                    const lolKey = (api.getApiKey && api.getApiKey('https://api.lolhuman.xyz')) || 'GataDios';
+                    const apiHost = (api.getApiUrl && api.getApiUrl('lol')) || 'https://api.lolhuman.xyz';
+                    const lolRes = await (api.httpGet ? api.httpGet(`${apiHost}/api/facebook?apikey=${lolKey}&url=${encodeURIComponent(url)}`) : axios.get(`${apiHost}/api/facebook?apikey=${lolKey}&url=${encodeURIComponent(url)}`));
                     if (lolRes.data && lolRes.data.result) {
                         let VIDEO = Array.isArray(lolRes.data.result) ? lolRes.data.result[0] : lolRes.data.result;
                         if (!VIDEO || VIDEO === '') VIDEO = Array.isArray(lolRes.data.result) ? lolRes.data.result[1] : null;

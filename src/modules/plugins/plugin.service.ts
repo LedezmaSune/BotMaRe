@@ -55,23 +55,54 @@ export class PluginService {
         console.log(`[PluginService] Inicializado con ${this.plugins.size} plugins activos.`);
     }
 
+    /**
+     * Obtiene una API Key configurada para un proveedor seleccionando aleatoriamente si es un arreglo,
+     * sin mutar la configuración global.
+     */
+    public getApiKey(provider: string): string | undefined {
+        if (!this.apiKeysConfig?.APIKeys) return undefined;
+        const keys = this.apiKeysConfig.APIKeys[provider];
+        if (Array.isArray(keys) && keys.length > 0) {
+            return keys[Math.floor(Math.random() * keys.length)];
+        }
+        return typeof keys === 'string' ? keys : undefined;
+    }
+
+    /**
+     * Obtiene la URL de servicio configurada para un proveedor.
+     */
+    public getApiUrl(service: string): string | undefined {
+        return this.apiKeysConfig?.APIs?.[service];
+    }
+
+    /**
+     * Valida y sanea el ID del plugin para prevenir path traversal o nombres de archivo maliciosos.
+     */
+    public sanitizePluginId(id: string): string {
+        if (!id || typeof id !== 'string') {
+            throw new Error('ID de plugin inválido o faltante');
+        }
+        const trimmed = id.trim();
+        if (!/^[a-zA-Z0-9_-]{1,64}$/.test(trimmed)) {
+            throw new Error('ID de plugin no válido: solo se permiten caracteres alfanuméricos, guiones y guiones bajos (1-64 caracteres)');
+        }
+        const targetPath = path.resolve(this.pluginsDir, `${trimmed}.js`);
+        const allowedDir = path.resolve(this.pluginsDir);
+        if (!targetPath.startsWith(allowedDir + path.sep)) {
+            throw new Error('Path traversal detectado en el ID de plugin');
+        }
+        return trimmed;
+    }
+
     public loadPlugins() {
         this.plugins.clear();
         this.metadata.clear();
         
-        // Cargar configuración global de APIs si existe
+        // Cargar configuración de APIs si existe (sin mutar claves en memoria)
         const apiKeysPath = path.resolve(process.cwd(), 'data/api-keys.json');
         if (fs.existsSync(apiKeysPath)) {
             try {
-                const config = JSON.parse(fs.readFileSync(apiKeysPath, 'utf8'));
-                if (config.APIKeys) {
-                    for (const [provider, keys] of Object.entries(config.APIKeys)) {
-                        if (Array.isArray(keys) && keys.length > 0) {
-                            config.APIKeys[provider] = keys[Math.floor(Math.random() * keys.length)];
-                        }
-                    }
-                }
-                this.apiKeysConfig = config;
+                this.apiKeysConfig = JSON.parse(fs.readFileSync(apiKeysPath, 'utf8'));
             } catch (error) {
                 console.error('[PluginService] Error cargando api-keys.json:', error);
             }
@@ -89,6 +120,7 @@ export class PluginService {
     public loadSinglePlugin(filename: string) {
         const id = filename.replace('.js', '');
         const fullPath = path.join(this.pluginsDir, filename);
+        if (!fs.existsSync(fullPath)) return;
         const code = fs.readFileSync(fullPath, 'utf8');
 
         const meta: PluginMetadata = {
@@ -100,7 +132,9 @@ export class PluginService {
         };
 
         try {
-            // Create a safe sandbox with Node standard utilities
+            // Entorno de ejecución para plugins (contención inicial).
+            // NOTA: node:vm no es una frontera de seguridad estricta frente a escapes deliberados;
+            // elimina caminos accidentales y no inyecta secretos ni objetos del host (como global.apiKeysConfig).
             const sandbox: any = {
                 console: {
                     log: (...args: any[]) => console.log(`[Plugin:${id}]`, ...args),
@@ -133,15 +167,13 @@ export class PluginService {
                 Boolean,
                 JSON,
                 Promise,
-                fetch: global.fetch || fetch,
-                global: this.apiKeysConfig,
                 module: { exports: {} },
                 exports: {}
             };
 
             const context = vm.createContext(sandbox);
             const script = new vm.Script(code);
-            script.runInContext(context, { timeout: 3000 }); // 3 sec timeout
+            script.runInContext(context, { timeout: 3000 }); // 3 sec timeout al compilar
 
             const exported = sandbox.module.exports || sandbox.exports;
             
@@ -167,7 +199,8 @@ export class PluginService {
     }
 
     public togglePlugin(id: string, active: boolean) {
-        const meta = this.metadata.get(id);
+        const safeId = this.sanitizePluginId(id);
+        const meta = this.metadata.get(safeId);
         if (!meta) throw new Error("Plugin no encontrado");
         
         let newCode = meta.code;
@@ -177,30 +210,32 @@ export class PluginService {
             newCode = newCode.replace(/(module\.)?exports\s*=\s*\{/i, `module.exports = {\n    active: ${active},`);
         }
         
-        this.savePlugin(id, newCode);
+        this.savePlugin(safeId, newCode);
     }
 
     public savePlugin(id: string, code: string) {
-        const fullPath = path.join(this.pluginsDir, `${id}.js`);
+        const safeId = this.sanitizePluginId(id);
+        const fullPath = path.resolve(this.pluginsDir, `${safeId}.js`);
         fs.writeFileSync(fullPath, code, 'utf8');
-        this.loadSinglePlugin(`${id}.js`);
+        this.loadSinglePlugin(`${safeId}.js`);
     }
     
     public deletePlugin(id: string) {
-        const fullPath = path.join(this.pluginsDir, `${id}.js`);
-        if(fs.existsSync(fullPath)){
+        const safeId = this.sanitizePluginId(id);
+        const fullPath = path.resolve(this.pluginsDir, `${safeId}.js`);
+        if (fs.existsSync(fullPath)) {
             fs.unlinkSync(fullPath);
         }
-        this.plugins.delete(id);
-        this.metadata.delete(id);
+        this.plugins.delete(safeId);
+        this.metadata.delete(safeId);
     }
 
-    public async dispatchOnMessage(ctx: PluginContext): Promise<boolean> {
+    public async dispatchOnMessage(ctx: PluginContext, timeoutMs: number = 10000): Promise<boolean> {
         if (!this.waService || !ctx || !ctx.text) return false;
 
         let handled = false;
 
-        // Bridge to interact safely with WhatsApp
+        // Puente seguro del host hacia WhatsApp y servicios externos
         const api = {
             reply: async (text: string) => {
                 handled = true;
@@ -249,16 +284,42 @@ export class PluginService {
             httpPost: async (url: string, body: any, opts: any = {}) => {
                 return await safeHttpRequest(url, { method: 'POST', data: body, ...opts });
             },
+            getApiKey: (provider: string) => this.getApiKey(provider),
+            getApiUrl: (service: string) => this.getApiUrl(service),
             getPlugins: () => this.getPlugins()
         };
+
+        const PLUGIN_TIMEOUT_MS = timeoutMs;
 
         for (const [id, plugin] of this.plugins.entries()) {
             try {
                 if (typeof plugin.onMessage === 'function') {
-                    const res = await Promise.resolve(plugin.onMessage(ctx, api)).catch(e => {
-                        console.error(`[Plugin:${id}] Runtime error in onMessage:`, e.message);
+                    // ADVERTENCIA DE SEGURIDAD:
+                    // Promise.race con timeout interrumpe ejecuciones asíncronas prolongadas (peticiones de red, I/O).
+                    // Sin embargo, una espera síncrona infinita (como while(true){}) en node:vm bloquea el Event Loop
+                    // del proceso principal y no puede ser interrumpida en el mismo hilo. Por esta razón, el aislamiento
+                    // estricto requiere la Fase B (worker_threads con resourceLimits).
+                    let timer: NodeJS.Timeout;
+                    const timeoutPromise = new Promise((_, reject) => {
+                        timer = setTimeout(() => {
+                            reject(new Error(`Timeout de ejecución excedido (${PLUGIN_TIMEOUT_MS} ms)`));
+                        }, PLUGIN_TIMEOUT_MS);
                     });
-                    if (res === true) handled = true;
+
+                    const executionPromise = Promise.resolve(plugin.onMessage(ctx, api));
+
+                    try {
+                        const res = await Promise.race([executionPromise, timeoutPromise]);
+                        clearTimeout(timer!);
+                        if (res === true) handled = true;
+                    } catch (err: any) {
+                        clearTimeout(timer!);
+                        if (err.message.includes('Timeout')) {
+                            console.warn(`[Plugin:${id}] ⚠️ Timeout de ejecución excedido (${PLUGIN_TIMEOUT_MS} ms) en onMessage. Bot continúa operando.`);
+                        } else {
+                            console.error(`[Plugin:${id}] Runtime error in onMessage:`, err.message);
+                        }
+                    }
                 }
             } catch(e: any) {
                 console.error(`[Plugin:${id}] Exception during execution:`, e.message);

@@ -8,7 +8,7 @@ module.exports = {
         
         if (!match) return;
 
-        const apiKey = global.APIKeys?.CloudConvert || "tu_apikey_gratis_de_cloudconvert";
+        const apiKey = (api.getApiKey && api.getApiKey('CloudConvert')) || "tu_apikey_gratis_de_cloudconvert";
         
         if (apiKey === "tu_apikey_gratis_de_cloudconvert" || !apiKey) {
             let msg = `⚠️ *Plugin de Conversión Inactivo*\n\n`;

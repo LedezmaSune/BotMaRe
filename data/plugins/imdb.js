@@ -9,7 +9,7 @@ module.exports = {
         if (!match) return;
 
         // Comprobar si configuraron la API Key en data/api-keys.json
-        const apiKey = global.APIKeys?.OMDB || "tu_apikey_gratis_de_omdbapi_com";
+        const apiKey = (api.getApiKey && api.getApiKey('OMDB')) || "tu_apikey_gratis_de_omdbapi_com";
         if (apiKey === "tu_apikey_gratis_de_omdbapi_com" || !apiKey) {
             return await api.reply("⚠️ *Aviso:* Para usar el buscador de películas, necesitas obtener una API Key gratuita en https://www.omdbapi.com/ y colocarla en el archivo `data/api-keys.json`.");
         }
@@ -18,7 +18,7 @@ module.exports = {
         await api.reply(`🍿 Buscando información sobre *${query}*...`);
 
         try {
-            const res = await axios.get(`http://www.omdbapi.com/?apikey=${apiKey}&t=${encodeURIComponent(query)}&plot=short`);
+            const res = await api.httpGet(`http://www.omdbapi.com/?apikey=${apiKey}&t=${encodeURIComponent(query)}&plot=short`);
             const data = res.data;
 
             if (data.Response === "False") {

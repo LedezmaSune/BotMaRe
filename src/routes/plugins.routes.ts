@@ -28,7 +28,8 @@ export function createPluginsRouter() {
             pluginService.savePlugin(id, code);
             res.json({ success: true, message: 'Plugin guardado exitosamente' });
         } catch (error: any) {
-            res.status(500).json({ success: false, error: error.message });
+            const isValidationError = error.message.includes('ID de plugin') || error.message.includes('Path traversal');
+            res.status(isValidationError ? 400 : 500).json({ success: false, error: error.message });
         }
     });
 
@@ -44,7 +45,8 @@ export function createPluginsRouter() {
             pluginService.togglePlugin(id, active);
             res.json({ success: true, message: `Plugin ${active ? 'activado' : 'desactivado'}` });
         } catch (error: any) {
-            res.status(500).json({ success: false, error: error.message });
+            const isValidationError = error.message.includes('ID de plugin') || error.message.includes('Path traversal');
+            res.status(isValidationError ? 400 : 500).json({ success: false, error: error.message });
         }
     });
 
@@ -55,7 +57,8 @@ export function createPluginsRouter() {
             pluginService.deletePlugin(id);
             res.json({ success: true, message: 'Plugin eliminado' });
         } catch (error: any) {
-            res.status(500).json({ success: false, error: error.message });
+            const isValidationError = error.message.includes('ID de plugin') || error.message.includes('Path traversal');
+            res.status(isValidationError ? 400 : 500).json({ success: false, error: error.message });
         }
     });
 

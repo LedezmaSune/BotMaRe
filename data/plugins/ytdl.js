@@ -22,12 +22,10 @@ module.exports = {
 
         try {
             // Ryzendesu API para YouTube
-            const apiUrl = global.APIs?.Ryzendesu || "https://api.ryzendesu.vip";
+            const apiUrl = (api.getApiUrl && api.getApiUrl('Ryzendesu')) || "https://api.ryzendesu.vip";
             const endpoint = isAudio ? '/api/downloader/ytmp3' : '/api/downloader/ytmp4';
             
-            const res = await axios.get(`${apiUrl}${endpoint}?url=${encodeURIComponent(url)}`, {
-                headers: { 'Accept': 'application/json' }
-            });
+            const res = await (api.httpGet ? api.httpGet(`${apiUrl}${endpoint}?url=${encodeURIComponent(url)}`, { headers: { 'Accept': 'application/json' } }) : axios.get(`${apiUrl}${endpoint}?url=${encodeURIComponent(url)}`, { headers: { 'Accept': 'application/json' } }));
 
             if (res.data && res.data.url) {
                 const mediaUrl = res.data.url;
@@ -47,7 +45,7 @@ module.exports = {
             console.error("Error en YouTube DL:", error.message);
             // Fallback a API Delirius si Ryzendesu falla
             try {
-                const altApi = global.APIs?.Delirius || "https://delirius-apiofc.vercel.app";
+                const altApi = (api.getApiUrl && api.getApiUrl('Delirius')) || "https://delirius-apiofc.vercel.app";
                 const altEndpoint = isAudio ? 'ytmp3' : 'ytmp4';
                 const altRes = await axios.get(`${altApi}/download/${altEndpoint}?url=${encodeURIComponent(url)}`);
                 

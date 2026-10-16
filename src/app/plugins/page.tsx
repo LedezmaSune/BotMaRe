@@ -125,6 +125,51 @@ const PLUGIN_TEMPLATES = [
     }
 ];
 
+const PLUGIN_ADAPTATION_PROMPT = `Actúa como un desarrollador experto en Node.js y frameworks de bots de WhatsApp.
+
+Tengo un sistema de bots propio llamado "BotMaRe" que utiliza un entorno Sandbox (VM) para ejecutar plugins. Necesito que adaptes un plugin creado originalmente para Baileys (ej. Mystic Bot) a la arquitectura estricta de BotMaRe.
+
+REGLAS DE ARQUITECTURA DE BOTMARE:
+1. El plugin DEBE exportarse exactamente con esta estructura:
+module.exports = {
+    name: "Nombre del Plugin",
+    description: "Descripción breve",
+    active: true,
+    onMessage: async (ctx, api) => {
+        // Lógica aquí
+    }
+};
+
+2. EL OBJETO \`ctx\` CONTIENE:
+- \`ctx.text\`: El mensaje de texto que envió el usuario.
+- \`ctx.from\`: El número/JID del remitente o grupo.
+- \`ctx.isGroup\`: Booleano (true/false) si es un grupo.
+- \`ctx.pushName\`: Nombre de perfil de WhatsApp del remitente.
+
+3. EL OBJETO \`api\` CONTIENE EL PUENTE SEGURO DEL HOST:
+- \`api.reply(text)\`: Responde con un texto al chat actual.
+- \`api.sendTo(jid, text)\`: Envía un texto a un chat específico.
+- \`api.sendMedia(url, caption, type)\`: Descarga y envía un archivo desde una URL de forma segura frente a SSRF. \`type\` puede ser 'image', 'video', 'audio', o 'document'.
+- \`api.react(emoji)\`: Reacciona con un emoji al mensaje.
+- \`api.callAI(prompt, systemPrompt)\`: Ejecuta una consulta al motor multi-proveedor de IA.
+- \`api.httpGet(url, options)\`: Realiza peticiones GET con protección anti-SSRF y límites seguros. Retorna \`{ data, headers, status }\`.
+- \`api.httpPost(url, body, options)\`: Realiza peticiones POST con protección anti-SSRF. Retorna \`{ data, headers, status }\`.
+- \`api.getApiKey(provider)\`: Obtiene la clave configurada para un proveedor desde \`data/api-keys.json\`.
+- \`api.getApiUrl(service)\`: Obtiene la URL de servicio configurada desde \`data/api-keys.json\`.
+- \`api.getPlugins()\`: Devuelve un arreglo con los metadatos de los plugins instalados.
+
+4. INSTRUCCIONES DE CONVERSIÓN:
+- No uses \`import\` ni \`export\` bajo ninguna circunstancia. El sandbox utiliza CommonJS puro.
+- No uses \`export default handler\` ni dependas de argumentos como \`m, {conn, command}\`. Extrae el comando usando Expresiones Regulares sobre \`ctx.text\`.
+- No uses librerías como \`axios\` ni \`fetch\` directamente en el sandbox: utiliza siempre \`await api.httpGet(url, opts)\` o \`await api.httpPost(url, body, opts)\` provistos por el puente del host.
+- No uses \`global.APIs\` ni \`global.APIKeys\`: utiliza \`api.getApiKey('nombre')\` o \`api.getApiUrl('nombre')\`.
+- Si el plugin original descargaba contenido y usaba \`conn.sendMessage(m.chat, { video: ... })\`, cámbialo para que use \`await api.sendMedia(url, caption, 'video')\`.
+- Todos los mensajes de texto (reacciones, errores, respuestas) deben enviarse usando \`await api.reply(texto)\`.
+
+A continuación te paso el código del plugin de Baileys. Devuélveme ÚNICAMENTE el código adaptado para BotMaRe, sin explicaciones, listo para guardar en un archivo .js:
+
+[PEGA EL CÓDIGO DEL PLUGIN AQUÍ]`;
+
 export default function PluginsPage() {
     const [plugins, setPlugins] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -267,45 +312,7 @@ export default function PluginsPage() {
     };
 
     const copyPrompt = () => {
-        const promptText = `Actúa como un desarrollador experto en Node.js y frameworks de bots de WhatsApp.
-
-Tengo un sistema de bots propio llamado "BotMaRe" que utiliza un entorno Sandbox (VM) para ejecutar plugins. Necesito que adaptes un plugin creado originalmente para Baileys (ej. Mystic Bot) a la arquitectura estricta de BotMaRe.
-
-REGLAS DE ARQUITECTURA DE BOTMARE:
-1. El plugin DEBE exportarse exactamente con esta estructura:
-module.exports = {
-    name: "Nombre del Plugin",
-    description: "Descripción breve",
-    active: true,
-    onMessage: async (ctx, api) => {
-        // Lógica aquí
-    }
-};
-
-2. EL OBJETO \`ctx\` CONTIENE:
-- \`ctx.text\`: El mensaje de texto que envió el usuario.
-- \`ctx.from\`: El número/JID del remitente o grupo.
-- \`ctx.isGroup\`: Booleano (true/false) si es un grupo.
-- \`ctx.pushName\`: Nombre de perfil de WhatsApp del remitente.
-
-3. EL OBJETO \`api\` CONTIENE ÚNICAMENTE LAS SIGUIENTES FUNCIONES:
-- \`api.reply(text)\`: Responde con un texto al chat actual.
-- \`api.sendTo(jid, text)\`: Envía un texto a un chat específico.
-- \`api.sendMedia(url, caption, type)\`: Descarga y envía un archivo desde una URL. \`type\` puede ser 'image', 'video', 'audio', o 'document'.
-- \`api.getPlugins()\`: Devuelve un arreglo con los metadatos de los plugins instalados.
-
-4. INSTRUCCIONES DE CONVERSIÓN:
-- No uses \`import\` ni \`export\` bajo ninguna circunstancia. El sandbox utiliza CommonJS puro.
-- No uses \`export default handler\` ni dependas de argumentos como \`m, {conn, command}\`. Extrae el comando usando Expresiones Regulares sobre \`ctx.text\`.
-- Si el plugin original descargaba contenido y usaba \`conn.sendMessage(m.chat, { video: ... })\`, cámbialo para que use \`await api.sendMedia(url, caption, 'video')\`.
-- Todos los mensajes de texto (reacciones, errores, respuestas) deben enviarse usando \`await api.reply(texto)\`.
-- Si el plugin original usa \`global.APIs\` o \`global.APIKeys\`, déjalo intacto (BotMaRe lo inyecta automáticamente).
-- Si el plugin original usa librerías como \`axios\` o \`fs\`, NO las importes con \`require\` ni \`import\`. Úsalas directamente porque ya están inyectadas de forma global.
-
-A continuación te paso el código del plugin de Baileys. Devuélveme ÚNICAMENTE el código adaptado para BotMaRe, sin explicaciones, listo para guardar en un archivo .js:
-
-[PEGA EL CÓDIGO DEL PLUGIN AQUÍ]`;
-        navigator.clipboard.writeText(promptText);
+        navigator.clipboard.writeText(PLUGIN_ADAPTATION_PROMPT);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
@@ -623,44 +630,7 @@ A continuación te paso el código del plugin de Baileys. Devuélveme ÚNICAMENT
                         
                         <div className="p-6">
                             <div className="bg-[#090d16] border border-app-border/70 rounded-xl p-4 overflow-y-auto max-h-[50vh] font-mono text-xs text-emerald-400 leading-relaxed shadow-inner">
-                                <pre className="whitespace-pre-wrap">Actúa como un desarrollador experto en Node.js y frameworks de bots de WhatsApp.
-
-Tengo un sistema de bots propio llamado "BotMaRe" que utiliza un entorno Sandbox (VM) para ejecutar plugins. Necesito que adaptes un plugin creado originalmente para Baileys (ej. Mystic Bot) a la arquitectura estricta de BotMaRe.
-
-REGLAS DE ARQUITECTURA DE BOTMARE:
-1. El plugin DEBE exportarse exactamente con esta estructura:
-module.exports = {'{'}
-    name: "Nombre del Plugin",
-    description: "Descripción breve",
-    active: true,
-    onMessage: async (ctx, api) =&gt; {'{'}
-        // Lógica aquí
-    {'}'}
-{'}'};
-
-2. EL OBJETO \`ctx\` CONTIENE:
-- \`ctx.text\`: El mensaje de texto que envió el usuario.
-- \`ctx.from\`: El número/JID del remitente o grupo.
-- \`ctx.isGroup\`: Booleano (true/false) si es un grupo.
-- \`ctx.pushName\`: Nombre de perfil de WhatsApp del remitente.
-
-3. EL OBJETO \`api\` CONTIENE ÚNICAMENTE LAS SIGUIENTES FUNCIONES:
-- \`api.reply(text)\`: Responde con un texto al chat actual.
-- \`api.sendTo(jid, text)\`: Envía un texto a un chat específico.
-- \`api.sendMedia(url, caption, type)\`: Descarga y envía un archivo desde una URL. \`type\` puede ser 'image', 'video', 'audio', o 'document'.
-- \`api.getPlugins()\`: Devuelve un arreglo con los metadatos de los plugins instalados.
-
-4. INSTRUCCIONES DE CONVERSIÓN:
-- No uses \`import\` ni \`export\` bajo ninguna circunstancia. El sandbox utiliza CommonJS puro.
-- No uses \`export default handler\` ni dependas de argumentos como \`m, &#123;conn, command&#125;\`. Extrae el comando usando Expresiones Regulares sobre \`ctx.text\`.
-- Si el plugin original descargaba contenido y usaba \`conn.sendMessage(m.chat, &#123; video: ... &#125;)\`, cámbialo para que use \`await api.sendMedia(url, caption, 'video')\`.
-- Todos los mensajes de texto (reacciones, errores, respuestas) deben enviarse usando \`await api.reply(texto)\`.
-- Si el plugin original usa \`global.APIs\` o \`global.APIKeys\`, déjalo intacto (BotMaRe lo inyecta automáticamente).
-- Si el plugin original usa librerías como \`axios\` o \`fs\`, NO las importes con \`require\` ni \`import\`. Úsalas directamente porque ya están inyectadas de forma global.
-
-A continuación te paso el código del plugin de Baileys. Devuélveme ÚNICAMENTE el código adaptado para BotMaRe, sin explicaciones, listo para guardar en un archivo .js:
-
-...[Pega tu código de Baileys al final]...</pre>
+                                <pre className="whitespace-pre-wrap">{PLUGIN_ADAPTATION_PROMPT}</pre>
                             </div>
                         </div>
 

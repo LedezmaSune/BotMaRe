@@ -18,10 +18,8 @@ module.exports = {
 
         try {
             // Intentamos usar la API gratuita de Ryzendesu (muy usada en bots)
-            const apiUrl = global.APIs?.Ryzendesu || "https://api.ryzendesu.vip";
-            const res = await axios.get(`${apiUrl}/api/downloader/tiktok?url=${encodeURIComponent(url)}`, {
-                headers: { 'Accept': 'application/json' }
-            });
+            const apiUrl = (api.getApiUrl && api.getApiUrl('Ryzendesu')) || "https://api.ryzendesu.vip";
+            const res = await (api.httpGet ? api.httpGet(`${apiUrl}/api/downloader/tiktok?url=${encodeURIComponent(url)}`, { headers: { 'Accept': 'application/json' } }) : axios.get(`${apiUrl}/api/downloader/tiktok?url=${encodeURIComponent(url)}`, { headers: { 'Accept': 'application/json' } }));
 
             if (res.data && res.data.data) {
                 // Ryzendesu suele devolver data.data.play o data.data.nowm para el video sin marca de agua
@@ -40,7 +38,7 @@ module.exports = {
             console.error("Error en TikTok DL:", error.message);
             // Intentar con una API alternativa si la primera falla (Delirius)
             try {
-                const altApi = global.APIs?.Delirius || "https://delirius-apiofc.vercel.app";
+                const altApi = (api.getApiUrl && api.getApiUrl('Delirius')) || "https://delirius-apiofc.vercel.app";
                 const altRes = await axios.get(`${altApi}/download/tiktok?url=${encodeURIComponent(url)}`);
                 
                 if (altRes.data && altRes.data.data && altRes.data.data.no_wm) {
