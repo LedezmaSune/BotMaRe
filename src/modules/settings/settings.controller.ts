@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { getSettings, updateSettings, listReminders } from '../../core/memory';
+import { getSettings, updateSettings, listReminders } from '../../core/db';
 import { asyncHandler } from '../../middleware/errorHandler';
 import { scrapeUrl } from '../../core/scraper';
 import { getAllConfig, getSafePublicConfig } from '../../core/config';
@@ -228,7 +228,7 @@ export class SettingsController {
         if (!fs.existsSync(uploadDir)) return res.json({ success: true, deletedCount: 0 });
         
         const files = fs.readdirSync(uploadDir);
-        const { listAllPendingReminders } = require('../../core/memory');
+        const { listAllPendingReminders } = require('../../core/db');
         const pendingReminders = await listAllPendingReminders();
         
         const activePaths = new Set(pendingReminders.map((r: any) => r.mediaPath).filter(Boolean));

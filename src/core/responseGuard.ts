@@ -1,4 +1,4 @@
-import { getSettings } from './memory';
+import { getSettings } from './db';
 
 export class ResponseGuard {
     private static readonly coreForbiddenPatterns = [

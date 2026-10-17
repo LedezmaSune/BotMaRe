@@ -1,4 +1,4 @@
-import { listAutoresponders, getUserState, setUserState } from '../../core/memory';
+import { listAutoresponders, getUserState, setUserState } from '../../core/db';
 
 // Normaliza texto: minúsculas y sin acentos/tildes
 function normalizeDiacritics(str: string): string {

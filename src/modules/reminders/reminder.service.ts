@@ -9,7 +9,7 @@ import {
     logAudit,
     deleteRemindersBulk,
     recoverOrphanedProcessingReminders
-} from '../../core/memory';
+} from '../../core/db';
 import { Reminder } from '../../types';
 
 export class ReminderService {

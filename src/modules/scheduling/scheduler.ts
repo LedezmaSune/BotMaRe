@@ -4,7 +4,7 @@ import { SmsService } from '../sms/sms.service';
 import { ReminderQueue } from './core/reminder-queue';
 import { TaskRunner } from './core/task-runner';
 import { DeliveryDispatcher } from './services/delivery.dispatcher';
-import { getReminderById } from '../../core/memory';
+import { getReminderById } from '../../core/db';
 
 /**
  * FACHADA PRINCIPAL DEL SISTEMA DE SCHEDULING (BOTMARE)

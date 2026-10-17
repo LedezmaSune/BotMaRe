@@ -1,4 +1,4 @@
-import { getHistory, addMessage, logAudit, getSettings } from "./memory";
+import { getHistory, addMessage, logAudit, getSettings } from "./db";
 import { callLLM } from "./llm";
 import { allToolsDefinition, restrictedToolsDefinition, executeTool } from "../tools/index";
 

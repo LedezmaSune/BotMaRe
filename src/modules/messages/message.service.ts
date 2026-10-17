@@ -1,7 +1,7 @@
 import { WhatsAppClient } from '../../infrastructure/whatsapp/client';
 import fs from 'fs';
 import path from 'path';
-import { getSettings } from '../../core/memory';
+import { getSettings } from '../../core/db';
 import axios from 'axios';
 import { safeDownload } from '../../utils/safeHttp';
 import { formatWhatsAppJid } from '../../utils/formatters';

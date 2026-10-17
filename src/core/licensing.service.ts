@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { getSettings, updateSettings } from './memory';
+import { getSettings, updateSettings } from './db';
 import { ModuleDefinition, PlanType, ALL_MODULES, PLAN_PRESETS } from '../types/licensing';
 
 export type { ModuleDefinition, PlanType };

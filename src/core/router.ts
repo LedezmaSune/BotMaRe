@@ -2,7 +2,7 @@ import { WAMessage, downloadMediaMessage } from '@whiskeysockets/baileys';
 import { MessageController } from '../modules/messages/message.controller';
 import { NotificationService } from '../telegram/notification.service';
 import { NotificationHub } from './notificationHub';
-import { getSettings, isChatPaused } from './memory';
+import { getSettings, isChatPaused } from './db';
 import { getConfig } from './config';
 import { accessControl } from './accessControl';
 import { crmService } from './crm.service';

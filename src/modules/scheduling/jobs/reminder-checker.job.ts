@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { listAllPendingReminders } from '../../../core/memory';
+import { listAllPendingReminders } from '../../../core/db';
 import { ReminderService } from '../../reminders/reminder.service';
 import { ReminderQueue } from '../core/reminder-queue';
 import { Reminder } from '../../../types';

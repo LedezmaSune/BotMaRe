@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { listPendingMediaPaths } from '../../../core/memory';
+import { listPendingMediaPaths } from '../../../core/db';
 
 export class FileCleanupJob {
     /**

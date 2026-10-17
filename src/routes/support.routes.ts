@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import os from 'os';
-import { listPausedChats, unpauseChat } from '../core/memory';
+import { listPausedChats, unpauseChat } from '../core/db';
 import { asyncHandler } from '../middleware/errorHandler';
 
 export function createSupportRouter() {

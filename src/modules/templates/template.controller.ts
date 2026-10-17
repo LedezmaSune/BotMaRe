@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { listTemplates, createTemplate, deleteTemplate, updateTemplate } from '../../core/memory';
+import { listTemplates, createTemplate, deleteTemplate, updateTemplate } from '../../core/db';
 import { asyncHandler } from '../../middleware/errorHandler';
 
 export class TemplateController {

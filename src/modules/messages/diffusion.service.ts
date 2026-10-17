@@ -3,7 +3,7 @@ import path from 'path';
 import { MessageService } from './message.service';
 import { Contact } from '../../types';
 import { processVariables } from '../../utils/variables';
-import { logAudit } from '../../core/memory';
+import { logAudit } from '../../core/db';
 import { globalEvents, EVENTS } from '../../core/events';
 import { SmsService } from '../sms/sms.service';
 

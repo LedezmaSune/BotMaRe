@@ -182,7 +182,7 @@ export class WhatsAppClient {
                     // Sincronizar automáticamente el nombre de perfil de WhatsApp con el bot_name configurado
                     setTimeout(() => {
                         try {
-                            const { getSettings } = require('../../core/memory');
+                            const { getSettings } = require('../../core/db');
                             getSettings().then((settings: any) => {
                                 const botName = settings.bot_name || 'BotMaRe';
                                 if (this.socket && typeof this.socket.updateProfileName === 'function') {

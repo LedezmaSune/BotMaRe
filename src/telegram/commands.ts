@@ -1,7 +1,7 @@
 import { Bot, InlineKeyboard } from "grammy";
 import { MessageService as WhatsAppService } from "../modules/messages/message.service";
 import { MassDiffusionService } from "../modules/messages/diffusion.service";
-import { getSettings, updateSettings, listAudits, deleteReminder } from "../core/memory";
+import { getSettings, updateSettings, listAudits, deleteReminder } from "../core/db";
 import { getConfig } from "../core/config";
 import { BackupService } from "../modules/system/backup.service";
 import { wizardState } from "./state";
@@ -385,7 +385,7 @@ export function registerCommands(bot: Bot, waService: WhatsAppService, diffusion
   bot.command(["reset", "reiniciabot", "borrarmemorial"], async (ctx) => {
     const userId = ctx.from?.id.toString();
     if (!userId) return;
-    const { clearHistory } = await import("../core/memory");
+    const { clearHistory } = await import("../core/db");
     await clearHistory(userId);
     await ctx.reply("🧹 Memoria borrada. ¡Empecemos de nuevo!");
   });

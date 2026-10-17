@@ -6,7 +6,7 @@ import {
     updateAutoresponder,
     deleteAutoresponder,
     toggleAutoresponder
-} from '../../core/memory';
+} from '../../core/db';
 
 export class AutoresponderController {
     list = asyncHandler(async (req: Request, res: Response) => {

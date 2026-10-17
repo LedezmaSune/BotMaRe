@@ -4,7 +4,7 @@ import path from 'path';
 import { SettingsController, BLOCKED_SETTINGS_KEYS, WRITABLE_SETTINGS_KEYS } from '../../src/modules/settings/settings.controller';
 import { getSafePublicConfig, isSensitiveKey, maskSecret } from '../../src/core/config';
 import { maskSensitiveLog } from '../../src/middleware/logger';
-import * as memory from '../../src/core/memory';
+import * as db from '../../src/core/db';
 
 describe('FASE 6: Protección de Secretos, Logs y Configuración', () => {
     const originalEnv = { ...process.env };
@@ -18,7 +18,7 @@ describe('FASE 6: Protección de Secretos, Logs y Configuración', () => {
         process.env.OPENAI_API_KEY = 'sk-proj-superSecretOpenAIKey5678';
         process.env.TELEGRAM_BOT_TOKEN = '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11';
 
-        vi.spyOn(memory, 'updateSettings').mockResolvedValue(undefined as any);
+        vi.spyOn(db, 'updateSettings').mockResolvedValue(undefined as any);
     });
 
     afterEach(() => {

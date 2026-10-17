@@ -1,7 +1,7 @@
 import { MessageService } from '../../messages/message.service';
 import { ReminderService } from '../../reminders/reminder.service';
 import { SmsService } from '../../sms/sms.service';
-import { createReminder } from '../../../core/memory';
+import { createReminder } from '../../../core/db';
 import { processVariables } from '../../../utils/variables';
 import { parseContactList } from '../../../utils/contactParser';
 import { RecurrenceService } from './recurrence.service';

@@ -1,5 +1,5 @@
 import { callLLM } from '../../core/llm';
-import { getSettings, getHistory, addMessage } from '../../core/memory';
+import { getSettings, getHistory, addMessage } from '../../core/db';
 import { ResponseGuard } from '../../core/responseGuard';
 
 /**

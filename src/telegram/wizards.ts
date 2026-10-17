@@ -1,7 +1,7 @@
 import { Bot, InlineKeyboard } from "grammy";
 import { wizardState, pendingRestores } from "./state";
 import { DateTime } from "luxon";
-import { createReminder } from "../core/memory";
+import { createReminder } from "../core/db";
 import { MassDiffusionService } from "../modules/messages/diffusion.service";
 import { handleTelegramMessage } from "./handlers/message";
 import { handleTelegramVoice } from "./handlers/voice";

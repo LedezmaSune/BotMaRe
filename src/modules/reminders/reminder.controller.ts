@@ -10,7 +10,7 @@ import {
     deleteReminder, 
     checkReminderExistsByMediaPath, 
     createReminder 
-} from '../../core/memory';
+} from '../../core/db';
 import { parseDateFromFilename } from '../../utils/dateParser';
 
 export class ReminderController {

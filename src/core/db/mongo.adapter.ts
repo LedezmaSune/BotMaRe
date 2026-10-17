@@ -65,7 +65,7 @@ export class MongoAdapter implements IDatabaseAdapter {
     async getSettings(): Promise<Record<string, string>> {
         try {
             const rows = await SettingsModel.find().lean() as SettingsData[];
-            const loaded = rows.reduce((acc, row) => ({ ...acc, [row.key]: row.value }), {});
+            const loaded: Record<string, string> = rows.reduce((acc, row) => ({ ...acc, [row.key]: row.value }), {});
             const merged = { ...DEFAULT_BOT_SETTINGS };
             for (const [key, val] of Object.entries(process.env)) {
                 if (val !== undefined && val !== '' && (loaded[key] === undefined || loaded[key] === null || loaded[key] === '')) {

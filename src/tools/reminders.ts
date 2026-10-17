@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import { createReminder, listReminders, deleteReminder } from "../core/memory";
+import { createReminder, listReminders, deleteReminder } from "../core/db";
 
 export const remindersTool = {
     definition: {

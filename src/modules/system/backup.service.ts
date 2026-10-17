@@ -4,7 +4,7 @@ import fs from 'fs';
 import cron from 'node-cron';
 import crypto from 'crypto';
 import { bot } from '../../telegram/bot';
-import { getSettings } from '../../core/memory';
+import { getSettings } from '../../core/db';
 import { InputFile } from 'grammy';
 
 const ENCRYPTION_ALGORITHM = 'aes-256-gcm';
@@ -407,7 +407,7 @@ export class BackupService {
         console.log(`🧹 [System] Iniciando limpieza de multimedia antigua (>${daysToKeep} días)...`);
         
         try {
-            const { listPendingMediaPaths } = require('../../core/memory');
+            const { listPendingMediaPaths } = require('../../core/db');
             const files = fs.readdirSync(uploadDir);
             const now = Date.now();
             const msThreshold = daysToKeep * 24 * 60 * 60 * 1000;
@@ -460,7 +460,7 @@ export class BackupService {
         const exportZip = new AdmZip();
         
         // 1. Obtener datos de la base de datos
-        const { getSettings, listTemplates, listReminders } = require('../../core/memory');
+        const { getSettings, listTemplates, listReminders } = require('../../core/db');
         const rawSettings = (await getSettings()) || {};
         const templates = await listTemplates();
         const reminders = await listReminders('owner', true);

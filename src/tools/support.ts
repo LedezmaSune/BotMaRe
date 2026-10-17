@@ -1,4 +1,4 @@
-import { pauseChat } from '../core/memory';
+import { pauseChat } from '../core/db';
 import { NotificationService } from '../telegram/notification.service';
 import { globalEvents, EVENTS } from '../core/events';
 

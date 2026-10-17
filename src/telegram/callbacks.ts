@@ -1,7 +1,7 @@
 import { Bot, InlineKeyboard } from "grammy";
 import { wizardState, pendingRestores } from "./state";
 import { MessageService as WhatsAppService } from "../modules/messages/message.service";
-import { getSettings, updateSettings, listAudits, listReminders, deleteReminder } from "../core/memory";
+import { getSettings, updateSettings, listAudits, listReminders, deleteReminder } from "../core/db";
 import { getConfig } from "../core/config";
 import { BackupService } from "../modules/system/backup.service";
 import { accessControl } from "../core/accessControl";
@@ -245,7 +245,7 @@ export function registerCallbacks(bot: Bot, waService: WhatsAppService) {
 
     if (data.startsWith("reactivate_ia_")) {
       const chatIdToReactivate = data.replace("reactivate_ia_", "");
-      const { unpauseChat } = await import("../core/memory");
+      const { unpauseChat } = await import("../core/db");
       await unpauseChat(chatIdToReactivate);
       
       await ctx.answerCallbackQuery({ text: "✅ IA Reactivada exitosamente.", show_alert: true });
