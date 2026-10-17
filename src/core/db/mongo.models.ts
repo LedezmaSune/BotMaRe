@@ -99,3 +99,42 @@ const SheetSyncSettingsSchema = new mongoose.Schema({
 }, { timestamps: true });
 export const SheetSyncSettingsModel = mongoose.models.SheetSyncSettings || mongoose.model('SheetSyncSettings', SheetSyncSettingsSchema);
 
+const CRMSchema = new mongoose.Schema({
+    id: { type: String, required: true, unique: true, default: 'global' },
+    contacts: { type: Map, of: mongoose.Schema.Types.Mixed, default: {} },
+    tags: { type: [mongoose.Schema.Types.Mixed], default: [] }
+}, { timestamps: true });
+export const CRMModel = mongoose.models.CRM || mongoose.model('CRM', CRMSchema);
+
+const AccessControlSchema = new mongoose.Schema({
+    id: { type: String, required: true, unique: true, default: 'global' },
+    contacts: {
+        mode: { type: String, default: 'all' },
+        whitelist: [{ type: String }],
+        blacklist: [{ type: String }]
+    },
+    groups: {
+        mode: { type: String, default: 'all' },
+        whitelist: [{ type: String }],
+        blacklist: [{ type: String }]
+    }
+}, { timestamps: true });
+export const AccessControlModel = mongoose.models.AccessControl || mongoose.model('AccessControl', AccessControlSchema);
+
+const TelemetrySchema = new mongoose.Schema({
+    id: { type: String, required: true, unique: true, default: 'global' },
+    llm: {
+        totalRequests: { type: Number, default: 0 },
+        totalTokens: { type: Number, default: 0 },
+        totalLatencyMs: { type: Number, default: 0 },
+        providerStats: { type: Map, of: mongoose.Schema.Types.Mixed, default: {} }
+    },
+    baileys: {
+        disconnects: { type: Number, default: 0 },
+        reconnects: { type: Number, default: 0 },
+        messagesSent: { type: Number, default: 0 }
+    },
+    lastUpdated: { type: Number, default: Date.now }
+}, { timestamps: true });
+export const TelemetryModel = mongoose.models.Telemetry || mongoose.model('Telemetry', TelemetrySchema);
+

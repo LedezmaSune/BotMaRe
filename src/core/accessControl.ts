@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import { getActiveEngine } from './db';
+import { AccessControlModel } from './db/mongo.models';
 
 interface AccessList {
     mode: 'all' | 'whitelist' | 'blacklist' | 'none';
@@ -35,9 +37,47 @@ class AccessControlService {
     private configPath = path.join(process.cwd(), 'data', 'accessList.json');
     private config: AccessConfig;
     private recentInteractions: Interaction[] = [];
+    private isDirty = false;
+    private saveTimeout: NodeJS.Timeout | null = null;
+    private isFlushing = false;
 
     constructor() {
         this.config = this.loadConfig();
+        process.on('beforeExit', () => {
+            if (this.isDirty) {
+                this.flushSync();
+            }
+        });
+    }
+
+    public async syncWithEngine(): Promise<void> {
+        try {
+            if (getActiveEngine && getActiveEngine() === 'mongodb') {
+                const doc = await AccessControlModel.findOne({ id: 'global' }).lean();
+                if (doc && doc.contacts && doc.groups) {
+                    this.config = {
+                        contacts: {
+                            mode: doc.contacts.mode || 'all',
+                            whitelist: doc.contacts.whitelist || [],
+                            blacklist: doc.contacts.blacklist || []
+                        },
+                        groups: {
+                            mode: doc.groups.mode || 'all',
+                            whitelist: doc.groups.whitelist || [],
+                            blacklist: doc.groups.blacklist || []
+                        }
+                    };
+                } else if (this.config.contacts.whitelist.length > 0 || this.config.contacts.blacklist.length > 0) {
+                    await AccessControlModel.updateOne(
+                        { id: 'global' },
+                        { $set: { contacts: this.config.contacts, groups: this.config.groups } },
+                        { upsert: true }
+                    );
+                }
+            }
+        } catch (error) {
+            console.error('[AccessControl] Error syncing with database engine:', error);
+        }
     }
 
     private loadConfig(): AccessConfig {
@@ -53,22 +93,78 @@ class AccessControlService {
         } catch (error) {
             console.error('[AccessControl] Error loading config:', error);
         }
-        this.saveConfig(DEFAULT_CONFIG);
+        this.flushSync();
         return { ...DEFAULT_CONFIG };
     }
 
-    private saveConfig(newConfig: AccessConfig) {
+    private scheduleSave() {
+        this.isDirty = true;
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+        }
+        this.saveTimeout = setTimeout(() => {
+            this.flush().catch(err => console.error('[AccessControl] Error in debounced flush:', err));
+        }, 300);
+    }
+
+    public async flush(): Promise<void> {
+        if (!this.isDirty || this.isFlushing) return;
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+            this.saveTimeout = null;
+        }
+        this.isFlushing = true;
+        this.isDirty = false;
+
         try {
-            // Ensure data directory exists
-            const dataDir = path.join(process.cwd(), 'data');
+            // 1. Guardar en MongoDB si está activo
+            try {
+                if (getActiveEngine && getActiveEngine() === 'mongodb') {
+                    await AccessControlModel.updateOne(
+                        { id: 'global' },
+                        { $set: { contacts: this.config.contacts, groups: this.config.groups } },
+                        { upsert: true }
+                    );
+                }
+            } catch (err) {
+                console.error('[AccessControl] Error saving to MongoDB:', err);
+            }
+
+            // 2. Guardar asíncronamente en disco
+            const dataDir = path.dirname(this.configPath);
+            if (!fs.existsSync(dataDir)) {
+                await fs.promises.mkdir(dataDir, { recursive: true });
+            }
+            await fs.promises.writeFile(this.configPath, JSON.stringify(this.config, null, 2), 'utf8');
+        } catch (error) {
+            console.error('[AccessControl] Error saving config asynchronously:', error);
+            this.isDirty = true;
+        } finally {
+            this.isFlushing = false;
+        }
+    }
+
+    public flushSync(): void {
+        if (!this.isDirty) return;
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+            this.saveTimeout = null;
+        }
+        try {
+            const dataDir = path.dirname(this.configPath);
             if (!fs.existsSync(dataDir)) {
                 fs.mkdirSync(dataDir, { recursive: true });
             }
-            fs.writeFileSync(this.configPath, JSON.stringify(newConfig, null, 2), 'utf8');
-            this.config = newConfig;
+            fs.writeFileSync(this.configPath, JSON.stringify(this.config, null, 2), 'utf8');
+            this.isDirty = false;
         } catch (error) {
-            console.error('[AccessControl] Error saving config:', error);
+            console.error('[AccessControl] Error in flushSync:', error);
         }
+    }
+
+    private saveConfig(newConfig: AccessConfig) {
+        this.config = newConfig;
+        this.scheduleSave();
     }
 
     public trackInteraction(id: string, pushName: string, isGroup: boolean) {

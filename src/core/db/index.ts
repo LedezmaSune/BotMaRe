@@ -38,6 +38,20 @@ export async function initDB(): Promise<void> {
         // Execute automigrator once Mongo is ready
         const { runMigration } = require('../migrator');
         await runMigration();
+
+        // Sincronizar CRM, listas de acceso y telemetría con MongoDB
+        try {
+            const { crmService } = require('../crm.service');
+            const { accessControl } = require('../accessControl');
+            const { telemetry } = require('../telemetry');
+            await Promise.all([
+                crmService.syncWithEngine?.(),
+                accessControl.syncWithEngine?.(),
+                telemetry.syncWithEngine?.()
+            ]);
+        } catch (e) {
+            console.warn('⚠️ [DB] Error al sincronizar servicios secundarios con MongoDB:', e);
+        }
         return;
     }
 
@@ -172,7 +186,7 @@ export const setUserState: IDatabaseAdapter['setUserState'] = (...args) => adapt
 export const getSheetSyncSettings: IDatabaseAdapter['getSheetSyncSettings'] = () => adapter.getSheetSyncSettings();
 export const saveSheetSyncSettings: IDatabaseAdapter['saveSheetSyncSettings'] = (settings: SheetSyncSettings) => adapter.saveSheetSyncSettings(settings);
 
-export const getActiveEngine: IDatabaseAdapter['getActiveEngine'] = () => adapter.getActiveEngine();
+export const getActiveEngine: IDatabaseAdapter['getActiveEngine'] = () => adapter ? adapter.getActiveEngine() : 'none';
 
 export const recoverOrphanedProcessingReminders = async (): Promise<number> => {
     if (adapter && typeof adapter.recoverOrphanedProcessingReminders === 'function') {

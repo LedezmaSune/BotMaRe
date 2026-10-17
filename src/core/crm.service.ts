@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import { getActiveEngine } from './db';
+import { CRMModel } from './db/mongo.models';
 
 export interface CRMContact {
     id: string; // WhatsApp ID o Teléfono limpio (ej: 5219991234567)
@@ -49,9 +51,17 @@ export class CRMService {
     private static instance: CRMService;
     private dbPath = path.join(process.cwd(), 'data', 'crm.json');
     private db: CRMDatabase;
+    private isDirty = false;
+    private saveTimeout: NodeJS.Timeout | null = null;
+    private isFlushing = false;
 
     private constructor() {
         this.db = this.loadDB();
+        process.on('beforeExit', () => {
+            if (this.isDirty) {
+                this.flushSync();
+            }
+        });
     }
 
     public static getInstance(): CRMService {
@@ -59,6 +69,31 @@ export class CRMService {
             CRMService.instance = new CRMService();
         }
         return CRMService.instance;
+    }
+
+    public async syncWithEngine(): Promise<void> {
+        try {
+            if (getActiveEngine && getActiveEngine() === 'mongodb') {
+                const doc = await CRMModel.findOne({ id: 'global' }).lean();
+                if (doc && doc.contacts) {
+                    const contactsObj = doc.contacts instanceof Map 
+                        ? Object.fromEntries(doc.contacts) 
+                        : (typeof doc.contacts === 'object' ? doc.contacts : {});
+                    this.db = {
+                        contacts: contactsObj as Record<string, CRMContact>,
+                        tags: (doc.tags && doc.tags.length > 0) ? doc.tags : (this.db.tags || DEFAULT_TAGS)
+                    };
+                } else if (Object.keys(this.db.contacts).length > 0) {
+                    await CRMModel.updateOne(
+                        { id: 'global' },
+                        { $set: { contacts: this.db.contacts, tags: this.db.tags } },
+                        { upsert: true }
+                    );
+                }
+            }
+        } catch (err) {
+            console.error('[CRM] Error syncing with database engine:', err);
+        }
     }
 
     private loadDB(): CRMDatabase {
@@ -74,21 +109,78 @@ export class CRMService {
         } catch (err) {
             console.error('[CRM] Error loading CRM database:', err);
         }
-        this.saveDB(DEFAULT_DB);
+        this.flushSync();
         return { ...DEFAULT_DB };
     }
 
-    private saveDB(data: CRMDatabase = this.db) {
+    private scheduleSave() {
+        this.isDirty = true;
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+        }
+        this.saveTimeout = setTimeout(() => {
+            this.flush().catch(err => console.error('[CRM] Error in debounced flush:', err));
+        }, 300);
+    }
+
+    public async flush(): Promise<void> {
+        if (!this.isDirty || this.isFlushing) return;
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+            this.saveTimeout = null;
+        }
+        this.isFlushing = true;
+        this.isDirty = false;
+
         try {
-            const dataDir = path.join(process.cwd(), 'data');
+            // 1. Guardar en MongoDB si el motor está activo
+            try {
+                if (getActiveEngine && getActiveEngine() === 'mongodb') {
+                    await CRMModel.updateOne(
+                        { id: 'global' },
+                        { $set: { contacts: this.db.contacts, tags: this.db.tags } },
+                        { upsert: true }
+                    );
+                }
+            } catch (err) {
+                console.error('[CRM] Error saving CRM to MongoDB:', err);
+            }
+
+            // 2. Guardado asíncrono no bloqueante en disco
+            const dataDir = path.dirname(this.dbPath);
+            if (!fs.existsSync(dataDir)) {
+                await fs.promises.mkdir(dataDir, { recursive: true });
+            }
+            await fs.promises.writeFile(this.dbPath, JSON.stringify(this.db, null, 2), 'utf8');
+        } catch (err) {
+            console.error('[CRM] Error saving CRM database asynchronously:', err);
+            this.isDirty = true;
+        } finally {
+            this.isFlushing = false;
+        }
+    }
+
+    public flushSync(): void {
+        if (!this.isDirty) return;
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+            this.saveTimeout = null;
+        }
+        try {
+            const dataDir = path.dirname(this.dbPath);
             if (!fs.existsSync(dataDir)) {
                 fs.mkdirSync(dataDir, { recursive: true });
             }
-            fs.writeFileSync(this.dbPath, JSON.stringify(data, null, 2), 'utf8');
-            this.db = data;
+            fs.writeFileSync(this.dbPath, JSON.stringify(this.db, null, 2), 'utf8');
+            this.isDirty = false;
         } catch (err) {
-            console.error('[CRM] Error saving CRM database:', err);
+            console.error('[CRM] Error in flushSync:', err);
         }
+    }
+
+    private saveDB(data: CRMDatabase = this.db) {
+        this.db = data;
+        this.scheduleSave();
     }
 
     /**
