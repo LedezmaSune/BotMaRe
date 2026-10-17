@@ -32,40 +32,7 @@ import {
     CheckSquare,
     Square
 } from 'lucide-react';
-
-interface CRMTag {
-    id: string;
-    name: string;
-    color: string;
-    bgClass?: string;
-    textClass?: string;
-    borderClass?: string;
-}
-
-interface CRMContact {
-    id: string;
-    name: string;
-    pushName?: string;
-    phone?: string;
-    tags: string[];
-    notes?: string;
-    email?: string;
-    address?: string;
-    customFields?: Record<string, string>;
-    lastInteraction: number;
-    firstInteraction?: number;
-    messageCount: number;
-    isGroup?: boolean;
-}
-
-interface CRMStats {
-    total: number;
-    vipCount: number;
-    leadCount: number;
-    clientCount: number;
-    debtorCount: number;
-    activeToday: number;
-}
+import { CRMContact, CRMTag, CRMStats } from '../domain';
 
 const PRESET_COLORS = [
     '#f59e0b', // Amber / Gold (VIP)

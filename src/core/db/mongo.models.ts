@@ -49,7 +49,7 @@ const ReminderSchema = new mongoose.Schema<ReminderData>({
     repeat: { type: String, default: 'none' },
     repeatInterval: { type: Number },
     repeatUnit: { type: String },
-    timestamp: { type: Date, default: Date.now }
+    timestamp: { type: String, default: () => new Date().toISOString() }
 });
 export const ReminderModel = mongoose.models.Reminder || mongoose.model<ReminderData>('Reminder', ReminderSchema);
 

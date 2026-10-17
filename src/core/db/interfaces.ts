@@ -25,22 +25,7 @@ export interface AuditData {
     timestamp: Date;
 }
 
-export interface ReminderData {
-    id: number;
-    userId: string;
-    chatId: string;
-    title?: string;
-    text: string;
-    time: string;
-    mediaPath?: string;
-    mediaType?: string;
-    status: 'pending' | 'processing' | 'sent' | 'failed';
-    repeat: string;
-    repeatInterval?: number;
-    repeatUnit?: string;
-    channel?: 'whatsapp' | 'sms';
-    timestamp: Date;
-}
+export type { Reminder, ReminderData } from '../../domain';
 
 export interface TemplateData {
     id: number;

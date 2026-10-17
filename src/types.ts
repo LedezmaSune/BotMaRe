@@ -1,19 +1,4 @@
-export interface Reminder {
-    id: number;
-    userId: string;
-    chatId: string;
-    title?: string;
-    text: string;
-    time: string;
-    mediaPath?: string;
-    mediaType?: string;
-    status: 'pending' | 'processing' | 'sent' | 'failed';
-    timestamp: string;
-    repeat?: string;
-    repeatInterval?: number;
-    repeatUnit?: string;
-    channel?: 'whatsapp' | 'sms';
-}
+export type { Reminder } from './domain';
 
 export interface Settings {
     bot_name: string;

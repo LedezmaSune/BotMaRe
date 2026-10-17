@@ -195,7 +195,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
         const id = generateNumericId();
         const payload: ReminderData = {
             id, userId, chatId, title, text, time, mediaPath, mediaType,
-            status, repeat, repeatInterval, repeatUnit, channel, timestamp: new Date()
+            status, repeat, repeatInterval, repeatUnit, channel, timestamp: new Date().toISOString()
         };
         try {
             this.ldb.data.reminders.push(payload);
@@ -242,7 +242,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
                     repeatInterval: item.repeatInterval,
                     repeatUnit: item.repeatUnit,
                     channel: item.channel || 'whatsapp',
-                    timestamp: new Date()
+                    timestamp: new Date().toISOString()
                 });
             }
             await this.ldb.write();

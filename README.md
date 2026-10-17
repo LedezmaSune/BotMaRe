@@ -158,7 +158,16 @@ BotMaRe utiliza una arquitectura de configuración con una única fuente de verd
 
 ---
 
-### 🧪 8. Pruebas y Suite de Contrato (`IDatabaseAdapter`)
+### 📐 8. Estandarización de Fechas y Capa de Dominio
+
+BotMaRe centraliza todas sus entidades en `src/domain/` (`Reminder`, `CRMContact`, `CRMTag`, etc.):
+
+- **Frontera de Persistencia y Transporte**: Todas las marcas de tiempo se representan como cadenas **ISO 8601** (`string`) o milisegundos numéricos en bases de datos (Lowdb/MongoDB), endpoints REST Express y componentes de frontend React.
+- **Lógica de Negocio Interna**: Se utilizan instancias `DateTime` (Luxon) o `Date` únicamente durante los cálculos de agendamiento y recurrencia, serializándose a ISO string antes de ser persistidas o transferidas.
+
+---
+
+### 🧪 9. Pruebas y Suite de Contrato (`IDatabaseAdapter`)
 
 BotMaRe incluye pruebas unitarias, de integración y pruebas de contrato para garantizar consistencia entre motores de persistencia:
 
