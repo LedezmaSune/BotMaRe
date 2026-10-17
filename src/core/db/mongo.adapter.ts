@@ -66,7 +66,18 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             const rows = await SettingsModel.find().lean() as SettingsData[];
             const loaded = rows.reduce((acc, row) => ({ ...acc, [row.key]: row.value }), {});
-            return { ...DEFAULT_BOT_SETTINGS, ...loaded };
+            const merged = { ...DEFAULT_BOT_SETTINGS };
+            for (const [key, val] of Object.entries(process.env)) {
+                if (val !== undefined && val !== '' && (loaded[key] === undefined || loaded[key] === null || loaded[key] === '')) {
+                    merged[key] = val;
+                }
+            }
+            for (const [key, val] of Object.entries(loaded)) {
+                if (val !== undefined && val !== null && val !== '') {
+                    merged[key] = String(val);
+                }
+            }
+            return merged;
         } catch (error) {
             console.error('❌ [DB:MongoAdapter.getSettings] Error al obtener configuraciones en MongoDB:', error);
             return { ...DEFAULT_BOT_SETTINGS };

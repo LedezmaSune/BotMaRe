@@ -52,6 +52,9 @@ export async function initDB(): Promise<void> {
 
 export { generateNumericId } from '../utils/idGenerator';
 
+export const setAdapter = (customAdapter: IDatabaseAdapter) => { adapter = customAdapter; };
+export const getAdapter = (): IDatabaseAdapter => adapter;
+
 // ==========================================
 // PROXY DE MÉTODOS AL ADAPTADOR ACTIVO
 // ==========================================
@@ -59,16 +62,23 @@ export { generateNumericId } from '../utils/idGenerator';
 export const saveUser = (id: string, data: Partial<UserData>) => adapter.saveUser(id, data);
 export const getUser = (id: string) => adapter.getUser(id);
 
-export const getSettings = async () => {
+export const getSettings = async (): Promise<Record<string, string>> => {
     const cached = cacheManager.get<Record<string, string>>('settings');
     if (cached) return cached;
-    const settings = await adapter.getSettings();
-    cacheManager.set('settings', settings, 300000);
-    return settings;
+    const dbSettings = await adapter.getSettings();
+    const merged: Record<string, string> = { ...dbSettings };
+    for (const [key, val] of Object.entries(process.env)) {
+        if (val !== undefined && val !== '' && (merged[key] === undefined || merged[key] === null || merged[key] === '')) {
+            merged[key] = val;
+        }
+    }
+    cacheManager.set('settings', merged, 300000);
+    return merged;
 };
 export const updateSettings = async (settings: Record<string, string>) => {
     const res = await adapter.updateSettings(settings);
     cacheManager.del('settings');
+    cacheManager.del('all_config');
     return res;
 };
 

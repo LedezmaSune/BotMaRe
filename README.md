@@ -146,9 +146,19 @@ cp .env.example .env
 pnpm run setup:secrets
 ```
 
+### ⚙️ 7. Precedencia Unificada de Configuración
+
+BotMaRe utiliza una arquitectura de configuración con una única fuente de verdad y precedencia estricta:
+
+1. **Base de Datos (BD / Dashboard / API / `setConfig`)**: Máxima prioridad. Cualquier valor explícito no vacío guardado en la base de datos (Lowdb o MongoDB) sobreescribe los valores de entorno.
+2. **Variables de Entorno (`.env` / `process.env`)**: Prioridad media. Definen los valores de infraestructura y arranque inicial cuando la clave no ha sido modificada en la BD.
+3. **Valores por Defecto (Defaults en código)**: Prioridad base. Garantizan que el sistema funcione con valores razonables si no están en BD ni en entorno.
+
+> **Caché e Inmutabilidad**: Todas las lecturas (`getConfig`, `getAllConfig`, `getSettings`) están cacheadas en memoria durante 5 minutos para optimizar llamadas concurrentes (ej. cada invocación a LLM). La caché utiliza clonación profunda (`structuredClone`) para garantizar inmutabilidad frente a mutaciones accidentales, y se invalida de forma inmediata ante cualquier actualización (`updateSettings` / `setConfig`).
+
 ---
 
-### 🧪 7. Pruebas y Suite de Contrato (`IDatabaseAdapter`)
+### 🧪 8. Pruebas y Suite de Contrato (`IDatabaseAdapter`)
 
 BotMaRe incluye pruebas unitarias, de integración y pruebas de contrato para garantizar consistencia entre motores de persistencia:
 

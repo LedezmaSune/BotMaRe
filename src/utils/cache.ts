@@ -15,6 +15,13 @@ class MemoryCache {
             this.cache.delete(key);
             return null;
         }
+        if (item.value && typeof item.value === 'object') {
+            try {
+                return structuredClone(item.value);
+            } catch {
+                return JSON.parse(JSON.stringify(item.value));
+            }
+        }
         return item.value;
     }
 
@@ -22,7 +29,15 @@ class MemoryCache {
      * Set a value in the cache with a Time-To-Live in milliseconds.
      */
     set(key: string, value: any, ttlMs: number): void {
-        this.cache.set(key, { value, expiresAt: Date.now() + ttlMs });
+        let cloned = value;
+        if (value && typeof value === 'object') {
+            try {
+                cloned = structuredClone(value);
+            } catch {
+                cloned = JSON.parse(JSON.stringify(value));
+            }
+        }
+        this.cache.set(key, { value: cloned, expiresAt: Date.now() + ttlMs });
     }
 
     /**
