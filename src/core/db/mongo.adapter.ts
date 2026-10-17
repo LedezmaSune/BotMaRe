@@ -9,13 +9,10 @@ import {
 import {
     UserModel, SettingsModel, MessageModel, AuditModel,
     ReminderModel, TemplateModel, PausedChatModel,
-    AutoresponderModel, UserStateModel
+    AutoresponderModel, UserStateModel, SheetSyncSettingsModel
 } from './mongo.models';
-
-// Utilidad para IDs numéricos (generados igual que en Lowdb por consistencia)
-function generateNumericId(): number {
-    return Date.now() + Math.floor(Math.random() * 1000);
-}
+import { generateNumericId } from '../../utils/idGenerator';
+import { DEFAULT_BOT_SETTINGS, applyUserDefaults, mergeUserData, normalizeMediaBasename } from './helpers';
 
 export class MongoAdapter implements IDatabaseAdapter {
     private customUri?: string;
@@ -37,10 +34,18 @@ export class MongoAdapter implements IDatabaseAdapter {
 
     async saveUser(id: string, data: Partial<UserData>): Promise<UserData | null> {
         try {
-            const updated = await UserModel.findOneAndUpdate(
-                { id }, { $set: data }, { upsert: true, new: true }
-            ).lean();
-            return updated as UserData | null;
+            const existing = await UserModel.findOne({ id }).lean() as UserData | null;
+            if (existing) {
+                const merged = mergeUserData(existing, data);
+                const updated = await UserModel.findOneAndUpdate(
+                    { id }, { $set: merged }, { new: true }
+                ).lean();
+                return updated as UserData | null;
+            } else {
+                const newUser = applyUserDefaults(id, data);
+                const created = await UserModel.create(newUser);
+                return created.toObject() as UserData;
+            }
         } catch (error) {
             console.error(`❌ [DB] Error al guardar usuario ${id} en MongoDB:`, error);
             return null;
@@ -58,28 +63,31 @@ export class MongoAdapter implements IDatabaseAdapter {
     }
 
     async getSettings(): Promise<Record<string, string>> {
-        const defaultSettings: Record<string, string> = {
-            bot_name: "GravityBot",
-            system_prompt: "Eres un asistente inteligente y servicial. Responde de forma amable y profesional.",
-            possible_responses: "1. Si preguntan precio: Dile que consulte la web.\n2. Si saludan: Saluda cordialmente.",
-            AI_ENABLED: "true"
-        };
         try {
             const rows = await SettingsModel.find().lean() as SettingsData[];
             const loaded = rows.reduce((acc, row) => ({ ...acc, [row.key]: row.value }), {});
-            return { ...defaultSettings, ...loaded };
+            return { ...DEFAULT_BOT_SETTINGS, ...loaded };
         } catch (error) {
             console.error('❌ [DB] Error al obtener configuraciones en MongoDB:', error);
-            return defaultSettings;
+            return { ...DEFAULT_BOT_SETTINGS };
         }
     }
 
     async updateSettings(settings: Record<string, string>): Promise<void> {
         try {
-            const operations = Object.entries(settings).map(([key, value]) => ({
-                updateOne: { filter: { key }, update: { $set: { value } }, upsert: true }
-            }));
-            await SettingsModel.bulkWrite(operations);
+            if (!settings || typeof settings !== 'object') return;
+            const operations = [];
+            for (const [rawKey, rawValue] of Object.entries(settings)) {
+                if (typeof rawKey !== 'string' || !rawKey.trim()) continue;
+                const key = rawKey.trim();
+                const value = typeof rawValue === 'string' ? rawValue : String(rawValue ?? '');
+                operations.push({
+                    updateOne: { filter: { key }, update: { $set: { value } }, upsert: true }
+                });
+            }
+            if (operations.length > 0) {
+                await SettingsModel.bulkWrite(operations);
+            }
         } catch (error) {
             console.error('❌ [DB] Error al actualizar configuraciones en MongoDB:', error);
         }
@@ -232,11 +240,18 @@ export class MongoAdapter implements IDatabaseAdapter {
         }
     }
 
-    async deleteRemindersBulk(userId: string, type: 'all' | 'pending' | 'sent'): Promise<void> {
+    async deleteRemindersBulk(userId: string, type: 'all' | 'pending' | 'sent' | 'failed'): Promise<void> {
         try {
             let filter: any = { userId };
-            if (type === 'pending') filter.status = { $ne: 'sent' };
-            else if (type === 'sent') filter.status = 'sent';
+            if (type === 'pending') {
+                filter.status = { $in: ['pending', 'processing', 'failed'] };
+            } else if (type === 'sent') {
+                filter.status = 'sent';
+            } else if (type === 'failed') {
+                filter.status = 'failed';
+            } else if (type === 'all') {
+                // Borra todos los del usuario
+            }
             await ReminderModel.deleteMany(filter);
         } catch (error) {
             console.error('❌ [DB] Error en eliminación masiva en MongoDB:', error);
@@ -294,12 +309,11 @@ export class MongoAdapter implements IDatabaseAdapter {
     async checkReminderExistsByMediaPath(mediaPath: string): Promise<boolean> {
         try {
             if (!mediaPath) return false;
-            const targetBase = path.basename(mediaPath);
+            const targetBase = normalizeMediaBasename(mediaPath);
+            if (!targetBase) return false;
+            const escaped = targetBase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const exists = await ReminderModel.findOne({
-                $or: [
-                    { mediaPath },
-                    { mediaPath: { $regex: targetBase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', $options: 'i' } }
-                ]
+                mediaPath: { $regex: new RegExp(`(^|[\\\\/])${escaped}$`, 'i') }
             }).lean();
             return !!exists;
         } catch (error) {
@@ -480,12 +494,33 @@ export class MongoAdapter implements IDatabaseAdapter {
     }
 
     async getSheetSyncSettings(): Promise<SheetSyncSettings | null> {
-        console.warn('⚠️ [DB] SheetSyncSettings no está implementado nativamente en MongoDB Atlas aún.');
-        return null;
+        try {
+            const doc = await SheetSyncSettingsModel.findOne().sort({ updatedAt: -1 }).lean() as any;
+            if (!doc) return null;
+            return {
+                spreadsheetId: doc.spreadsheetId,
+                refreshToken: doc.refreshToken,
+                syncInterval: doc.syncInterval,
+                lastSyncTime: doc.lastSyncTime,
+                isActive: doc.isActive,
+                authMethod: doc.authMethod
+            };
+        } catch (error) {
+            console.error('❌ [DB] Error al obtener SheetSyncSettings en MongoDB:', error);
+            return null;
+        }
     }
 
     async saveSheetSyncSettings(settings: SheetSyncSettings): Promise<void> {
-        console.warn('⚠️ [DB] SheetSyncSettings no está implementado nativamente en MongoDB Atlas aún.');
+        try {
+            await SheetSyncSettingsModel.findOneAndUpdate(
+                {},
+                { $set: settings },
+                { upsert: true, new: true }
+            );
+        } catch (error) {
+            console.error('❌ [DB] Error al guardar SheetSyncSettings en MongoDB:', error);
+        }
     }
 
     async recoverOrphanedProcessingReminders(): Promise<number> {

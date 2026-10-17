@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { IDatabaseAdapter } from '../../src/core/db/db.adapter';
+import { DEFAULT_BOT_SETTINGS } from '../../src/core/db/helpers';
 
 export interface ContractTestOptions {
     adapterName: string;
@@ -24,13 +25,23 @@ export function runDatabaseAdapterContractTests({ adapterName, getAdapter, clean
 
         // 1. getSettings() - Valores por defecto
         describe('1. getSettings()', () => {
-            it('debe devolver claves básicas con valores por defecto consistentes', async () => {
+            it('debe devolver claves básicas con valores por defecto idénticos a DEFAULT_BOT_SETTINGS campo por campo', async () => {
                 const settings = await adapter.getSettings();
                 expect(settings).toBeDefined();
-                expect(settings.bot_name).toBe('GravityBot');
-                expect(settings.AI_ENABLED).toBe('true');
-                expect(settings.system_prompt).toContain('Eres un asistente inteligente y servicial');
-                expect(settings.possible_responses).toBeDefined();
+                expect(settings.bot_name).toBe(DEFAULT_BOT_SETTINGS.bot_name);
+                expect(settings.system_prompt).toBe(DEFAULT_BOT_SETTINGS.system_prompt);
+                expect(settings.possible_responses).toBe(DEFAULT_BOT_SETTINGS.possible_responses);
+                expect(settings.AI_ENABLED).toBe(DEFAULT_BOT_SETTINGS.AI_ENABLED);
+            });
+
+            it('debe validar y serializar a string tipos de datos no-string en updateSettings', async () => {
+                await adapter.updateSettings({
+                    test_num: 9999 as any,
+                    test_bool: true as any
+                });
+                const settings = await adapter.getSettings();
+                expect(settings.test_num).toBe('9999');
+                expect(settings.test_bool).toBe('true');
             });
         });
 
@@ -49,9 +60,7 @@ export function runDatabaseAdapterContractTests({ adapterName, getAdapter, clean
                 expect(fetched).toEqual(user);
             });
 
-            // NOTA FASE 1: Marcado temporalmente con it.fails porque Lowdb usa `{ ...data }`
-            // al final y sobrescribe defaults con undefined. Se corrige en la FASE 2.
-            it.fails('no debe sobrescribir valores por defecto si se pasan campos undefined', async () => {
+            it('no debe sobrescribir valores por defecto si se pasan campos undefined', async () => {
                 const user = await adapter.saveUser('user_contract_undef', {
                     nombre: undefined,
                     xp: undefined
@@ -62,7 +71,7 @@ export function runDatabaseAdapterContractTests({ adapterName, getAdapter, clean
             });
         });
 
-        // 3. deleteRemindersBulk('pending' | 'sent' | 'all')
+        // 3. deleteRemindersBulk('pending' | 'sent' | 'failed' | 'all')
         describe('3. deleteRemindersBulk', () => {
             it('debe eliminar solo recordatorios no procesados con type="pending" conservando "sent"', async () => {
                 const userId = 'user_bulk_pending';
@@ -84,6 +93,18 @@ export function runDatabaseAdapterContractTests({ adapterName, getAdapter, clean
                 await adapter.createReminder(userId, 'c1', 'msg2', '10:10', undefined, undefined, 'none', undefined, undefined, 'T2', 'sent');
 
                 await adapter.deleteRemindersBulk(userId, 'sent');
+
+                const remaining = await adapter.listReminders(userId, true);
+                expect(remaining.length).toBe(1);
+                expect(remaining[0].status).toBe('pending');
+            });
+
+            it('debe eliminar solo recordatorios "failed" con type="failed" conservando el resto', async () => {
+                const userId = 'user_bulk_failed';
+                await adapter.createReminder(userId, 'c1', 'msg1', '10:00', undefined, undefined, 'none', undefined, undefined, 'T1', 'pending');
+                await adapter.createReminder(userId, 'c1', 'msg2', '10:10', undefined, undefined, 'none', undefined, undefined, 'T2', 'failed');
+
+                await adapter.deleteRemindersBulk(userId, 'failed');
 
                 const remaining = await adapter.listReminders(userId, true);
                 expect(remaining.length).toBe(1);
@@ -172,7 +193,7 @@ export function runDatabaseAdapterContractTests({ adapterName, getAdapter, clean
             });
         });
 
-        // 7. createReminder - IDs numéricos
+        // 7. createReminder - IDs numéricos y concurrencia sin colisiones
         describe('7. createReminder generación de IDs', () => {
             it('debe generar IDs numéricos positivos válidos', async () => {
                 const userId = 'user_concurrency';
@@ -182,6 +203,17 @@ export function runDatabaseAdapterContractTests({ adapterName, getAdapter, clean
                 expect(typeof id2).toBe('number');
                 expect(id1).toBeGreaterThan(0);
                 expect(id2).toBeGreaterThan(0);
+            });
+
+            it('debe generar IDs 100% únicos ante 30 llamadas concurrentes simultáneas', async () => {
+                const userId = 'user_concurrency_30';
+                const count = 30;
+                const promises = Array.from({ length: count }, (_, i) =>
+                    adapter.createReminder(userId, 'c1', `Concurrent ${i}`, '12:00')
+                );
+                const ids = await Promise.all(promises);
+                const uniqueIds = new Set(ids);
+                expect(uniqueIds.size).toBe(count);
             });
         });
     });

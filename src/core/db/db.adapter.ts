@@ -56,9 +56,10 @@ export interface IDatabaseAdapter {
      * Eliminación masiva de recordatorios según su estado:
      * - 'pending': elimina los recordatorios no finalizados ('pending', 'processing', 'failed'). Conserva únicamente 'sent'.
      * - 'sent': elimina únicamente los recordatorios finalizados ('sent'). Conserva los pendientes, en proceso y fallidos.
+     * - 'failed': elimina únicamente los recordatorios en estado fallido ('failed'). Conserva los pendientes, en proceso y enviados.
      * - 'all': elimina todos los recordatorios del usuario independientemente de su estado.
      */
-    deleteRemindersBulk(userId: string, type: 'all' | 'pending' | 'sent'): Promise<void>;
+    deleteRemindersBulk(userId: string, type: 'all' | 'pending' | 'sent' | 'failed'): Promise<void>;
     getReminderById(id: number): Promise<any | null>;
     listAllPendingReminders(): Promise<any[]>;
     listPendingMediaPaths(): Promise<string[]>;

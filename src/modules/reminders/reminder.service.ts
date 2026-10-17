@@ -13,7 +13,7 @@ import {
 import { Reminder } from '../../types';
 
 export class ReminderService {
-    async bulkDelete(userId: string, type: 'all' | 'pending' | 'sent') {
+    async bulkDelete(userId: string, type: 'all' | 'pending' | 'sent' | 'failed') {
         return await deleteRemindersBulk(userId, type);
     }
 

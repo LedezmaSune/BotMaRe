@@ -5,6 +5,8 @@ import {
     ReminderData, TemplateData, PausedChatData, 
     AutoresponderData, UserStateData, MessageRow, SheetSyncSettings
 } from './interfaces';
+import { generateNumericId } from '../../utils/idGenerator';
+import { DEFAULT_BOT_SETTINGS, applyUserDefaults, mergeUserData, normalizeMediaBasename } from './helpers';
 
 import { JSONFile } from 'lowdb/node';
 import { Low } from 'lowdb';
@@ -21,10 +23,6 @@ type Schema = {
     user_states: any[];
     sheet_sync_settings: SheetSyncSettings | null;
 };
-
-function generateNumericId(): number {
-    return Date.now() + Math.floor(Math.random() * 1000);
-}
 
 export class LowdbAdapter implements IDatabaseAdapter {
     private ldb!: Low<Schema>;
@@ -62,15 +60,10 @@ export class LowdbAdapter implements IDatabaseAdapter {
         try {
             let user = this.ldb.data.users.find(u => u.id === id);
             if (user) {
-                Object.assign(user, data);
+                const merged = mergeUserData(user, data);
+                Object.assign(user, merged);
             } else {
-                const newUser: UserData = {
-                    id, nombre: data.nombre || 'Sin Nombre',
-                    xp: data.xp !== undefined ? data.xp : 0,
-                    nivel: data.nivel !== undefined ? data.nivel : 1,
-                    rango: data.rango || 'Novato',
-                    ...data
-                } as UserData;
+                const newUser = applyUserDefaults(id, data);
                 this.ldb.data.users.push(newUser);
                 user = newUser;
             }
@@ -93,32 +86,30 @@ export class LowdbAdapter implements IDatabaseAdapter {
     }
 
     async getSettings(): Promise<Record<string, string>> {
-        const defaultSettings: Record<string, string> = {
-            bot_name: "GravityBot",
-            system_prompt: "Eres un asistente inteligente y servicial. Responde de forma amable y profesional.",
-            possible_responses: "1. Si preguntan precio: Dile que consulte la web.\\n2. Si saludan: Saluda cordialmente.",
-            AI_ENABLED: "true"
-        };
         try {
             const rows = this.ldb.data.settings || [];
             const loaded = rows.reduce((acc: any, row: any) => ({ ...acc, [row.key]: row.value }), {});
-            return { ...defaultSettings, ...loaded };
+            return { ...DEFAULT_BOT_SETTINGS, ...loaded };
         } catch (error) {
             console.warn('⚠️ [DB:LowdbAdapter.getSettings] Error al leer configuraciones:', error);
-            return defaultSettings;
+            return { ...DEFAULT_BOT_SETTINGS };
         }
     }
 
     async updateSettings(settings: Record<string, string>): Promise<void> {
         try {
-            Object.entries(settings).forEach(([key, value]) => {
+            if (!settings || typeof settings !== 'object') return;
+            for (const [rawKey, rawValue] of Object.entries(settings)) {
+                if (typeof rawKey !== 'string' || !rawKey.trim()) continue;
+                const key = rawKey.trim();
+                const value = typeof rawValue === 'string' ? rawValue : String(rawValue ?? '');
                 const exists = this.ldb.data.settings.find(s => s.key === key);
                 if (exists) {
                     exists.value = value;
                 } else {
                     this.ldb.data.settings.push({ key, value });
                 }
-            });
+            }
             await this.ldb.write();
         } catch (error) {
             console.error('❌ [DB] Error al actualizar configuraciones en Lowdb:', error);
@@ -285,13 +276,26 @@ export class LowdbAdapter implements IDatabaseAdapter {
         }
     }
 
-    async deleteRemindersBulk(userId: string, type: 'all' | 'pending' | 'sent'): Promise<void> {
+    async deleteRemindersBulk(userId: string, type: 'all' | 'pending' | 'sent' | 'failed'): Promise<void> {
         try {
             this.ldb.data.reminders = this.ldb.data.reminders.filter(r => {
-                if (r.userId !== userId) return true; // keep others
-                if (type === 'pending' && r.status === 'sent') return true; // keep sent
-                if (type === 'sent' && r.status !== 'sent') return true; // keep pending
-                return false; // delete
+                if (r.userId !== userId) return true; // conserva los de otros usuarios
+                if (type === 'pending') {
+                    // Elimina los no procesados (pending, processing, failed), conserva sent
+                    return r.status === 'sent';
+                }
+                if (type === 'sent') {
+                    // Elimina sent, conserva los no procesados
+                    return r.status !== 'sent';
+                }
+                if (type === 'failed') {
+                    // Elimina failed, conserva los demás
+                    return r.status !== 'failed';
+                }
+                if (type === 'all') {
+                    return false; // Elimina todos los del usuario
+                }
+                return true;
             });
             await this.ldb.write();
         } catch (error) {
@@ -351,13 +355,11 @@ export class LowdbAdapter implements IDatabaseAdapter {
     async checkReminderExistsByMediaPath(mediaPath: string): Promise<boolean> {
         try {
             if (!mediaPath) return false;
-            const targetNorm = path.normalize(mediaPath).toLowerCase().replace(/\\/g, '/');
-            const targetBase = path.basename(mediaPath).toLowerCase();
+            const targetBase = normalizeMediaBasename(mediaPath);
+            if (!targetBase) return false;
             return !!this.ldb.data.reminders.find(r => {
                 if (!r.mediaPath) return false;
-                const rNorm = path.normalize(r.mediaPath).toLowerCase().replace(/\\/g, '/');
-                const rBase = path.basename(r.mediaPath).toLowerCase();
-                return rNorm === targetNorm || rBase === targetBase || rNorm.endsWith('/' + targetBase);
+                return normalizeMediaBasename(r.mediaPath) === targetBase;
             });
         } catch (error) {
             console.warn(`⚠️ [DB:LowdbAdapter.checkReminderExistsByMediaPath] Error al verificar multimedia ${mediaPath}:`, error);

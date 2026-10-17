@@ -88,3 +88,14 @@ const UserStateSchema = new mongoose.Schema<UserStateData>({
     timestamp: { type: Date, default: Date.now }
 });
 export const UserStateModel = mongoose.models.UserState || mongoose.model<UserStateData>('UserState', UserStateSchema);
+
+const SheetSyncSettingsSchema = new mongoose.Schema({
+    spreadsheetId: { type: String, required: true },
+    refreshToken: { type: String, required: true },
+    syncInterval: { type: String, enum: ['15m', '1h', '12h', 'manual'], default: '1h' },
+    lastSyncTime: { type: Date },
+    isActive: { type: Boolean, default: true },
+    authMethod: { type: String, enum: ['public', 'service_account', 'oauth'], default: 'oauth' }
+}, { timestamps: true });
+export const SheetSyncSettingsModel = mongoose.models.SheetSyncSettings || mongoose.model('SheetSyncSettings', SheetSyncSettingsSchema);
+

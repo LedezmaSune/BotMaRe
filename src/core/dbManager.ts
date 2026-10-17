@@ -55,9 +55,7 @@ export async function initDB(): Promise<void> {
     await runMigration();
 }
 
-export function generateNumericId(): number {
-    return Date.now() + Math.floor(Math.random() * 1000);
-}
+export { generateNumericId } from '../utils/idGenerator';
 
 // ==========================================
 // PROXY DE MÉTODOS AL ADAPTADOR ACTIVO
@@ -91,7 +89,7 @@ export const createRemindersBulk = (userId: string, items: Array<any>) => adapte
 export const listReminders = (userId: string, includeProcessed?: boolean) => adapter.listReminders(userId, includeProcessed);
 export const deleteReminder = (id: number) => adapter.deleteReminder(id);
 export const updateReminderStatus = (id: number, status: 'pending' | 'processing' | 'sent' | 'failed') => adapter.updateReminderStatus(id, status);
-export const deleteRemindersBulk = (userId: string, type: 'all' | 'pending' | 'sent') => adapter.deleteRemindersBulk(userId, type);
+export const deleteRemindersBulk = (userId: string, type: 'all' | 'pending' | 'sent' | 'failed') => adapter.deleteRemindersBulk(userId, type);
 export const getReminderById = (id: number) => adapter.getReminderById(id);
 export const listAllPendingReminders = () => adapter.listAllPendingReminders();
 export const listPendingMediaPaths = () => adapter.listPendingMediaPaths();
