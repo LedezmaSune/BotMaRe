@@ -47,8 +47,8 @@ export class MongoAdapter implements IDatabaseAdapter {
                 return created.toObject() as UserData;
             }
         } catch (error) {
-            console.error(`❌ [DB] Error al guardar usuario ${id} en MongoDB:`, error);
-            return null;
+            console.error(`❌ [DB:MongoAdapter.saveUser] Error al guardar usuario ${id} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -57,8 +57,8 @@ export class MongoAdapter implements IDatabaseAdapter {
             const user = await UserModel.findOne({ id }).lean();
             return user as UserData | null;
         } catch (error) {
-            console.error(`❌ [DB] Error al obtener usuario ${id} de MongoDB:`, error);
-            return null;
+            console.error(`❌ [DB:MongoAdapter.getUser] Error al obtener usuario ${id} de MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -68,7 +68,7 @@ export class MongoAdapter implements IDatabaseAdapter {
             const loaded = rows.reduce((acc, row) => ({ ...acc, [row.key]: row.value }), {});
             return { ...DEFAULT_BOT_SETTINGS, ...loaded };
         } catch (error) {
-            console.error('❌ [DB] Error al obtener configuraciones en MongoDB:', error);
+            console.error('❌ [DB:MongoAdapter.getSettings] Error al obtener configuraciones en MongoDB:', error);
             return { ...DEFAULT_BOT_SETTINGS };
         }
     }
@@ -89,7 +89,8 @@ export class MongoAdapter implements IDatabaseAdapter {
                 await SettingsModel.bulkWrite(operations);
             }
         } catch (error) {
-            console.error('❌ [DB] Error al actualizar configuraciones en MongoDB:', error);
+            console.error('❌ [DB:MongoAdapter.updateSettings] Error al actualizar configuraciones en MongoDB:', error);
+            throw error;
         }
     }
 
@@ -98,7 +99,8 @@ export class MongoAdapter implements IDatabaseAdapter {
             const msg = new MessageModel({ userId, role, content });
             await msg.save();
         } catch (error) {
-            console.error('❌ [DB] Error al guardar mensaje en MongoDB:', error);
+            console.error('❌ [DB:MongoAdapter.addMessage] Error al guardar mensaje en MongoDB:', error);
+            throw error;
         }
     }
 
@@ -111,8 +113,8 @@ export class MongoAdapter implements IDatabaseAdapter {
                 content: row.content
             }));
         } catch (error) {
-            console.error('❌ [DB] Error al leer historial en MongoDB:', error);
-            return [];
+            console.error(`❌ [DB:MongoAdapter.getHistory] Error al leer historial de ${userId} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -120,7 +122,8 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             await MessageModel.deleteMany({ userId });
         } catch (error) {
-            console.error('❌ [DB] Error al vaciar historial en MongoDB:', error);
+            console.error(`❌ [DB:MongoAdapter.clearHistory] Error al vaciar historial de ${userId} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -129,18 +132,19 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             const audit = new AuditModel({ userId, action, details: detailsStr });
             await audit.save();
+            console.log(`[Audit Logged] ${action} for user ${userId}`);
         } catch (error) {
-            console.error('❌ [DB] Error al registrar auditoría en MongoDB:', error);
+            console.error('❌ [DB:MongoAdapter.logAudit] Error al registrar auditoría en MongoDB:', error);
+            throw error;
         }
-        console.log(`[Audit Logged] ${action} for user ${userId}`);
     }
 
     async listAudits(limit: number = 10): Promise<any[]> {
         try {
             return await AuditModel.find().sort({ timestamp: -1 }).limit(limit).lean();
         } catch (error) {
-            console.error('❌ [DB] Error al obtener auditorias en MongoDB:', error);
-            return [];
+            console.error('❌ [DB:MongoAdapter.listAudits] Error al obtener auditorias en MongoDB:', error);
+            throw error;
         }
     }
 
@@ -161,8 +165,8 @@ export class MongoAdapter implements IDatabaseAdapter {
             await rem.save();
             return id;
         } catch (error) {
-            console.error('❌ [DB] Error al crear recordatorio en MongoDB:', error);
-            return id;
+            console.error('❌ [DB:MongoAdapter.createReminder] Error al crear recordatorio en MongoDB:', error);
+            throw error;
         }
     }
 
@@ -208,8 +212,8 @@ export class MongoAdapter implements IDatabaseAdapter {
             await ReminderModel.insertMany(payloads);
             return ids;
         } catch (error) {
-            console.error('❌ [DB] Error al crear recordatorios masivos en MongoDB:', error);
-            return ids;
+            console.error('❌ [DB:MongoAdapter.createRemindersBulk] Error al crear recordatorios masivos en MongoDB:', error);
+            throw error;
         }
     }
 
@@ -219,8 +223,8 @@ export class MongoAdapter implements IDatabaseAdapter {
             const sortOrder = includeProcessed ? { time: -1, id: -1 } : { time: 1, id: 1 };
             return await ReminderModel.find(filter).sort(sortOrder as any).lean();
         } catch (error) {
-            console.error('❌ [DB] Error al listar recordatorios en MongoDB:', error);
-            return [];
+            console.error(`❌ [DB:MongoAdapter.listReminders] Error al listar recordatorios para ${userId} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -228,7 +232,8 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             await ReminderModel.deleteOne({ id });
         } catch (error) {
-            console.error('❌ [DB] Error al eliminar recordatorio en MongoDB:', error);
+            console.error(`❌ [DB:MongoAdapter.deleteReminder] Error al eliminar recordatorio #${id} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -236,7 +241,8 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             await ReminderModel.updateOne({ id }, { $set: { status } });
         } catch (error) {
-            console.error('❌ [DB] Error al actualizar estado de recordatorio en MongoDB:', error);
+            console.error(`❌ [DB:MongoAdapter.updateReminderStatus] Error al actualizar estado de recordatorio #${id} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -254,7 +260,8 @@ export class MongoAdapter implements IDatabaseAdapter {
             }
             await ReminderModel.deleteMany(filter);
         } catch (error) {
-            console.error('❌ [DB] Error en eliminación masiva en MongoDB:', error);
+            console.error('❌ [DB:MongoAdapter.deleteRemindersBulk] Error en eliminación masiva en MongoDB:', error);
+            throw error;
         }
     }
 
@@ -262,8 +269,8 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             return await ReminderModel.findOne({ id }).lean();
         } catch (error) {
-            console.warn(`⚠️ [DB:MongoAdapter.getReminderById] Error al buscar recordatorio #${id}:`, error);
-            return null;
+            console.error(`❌ [DB:MongoAdapter.getReminderById] Error al buscar recordatorio #${id} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -271,8 +278,8 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             return await ReminderModel.find({ status: 'pending' }).lean();
         } catch (error) {
-            console.warn('⚠️ [DB:MongoAdapter.listAllPendingReminders] Error al listar recordatorios pendientes:', error);
-            return [];
+            console.error('❌ [DB:MongoAdapter.listAllPendingReminders] Error al listar recordatorios pendientes en MongoDB:', error);
+            throw error;
         }
     }
 
@@ -284,8 +291,8 @@ export class MongoAdapter implements IDatabaseAdapter {
             ).lean();
             return results.map(r => r.mediaPath).filter(Boolean) as string[];
         } catch (error) {
-            console.warn('⚠️ [DB:MongoAdapter.listPendingMediaPaths] Error al listar rutas multimedia:', error);
-            return [];
+            console.error('❌ [DB:MongoAdapter.listPendingMediaPaths] Error al listar rutas multimedia en MongoDB:', error);
+            throw error;
         }
     }
 
@@ -293,7 +300,8 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             await ReminderModel.updateOne({ id }, { $set: data });
         } catch (error) {
-            console.error('❌ [DB] Error al actualizar recordatorio en MongoDB:', error);
+            console.error(`❌ [DB:MongoAdapter.updateReminder] Error al actualizar recordatorio #${id} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -301,8 +309,8 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             return await ReminderModel.find({ status: { $in: ['pending', 'failed'] } }).lean();
         } catch (error) {
-            console.warn('⚠️ [DB:MongoAdapter.listPendingOrFailedReminders] Error al listar recordatorios pendientes/fallidos:', error);
-            return [];
+            console.error('❌ [DB:MongoAdapter.listPendingOrFailedReminders] Error al listar recordatorios pendientes/fallidos en MongoDB:', error);
+            throw error;
         }
     }
 
@@ -317,8 +325,8 @@ export class MongoAdapter implements IDatabaseAdapter {
             }).lean();
             return !!exists;
         } catch (error) {
-            console.warn(`⚠️ [DB:MongoAdapter.checkReminderExistsByMediaPath] Error al verificar multimedia ${mediaPath}:`, error);
-            return false;
+            console.error(`❌ [DB:MongoAdapter.checkReminderExistsByMediaPath] Error al verificar multimedia ${mediaPath} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -326,8 +334,8 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             return await TemplateModel.find().sort({ name: 1 }).lean();
         } catch (error) {
-            console.warn('⚠️ [DB:MongoAdapter.listTemplates] Error al listar plantillas:', error);
-            return [];
+            console.error('❌ [DB:MongoAdapter.listTemplates] Error al listar plantillas en MongoDB:', error);
+            throw error;
         }
     }
 
@@ -338,8 +346,8 @@ export class MongoAdapter implements IDatabaseAdapter {
             await temp.save();
             return id;
         } catch (error) {
-            console.error('❌ [DB] Error al crear plantilla en MongoDB:', error);
-            return id;
+            console.error('❌ [DB:MongoAdapter.createTemplate] Error al crear plantilla en MongoDB:', error);
+            throw error;
         }
     }
 
@@ -347,7 +355,8 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             await TemplateModel.deleteOne({ id });
         } catch (error) {
-            console.error('❌ [DB] Error al eliminar plantilla en MongoDB:', error);
+            console.error(`❌ [DB:MongoAdapter.deleteTemplate] Error al eliminar plantilla #${id} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -355,7 +364,8 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             await TemplateModel.updateOne({ id }, { $set: { name, content } });
         } catch (error) {
-            console.error('❌ [DB] Error al actualizar plantilla en MongoDB:', error);
+            console.error(`❌ [DB:MongoAdapter.updateTemplate] Error al actualizar plantilla #${id} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -368,7 +378,8 @@ export class MongoAdapter implements IDatabaseAdapter {
                 { upsert: true, new: true }
             );
         } catch (error) {
-            console.error('❌ [DB] Error al pausar chat en MongoDB:', error);
+            console.error(`❌ [DB:MongoAdapter.pauseChat] Error al pausar chat ${chatId} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -376,7 +387,8 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             await PausedChatModel.deleteOne({ chatId });
         } catch (error) {
-            console.error('❌ [DB] Error al despausar chat en MongoDB:', error);
+            console.error(`❌ [DB:MongoAdapter.unpauseChat] Error al despausar chat ${chatId} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -401,8 +413,8 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             return await PausedChatModel.find().sort({ timestamp: -1 }).lean();
         } catch (error) {
-            console.warn('⚠️ [DB:MongoAdapter.listPausedChats] Error al listar chats pausados:', error);
-            return [];
+            console.error('❌ [DB:MongoAdapter.listPausedChats] Error al listar chats pausados en MongoDB:', error);
+            throw error;
         }
     }
 
@@ -410,8 +422,8 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             return await AutoresponderModel.find().sort({ timestamp: -1 }).lean();
         } catch (error) {
-            console.warn('⚠️ [DB:MongoAdapter.listAutoresponders] Error al listar autorespondedores:', error);
-            return [];
+            console.error('❌ [DB:MongoAdapter.listAutoresponders] Error al listar autorespondedores en MongoDB:', error);
+            throw error;
         }
     }
 
@@ -428,8 +440,8 @@ export class MongoAdapter implements IDatabaseAdapter {
             await aut.save();
             return id;
         } catch (error) {
-            console.error('❌ [DB] Error al crear autorespondedor en MongoDB:', error);
-            return id;
+            console.error('❌ [DB:MongoAdapter.createAutoresponder] Error al crear autorespondedor en MongoDB:', error);
+            throw error;
         }
     }
 
@@ -443,7 +455,8 @@ export class MongoAdapter implements IDatabaseAdapter {
                 isActive: isActive ? 1 : 0, parentId, options
             } });
         } catch (error) {
-            console.error('❌ [DB] Error al actualizar autorespondedor en MongoDB:', error);
+            console.error(`❌ [DB:MongoAdapter.updateAutoresponder] Error al actualizar autorespondedor #${id} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -451,7 +464,8 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             await AutoresponderModel.updateOne({ id }, { $set: { isActive: isActive ? 1 : 0 } });
         } catch (error) {
-            console.error('❌ [DB] Error al alternar autorespondedor en MongoDB:', error);
+            console.error(`❌ [DB:MongoAdapter.toggleAutoresponder] Error al alternar autorespondedor #${id} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -459,7 +473,8 @@ export class MongoAdapter implements IDatabaseAdapter {
         try {
             await AutoresponderModel.deleteOne({ id });
         } catch (error) {
-            console.error('❌ [DB] Error al eliminar autorespondedor en MongoDB:', error);
+            console.error(`❌ [DB:MongoAdapter.deleteAutoresponder] Error al eliminar autorespondedor #${id} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -468,8 +483,8 @@ export class MongoAdapter implements IDatabaseAdapter {
             const row = await UserStateModel.findOne({ chatId }).lean() as UserStateData | null;
             return row ? (row.currentMenuId ?? null) : null;
         } catch (error) {
-            console.warn(`⚠️ [DB:MongoAdapter.getUserState] Error al obtener estado para ${chatId}:`, error);
-            return null;
+            console.error(`❌ [DB:MongoAdapter.getUserState] Error al obtener estado para ${chatId} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -485,7 +500,8 @@ export class MongoAdapter implements IDatabaseAdapter {
                 );
             }
         } catch (error) {
-            console.error('❌ [DB] Error al guardar estado en MongoDB:', error);
+            console.error(`❌ [DB:MongoAdapter.setUserState] Error al guardar estado para ${chatId} en MongoDB:`, error);
+            throw error;
         }
     }
 
@@ -506,8 +522,8 @@ export class MongoAdapter implements IDatabaseAdapter {
                 authMethod: doc.authMethod
             };
         } catch (error) {
-            console.error('❌ [DB] Error al obtener SheetSyncSettings en MongoDB:', error);
-            return null;
+            console.error('❌ [DB:MongoAdapter.getSheetSyncSettings] Error al obtener SheetSyncSettings en MongoDB:', error);
+            throw error;
         }
     }
 
@@ -519,7 +535,8 @@ export class MongoAdapter implements IDatabaseAdapter {
                 { upsert: true, new: true }
             );
         } catch (error) {
-            console.error('❌ [DB] Error al guardar SheetSyncSettings en MongoDB:', error);
+            console.error('❌ [DB:MongoAdapter.saveSheetSyncSettings] Error al guardar SheetSyncSettings en MongoDB:', error);
+            throw error;
         }
     }
 
@@ -536,7 +553,7 @@ export class MongoAdapter implements IDatabaseAdapter {
             return count;
         } catch (error) {
             console.error('❌ [DB:MongoAdapter.recoverOrphanedProcessingReminders] Error al recuperar recordatorios huérfanos:', error);
-            return 0;
+            throw error;
         }
     }
 }

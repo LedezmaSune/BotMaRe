@@ -13,8 +13,6 @@ export * from './db/interfaces';
 // Re-exportamos modelos para el migrator
 export * from './db/mongo.models';
 
-export let isMongo = false;
-export let ldb: any = null;
 let adapter: IDatabaseAdapter;
 
 export async function initDB(): Promise<void> {
@@ -34,7 +32,6 @@ export async function initDB(): Promise<void> {
         console.log('🔄 [DB] Conectando a MongoDB Atlas...');
         adapter = new MongoAdapter();
         await adapter.initDB();
-        isMongo = true;
         
         // Execute automigrator once Mongo is ready
         const { runMigration } = require('./migrator');
@@ -47,8 +44,6 @@ export async function initDB(): Promise<void> {
     const lowAdapter = new LowdbAdapter();
     await lowAdapter.initDB();
     adapter = lowAdapter;
-    isMongo = false;
-    ldb = lowAdapter.getRawDb();
     
     // Execute automigrator
     const { runMigration } = require('./migrator');

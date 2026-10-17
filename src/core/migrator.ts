@@ -3,16 +3,14 @@ const checkFileExists = fs.existsSync;
 const writeFileSecure = fs.writeFileSync;
 import path from 'path';
 import { 
-    isMongo, 
-    ldb, 
-    SettingsModel, 
-    MessageModel, 
-    AuditModel, 
-    ReminderModel, 
-    TemplateModel, 
-    PausedChatModel, 
-    AutoresponderModel, 
-    UserStateModel 
+    updateSettings,
+    addMessage,
+    logAudit,
+    createRemindersBulk,
+    createTemplate,
+    pauseChat,
+    createAutoresponder,
+    setUserState
 } from './dbManager';
 
 export async function runMigration(): Promise<void> {
@@ -26,7 +24,7 @@ export async function runMigration(): Promise<void> {
 
     console.log('\n=======================================================');
     console.log('📦 [MIGRADOR] Base de datos SQLite detectada en data/database.db');
-    console.log('👉 Iniciando migración automática a base de datos híbrida...');
+    console.log('👉 Iniciando migración automática a base de datos activa...');
     console.log('=======================================================\n');
 
     let sqliteDb: any = null;
@@ -44,21 +42,11 @@ export async function runMigration(): Promise<void> {
         console.log('⚙️ Migrando configuraciones...');
         const sqlSettings = sqliteDb.prepare('SELECT * FROM settings').all() as any[];
         if (sqlSettings.length > 0) {
-            if (isMongo) {
-                const ops = sqlSettings.map(s => ({
-                    updateOne: {
-                        filter: { key: s.key },
-                        update: { $set: { value: s.value } },
-                        upsert: true
-                    }
-                }));
-                await SettingsModel.bulkWrite(ops);
-            } else {
-                sqlSettings.forEach(s => {
-                    const exists = ldb.get('settings').find({ key: s.key }).value();
-                    if (!exists) ldb.get('settings').push({ key: s.key, value: s.value }).write();
-                });
-            }
+            const settingsMap: Record<string, string> = {};
+            sqlSettings.forEach(s => {
+                settingsMap[s.key] = s.value;
+            });
+            await updateSettings(settingsMap);
             console.log(`  ✓ ${sqlSettings.length} configuraciones migradas.`);
         }
 
@@ -66,16 +54,8 @@ export async function runMigration(): Promise<void> {
         console.log('✉️ Migrando historial de mensajes...');
         const sqlMessages = sqliteDb.prepare('SELECT * FROM messages').all() as any[];
         if (sqlMessages.length > 0) {
-            const parsedMessages = sqlMessages.map(m => ({
-                userId: m.userId,
-                role: m.role,
-                content: m.content,
-                timestamp: m.timestamp ? new Date(m.timestamp) : new Date()
-            }));
-            if (isMongo) {
-                await MessageModel.insertMany(parsedMessages);
-            } else {
-                ldb.get('messages').push(...parsedMessages).write();
+            for (const m of sqlMessages) {
+                await addMessage(m.userId, m.role, m.content);
             }
             console.log(`  ✓ ${sqlMessages.length} mensajes de chat migrados.`);
         }
@@ -84,16 +64,8 @@ export async function runMigration(): Promise<void> {
         console.log('🛡️ Migrando logs de auditoría...');
         const sqlAudits = sqliteDb.prepare('SELECT * FROM audits').all() as any[];
         if (sqlAudits.length > 0) {
-            const parsedAudits = sqlAudits.map(a => ({
-                userId: a.userId,
-                action: a.action,
-                details: a.details,
-                timestamp: a.timestamp ? new Date(a.timestamp) : new Date()
-            }));
-            if (isMongo) {
-                await AuditModel.insertMany(parsedAudits);
-            } else {
-                ldb.get('audits').push(...parsedAudits).write();
+            for (const a of sqlAudits) {
+                await logAudit(a.userId, a.action, a.details);
             }
             console.log(`  ✓ ${sqlAudits.length} logs de auditoría migrados.`);
         }
@@ -102,9 +74,7 @@ export async function runMigration(): Promise<void> {
         console.log('📅 Migrando recordatorios...');
         const sqlReminders = sqliteDb.prepare('SELECT * FROM reminders').all() as any[];
         if (sqlReminders.length > 0) {
-            const parsedReminders = sqlReminders.map(r => ({
-                id: r.id,
-                userId: r.userId,
+            const items = sqlReminders.map(r => ({
                 chatId: r.chatId,
                 title: r.title || undefined,
                 text: r.text,
@@ -114,14 +84,10 @@ export async function runMigration(): Promise<void> {
                 status: r.status,
                 repeat: r.repeat || 'none',
                 repeatInterval: r.repeatInterval || undefined,
-                repeatUnit: r.repeatUnit || undefined,
-                timestamp: r.timestamp ? new Date(r.timestamp) : new Date()
+                repeatUnit: r.repeatUnit || undefined
             }));
-            if (isMongo) {
-                await ReminderModel.insertMany(parsedReminders);
-            } else {
-                ldb.get('reminders').push(...parsedReminders).write();
-            }
+            const userId = sqlReminders[0]?.userId || 'owner';
+            await createRemindersBulk(userId, items);
             console.log(`  ✓ ${sqlReminders.length} recordatorios migrados.`);
         }
 
@@ -129,16 +95,8 @@ export async function runMigration(): Promise<void> {
         console.log('📋 Migrando plantillas...');
         const sqlTemplates = sqliteDb.prepare('SELECT * FROM templates').all() as any[];
         if (sqlTemplates.length > 0) {
-            const parsedTemplates = sqlTemplates.map(t => ({
-                id: t.id,
-                name: t.name,
-                content: t.content,
-                timestamp: t.timestamp ? new Date(t.timestamp) : new Date()
-            }));
-            if (isMongo) {
-                await TemplateModel.insertMany(parsedTemplates);
-            } else {
-                ldb.get('templates').push(...parsedTemplates).write();
+            for (const t of sqlTemplates) {
+                await createTemplate(t.name, t.content);
             }
             console.log(`  ✓ ${sqlTemplates.length} plantillas migradas.`);
         }
@@ -147,16 +105,8 @@ export async function runMigration(): Promise<void> {
         console.log('⏸️ Migrando chats pausados...');
         const sqlPaused = sqliteDb.prepare('SELECT * FROM paused_chats').all() as any[];
         if (sqlPaused.length > 0) {
-            const parsedPaused = sqlPaused.map(p => ({
-                chatId: p.chatId,
-                reason: p.reason,
-                pausedUntil: p.pausedUntil,
-                timestamp: p.timestamp ? new Date(p.timestamp) : new Date()
-            }));
-            if (isMongo) {
-                await PausedChatModel.insertMany(parsedPaused);
-            } else {
-                ldb.get('paused_chats').push(...parsedPaused).write();
+            for (const p of sqlPaused) {
+                await pauseChat(p.chatId, p.reason || 'Migrado de SQLite');
             }
             console.log(`  ✓ ${sqlPaused.length} chats pausados migrados.`);
         }
@@ -165,21 +115,11 @@ export async function runMigration(): Promise<void> {
         console.log('🔄 Migrando autorespondedores...');
         const sqlAuto = sqliteDb.prepare('SELECT * FROM autoresponders').all() as any[];
         if (sqlAuto.length > 0) {
-            const parsedAuto = sqlAuto.map(a => ({
-                id: a.id,
-                keyword: a.keyword,
-                matchType: a.matchType,
-                response: a.response,
-                aiAction: a.aiAction,
-                isActive: a.isActive,
-                parentId: a.parentId || undefined,
-                options: a.options || undefined,
-                timestamp: a.timestamp ? new Date(a.timestamp) : new Date()
-            }));
-            if (isMongo) {
-                await AutoresponderModel.insertMany(parsedAuto);
-            } else {
-                ldb.get('autoresponders').push(...parsedAuto).write();
+            for (const a of sqlAuto) {
+                await createAutoresponder(
+                    a.keyword, a.matchType, a.response, a.aiAction,
+                    Boolean(a.isActive), a.parentId || null, a.options || null
+                );
             }
             console.log(`  ✓ ${sqlAuto.length} autorespondedores migrados.`);
         }
@@ -188,15 +128,8 @@ export async function runMigration(): Promise<void> {
         console.log('👥 Migrando estados de menús...');
         const sqlStates = sqliteDb.prepare('SELECT * FROM user_states').all() as any[];
         if (sqlStates.length > 0) {
-            const parsedStates = sqlStates.map(u => ({
-                chatId: u.chatId,
-                currentMenuId: u.currentMenuId || undefined,
-                timestamp: u.timestamp ? new Date(u.timestamp) : new Date()
-            }));
-            if (isMongo) {
-                await UserStateModel.insertMany(parsedStates);
-            } else {
-                ldb.get('user_states').push(...parsedStates).write();
+            for (const u of sqlStates) {
+                await setUserState(u.chatId, u.currentMenuId || null);
             }
             console.log(`  ✓ ${sqlStates.length} estados de menús migrados.`);
         }

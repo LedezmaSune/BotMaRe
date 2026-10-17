@@ -67,7 +67,7 @@ describe('FASE 8: Errores Silenciosos, Autorización en Herramientas y Recuperac
         });
     });
 
-    describe('isChatPaused - No Ocultar Fallos de BD', () => {
+    describe('isChatPaused y listAllPendingReminders - No Ocultar Fallos de BD', () => {
         it('debe lanzar excepción si la base de datos falla al consultar estado de pausa', async () => {
             const adapter = new LowdbAdapter();
             (adapter as any).ldb = {
@@ -75,6 +75,15 @@ describe('FASE 8: Errores Silenciosos, Autorización en Herramientas y Recuperac
             };
 
             await expect(adapter.isChatPaused('chat123')).rejects.toThrow();
+        });
+
+        it('debe lanzar excepción si la base de datos falla al listar recordatorios pendientes en lugar de retornar array vacío', async () => {
+            const adapter = new LowdbAdapter();
+            (adapter as any).ldb = {
+                data: null // Provoca que acceder a .reminders lance TypeError
+            };
+
+            await expect(adapter.listAllPendingReminders()).rejects.toThrow();
         });
     });
 

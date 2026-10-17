@@ -70,8 +70,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             await this.ldb.write();
             return user;
         } catch (error) {
-            console.error(`❌ [DB] Error al guardar usuario ${id} en Lowdb:`, error);
-            return null;
+            console.error(`❌ [DB:LowdbAdapter.saveUser] Error al guardar usuario ${id} en Lowdb:`, error);
+            throw error;
         }
     }
 
@@ -80,8 +80,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             const user = this.ldb.data.users.find(u => u.id === id);
             return user || null;
         } catch (error) {
-            console.error(`❌ [DB] Error al obtener usuario ${id} de Lowdb:`, error);
-            return null;
+            console.error(`❌ [DB:LowdbAdapter.getUser] Error al obtener usuario ${id} de Lowdb:`, error);
+            throw error;
         }
     }
 
@@ -112,7 +112,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             }
             await this.ldb.write();
         } catch (error) {
-            console.error('❌ [DB] Error al actualizar configuraciones en Lowdb:', error);
+            console.error('❌ [DB:LowdbAdapter.updateSettings] Error al actualizar configuraciones en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -121,7 +122,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             this.ldb.data.messages.push({ userId, role, content, timestamp: new Date() });
             await this.ldb.write();
         } catch (error) {
-            console.error('❌ [DB] Error al guardar mensaje en Lowdb:', error);
+            console.error('❌ [DB:LowdbAdapter.addMessage] Error al guardar mensaje en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -134,8 +136,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
                 role: row.role as any, content: row.content
             }));
         } catch (error) {
-            console.warn(`⚠️ [DB:LowdbAdapter.getHistory] Error al obtener historial de ${userId}:`, error);
-            return [];
+            console.error(`❌ [DB:LowdbAdapter.getHistory] Error al obtener historial de ${userId}:`, error);
+            throw error;
         }
     }
 
@@ -144,7 +146,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             this.ldb.data.messages = this.ldb.data.messages.filter(m => m.userId !== userId);
             await this.ldb.write();
         } catch (error) {
-            console.error('❌ [DB] Error al vaciar historial en Lowdb:', error);
+            console.error('❌ [DB:LowdbAdapter.clearHistory] Error al vaciar historial en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -153,10 +156,11 @@ export class LowdbAdapter implements IDatabaseAdapter {
         try {
             this.ldb.data.audits.push({ userId, action, details: detailsStr, timestamp: new Date() });
             await this.ldb.write();
+            console.log(`[Audit Logged] ${action} for user ${userId}`);
         } catch (error) {
-            console.error('❌ [DB] Error al registrar auditoría en Lowdb:', error);
+            console.error('❌ [DB:LowdbAdapter.logAudit] Error al registrar auditoría en Lowdb:', error);
+            throw error;
         }
-        console.log(`[Audit Logged] ${action} for user ${userId}`);
     }
 
     async listAudits(limit: number = 10): Promise<any[]> {
@@ -165,8 +169,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             const sorted = list.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
             return sorted.slice(0, limit);
         } catch (error) {
-            console.error('❌ [DB] Error al obtener auditorias en Lowdb:', error);
-            return [];
+            console.error('❌ [DB:LowdbAdapter.listAudits] Error al obtener auditorias en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -187,8 +191,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             await this.ldb.write();
             return id;
         } catch (error) {
-            console.error('❌ [DB] Error al crear recordatorio en Lowdb:', error);
-            return id;
+            console.error('❌ [DB:LowdbAdapter.createReminder] Error al crear recordatorio en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -233,8 +237,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             await this.ldb.write();
             return ids;
         } catch (error) {
-            console.error('❌ [DB] Error al crear recordatorios masivos en Lowdb:', error);
-            return ids;
+            console.error('❌ [DB:LowdbAdapter.createRemindersBulk] Error al crear recordatorios masivos en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -250,8 +254,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
                 return list.sort((a: any, b: any) => a.time.localeCompare(b.time) || a.id - b.id);
             }
         } catch (error) {
-            console.warn(`⚠️ [DB:LowdbAdapter.listReminders] Error al listar recordatorios para ${userId}:`, error);
-            return [];
+            console.error(`❌ [DB:LowdbAdapter.listReminders] Error al listar recordatorios para ${userId}:`, error);
+            throw error;
         }
     }
 
@@ -260,7 +264,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             this.ldb.data.reminders = this.ldb.data.reminders.filter(r => r.id !== id);
             await this.ldb.write();
         } catch (error) {
-            console.error('❌ [DB] Error al eliminar recordatorio en Lowdb:', error);
+            console.error('❌ [DB:LowdbAdapter.deleteReminder] Error al eliminar recordatorio en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -272,7 +277,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
                 await this.ldb.write();
             }
         } catch (error) {
-            console.error('❌ [DB] Error al actualizar estado de recordatorio en Lowdb:', error);
+            console.error('❌ [DB:LowdbAdapter.updateReminderStatus] Error al actualizar estado de recordatorio en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -299,7 +305,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             });
             await this.ldb.write();
         } catch (error) {
-            console.error('❌ [DB] Error en eliminación masiva en Lowdb:', error);
+            console.error('❌ [DB:LowdbAdapter.deleteRemindersBulk] Error en eliminación masiva en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -307,8 +314,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
         try {
             return this.ldb.data.reminders.find(r => r.id === id) || null;
         } catch (error) {
-            console.warn(`⚠️ [DB:LowdbAdapter.getReminderById] Error al buscar recordatorio #${id}:`, error);
-            return null;
+            console.error(`❌ [DB:LowdbAdapter.getReminderById] Error al buscar recordatorio #${id}:`, error);
+            throw error;
         }
     }
 
@@ -316,8 +323,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
         try {
             return this.ldb.data.reminders.filter(r => r.status === 'pending');
         } catch (error) {
-            console.warn('⚠️ [DB:LowdbAdapter.listAllPendingReminders] Error al listar recordatorios pendientes:', error);
-            return [];
+            console.error('❌ [DB:LowdbAdapter.listAllPendingReminders] Error al listar recordatorios pendientes:', error);
+            throw error;
         }
     }
 
@@ -326,8 +333,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             const list = this.ldb.data.reminders.filter(r => r.status !== 'sent');
             return list.map((r: any) => r.mediaPath).filter(Boolean);
         } catch (error) {
-            console.warn('⚠️ [DB:LowdbAdapter.listPendingMediaPaths] Error al listar rutas multimedia:', error);
-            return [];
+            console.error('❌ [DB:LowdbAdapter.listPendingMediaPaths] Error al listar rutas multimedia:', error);
+            throw error;
         }
     }
 
@@ -339,7 +346,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
                 await this.ldb.write();
             }
         } catch (error) {
-            console.error('❌ [DB] Error al actualizar recordatorio en Lowdb:', error);
+            console.error('❌ [DB:LowdbAdapter.updateReminder] Error al actualizar recordatorio en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -347,8 +355,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
         try {
             return this.ldb.data.reminders.filter(r => ['pending', 'failed'].includes(r.status));
         } catch (error) {
-            console.warn('⚠️ [DB:LowdbAdapter.listPendingOrFailedReminders] Error al listar recordatorios pendientes/fallidos:', error);
-            return [];
+            console.error('❌ [DB:LowdbAdapter.listPendingOrFailedReminders] Error al listar recordatorios pendientes/fallidos:', error);
+            throw error;
         }
     }
 
@@ -362,8 +370,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
                 return normalizeMediaBasename(r.mediaPath) === targetBase;
             });
         } catch (error) {
-            console.warn(`⚠️ [DB:LowdbAdapter.checkReminderExistsByMediaPath] Error al verificar multimedia ${mediaPath}:`, error);
-            return false;
+            console.error(`❌ [DB:LowdbAdapter.checkReminderExistsByMediaPath] Error al verificar multimedia ${mediaPath}:`, error);
+            throw error;
         }
     }
 
@@ -372,8 +380,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             const list = [...this.ldb.data.templates];
             return list.sort((a: any, b: any) => a.name.localeCompare(b.name));
         } catch (error) {
-            console.warn('⚠️ [DB:LowdbAdapter.listTemplates] Error al listar plantillas:', error);
-            return [];
+            console.error('❌ [DB:LowdbAdapter.listTemplates] Error al listar plantillas:', error);
+            throw error;
         }
     }
 
@@ -384,8 +392,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             await this.ldb.write();
             return id;
         } catch (error) {
-            console.error('❌ [DB] Error al crear plantilla en Lowdb:', error);
-            return id;
+            console.error('❌ [DB:LowdbAdapter.createTemplate] Error al crear plantilla en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -394,7 +402,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             this.ldb.data.templates = this.ldb.data.templates.filter(t => t.id !== id);
             await this.ldb.write();
         } catch (error) {
-            console.error('❌ [DB] Error al eliminar plantilla en Lowdb:', error);
+            console.error('❌ [DB:LowdbAdapter.deleteTemplate] Error al eliminar plantilla en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -407,7 +416,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
                 await this.ldb.write();
             }
         } catch (error) {
-            console.error('❌ [DB] Error al actualizar plantilla en Lowdb:', error);
+            console.error('❌ [DB:LowdbAdapter.updateTemplate] Error al actualizar plantilla en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -423,7 +433,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             }
             await this.ldb.write();
         } catch (error) {
-            console.error('❌ [DB] Error al pausar chat en Lowdb:', error);
+            console.error('❌ [DB:LowdbAdapter.pauseChat] Error al pausar chat en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -432,7 +443,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             this.ldb.data.paused_chats = this.ldb.data.paused_chats.filter(p => p.chatId !== chatId);
             await this.ldb.write();
         } catch (error) {
-            console.error('❌ [DB] Error al despausar chat en Lowdb:', error);
+            console.error('❌ [DB:LowdbAdapter.unpauseChat] Error al despausar chat en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -459,8 +471,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             const list = [...this.ldb.data.paused_chats];
             return list.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         } catch (error) {
-            console.warn('⚠️ [DB:LowdbAdapter.listPausedChats] Error al listar chats pausados:', error);
-            return [];
+            console.error('❌ [DB:LowdbAdapter.listPausedChats] Error al listar chats pausados:', error);
+            throw error;
         }
     }
 
@@ -469,8 +481,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             const list = [...this.ldb.data.autoresponders];
             return list.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         } catch (error) {
-            console.warn('⚠️ [DB:LowdbAdapter.listAutoresponders] Error al listar autorespondedores:', error);
-            return [];
+            console.error('❌ [DB:LowdbAdapter.listAutoresponders] Error al listar autorespondedores:', error);
+            throw error;
         }
     }
 
@@ -488,8 +500,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             await this.ldb.write();
             return id;
         } catch (error) {
-            console.error('❌ [DB] Error al crear autorespondedor en Lowdb:', error);
-            return id;
+            console.error('❌ [DB:LowdbAdapter.createAutoresponder] Error al crear autorespondedor en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -507,7 +519,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
                 await this.ldb.write();
             }
         } catch (error) {
-            console.error('❌ [DB] Error al actualizar autorespondedor en Lowdb:', error);
+            console.error('❌ [DB:LowdbAdapter.updateAutoresponder] Error al actualizar autorespondedor en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -519,7 +532,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
                 await this.ldb.write();
             }
         } catch (error) {
-            console.error('❌ [DB] Error al alternar autorespondedor en Lowdb:', error);
+            console.error('❌ [DB:LowdbAdapter.toggleAutoresponder] Error al alternar autorespondedor en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -528,7 +542,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             this.ldb.data.autoresponders = this.ldb.data.autoresponders.filter(a => a.id !== id);
             await this.ldb.write();
         } catch (error) {
-            console.error('❌ [DB] Error al eliminar autorespondedor en Lowdb:', error);
+            console.error('❌ [DB:LowdbAdapter.deleteAutoresponder] Error al eliminar autorespondedor en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -537,8 +552,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             const row = this.ldb.data.user_states.find(s => s.chatId === chatId);
             return row ? (row.currentMenuId ?? null) : null;
         } catch (error) {
-            console.warn(`⚠️ [DB:LowdbAdapter.getUserState] Error al obtener estado para ${chatId}:`, error);
-            return null;
+            console.error(`❌ [DB:LowdbAdapter.getUserState] Error al obtener estado para ${chatId}:`, error);
+            throw error;
         }
     }
 
@@ -557,7 +572,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             }
             await this.ldb.write();
         } catch (error) {
-            console.error('❌ [DB] Error al guardar estado en Lowdb:', error);
+            console.error('❌ [DB:LowdbAdapter.setUserState] Error al guardar estado en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -569,8 +585,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
         try {
             return this.ldb.data.sheet_sync_settings || null;
         } catch (error) {
-            console.warn('⚠️ [DB:LowdbAdapter.getSheetSyncSettings] Error al leer configuración de Google Sheets:', error);
-            return null;
+            console.error('❌ [DB:LowdbAdapter.getSheetSyncSettings] Error al leer configuración de Google Sheets:', error);
+            throw error;
         }
     }
 
@@ -579,7 +595,8 @@ export class LowdbAdapter implements IDatabaseAdapter {
             this.ldb.data.sheet_sync_settings = settings;
             await this.ldb.write();
         } catch (error) {
-            console.error('❌ [DB] Error al guardar configuracion de Google Sheets en Lowdb:', error);
+            console.error('❌ [DB:LowdbAdapter.saveSheetSyncSettings] Error al guardar configuracion de Google Sheets en Lowdb:', error);
+            throw error;
         }
     }
 
@@ -595,7 +612,7 @@ export class LowdbAdapter implements IDatabaseAdapter {
             return processing.length;
         } catch (error) {
             console.error('❌ [DB:LowdbAdapter.recoverOrphanedProcessingReminders] Error al recuperar recordatorios huérfanos:', error);
-            return 0;
+            throw error;
         }
     }
 }
