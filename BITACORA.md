@@ -1,9 +1,41 @@
 # 📓 Bitácora de Desarrollo - BotMaRe
 
 > [!NOTE]
-> **ESTADO: VERSIÓN 2.5.0 ESTABLE Y OPTIMIZADA 🚀**
+> **ESTADO: VERSIÓN 2.7.0 ESTABLE Y BLINDADA 🚀**
 > 
-> *Sistemas de IA multiproveedor, diagnósticos en tiempo real, refactorización del actualizador `update.sh`, mantenimiento pasivo de Baileys/SQLite sin desconexión y actualización de UI.*
+> *Blindaje Criptográfico E2EE Baileys, reconexión atómica, soporte de base de datos desacoplada (LowDB / MongoDB / SQLite), sistema de plugins con IA nativa y suite de pruebas Vitest automatizada.*
+
+## Fecha: 15 de Octubre de 2026
+
+### ✅ Release v2.7.0 (Blindaje Baileys y Plugins IA)
+1. **Blindaje de Protocolo Signal en Baileys:**
+   - Corrección en `getMessage` retornando `undefined` para evitar retransmisiones corruptas de mensajes programados.
+   - Reconexión atómica y estabilización de pre-claves criptográficas de 500ms.
+2. **Ecosistema de Plugins IA:**
+   - Inyección de helper `api.callAI()` en sandbox de plugins (`src/core/plugin-manager.ts`).
+   - 6 nuevos plugins oficiales (`google-search`, `summarize-text`, `translate`, `url-info`, `webhook`, `google-sheets`).
+3. **Persistencia Desacoplada y Hardening:**
+   - Contrato unificado `IDatabaseAdapter` con implementaciones `LowDbAdapter`, `MongoAdapter` y `SqliteAdapter`.
+   - Autenticación criptográfica por timing seguro en webhooks (`crypto.timingSafeEqual`) y rate limiting estricto con bloqueo por fuerza bruta.
+
+## Fecha: 10 de Octubre de 2026
+
+### ✅ Release v2.6.1 (Sincronización Inteligente de Google Sheets)
+1. **Job Programado de Sincronización:**
+   - Creación de `SheetsSyncJob` con intervalos configurables (15m, 1h, 12h y manual).
+2. **Parser Tolerante a Variaciones de Esquema:**
+   - Detección automática de encabezados en Google Sheets y soporte de 2, 3 o 4 columnas con adjuntos multimedia.
+   - Extracción inteligente de identificador de hoja y soporte para enlaces con `#gid=`.
+
+## Fecha: 04 de Octubre de 2026
+
+### ✅ Release v2.6.0 (Voz Conversacional y Gestión Documental)
+1. **Notas de Voz Bidireccionales:**
+   - Transcripción de audios con Whisper y generación de respuestas de voz con Text-to-Speech (TTS).
+2. **Gestión Documental:**
+   - Extracción de texto y análisis en documentos adjuntos (PDF, Word, Excel, TXT, CSV, MD) en mensajes citados.
+3. **Escudo Anti-Prompt Injection:**
+   - Delimitación estricta de mensajes (`<<<INICIO>>>`) para blindar las instrucciones del sistema en el LLM.
 
 ## Fecha: 17 de Septiembre de 2026
 
@@ -94,7 +126,7 @@
    - Inyección de instrucciones claras en la UI (`WebhooksUI.tsx`).
    - Implementación de `WEBHOOK_API_KEY` en archivo estático `.env` para mayor seguridad en integraciones.
 3. **Desarrollo de Arquitectura RAG:**
-   - Se estableció la ruta y las notas principales para integrar el sistema RAG (Bases de datos vectoriales para subir PDFs y TXTs). Todo documentado en `rag_project_notes.md`.
+   - Se estableció la arquitectura y el parser de documentos (`src/core/document-parser.ts`) para procesamiento de archivos (PDFs, Word, Excel, CSV, TXT y Markdown).
 4. **Feedback Visual Anti-Ban:**
    - Se agregó una animación Premium (Ámbar) con contador regresivo en `MassMessaging.tsx` que escucha los tiempos de espera del `diffusion.service.ts` para evitar confusión visual del usuario.
 

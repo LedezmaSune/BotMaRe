@@ -4,7 +4,7 @@ El directorio `src/modules` es el cerebro lógico del sistema. Contiene los subm
 
 ## 1. `system` (Mantenimiento y Actualizaciones)
 Encargado de la supervivencia del bot:
-- **`update.service.ts`**: Lógica de auto-actualización desde GitHub. Implementa detección dinámica de rama (`main`, `master`) y soporte nativo para entornos de recursos limitados (Termux en Android) asegurando que el proceso `git pull` y `pnpm install` no se quede sin memoria o rompa la instalación.
+- **`update.service.ts`**: Lógica de auto-actualización no destructiva desde GitHub. Detecta la rama activa actual con `git branch --show-current`, crea un respaldo completo preventivo de `data/` y `.env`, y sincroniza código mediante `git fetch` + `git stash` + `git rebase` + `git stash pop` junto a `pnpm install --frozen-lockfile`.
 - **`backup.service.ts`**: Realiza respaldos comprimidos de toda la configuración, reportes y bases de datos.
 
 ## 2. `messages` (Envíos y Difusión)
@@ -13,8 +13,8 @@ Encargado de la supervivencia del bot:
 
 ## 3. `scheduling` (Orquestación y Tareas Cron)
 Corazón de los procesos en segundo plano:
-- **`task-runner.ts`**: Registra y ejecuta tareas tipo Cron (`node-cron`). Limpia los temporizadores pendientes (Timeouts) usando `Map` para evitar Fugas de Memoria.
-- **`reminder-checker.job.ts`**: Se ejecuta cada minuto para comprobar si hay recordatorios pendientes. Tiene una tolerancia de 60 minutos, garantizando que si el bot estuvo offline, los mensajes pendientes no se pierdan.
+- **`task-runner.ts`**: Registra y ejecuta tareas tipo Cron (`node-cron`) y temporizadores aislados mediante `TaskRunner.safeRun`, reportando fallos recurrentes (>=3) a `NotificationHub`.
+- **`reminder-checker.job.ts`**: Se ejecuta cada minuto para comprobar si hay recordatorios pendientes. Tiene una ventana de tolerancia de **120 minutos** (`MAX_DELAY_MINUTES = 120`), garantizando que si el bot estuvo temporalmente offline, los recordatorios pendientes recientes se despachen sin descartarse.
 
 ## 4. `plugins` (Extensiones de Terceros)
 - **`plugin.service.ts`**: Carga y ejecuta plugins personalizados de forma aislada (Sandbox VM). 

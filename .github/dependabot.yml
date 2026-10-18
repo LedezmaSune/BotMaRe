@@ -1,0 +1,31 @@
+version: 2
+updates:
+  # Automatización de dependencias para Node.js / pnpm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Mexico_City"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "LedezmaSune"
+    commit-message:
+      prefix: "chore(deps)"
+
+  # Automatización de dependencias para GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "ci(actions)"
+
+  # Automatización de módulos para Docker
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "chore(docker)"

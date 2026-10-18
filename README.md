@@ -5,7 +5,7 @@
 
   <p>
     <img src="https://img.shields.io/badge/Version-2.7.0-indigo?style=flat-square" alt="Version 2.7.0"/>
-    <img src="https://img.shields.io/badge/Tests-133%20Passed-success?style=flat-square" alt="Tests 133 Passed"/>
+    <img src="https://img.shields.io/badge/Tests-189%20Passed-success?style=flat-square" alt="Tests 189 Passed"/>
     <img src="https://img.shields.io/badge/Node.js-20.19.0+-339933?logo=nodedotjs&logoColor=white&style=flat-square" alt="Node.js"/>
     <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&style=flat-square" alt="Next.js"/>
     <img src="https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white&style=flat-square" alt="TypeScript"/>
@@ -457,11 +457,11 @@ Envía notas de voz nativas, imágenes y documentos desde tus plantillas o Googl
 
 ## 🧹 Mantenimiento Autónomo y Limpieza
 
-El planificador central ([`Scheduler`](file:///C:/Proyectos/wamasivos/BotMaRe/src/modules/scheduling/scheduler.ts)) ejecuta rutinas de optimización continuas:
+El planificador central ([`Scheduler`](src/modules/scheduling/scheduler.ts)) ejecuta rutinas de optimización continuas:
 - 🧹 **Temporales huérfanos:** Purga cada **3 minutos**.
-- 📦 **Logs y Backups antiguos:** Purga diaria de logs (>7 días) y respaldos (>15 días).
+- 📦 **Logs y Backups antiguos:** Purga diaria de logs (>7 días) y respaldos (>15 días), con rotación automática de logs activos (>10MB).
 - 🗑️ **Uploads temporales:** Limpieza cada **24 horas** y al arrancar el servidor.
-- 🔑 **Optimización SQLite:** Purga de claves temporales (`purgePreKeys`) cada **1 hora** para mantener la base de datos ligera y rápida.
+- 🔑 **Estabilidad de Sesión WhatsApp:** Preservación de pre-claves de Baileys (purgas automáticas agresivas desactivadas para evitar desautenticaciones).
 
 ---
 

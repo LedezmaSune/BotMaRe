@@ -1,0 +1,16 @@
+# Propietarios de código por defecto para todo el repositorio
+* @LedezmaSune
+
+# Infraestructura y Despliegue
+/Dockerfile @LedezmaSune
+/docker-compose.yml @LedezmaSune
+/main.tf @LedezmaSune
+/variables.tf @LedezmaSune
+/outputs.tf @LedezmaSune
+/.github/workflows/ @LedezmaSune
+
+# Seguridad y Base de Datos
+/src/core/db/ @LedezmaSune
+/src/middleware/ @LedezmaSune
+/src/core/crypto.ts @LedezmaSune
+/SECURITY.md @LedezmaSune
