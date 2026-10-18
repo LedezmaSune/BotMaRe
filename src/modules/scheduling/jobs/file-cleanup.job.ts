@@ -122,6 +122,19 @@ export class FileCleanupJob {
                         if (stats.isFile() && now - Math.max(stats.mtimeMs, stats.ctimeMs) > target.maxAgeMs) {
                             await fs.promises.unlink(fullPath);
                             totalDeleted++;
+                        } else if (stats.isFile() && target.dir.includes('logs') && stats.size > 10 * 1024 * 1024) {
+                            // Truncar log activo manteniendo últimos 512KB para no llenar disco
+                            try {
+                                const fd = await fs.promises.open(fullPath, 'r+');
+                                const keepBytes = 512 * 1024;
+                                const buffer = Buffer.alloc(keepBytes);
+                                await fd.read(buffer, 0, keepBytes, Math.max(0, stats.size - keepBytes));
+                                await fd.close();
+                                await fs.promises.writeFile(fullPath, buffer);
+                                console.log(`[FileCleanup] Log activo truncado por superar 10MB: ${file}`);
+                            } catch (truncErr) {
+                                await fs.promises.truncate(fullPath, 0);
+                            }
                         }
                     } catch (e) {}
                 }

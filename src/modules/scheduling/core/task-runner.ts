@@ -8,6 +8,8 @@ import { SheetsSyncJob } from '../jobs/sheets-sync.job';
 import { BaileysMaintenanceJob } from '../jobs/baileys-maintenance.job';
 import { UpdateCheckerJob } from '../jobs/update-checker.job';
 
+import { NotificationHub } from '../../../core/notificationHub';
+
 export class TaskRunner {
     private isRunning: boolean = false;
     private reminderIntervalId: NodeJS.Timeout | null = null;
@@ -15,12 +17,40 @@ export class TaskRunner {
     private tempCleanupIntervalId: NodeJS.Timeout | null = null;
     private cronTasks: ScheduledTask[] = [];
     private initialTimeouts: NodeJS.Timeout[] = [];
+    private static consecutiveFailures = new Map<string, number>();
 
     constructor(
         private reminderQueue: ReminderQueue,
         private reminderService: ReminderService,
         private waService: MessageService
     ) {}
+
+    /**
+     * Helper seguro para ejecutar jobs con aislamiento, tracking de fallos y alertas a NotificationHub.
+     */
+    static async safeRun(jobName: string, fn: () => Promise<void>): Promise<void> {
+        try {
+            await fn();
+            // Resetear contador al tener éxito
+            this.consecutiveFailures.set(jobName, 0);
+        } catch (err: any) {
+            const count = (this.consecutiveFailures.get(jobName) || 0) + 1;
+            this.consecutiveFailures.set(jobName, count);
+            console.error(`[TaskRunner] Error en ${jobName} (Fallo consecutivo #${count}):`, err.message);
+
+            // Si falla repetidamente (3 o más veces consecutivas), alertar por NotificationHub
+            if (count >= 3) {
+                try {
+                    NotificationHub.notify({
+                        title: `Fallo recurrente en ${jobName}`,
+                        message: `El trabajo ${jobName} ha fallado ${count} veces consecutivas. Último error: ${err.message}`,
+                        type: 'error',
+                        source: 'scheduler'
+                    }).catch(() => {});
+                } catch (e) {}
+            }
+        }
+    }
 
     /**
      * Inicia todos los trabajos programados con aislamiento de errores.
@@ -31,32 +61,28 @@ export class TaskRunner {
 
         console.log("[TaskRunner] Iniciando orquestador de tareas en segundo plano...");
 
-        // 1. Revisión de recordatorios vencidos cada 30 segundos
+        // 1. Revisión de recordatorios vencidos cada 1 minuto
         this.reminderIntervalId = setInterval(() => {
-            ReminderCheckerJob.execute(this.reminderQueue, this.reminderService).catch(err => {
-                console.error("[TaskRunner] Error no capturado en ReminderCheckerJob:", err.message);
-            });
-        }, 60000); // Revisión cada 1 minuto en lugar de 30s para no saturar SQLite
+            TaskRunner.safeRun('ReminderCheckerJob', () =>
+                ReminderCheckerJob.execute(this.reminderQueue, this.reminderService)
+            );
+        }, 60000);
 
-        // 2. Sincronización de Google Sheets cada 1 minuto
+        // 2. Sincronización de Google Sheets cada 5 minutos
         this.sheetsIntervalId = setInterval(() => {
-            SheetsSyncJob.execute().catch(err => {
-                console.error("[TaskRunner] Error no capturado en SheetsSyncJob:", err.message);
-            });
-        }, 5 * 60 * 1000); // Revisión cada 5 minutos en lugar de 1 minuto
+            TaskRunner.safeRun('SheetsSyncJob', () => SheetsSyncJob.execute());
+        }, 5 * 60 * 1000);
 
         // 3. Limpieza de archivos temporales cada 3 minutos
         this.tempCleanupIntervalId = setInterval(() => {
-            FileCleanupJob.cleanupTemp().catch(err => {
-                console.error("[TaskRunner] Error no capturado en FileCleanupJob.cleanupTemp:", err.message);
-            });
+            TaskRunner.safeRun('FileCleanupJob.cleanupTemp', () => FileCleanupJob.cleanupTemp());
         }, 3 * 60 * 1000);
 
-        // 4. Limpieza profunda diaria de disco, purga de logs y optimización SQLite (cron: '0 4 * * *' - 4:00 AM)
+        // 4. Limpieza profunda diaria de disco, purga de logs y optimización (cron: '0 4 * * *' - 4:00 AM)
         const dailyCleanupJob = cron.schedule('0 4 * * *', async () => {
             console.log("[TaskRunner] Ejecutando mantenimiento diario de disco y optimización de base de datos...");
-            await FileCleanupJob.cleanupUploads();
-            await FileCleanupJob.cleanupOldLogsAndBackups();
+            await TaskRunner.safeRun('FileCleanupJob.cleanupUploads', () => FileCleanupJob.cleanupUploads());
+            await TaskRunner.safeRun('FileCleanupJob.cleanupOldLogsAndBackups', () => FileCleanupJob.cleanupOldLogsAndBackups());
             // NOTA: Se desactivó el mantenimiento de Baileys (Cachés/Sesiones) porque provocaba desconexiones de WhatsApp.
             // await BaileysMaintenanceJob.execute(this.waService);
         });
@@ -64,15 +90,15 @@ export class TaskRunner {
 
         // 6. Verificación periódica de nuevas versiones en GitHub cada 12 horas (cron: '0 */12 * * *')
         const updateJob = cron.schedule('0 */12 * * *', () => {
-            UpdateCheckerJob.execute().catch(() => {});
+            TaskRunner.safeRun('UpdateCheckerJob', () => UpdateCheckerJob.execute());
         });
         this.cronTasks.push(updateJob);
 
         // Disparos iniciales seguros no bloqueantes tras arranque
-        this.initialTimeouts.push(setTimeout(() => FileCleanupJob.cleanupUploads().catch(() => {}), 5000));
-        this.initialTimeouts.push(setTimeout(() => FileCleanupJob.cleanupOldLogsAndBackups().catch(() => {}), 10000));
-        this.initialTimeouts.push(setTimeout(() => UpdateCheckerJob.execute().catch(() => {}), 15000));
-        this.initialTimeouts.push(setTimeout(() => ReminderCheckerJob.execute(this.reminderQueue, this.reminderService).catch(() => {}), 1000));
+        this.initialTimeouts.push(setTimeout(() => TaskRunner.safeRun('initial.cleanupUploads', () => FileCleanupJob.cleanupUploads()), 5000));
+        this.initialTimeouts.push(setTimeout(() => TaskRunner.safeRun('initial.cleanupOldLogsAndBackups', () => FileCleanupJob.cleanupOldLogsAndBackups()), 10000));
+        this.initialTimeouts.push(setTimeout(() => TaskRunner.safeRun('initial.UpdateCheckerJob', () => UpdateCheckerJob.execute()), 15000));
+        this.initialTimeouts.push(setTimeout(() => TaskRunner.safeRun('initial.ReminderCheckerJob', () => ReminderCheckerJob.execute(this.reminderQueue, this.reminderService)), 1000));
 
         console.log("[TaskRunner] Todas las tareas programadas han sido inicializadas exitosamente.");
     }

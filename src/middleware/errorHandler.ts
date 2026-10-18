@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { logger } from '../utils/logger';
+import { NotificationHub } from '../core/notificationHub';
 
 export class AppError extends Error {
     constructor(public message: string, public statusCode: number = 500, public isOperational: boolean = true) {
@@ -18,6 +19,14 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
     // Log the error using the new logger
     if (statusCode >= 500) {
         logger.error({ err, correlationId }, `[Error] ${statusCode} - ${message}`);
+        try {
+            NotificationHub.notify({
+                title: `Error del Servidor (${statusCode})`,
+                message: `${req.method} ${req.originalUrl || req.path}: ${message}`,
+                type: 'error',
+                source: 'http-server'
+            }).catch(() => {});
+        } catch (e) {}
     } else {
         logger.warn({ correlationId }, `[Warning] ${statusCode} - ${message}`);
     }
