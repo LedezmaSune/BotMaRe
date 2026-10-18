@@ -6,6 +6,16 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  # Configuración de Backend Remoto Seguro (S3 + DynamoDB State Locking)
+  # Descomenta y ajusta con tu bucket y tabla antes de desplegar en equipo:
+  # backend "s3" {
+  #   bucket         = "botmare-terraform-state"
+  #   key            = "production/terraform.tfstate"
+  #   region         = "us-east-1"
+  #   dynamodb_table = "botmare-terraform-locks"
+  #   encrypt        = true
+  # }
 }
 
 provider "aws" {
@@ -19,21 +29,21 @@ data "aws_vpc" "default" {
 
 resource "aws_security_group" "botmare_sg" {
   name        = "${var.project_name}-sg-${var.environment}"
-  description = "Reglas de seguridad para BotMaRe (WhatsApp, Panel Web y SSH)"
+  description = "Reglas de seguridad endurecidas para BotMaRe (SSH restringido y panel seguro)"
   vpc_id      = data.aws_vpc.default.id
 
-  # SSH
+  # SSH (Restringido a CIDRs autorizados de administración)
   ingress {
-    description = "Acceso SSH para administracion remota"
+    description = "Acceso SSH restringido a operadores"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = var.allowed_ssh_ips
   }
 
-  # HTTP / HTTPS
+  # HTTP / HTTPS (Opcional para Let's Encrypt / Reverse Proxy)
   ingress {
-    description = "HTTP Publico (Let's Encrypt / Certificados)"
+    description = "HTTP Publico (Desafios Let's Encrypt)"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -48,22 +58,16 @@ resource "aws_security_group" "botmare_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Panel Web BotMaRe (Puerto 8000)
-  ingress {
-    description = "Panel de Control Web BotMaRe"
-    from_port   = 8000
-    to_port     = 8000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # Next.js Turbo Dev UI (Puerto 3000)
-  ingress {
-    description = "Next.js UI Dashboard"
-    from_port   = 3000
-    to_port     = 3000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+  # Panel Web BotMaRe (Puerto 8000) - Solo si se definen IPs autorizadas
+  dynamic "ingress" {
+    for_each = length(var.allowed_admin_ips) > 0 ? [1] : []
+    content {
+      description = "Panel de Control Web BotMaRe (Restringido a IPs de administracion)"
+      from_port   = 8000
+      to_port     = 8000
+      protocol    = "tcp"
+      cidr_blocks = var.allowed_admin_ips
+    }
   }
 
   # Salida libre para Cloudflare Tunnel, Telegram API y Baileys WhatsApp
@@ -114,6 +118,20 @@ locals {
     apt-get upgrade -y
     apt-get install -y ca-certificates curl gnupg lsb-release git ufw fail2ban
 
+    # Configurar Fail2Ban para SSH
+    cat <<'EOF_JAIL' > /etc/fail2ban/jail.local
+    [sshd]
+    enabled = true
+    port = 22
+    filter = sshd
+    logpath = /var/log/auth.log
+    maxretry = 5
+    bantime = 3600
+    findtime = 600
+EOF_JAIL
+    systemctl enable fail2ban
+    systemctl restart fail2ban
+
     # Instalación de Docker y Docker Compose
     mkdir -p /etc/apt/keyrings
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
@@ -143,13 +161,21 @@ locals {
       git pull origin main
     fi
 
-    # Configurar archivo de entorno si no existe
-    if [ ! -f "/opt/botmare/.env" ]; then
-      cp /opt/botmare/.env.example /opt/botmare/.env
-    fi
+    # Generar .env inyectando secretos seguros de Terraform (no defaults inseguros)
+    cat <<'EOF_ENV' > /opt/botmare/.env
+NODE_ENV=production
+PORT=8000
+DASHBOARD_USER=${var.dashboard_user}
+DASHBOARD_PASS=${var.dashboard_pass}
+WEBHOOK_API_KEY=${var.webhook_api_key}
+SUPERADMIN_KEY=${var.superadmin_key}
+BACKUP_ENCRYPTION_KEY=${var.backup_encryption_key}
+DB_ENGINE=lowdb
+EOF_ENV
 
     # Dar permisos al usuario ubuntu
     chown -R ubuntu:ubuntu /opt/botmare
+    chmod 600 /opt/botmare/.env
 
     # Construir y levantar con Docker Compose
     docker compose up -d --build
