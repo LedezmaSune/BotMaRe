@@ -1,7 +1,7 @@
 # ═══════════════════════════════════════════════════════════════════
 #  STAGE 1: Compilación de Assets y Dashboard (Builder)
 # ═══════════════════════════════════════════════════════════════════
-FROM node:20-alpine AS builder
+FROM node:26-alpine AS builder
 
 WORKDIR /app
 
@@ -20,7 +20,7 @@ RUN pnpm run build
 # ═══════════════════════════════════════════════════════════════════
 #  STAGE 2: Dependencias de Producción (Prod-Deps)
 # ═══════════════════════════════════════════════════════════════════
-FROM node:20-alpine AS prod-deps
+FROM node:26-alpine AS prod-deps
 
 WORKDIR /app
 
@@ -33,7 +33,7 @@ RUN pnpm install --prod --frozen-lockfile
 # ═══════════════════════════════════════════════════════════════════
 #  STAGE 3: Imagen Final Segura y No Privilegiada (Runner)
 # ═══════════════════════════════════════════════════════════════════
-FROM node:20-alpine AS runner
+FROM node:26-alpine AS runner
 
 WORKDIR /app
 
