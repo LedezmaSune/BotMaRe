@@ -93,6 +93,37 @@ describe('FASE 5: Endurecimiento de la Superficie HTTP', () => {
             expect(next).toHaveBeenCalled();
             expect(res.status).not.toHaveBeenCalled();
         });
+
+        it('debe bloquear con HTTP 429 tras 5 intentos fallidos desde la misma IP', () => {
+            const badToken = Buffer.from('admin:wrongpass').toString('base64');
+            const clientIp = '198.51.100.55';
+
+            for (let i = 0; i < 5; i++) {
+                const req: any = {
+                    path: '/index.html',
+                    headers: { authorization: `Basic ${badToken}` },
+                    socket: { remoteAddress: clientIp }
+                };
+                const res: any = { status: vi.fn().mockReturnThis(), send: vi.fn(), set: vi.fn() };
+                const next = vi.fn();
+                basicAuth(req, res, next);
+                expect(res.status).toHaveBeenCalledWith(401);
+            }
+
+            // 6to intento: debe responder 429
+            const reqLocked: any = {
+                path: '/index.html',
+                headers: { authorization: `Basic ${badToken}` },
+                socket: { remoteAddress: clientIp }
+            };
+            const resLocked: any = { status: vi.fn().mockReturnThis(), send: vi.fn(), set: vi.fn() };
+            const nextLocked = vi.fn();
+            basicAuth(reqLocked, resLocked, nextLocked);
+
+            expect(nextLocked).not.toHaveBeenCalled();
+            expect(resLocked.status).toHaveBeenCalledWith(429);
+            expect(resLocked.send).toHaveBeenCalledWith(expect.stringContaining('Too Many Requests'));
+        });
     });
 
     describe('Rate Limiter Skip Logic', () => {

@@ -40,6 +40,7 @@ async function tryProvider(
         pTxt = pTxt.replace(/<<<INICIO DEL MENSAJE>>>/g, '').replace(/<<<FIN DEL MENSAJE>>>/g, '').trim();
         metadataObj = { senderId: sMatch ? sMatch[1] : undefined, prompt: pTxt };
     } catch(e) {}
+    let lastError: any = null;
 
     for (const key of keys) {
         try {
@@ -105,12 +106,14 @@ async function tryProvider(
                 errorMsg += `\n    💡 SUGERENCIA: Tu cuenta no tiene saldo suficiente o requiere recarga.`;
             }
 
+            lastError = error;
             console.warn(`[LLM] ${providerName} falló con una llave: ${errorMsg}`);
             NotificationService.notifyModelEvent(providerName, config.model, 'fail', errorMsg, metadataObj);
             continue; // Intentar con la siguiente llave del mismo proveedor
         }
     }
-    throw new Error(`Todas las llaves de ${providerName} fallaron o agotaron el tiempo.`);
+    const lastMsg = lastError ? (lastError.message || String(lastError)) : 'Todas las llaves fallaron o agotaron el tiempo.';
+    throw new Error(`[${providerName}] ${lastMsg}`);
 }
 
 /**
@@ -162,6 +165,8 @@ export async function callLLM(
     // Obtener TODA la configuración de una vez (Optimización)
     const config = await getAllConfig();
 
+    const providerErrors: Array<{ provider: string; error: string }> = [];
+
     // 0. Intentar Ollama (Local) - PROVEEDOR PRINCIPAL
     // Auto-detectar URLs posibles (configurada, 127.0.0.1 IPv4 y localhost IPv6)
     const rawOllamaUrl = config['OLLAMA_API_URL'] || 'http://127.0.0.1:11434';
@@ -175,6 +180,7 @@ export async function callLLM(
     const ollamaKeys = getApiKeys(config['OLLAMA_API_KEY']);
     const ollamaAuthKeys = ollamaKeys.length > 0 ? ollamaKeys : ['ollama-local-key'];
 
+    let ollamaLastError: string | null = null;
     for (const url of uniqueOllamaUrls) {
         const baseURL = url.endsWith('/v1') ? url : `${url.replace(/\/$/, '')}/v1`;
         try {
@@ -186,9 +192,12 @@ export async function callLLM(
                 frequency_penalty: 1.2, // Castiga fuertemente repetir la misma frase (evita bucles)
                 presence_penalty: 1.0   // Fuerza al modelo a avanzar en el texto
             }, cleanedMessages, tools, hasVision);
-        } catch (e) {
-            // Si falla una URL (ej. ::1 IPv6), intenta con 127.0.0.1 IPv4
+        } catch (e: any) {
+            ollamaLastError = e.message || String(e);
         }
+    }
+    if (ollamaLastError && (config['OLLAMA_API_URL'] || config['OLLAMA_API_KEY'])) {
+        providerErrors.push({ provider: 'Ollama', error: ollamaLastError });
     }
 
     // 1. Intentar Groq (Opción 1 - Velocidad y Herramientas)
@@ -199,7 +208,9 @@ export async function callLLM(
                 baseURL: "https://api.groq.com/openai/v1",
                 model: hasVision ? "llama-3.2-11b-vision-instant" : resolveModel('Groq', config['GROQ_MODEL'], "llama-3.3-70b-specdec")
             }, cleanedMessages, tools, hasVision);
-        } catch (e) {}
+        } catch (e: any) {
+            providerErrors.push({ provider: 'Groq', error: e.message || String(e) });
+        }
     }
 
     // 1.1 Intentar Cerebras (Ultrarrápido Gratis - Llama 3.1 70B)
@@ -210,7 +221,9 @@ export async function callLLM(
                 baseURL: "https://api.cerebras.ai/v1",
                 model: config['CEREBRAS_MODEL'] || "llama3.1-70b"
             }, cleanedMessages, tools, hasVision);
-        } catch (e) {}
+        } catch (e: any) {
+            providerErrors.push({ provider: 'Cerebras', error: e.message || String(e) });
+        }
     }
 
     // 1.2 Intentar SambaNova (Llama 3.3 70B Gratis)
@@ -221,7 +234,9 @@ export async function callLLM(
                 baseURL: "https://api.sambanova.ai/v1",
                 model: config['SAMBANOVA_MODEL'] || "Meta-Llama-3.3-70B-Instruct"
             }, cleanedMessages, tools, hasVision);
-        } catch (e) {}
+        } catch (e: any) {
+            providerErrors.push({ provider: 'SambaNova', error: e.message || String(e) });
+        }
     }
 
     // 1.5. Intentar DeepSeek Directo (Opción 2 - Inteligencia Pura)
@@ -232,7 +247,9 @@ export async function callLLM(
                 baseURL: "https://api.deepseek.com",
                 model: config['DEEPSEEK_MODEL'] || "deepseek-chat"
             }, cleanedMessages, tools, hasVision);
-        } catch (e) {}
+        } catch (e: any) {
+            providerErrors.push({ provider: 'DeepSeek', error: e.message || String(e) });
+        }
     }
 
     // 2. Intentar Gemini
@@ -243,7 +260,9 @@ export async function callLLM(
                 baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
                 model: config['GEMINI_MODEL'] || "gemini-2.5-flash"
             }, cleanedMessages, tools, hasVision);
-        } catch (e) {}
+        } catch (e: any) {
+            providerErrors.push({ provider: 'Gemini', error: e.message || String(e) });
+        }
     }
 
     // 3. Intentar OpenAI
@@ -253,7 +272,9 @@ export async function callLLM(
             return await tryProvider('OpenAI', openaiKeys, {
                 model: config['OPENAI_MODEL'] || "gpt-4o-mini"
             }, cleanedMessages, tools, hasVision);
-        } catch (e) {}
+        } catch (e: any) {
+            providerErrors.push({ provider: 'OpenAI', error: e.message || String(e) });
+        }
     }
 
     // 4. Intentar OpenRouter
@@ -268,7 +289,9 @@ export async function callLLM(
                     "X-Title": "BotMaRe AI",
                 }
             }, cleanedMessages, tools, hasVision);
-        } catch (e) {}
+        } catch (e: any) {
+            providerErrors.push({ provider: 'OpenRouter', error: e.message || String(e) });
+        }
     }
 
     // 5. Intentar Nvidia (DeepSeek)
@@ -283,7 +306,9 @@ export async function callLLM(
                 top_p: 0.95,
                 extraBody: { chat_template_kwargs: { thinking: false } }
             }, cleanedMessages, tools, hasVision);
-        } catch (e) {}
+        } catch (e: any) {
+            providerErrors.push({ provider: 'Nvidia', error: e.message || String(e) });
+        }
     }
 
     // 6. Intentar Mistral AI
@@ -294,7 +319,9 @@ export async function callLLM(
                 baseURL: "https://api.mistral.ai/v1",
                 model: config['MISTRAL_MODEL'] || "mistral-small-latest"
             }, cleanedMessages, tools, hasVision);
-        } catch (e) {}
+        } catch (e: any) {
+            providerErrors.push({ provider: 'Mistral', error: e.message || String(e) });
+        }
     }
 
     // 7. Intentar SiliconFlow (DeepSeek V3/R1 Gratis)
@@ -305,7 +332,9 @@ export async function callLLM(
                 baseURL: "https://api.siliconflow.cn/v1",
                 model: config['SILICONFLOW_MODEL'] || "deepseek-ai/DeepSeek-V3"
             }, cleanedMessages, tools, hasVision);
-        } catch (e) {}
+        } catch (e: any) {
+            providerErrors.push({ provider: 'SiliconFlow', error: e.message || String(e) });
+        }
     }
 
     // 8. Intentar Together AI
@@ -316,7 +345,9 @@ export async function callLLM(
                 baseURL: "https://api.together.xyz/v1",
                 model: config['TOGETHER_MODEL'] || "meta-llama/Llama-3.3-70B-Instruct-Turbo"
             }, cleanedMessages, tools, hasVision);
-        } catch (e) {}
+        } catch (e: any) {
+            providerErrors.push({ provider: 'Together', error: e.message || String(e) });
+        }
     }
 
     // 9. Intentar CheaperInference (Gateway Económico Multi-IA)
@@ -327,11 +358,17 @@ export async function callLLM(
                 baseURL: "https://api.cheaperinference.com/v1",
                 model: config['CHEAPERINFERENCE_MODEL'] || "gemini-2.5-flash"
             }, cleanedMessages, tools, hasVision);
-        } catch (e) {}
+        } catch (e: any) {
+            providerErrors.push({ provider: 'CheaperInference', error: e.message || String(e) });
+        }
     }
 
-
-    throw new Error("No hay proveedores de IA configurados o todos han fallado.");
+    const details = providerErrors.length > 0
+        ? `:\n` + providerErrors.map(e => ` - ${e.provider}: ${e.error}`).join('\n')
+        : '.';
+    const finalError = new Error(`No hay proveedores de IA configurados o todos han fallado${details}`);
+    (finalError as any).causes = providerErrors;
+    throw finalError;
 }
 
 /**
