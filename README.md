@@ -494,12 +494,14 @@ Ejecución continua 24/7 en servidores de producción:
 
 ## 🔄 Historial de Actualizaciones (Changelog)
 
-- **[2.7.0] - 2026-10-15:** Blindaje Criptográfico Baileys E2EE, Reconexión Atómica y Ecosistema de Plugins IA:
-  - 🛡️ **Erradicación de "Esperando Mensaje" en WhatsApp:** Corrección crítica en la gestión criptográfica Signal de Baileys (`getMessage` devuelve `undefined` en lugar de objeto vacío), evitando que retransmisiones corruptas bloqueen el chat del receptor.
-  - ⚡ **Reconexión Atómica:** Renovación de la promesa de sincronización durante reconexiones en caliente y margen de estabilización de 500ms para pre-claves criptográficas antes del despacho de recordatorios.
-  - 🧩 **Ecosistema de Plugins con IA Nativa:** Inyección del helper `api.callAI()` en el sandbox de plugins (VM), permitiendo a cualquier plugin delegar tareas en los LLM configurados sin duplicar claves.
+- **[2.7.0] - 2026-10-17:** Blindaje Integral de Seguridad, Persistencia Desacoplada y Hardening Productivo:
+  - 🛡️ **Erradicación de "Esperando Mensaje" en WhatsApp:** Corrección crítica en la gestión criptográfica Signal de Baileys (`getMessage` devuelve `undefined` en lugar de objeto vacío), evitando que retransmisiones corruptas bloqueen el chat del receptor, con reconexión atómica y estabilización de pre-claves.
+  - 🗄️ **Persistencia de Datos Desacoplada:** Contrato unificado `IDatabaseAdapter` con soporte intercambiable para LowDB (`data/database.json`), MongoDB Atlas y SQLite WAL (`data/database.db`), erradicando operaciones síncronas bloqueantes en CRM y telemetría.
+  - 🔒 **Hardening Integral de Seguridad:** Autenticación HMAC segura contra ataques de temporización (`timingSafeEqual`), rate limiting estricto con bloqueo por fuerza bruta, cifrado simétrico AES-256-GCM de respaldos y blindaje SSRF con resolución DNS.
+  - 🧩 **Ecosistema de Plugins con IA Nativa:** Inyección del helper `api.callAI()` en el sandbox de plugins (VM), permitiendo a cualquier plugin delegar tareas en los LLM configurados sin duplicar claves y contención de variables de entorno sensibles.
   - 🌐 **6 Nuevos Plugins Oficiales:** Incorporación de `google-search.js` (Búsqueda web), `summarize-text.js` (Resumen inteligente), `translate.js` (Traductor multilingüe), `url-info.js` (Inspector OpenGraph), `webhook.js` (Despachador HTTP POST) y `google-sheets.js` (Inspector de hojas).
-  - 🧪 **Suite de Pruebas Unitarias Robustecida:** Cobertura automatizada de pruebas para el compilador de plugins y validadores con 52 tests pasando en Vitest.
+  - 🐳 **Despliegue y Observabilidad:** Contenedor Docker multi-stage sin toolchains de compilación en runner (no-root), rotación automática de logs activos (>10MB), reportes de fallos recurrentes del scheduler a `NotificationHub` y endpoint `/healthz`.
+  - 🧪 **Suite de Pruebas Automatizada:** Cobertura automatizada completa con 189 tests pasando en 25 suites bajo Vitest y 0 errores de compilación TypeScript.
 - **[2.6.1] - 2026-10-10:** Sincronización Inteligente de Google Sheets y Tolerancia de Formatos:
   - 📊 **Sincronización Automática Periódica:** Nuevo job programado (`SheetsSyncJob`) para actualizar respuestas de Sheets en intervalos configurables (15m, 1h, 12h o manual).
   - 🔍 **Extracción Inteligente de Spreadsheet ID y GID:** Soporte para URLs completas de Google Docs, pestañas específicas con `#gid=` o IDs limpios.

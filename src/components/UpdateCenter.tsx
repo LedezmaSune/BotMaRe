@@ -17,16 +17,17 @@ interface Release {
 const FALLBACK_RELEASES: Release[] = [
     {
         version: 'V 2.7.0',
-        date: '15 Octubre 2026',
-        title: 'Blindaje Criptográfico E2EE Baileys, Reconexión Atómica y Ecosistema de Plugins IA',
+        date: '17 Octubre 2026',
+        title: 'Blindaje Integral de Seguridad, Persistencia Desacoplada y Hardening Productivo',
         type: 'major',
-        description: 'Actualización mayor enfocada en la resiliencia del transporte de WhatsApp, erradicación de errores de descifrado en mensajes programados y expansión del motor de plugins con acceso directo a IA.',
+        description: 'Actualización mayor que consolida la resiliencia del protocolo Signal en Baileys, la arquitectura de base de datos desacoplada (LowDB / MongoDB / SQLite), blindaje integral de seguridad (AES-256-GCM, SSRF, Rate Limiting) y 189 tests automatizados.',
         features: [
-            '🛡️ Erradicación de "Esperando Mensaje" en WhatsApp: Corrección crítica en el protocolo Signal de Baileys (`getMessage` devuelve `undefined` en lugar de objeto vacío), evitando que retransmisiones corruptas bloqueen el chat del receptor.',
-            '⚡ Reconexión Atómica y Estabilización: Renovación de la promesa de sincronización durante desconexiones temporales y margen de estabilización de 500ms para pre-claves criptográficas antes del despacho de recordatorios.',
-            '🧩 Ecosistema de Plugins con IA Nativa: Inyección del helper `api.callAI()` en el entorno seguro de plugins (VM), permitiendo a cualquier plugin delegar tareas en los LLM configurados sin claves adicionales.',
-            '🌐 6 Nuevos Plugins Oficiales: Incorporación de `google-search` (Búsqueda web), `summarize-text` (Resumen de textos y citas), `translate` (Traductor multilingüe), `url-info` (Inspector OpenGraph), `webhook` (Despachador HTTP POST) y `google-sheets` (Inspector de hojas).',
-            '🧪 Suite de Pruebas Unitarias Robustecida: Cobertura automatizada de pruebas para el compilador de plugins y validadores con 52 tests pasando en Vitest.'
+            '🛡️ Blindaje Criptográfico y Resiliencia en Baileys: Corrección en `getMessage` retornando `undefined` para erradicar retransmisiones corruptas en mensajes programados, junto con reconexión atómica y margen de estabilización de pre-claves.',
+            '🗄️ Persistencia de Datos Desacoplada: Contrato unificado `IDatabaseAdapter` con drivers nativos e intercambiables para LowDB (JSON), MongoDB Atlas y SQLite WAL, eliminando E/S bloqueante síncrona en CRM y telemetría.',
+            '🔒 Hardening Integral de Seguridad: Autenticación HMAC segura contra ataques de temporización (`timingSafeEqual`), rate limiting estricto con bloqueo por fuerza bruta, cifrado AES-256-GCM de respaldos y blindaje SSRF con resolución DNS.',
+            '🧩 Ecosistema de Plugins IA con Sandbox Aislado: Inyección del helper `api.callAI()` en el entorno seguro de plugins, contención estricta de variables de entorno y 6 nuevos plugins oficiales.',
+            '🐳 Despliegue y Observabilidad Empresarial: Contenedor Docker multi-stage sin toolchain de compilación en runner (no-root), rotación activa de logs (>10MB), alertas automáticas a `NotificationHub` y endpoint `/healthz`.',
+            '🧪 Suite de Pruebas Unitarias e Integración: Cobertura automatizada completa con 189 tests pasando en 25 suites bajo Vitest y 0 errores de compilación TypeScript.'
         ]
     },
     {
