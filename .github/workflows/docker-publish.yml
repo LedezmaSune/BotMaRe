@@ -44,7 +44,7 @@ jobs:
             type=raw,value=latest
 
       - name: 🚀 Construir y subir la imagen Docker
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
