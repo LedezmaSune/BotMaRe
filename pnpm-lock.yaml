@@ -126,6 +126,9 @@ importers:
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@4.3.3)
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
       tunnelmole:
         specifier: ^2.4.0
         version: 2.4.0
@@ -187,9 +190,6 @@ importers:
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
-      tsx:
-        specifier: ^4.23.15
-        version: 4.23.15
       typescript:
         specifier: ^6.0.3
         version: 6.0.3

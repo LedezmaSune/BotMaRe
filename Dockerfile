@@ -1,57 +1,68 @@
 # ═══════════════════════════════════════════════════════════════════
-#  STAGE 1: Compilación y dependencias (Builder)
+#  STAGE 1: Compilación de Assets y Dashboard (Builder)
 # ═══════════════════════════════════════════════════════════════════
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Herramientas de compilación para módulos nativos (better-sqlite3)
+# Herramientas nativas para compilación de dependencias (better-sqlite3)
 RUN apk add --no-cache python3 make g++
-
-# Habilitar Corepack para usar pnpm
 RUN corepack enable
 
-# Copiar manifiesto y lockfile para instalación determinista
 COPY package.json pnpm-lock.yaml ./
-
-# Instalación estricta sin fallback permisivo
 RUN pnpm install --frozen-lockfile
 
-# Copiar código fuente
 COPY . .
 
-# Compilar Next.js Dashboard
+# Compilar exportación estática de Next.js (genera carpeta /app/out)
 RUN pnpm run build
 
 # ═══════════════════════════════════════════════════════════════════
-#  STAGE 2: Imagen Final Segura de Producción (Runner)
+#  STAGE 2: Dependencias de Producción (Prod-Deps)
+# ═══════════════════════════════════════════════════════════════════
+FROM node:20-alpine AS prod-deps
+
+WORKDIR /app
+
+RUN apk add --no-cache python3 make g++
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --prod --frozen-lockfile
+
+# ═══════════════════════════════════════════════════════════════════
+#  STAGE 3: Imagen Final Segura y No Privilegiada (Runner)
 # ═══════════════════════════════════════════════════════════════════
 FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Instalar curl únicamente para el healthcheck
+# Solo curl para comprobación de salud del contenedor; sin compiladores ni toolchain
 RUN apk add --no-cache curl
-
 RUN corepack enable
 
 ENV NODE_ENV=production
 
-# Copiar aplicación construida desde el stage anterior
-COPY --from=builder /app ./
+# Copiar dependencias de producción limpias
+COPY --from=prod-deps /app/node_modules ./node_modules
+COPY --from=prod-deps /app/package.json ./
 
-# Asegurar permisos de escritura para usuario node en directorios de persistencia
-RUN mkdir -p data backups out .next && chown -R node:node /app
+# Copiar aplicación, estáticos y plugins versionados
+COPY --from=builder /app/out ./out
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/bin ./bin
+COPY --from=builder /app/data/plugins ./data/plugins
 
-# Ejecutar como usuario no privilegiado (no-root)
+# Crear directorios de persistencia con permisos para usuario node
+RUN mkdir -p data backups && chown -R node:node /app
+
+# Ejecución bajo usuario no-root
 USER node
 
-# Puerto del servidor BotMaRe
 EXPOSE 8000
 
-# Verificación de salud del contenedor
+# Verificación de salud contra endpoint público /healthz
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -fs http://localhost:8000/healthz || exit 1
 
-# Comando de arranque
 CMD ["pnpm", "run", "start"]

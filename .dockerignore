@@ -3,7 +3,8 @@ npm-debug.log
 .next
 out
 dist
-data/
+data/*
+!data/plugins/
 auth_info_baileys/
 .env
 .git

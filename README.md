@@ -122,12 +122,22 @@ terraform apply
 ---
 
 ### 🐳 5. Docker / Docker Compose
+
+La imagen Docker utiliza una arquitectura multi-etapa (*multi-stage build*):
+- **Builder**: Compila la exportación estática de Next.js (`out/`) e instala dependencias completas.
+- **Prod-Deps**: Prepara `node_modules` únicamente con dependencias de producción.
+- **Runner**: Basado en `node:20-alpine` sin compiladores de C/C++ ni herramientas de desarrollo (eliminando superficie de ataque). Se ejecuta bajo el usuario no privilegiado `USER node`, incluye comprobación de salud periódica `HEALTHCHECK` sobre `/healthz` y empaca los 16 plugins oficiales en `data/plugins/`.
+- **Runtime en Producción**: Ejecuta el servidor Node mediante `tsx` (incluido como dependencia de producción en `dependencies`), garantizando compatibilidad inmediata con la carga dinámica de plugins en TypeScript.
+
 ```bash
 # Iniciar contenedor en segundo plano:
 docker compose up -d --build
 
 # Ver logs en tiempo real:
 docker compose logs -f
+
+# Comprobar estado y salud del contenedor:
+curl -f http://localhost:8000/healthz
 ```
 
 ---

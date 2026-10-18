@@ -6,7 +6,6 @@ services:
     container_name: botmare_engine
     restart: unless-stopped
     ports:
-      - "3000:3000"
       - "8000:8000"
     volumes:
       - ./data:/app/data
@@ -14,6 +13,17 @@ services:
       - ./.env:/app/.env
     environment:
       - NODE_ENV=production
-    # If using tailscale or similar, you might need extra capabilities:
-    # cap_add:
-    #   - NET_ADMIN
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+        reservations:
+          cpus: '0.25'
+          memory: 512M
