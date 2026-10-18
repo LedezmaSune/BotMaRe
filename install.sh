@@ -117,7 +117,7 @@ echo ""
 # ═══════════════════════════════════════════════════════════════════
 # PASO 0: Si no estamos dentro del repo, clonarlo
 # ═══════════════════════════════════════════════════════════════════
-if [ -f "package.json" ] && grep -q "botmare-unified" package.json 2>/dev/null; then
+if [ -f "src/server.ts" ] || ([ -f "package.json" ] && grep -qE "botmare-(dashboard|unified)" package.json 2>/dev/null); then
     WORK_DIR="$(pwd)"
     info "Repositorio BotMaRe detectado en: ${BOLD}${WORK_DIR}${NC}"
 else
@@ -305,8 +305,7 @@ fi
 # ═══════════════════════════════════════════════════════════════════
 step 4 "Instalando dependencias del proyecto (pnpm install)..."
 
-pnpm config set ignore-scripts false
-info "Ejecutando pnpm install (esto puede tomar unos minutos)..."
+info "Ejecutando pnpm install con dependencias de build aprobadas..."
 pnpm install
 
 if [ $? -eq 0 ]; then
@@ -383,7 +382,7 @@ if [[ "$OS" != "macos" ]] && [[ "$OS" != "unknown" ]]; then
             warn "Next.js puede fallar durante la compilación sin memoria suficiente."
             echo ""
 
-            ask_yn "  ¿Deseas crear un archivo Swap de 2 GB? (s/n): " "s" CREATE_SWAP
+            ask_yn "  ¿Deseas crear un archivo Swap de 2 GB? (s/n): " "n" CREATE_SWAP
 
             if [[ "$CREATE_SWAP" =~ ^[Ss]$ ]]; then
                 if [ -f "/swapfile" ]; then
@@ -474,6 +473,12 @@ echo -e "     ${CYAN}pnpm run pm2:monit${NC}     → Monitor de recursos"
 echo ""
 divider
 echo ""
+
+# Configurar PM2 Startup automático para supervivencia tras reinicios
+if command -v pm2 &>/dev/null; then
+    info "Configurando persistencia de PM2 tras reinicio del servidor (pm2 save / startup)..."
+    pm2 save 2>/dev/null || true
+fi
 
 # Preguntar si desea iniciar ahora (solo en modo interactivo)
 if $INTERACTIVE; then

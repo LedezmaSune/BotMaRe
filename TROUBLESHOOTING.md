@@ -110,8 +110,7 @@ Si nada de lo anterior funciona, elimina las dependencias cacheadas y vuelve a p
 
 ```powershell
 rmdir /s /q node_modules
-del pnpm-lock.yaml
-pnpm install
+pnpm install --frozen-lockfile
 pnpm run build
 ```
 

@@ -484,9 +484,9 @@ Ejecución continua 24/7 en servidores de producción:
   pnpm rebuild better-sqlite3
   pnpm rebuild cloudflared
   ```
-- **Error de actualización en Git (archivos modificados localmente):**
+- **Actualización conservando cambios locales:**
   ```bash
-  git restore . && git pull origin main
+  git stash && git pull --rebase origin main && git stash pop
   ```
 - **Guía de errores en Windows / Node.js:** Consulta [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
 

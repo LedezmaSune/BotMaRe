@@ -97,34 +97,24 @@ export class UpdateService {
         try {
             console.log('[UpdateService] Iniciando proceso de actualización reforzado...');
             
-            // 1. Respaldo preventivo de seguridad
+            // 1. Respaldo preventivo completo de toda la carpeta data/ y .env
             const backupDir = path.resolve('backups', `pre-update-${Date.now()}`);
             if (!fs.existsSync(backupDir)) {
                 fs.mkdirSync(backupDir, { recursive: true });
             }
             
-            const dbFile = path.resolve('data/database.db');
-            if (fs.existsSync(dbFile)) {
-                fs.copyFileSync(dbFile, path.join(backupDir, 'database.db'));
-            }
-
-            const jsonDbFile = path.resolve('data/database.json');
-            if (fs.existsSync(jsonDbFile)) {
-                fs.copyFileSync(jsonDbFile, path.join(backupDir, 'database.json'));
-            }
-            
-            const waAuthFile = path.resolve('data/whatsapp_auth.db');
-            if (fs.existsSync(waAuthFile)) {
-                fs.copyFileSync(waAuthFile, path.join(backupDir, 'whatsapp_auth.db'));
+            const dataDir = path.resolve('data');
+            if (fs.existsSync(dataDir)) {
+                fs.cpSync(dataDir, path.join(backupDir, 'data'), { recursive: true });
             }
             
             const envFile = path.resolve('.env');
             if (fs.existsSync(envFile)) {
                 fs.copyFileSync(envFile, path.join(backupDir, '.env'));
             }
-            console.log(`[UpdateService] Respaldo preventivo guardado en: ${backupDir}`);
+            console.log(`[UpdateService] Respaldo preventivo completo guardado en: ${backupDir}`);
 
-            // 2. Traer último código de Git respetando la rama/tag actual
+            // 2. Traer último código de Git respetando la rama/tag actual sin destruir cambios locales
             let currentBranch = 'main';
             try {
                 const branchOutput = await execAsync('git branch --show-current', EXEC_OPTS);
@@ -136,17 +126,35 @@ export class UpdateService {
 
             console.log(`[UpdateService] Actualizando desde la rama/tag: ${currentBranch}`);
             await execAsync(`git fetch origin ${currentBranch}`, EXEC_OPTS);
-            await execAsync(`git reset --hard origin/${currentBranch}`, EXEC_OPTS);
-            console.log(`[UpdateService] Código fuente sincronizado con origin/${currentBranch}.`);
 
-            // 3. Instalar nuevas dependencias (con soporte para Termux)
+            let hasStash = false;
+            try {
+                const statusOutput = await execAsync('git status --porcelain', EXEC_OPTS);
+                if (statusOutput.stdout.trim()) {
+                    await execAsync('git stash save "Backup automático previo a actualización"', EXEC_OPTS);
+                    hasStash = true;
+                }
+            } catch (e) {}
+
+            await execAsync(`git rebase origin/${currentBranch}`, EXEC_OPTS);
+
+            if (hasStash) {
+                try {
+                    await execAsync('git stash pop', EXEC_OPTS);
+                } catch (stashErr) {
+                    console.warn('[UpdateService] Conflicto o advertencia al restaurar stash:', stashErr);
+                }
+            }
+            console.log(`[UpdateService] Código fuente sincronizado limpiamente con origin/${currentBranch}.`);
+
+            // 3. Instalar nuevas dependencias con lockfile estricto y reproducible
             const isTermux = fs.existsSync('/data/data/com.termux');
             if (isTermux) {
-                console.log('[UpdateService] Entorno Termux detectado. Instalando dependencias (pnpm install --ignore-scripts)...');
-                await execAsync('pnpm install --ignore-scripts', EXEC_OPTS);
+                console.log('[UpdateService] Entorno Termux detectado. Instalando dependencias (pnpm install --frozen-lockfile --ignore-scripts)...');
+                await execAsync('pnpm install --frozen-lockfile --ignore-scripts', EXEC_OPTS);
             } else {
-                console.log('[UpdateService] Instalando dependencias (pnpm install)...');
-                await execAsync('pnpm install', EXEC_OPTS);
+                console.log('[UpdateService] Instalando dependencias (pnpm install --frozen-lockfile)...');
+                await execAsync('pnpm install --frozen-lockfile', EXEC_OPTS);
             }
 
             // 4. Recompilar Dashboard

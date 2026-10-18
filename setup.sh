@@ -22,7 +22,6 @@ else
     npm install -g pnpm pm2
     
     echo "[2/3] Instalando dependencias del proyecto..."
-    pnpm config set ignore-scripts false
     pnpm install
 
     echo "[3/3] Configurando archivo .env..."
