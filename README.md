@@ -148,17 +148,43 @@ curl -f http://localhost:8000/healthz
 
 ### 🔐 6. Configuración de Seguridad y Secretos (.env)
 
-BotMaRe implementa **validación estricta al arranque**. Si faltan variables obligatorias o se detectan contraseñas por defecto inseguras (`tu_contrasena_segura`, `admin123`, etc.), el servidor abortará el proceso inmediatamente para prevenir despliegues vulnerables.
+BotMaRe implementa **validación estricta al arranque** antes de levantar cualquier servicio (Dashboard, WhatsApp, Telegram o Base de Datos). El sistema exige **5 variables de seguridad obligatorias**:
 
-Para generar o autocompletar automáticamente todas las claves criptográficas obligatorias (`DASHBOARD_PASS`, `WEBHOOK_API_KEY`, `SUPERADMIN_KEY`, `BACKUP_ENCRYPTION_KEY`):
+| Variable | Propósito | Regla de Validación |
+| :--- | :--- | :--- |
+| `DASHBOARD_USER` | Usuario administrador para la interfaz web. | No puede estar vacío. |
+| `DASHBOARD_PASS` | Contraseña de acceso al Dashboard web. | No puede estar vacía, contener `CAMBIA_ESTO`, ni ser `tu_contrasena_segura` o `admin123`. |
+| `WEBHOOK_API_KEY` | Clave API para webhooks entrantes (Make, Zapier, Google Sheets). | No puede estar vacía ni contener `CAMBIA_ESTO`. |
+| `SUPERADMIN_KEY` | Clave maestra para el Panel SuperAdmin y gestión de licencias (`Ctrl+Shift+S`). | No puede estar vacía ni contener `CAMBIA_ESTO`. |
+| `BACKUP_ENCRYPTION_KEY` | Clave simétrica de 256 bits para cifrado de respaldos locales y enviados a Telegram. | No puede estar vacía ni contener `CAMBIA_ESTO`. |
 
-```bash
-# 1. Copiar plantilla si aún no tienes .env:
-cp .env.example .env
+#### ⚠️ ¿Por qué se detiene el bot al iniciar o reiniciar?
+1. **Otras claves técnicas sin configurar (Causa más frecuente):** Si editas manualmente tu archivo `.env` y asignas tu propia contraseña en `DASHBOARD_PASS`, pero dejas `SUPERADMIN_KEY`, `WEBHOOK_API_KEY` o `BACKUP_ENCRYPTION_KEY` con el texto de ejemplo `CAMBIA_ESTO...`, el validador abortará todo el proceso (`process.exit(1)`). **Al detenerse el servidor por completo, tampoco iniciará el bot de Telegram ni WhatsApp.**
+2. **Contraseña en lista negra:** Si en `DASHBOARD_PASS` intentas usar `admin123`, `tu_contrasena_segura` o palabras que incluyan `CAMBIA_ESTO`, el arranque será denegado por considerarse inseguro.
 
-# 2. Autogenerar claves y secretos criptográficamente seguros:
-pnpm run setup:secrets
-```
+#### 💡 Flujo Recomendado de Configuración
+Para evitar errores de validación y ahorrar tiempo configurando las claves criptográficas:
+
+1. **Desde el Menú de Control Maestro (Recomendado):**
+   * Presiona la opción **`[17] 🔐 Generar Secretos`** (ejecuta `pnpm run setup:secrets` internamente). Esto autogenerará claves criptográficamente seguras para todas las variables técnicas respetando las que ya tengas configuradas.
+   * Si deseas personalizar tu usuario o contraseña web, selecciona después la opción **`[15] 📝 Editar .env`** y cambia únicamente `DASHBOARD_PASS` por la clave personal que prefieras.
+
+2. **Desde la terminal:**
+   ```bash
+   # 1. Copiar plantilla si aún no tienes .env:
+   cp .env.example .env
+
+   # 2. Autogenerar claves y secretos criptográficamente seguros:
+   pnpm run setup:secrets
+   ```
+
+#### 🔍 ¿Cómo revisar tus credenciales en distintos entornos?
+Si necesitas consultar qué usuario y contraseña tienes configurados en tu entorno actual:
+
+* **Windows (PowerShell):** `Get-Content .env | Select-String "DASHBOARD_"`
+* **Linux / VPS / Termux (Bash):** `grep -E "DASHBOARD_USER|DASHBOARD_PASS" .env`
+* **Docker / Docker Compose:** `docker compose exec botmare env | grep DASHBOARD_`
+* **Launcher de BotMaRe:** Opciones `[15]` (ver/editar) o `[17]` (ver estado de generación).
 
 > [!IMPORTANT]
 > **Checklist de Producción:** Para la lista de verificación completa de seguridad, aislamiento de red (evitar abrir puerto 8000), rotación de claves y modelo de confianza de plugins, consulta [SECURITY.md](./SECURITY.md).

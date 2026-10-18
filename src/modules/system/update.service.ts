@@ -98,7 +98,7 @@ export class UpdateService {
                 version: 'v2.7.0',
                 title: 'v2.7.0 - Blindaje Integral de Seguridad, Persistencia Desacoplada y Hardening Productivo',
                 date: '2026-10-17T00:00:00Z',
-                body: 'Actualización mayor que consolida la resiliencia en Baileys, arquitectura de datos desacoplada (LowDB / MongoDB / SQLite), blindaje integral de seguridad (AES-256-GCM, SSRF, Rate Limiting) y 189 tests en Vitest.',
+                body: 'Actualización mayor que consolida la resiliencia en WhatsApp (Baileys), arquitectura de datos desacoplada (LowDB / MongoDB / SQLite), blindaje integral de seguridad (AES-256-GCM, SSRF, Rate Limiting) y 189 tests en Vitest.',
                 prerelease: false,
                 draft: false,
                 url: 'https://github.com/LedezmaSune/BotMaRe/releases/tag/v2.7.0'
