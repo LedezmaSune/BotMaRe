@@ -63,3 +63,4 @@ bin/*
 MANUAL_DE_USUARIO.md
 ia.md
 client_secret_*.json
+prompts/
