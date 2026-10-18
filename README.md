@@ -67,6 +67,10 @@
 | 📢 **Difusión con Spintax** | Campañas masivas anti-spam con variación de frases y macros de contacto dinámicas. |
 | 📅 **Recordatorios Inteligentes** | Programación individual y grupal con frecuencias configurables y verificación de conexión activa. |
 | 🛡️ **Blindaje Anti-Ban** | Retardos progresivos, pausas y simulación humana ("Escribiendo...", "Grabando audio..."). |
+| 🗄️ **Persistencia Desacoplada** | Arquitectura multi-driver mediante `IDatabaseAdapter` con soporte intercambiable para LowDB (JSON), MongoDB Atlas y SQLite WAL, erradicando E/S bloqueante en CRM y telemetría. |
+| 🔒 **Hardening Integral de Seguridad** | Autenticación timing-safe en webhooks (`crypto.timingSafeEqual`), cifrado AES-256-GCM para respaldos, rate limiting con bloqueo por fuerza bruta y blindaje SSRF con DNS estricto. |
+| 🐳 **Docker Multi-Stage No-Root** | Contenedor productivo ultra-ligero basado en `node:20-alpine` bajo usuario no privilegiado `node`, sin compiladores C++ y con healthcheck en `/healthz`. |
+| 🧪 **Suite de 189 Tests Automatizados** | 25 suites de pruebas unitarias, de integración real y de contrato bajo Vitest, y cero errores de compilación TypeScript. |
 | ☁️ **Infraestructura como Código** | Archivos `main.tf` listos para aprovisionar VPS en AWS, Hetzner, DigitalOcean u Oracle Cloud. |
 
 ---
@@ -155,6 +159,9 @@ cp .env.example .env
 # 2. Autogenerar claves y secretos criptográficamente seguros:
 pnpm run setup:secrets
 ```
+
+> [!IMPORTANT]
+> **Checklist de Producción:** Para la lista de verificación completa de seguridad, aislamiento de red (evitar abrir puerto 8000), rotación de claves y modelo de confianza de plugins, consulta [SECURITY.md](./SECURITY.md).
 
 ### ⚙️ 7. Precedencia Unificada de Configuración
 
