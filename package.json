@@ -48,7 +48,7 @@
     "helmet": "^8.3.0",
     "http-proxy-middleware": "^4.2.0",
     "lowdb": "7.0.1",
-    "lucide-react": "^1.49.0",
+    "lucide-react": "^1.57.0",
     "luxon": "^3.7.2",
     "mammoth": "^1.13.0",
     "mongoose": "^9.10.3",
