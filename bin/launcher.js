@@ -98,6 +98,7 @@ async function showMenu() {
     console.log(`    ${c.dim}│${c.reset} ${c.yellow}[14]${c.reset} 🩺 Diagnóstico Sist. ${c.dim}(Health Check)${c.reset}`);
     console.log(`    ${c.dim}│${c.reset} ${c.yellow}[15]${c.reset} 📝 Editar .env       ${c.dim}(Configuración)${c.reset}`);
     console.log(`    ${c.dim}│${c.reset} ${c.yellow}[16]${c.reset} ⏪ Restaurar Backups ${c.dim}(Emergencia)${c.reset}`);
+    console.log(`    ${c.dim}│${c.reset} ${c.yellow}[17]${c.reset} 🔐 Generar Secretos  ${c.dim}(setup:secrets Criptográfico)${c.reset}`);
     console.log(`    ${c.yellow}╰────────────────────────────────────────${c.reset}\n`);
 
     console.log(`    ${c.red}[11] ❌ Salir del Sistema${c.reset}\n`);
@@ -107,7 +108,7 @@ async function showMenu() {
     
     if (!envExists || !nextExists) {
         console.log(`    ${c.bgYellow}${c.red}${c.bright} 🌟 ¡BIENVENIDO A BOTMARE! (PASOS DE PRIMERA VEZ) 🌟 ${c.reset}`);
-        if (!envExists) console.log(`    ${c.yellow}👉 1. Configura tu archivo .env con tus contraseñas y API Keys.${c.reset}`);
+        if (!envExists) console.log(`    ${c.yellow}👉 1. Presiona [17] para Generar tus Secretos y Contraseñas Seguras (.env).${c.reset}`);
         if (!nextExists) console.log(`    ${c.yellow}👉 2. Presiona [3] para Compilar el Frontend.${c.reset}`);
         console.log(`    ${c.yellow}👉 3. Presiona [1] para Iniciar el Servidor.${c.reset}`);
         console.log(`    ${c.red}⚠️  Nota: Si ves errores de SQLite al iniciar, usa la opción [12].${c.reset}\n`);
@@ -115,9 +116,10 @@ async function showMenu() {
         console.log(`    ${c.cyan}💡 Tip: Si acabas de actualizar o tienes errores, presiona [12] o [13].${c.reset}\n`);
     }
     
-    rl.question(`    ${c.cyan}${c.bright}➤ Selecciona una acción [1-16]:${c.reset} `, (choice) => {
+    rl.question(`    ${c.cyan}${c.bright}➤ Selecciona una acción [1-17]:${c.reset} `, (choice) => {
         handleChoice(choice.trim());
     });
+
 }
 
 async function showFoldersMenu() {
@@ -364,8 +366,13 @@ function handleChoice(choice) {
         case '14': showDiagnostics(); break;
         case '15': editEnvMenu(); break;
         case '16': showBackupsMenu(); break;
+        case '17':
+            console.log(`\n    ${c.bgYellow}${c.bright} 🔐 GENERANDO SECRETOS CRIPTOGRÁFICOS (.env) ${c.reset}\n`);
+            runCmd('pnpm', ['run', 'setup:secrets'], showMenu);
+            break;
         default: invalidChoice(showMenu); break;
     }
+
 }
 
 function showDiagnostics() {
