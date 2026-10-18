@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════
 #  🦊 BotMaRe AI - Instalador Maestro para Linux / macOS
-#  Versión: 3.0  •  2026
+#  Versión: 2.7.0 (sincronizada con package.json)  •  2026
 #
 #  USO REMOTO (una sola línea, instala todo desde cero):
 #    curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install.sh | bash

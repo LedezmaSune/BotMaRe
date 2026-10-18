@@ -2,7 +2,7 @@
 
 # ═══════════════════════════════════════════════════════════════════
 #  🦊 BotMaRe AI - Script de Actualización Inteligente y Seguro
-#  Versión: 2.5.0  •  2026
+#  Versión: 2.7.0 (sincronizada con package.json)  •  2026
 #
 #  Mantiene tu bot al día sincronizándolo con el repositorio,
 #  asegurando tus bases de datos, llaves de sesión y variables.

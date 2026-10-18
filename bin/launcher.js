@@ -115,7 +115,7 @@ async function showMenu() {
         console.log(`    ${c.cyan}💡 Tip: Si acabas de actualizar o tienes errores, presiona [12] o [13].${c.reset}\n`);
     }
     
-    rl.question(`    ${c.cyan}${c.bright}➤ Selecciona una acción [1-13]:${c.reset} `, (choice) => {
+    rl.question(`    ${c.cyan}${c.bright}➤ Selecciona una acción [1-16]:${c.reset} `, (choice) => {
         handleChoice(choice.trim());
     });
 }
@@ -194,19 +194,59 @@ function handleFoldersChoice(choice) {
     }
 }
 
+function parseSemver(v) {
+    if (!v) return [0, 0, 0];
+    const clean = String(v).replace(/^v/i, '').trim();
+    const parts = clean.split('-')[0].split('.').map(n => parseInt(n, 10) || 0);
+    return [parts[0] || 0, parts[1] || 0, parts[2] || 0];
+}
+
+function compareSemver(v1, v2) {
+    const [maj1, min1, pat1] = parseSemver(v1);
+    const [maj2, min2, pat2] = parseSemver(v2);
+    if (maj1 !== maj2) return maj1 > maj2 ? 1 : -1;
+    if (min1 !== min2) return min1 > min2 ? 1 : -1;
+    if (pat1 !== pat2) return pat1 > pat2 ? 1 : -1;
+    return 0;
+}
+
 function handleUpdateChoice(choice) {
     switch (choice) {
         case '1':
-            console.log(`\n    ${c.bgYellow}${c.bright} 🌟 BUSCANDO ACTUALIZACIÓN ${c.reset}`);
+            console.log(`\n    ${c.bgYellow}${c.bright} 🌟 BUSCANDO ACTUALIZACIÓN ESTABLE ${c.reset}`);
             try {
                 execSync('git fetch --tags', { stdio: 'inherit', cwd: path.resolve(__dirname, '..') });
-                const tags = execSync('git tag --sort=-v:refname', { cwd: path.resolve(__dirname, '..') }).toString().trim().split(/\r?\n/);
-                if (!tags[0]) throw new Error("No tags");
-                console.log(`    ${c.green}✔ Tag estable: ${tags[0]}${c.reset}`);
-                runCmd('git', ['checkout', tags[0]], showUpdateMenu);
+                const rawTags = execSync('git tag -l "v*"', { cwd: path.resolve(__dirname, '..') })
+                    .toString()
+                    .trim()
+                    .split(/\r?\n/)
+                    .filter(Boolean);
+
+                if (rawTags.length === 0) {
+                    console.log(`    ${c.yellow}⚠️  No se encontraron tags de versiones en el repositorio.${c.reset}`);
+                    setTimeout(showUpdateMenu, 2500);
+                    break;
+                }
+
+                // Ordenar tags por semver descendente
+                rawTags.sort((a, b) => compareSemver(b, a));
+                const targetTag = rawTags[0];
+                const currentVersion = pkg.version || '2.7.0';
+
+                // Comprobar si el tag degrada la versión actual
+                if (compareSemver(targetTag, currentVersion) <= 0) {
+                    console.log(`    ${c.yellow}⚠️  El último tag estable disponible (${targetTag}) es igual o menor a tu versión actual (${currentVersion}).${c.reset}`);
+                    console.log(`    ${c.cyan}ℹ️  Operación cancelada: No se degradará el proyecto a una versión anterior.${c.reset}`);
+                    console.log(`    ${c.dim}   Para sincronizar cambios recientes, usa la opción [2] (Actualizar a Dev).${c.reset}\n`);
+                    setTimeout(showUpdateMenu, 4000);
+                    break;
+                }
+
+                console.log(`    ${c.green}✔ Nueva versión estable detectada: ${targetTag} (actual: ${currentVersion})${c.reset}`);
+                runCmd('git', ['checkout', targetTag], showUpdateMenu);
             } catch (e) {
-                console.log(`    ${c.red}✖ No se encontraron versiones o falló la conexión.${c.reset}`);
-                setTimeout(showUpdateMenu, 2000);
+                console.log(`    ${c.red}✖ Error consultando versiones estables o falló la conexión: ${e.message}${c.reset}`);
+                setTimeout(showUpdateMenu, 3000);
             }
             break;
         case '2':
@@ -219,6 +259,7 @@ function handleUpdateChoice(choice) {
         default: invalidChoice(showUpdateMenu); break;
     }
 }
+
 
 function handlePM2Choice(choice) {
     switch (choice) {

@@ -70,7 +70,7 @@ export class UpdateService {
                 params: { per_page: 20 }
             });
 
-            const releases = response.data.map((r: any) => ({
+            const releases = (response.data || []).map((r: any) => ({
                 version: r.tag_name,
                 title: r.name || r.tag_name,
                 date: r.published_at,
@@ -80,13 +80,50 @@ export class UpdateService {
                 url: r.html_url
             }));
 
-            this.releasesCache = { data: releases, timestamp: Date.now() };
-            return { releases };
+            if (releases.length > 0) {
+                this.releasesCache = { data: releases, timestamp: Date.now() };
+                return { releases };
+            }
+
+            return { releases: this.getKnownReleases() };
         } catch (error: any) {
-            console.error('[UpdateService] Error fetching releases:', error.message);
-            return { releases: [], error: error.message };
+            console.error('[UpdateService] Error fetching releases, usando versiones conocidas:', error.message);
+            return { releases: this.getKnownReleases(), error: error.message };
         }
     }
+
+    private getKnownReleases() {
+        return [
+            {
+                version: 'v2.7.0',
+                title: 'v2.7.0 - Blindaje Criptográfico E2EE Baileys y Ecosistema de Plugins IA',
+                date: '2026-10-15T00:00:00Z',
+                body: 'Actualización mayor enfocada en la resiliencia del transporte de WhatsApp, erradicación de errores de descifrado en mensajes programados y expansión del motor de plugins con acceso directo a IA.',
+                prerelease: false,
+                draft: false,
+                url: 'https://github.com/LedezmaSune/BotMaRe/releases/tag/v2.7.0'
+            },
+            {
+                version: 'v2.6.1',
+                title: 'v2.6.1 - Sincronización Inteligente de Google Sheets y Tolerancia de Columnas',
+                date: '2026-10-10T00:00:00Z',
+                body: 'Mejoras en la integración de Google Sheets para auto-respuestas y plantillas, soportando enlaces con GID y esquemas flexibles de columnas.',
+                prerelease: false,
+                draft: false,
+                url: 'https://github.com/LedezmaSune/BotMaRe/releases/tag/v2.6.1'
+            },
+            {
+                version: 'v2.6.0',
+                title: 'v2.6.0 - Motor de Voz Conversacional (Whisper / TTS) y Gestión Documental',
+                date: '2026-10-04T00:00:00Z',
+                body: 'Integración completa de notas de voz bidireccionales y lectura de documentos adjuntos (PDF, Excel, Word).',
+                prerelease: false,
+                draft: false,
+                url: 'https://github.com/LedezmaSune/BotMaRe/releases/tag/v2.6.0'
+            }
+        ];
+    }
+
 
     async performUpdate() {
         const { exec } = require('child_process');
