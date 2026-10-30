@@ -76,6 +76,13 @@ export class ReminderQueue {
                 } finally {
                     this.inFlightLocks.delete(nextReminder.id);
                 }
+
+                // Pausa Anti-Ban / Jitter Buffer entre recordatorios consecutivos en cola
+                if (this.queue.length > 0) {
+                    const queueDelay = 3000 + Math.random() * 3000; // 3 a 6 segundos
+                    console.log(`[ReminderQueue] Esperando ${Math.round(queueDelay / 1000)}s antes del siguiente recordatorio (${this.queue.length} restante(s))...`);
+                    await new Promise(res => setTimeout(res, queueDelay));
+                }
             }
         } finally {
             this.isWorkerRunning = false;

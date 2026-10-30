@@ -16,6 +16,21 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'V 2.8.0',
+        date: '30 Octubre 2026',
+        title: 'Gestión Multimedia en Fichas de Recordatorios, Delay Anti-Ban Escalonado y Envíos Resilientes',
+        type: 'minor',
+        description: 'Actualización enfocada en la experiencia de usuario y seguridad operativa: inspección interactiva y edición directa de archivos en recordatorios, delay programable en subidas masivas, jitter buffer en cola de envíos y erradicación de falsas alarmas de error 500.',
+        features: [
+            '📎 Inspección Multimedia en Fichas: Visualización directa de archivos adjuntos en las tarjetas y tablas de recordatorios (Pendientes e Historial), con miniaturas interactivas para imágenes y accesos para documentos, audio y video.',
+            '✏️ Edición y Desasociación de Adjuntos: Nuevo botón "Ver" para abrir el archivo actual en una nueva pestaña y botón "Quitar" para desasociar la multimedia del recordatorio si se desea enviar solo texto.',
+            '⏱️ Delay Escalonado en Carga Masiva: Nuevo selector de "Delay entre Envíos (Minutos)" en el Asistente Masivo (BatchWizard) y escaneo de carpetas, espaciando automáticamente recordatorios que caen en el mismo día.',
+            '🛡️ Jitter Buffer Anti-Ban en la Cola: Pausa de seguridad aleatoria (3 a 6 segundos) entre recordatorios consecutivos despachados por la cola del Scheduler, previniendo sobrecargas o bloqueos en WhatsApp.',
+            '⚡ Envío Inmediato Resiliente (sendNow): Reemplazo de errores 500 genéricos por 409 Conflict y 404 Not Found, evitando falsas alarmas de caída de servidor en Telegram/NotificationHub y añadiendo soporte para forzar reenvíos manuales (`force=true`).',
+            '🌐 Endpoint Seguro de Medios: Nueva ruta `GET /api/reminders/:id/media` respaldada por `MediaResolverService` para servir archivos protegidos con resolución en caliente y protección contra Path Traversal.'
+        ]
+    },
+    {
         version: 'V 2.7.0',
         date: '17 Octubre 2026',
         title: 'Blindaje Integral de Seguridad, Persistencia Desacoplada y Hardening Productivo',

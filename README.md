@@ -1,11 +1,11 @@
 <div align="center">
-  <img src="https://img.shields.io/badge/BotMaRe-v2.7.0-6366f1?style=for-the-badge&logo=probot" alt="BotMaRe Banner"/>
+  <img src="https://img.shields.io/badge/BotMaRe-v2.8.0-6366f1?style=for-the-badge&logo=probot" alt="BotMaRe Banner"/>
   <h1>🦊 BotMaRe - Dashboard</h1>
   <p><strong>La plataforma definitiva de automatización para WhatsApp impulsada por Inteligencia Artificial, Orquestación Multi-Proveedor y Despliegue Multi-Plataforma.</strong></p>
 
   <p>
-    <img src="https://img.shields.io/badge/Version-2.7.0-indigo?style=flat-square" alt="Version 2.7.0"/>
-    <img src="https://img.shields.io/badge/Tests-189%20Passed-success?style=flat-square" alt="Tests 189 Passed"/>
+    <img src="https://img.shields.io/badge/Version-2.8.0-indigo?style=flat-square" alt="Version 2.8.0"/>
+    <img src="https://img.shields.io/badge/Tests-196%20Passed-success?style=flat-square" alt="Tests 196 Passed"/>
     <img src="https://img.shields.io/badge/Node.js-20.19.0+-339933?logo=nodedotjs&logoColor=white&style=flat-square" alt="Node.js"/>
     <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&style=flat-square" alt="Next.js"/>
     <img src="https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white&style=flat-square" alt="TypeScript"/>
@@ -527,6 +527,14 @@ Ejecución continua 24/7 en servidores de producción:
 
 ## 🔄 Historial de Actualizaciones (Changelog)
 
+- **[2.8.0] - 2026-10-30:** Gestión Multimedia en Recordatorios, Delay Anti-Ban Escalonado y Envíos Resilientes:
+  - 📎 **Inspección Multimedia en Fichas:** Visualización directa de archivos adjuntos en tarjetas y tablas de recordatorios (Pendientes e Historial), con miniaturas interactivas para imágenes y enlaces directos para documentos, audios y videos.
+  - ✏️ **Edición y Desasociación de Adjuntos:** Nuevo botón "Ver" para inspeccionar archivos actuales en una nueva pestaña y botón "Quitar" para desasociar la multimedia (`removeMedia`) si se desea transformar el recordatorio a solo texto.
+  - ⏱️ **Delay Escalonado en Carga Masiva:** Nuevo control de "Delay entre Envíos (Minutos)" en el Asistente Masivo (`BatchWizard`) y escaneo de carpetas (`scanFolder`), espaciando automáticamente los recordatorios que caen en la misma fecha.
+  - 🛡️ **Jitter Buffer Anti-Ban en la Cola del Scheduler:** Pausa de seguridad aleatoria (3 a 6 segundos) entre recordatorios consecutivos despachados por la cola (`ReminderQueue`), previniendo sobrecargas o bloqueos en WhatsApp.
+  - ⚡ **Envío Inmediato Resiliente (`sendNow`):** Erradicación de falsas alarmas de error 500 en `NotificationHub`, mapeo semántico a códigos HTTP 409 Conflict y 404 Not Found, soporte para forzar reenvíos manuales (`force=true`) y sincronización inmediata de la interfaz.
+  - 🌐 **Endpoint Seguro de Medios:** Nueva ruta `GET /api/reminders/:id/media` respaldada por `MediaResolverService` para servir archivos protegidos con resolución en caliente y protección contra Path Traversal.
+  - 🧪 **Suite de 196 Tests Automatizados:** Cobertura expandida con 11 nuevos tests unitarios en Vitest sin errores de compilación TypeScript.
 - **[2.7.0] - 2026-10-17:** Blindaje Integral de Seguridad, Persistencia Desacoplada y Hardening Productivo:
   - 🛡️ **Erradicación de "Esperando Mensaje" en WhatsApp:** Corrección crítica en la gestión criptográfica Signal de Baileys (`getMessage` devuelve `undefined` en lugar de objeto vacío), evitando que retransmisiones corruptas bloqueen el chat del receptor, con reconexión atómica y estabilización de pre-claves.
   - 🗄️ **Persistencia de Datos Desacoplada:** Contrato unificado `IDatabaseAdapter` con soporte intercambiable para LowDB (`data/database.json`), MongoDB Atlas y SQLite WAL (`data/database.db`), erradicando operaciones síncronas bloqueantes en CRM y telemetría.

@@ -2,19 +2,21 @@ import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { ReminderService } from './reminder.service';
-import { asyncHandler } from '../../middleware/errorHandler';
+import { asyncHandler, AppError } from '../../middleware/errorHandler';
 import { Scheduler } from '../scheduling/scheduler';
 import { 
     updateReminder, 
     listPendingOrFailedReminders, 
     deleteReminder, 
     checkReminderExistsByMediaPath, 
-    createReminder 
+    createReminder,
+    getReminderById 
 } from '../../core/db';
 import { parseDateFromFilename } from '../../utils/dateParser';
+import { MediaResolverService } from '../scheduling/services/media-resolver.service';
 
 export class ReminderController {
-    constructor(private reminderService: ReminderService) {}
+    constructor(private reminderService: ReminderService) { }
 
     list = asyncHandler(async (req: Request, res: Response) => {
         const reminders = await this.reminderService.list('owner', true);
@@ -37,7 +39,9 @@ export class ReminderController {
     });
 
     createWithMedia = asyncHandler(async (req: Request, res: Response) => {
-        const { chatId, text, time, repeat, repeatInterval, repeatUnit, title, channel } = req.body;
+        const { chatId, text, time, repeat, repeatInterval, repeatUnit, title, channel, removeMedia } = req.body;
+
+
         const files = req.files as Express.Multer.File[];
 
         if (!files || files.length === 0) {
@@ -57,10 +61,10 @@ export class ReminderController {
             else mediaType = 'document';
 
             const mediaPath = path.resolve(file.path);
-            
+
             // Solo adjuntamos el texto (caption) al primer archivo para evitar spam si suben muchas fotos
             const textForThisFile = i === 0 ? text : '';
-            
+
             const id = await this.reminderService.create('owner', chatId, textForThisFile, time, mediaPath, mediaType, repeat, repeatInterval ? parseInt(repeatInterval) : undefined, repeatUnit, title, channel || 'whatsapp');
             createdIds.push(id);
             mediaPaths.push(mediaPath);
@@ -70,8 +74,11 @@ export class ReminderController {
     });
 
     delete = asyncHandler(async (req: Request, res: Response) => {
-        const id = req.params.id;
-        await this.reminderService.delete(parseInt(id as string));
+        const id = parseInt(req.params.id as string, 10);
+        if (isNaN(id)) {
+            throw new AppError('ID de recordatorio inválido.', 400);
+        }
+        await this.reminderService.delete(id);
         res.json({ success: true });
     });
 
@@ -82,9 +89,12 @@ export class ReminderController {
     });
 
     update = asyncHandler(async (req: Request, res: Response) => {
-        const id = req.params.id;
-        const { chatId, text, time, repeat, repeatInterval, repeatUnit, title, channel } = req.body;
-        
+        const id = parseInt(req.params.id as string, 10);
+        if (isNaN(id)) {
+            throw new AppError('ID de recordatorio inválido.', 400);
+        }
+        const { chatId, text, time, repeat, repeatInterval, repeatUnit, title, channel, removeMedia } = req.body;
+
         const updateData: any = {
             chatId,
             text,
@@ -95,6 +105,13 @@ export class ReminderController {
             title: title || undefined,
             channel: channel || 'whatsapp'
         };
+
+        if (removeMedia === 'true' || removeMedia === true) {
+            updateData.mediaPath = null;
+            updateData.mediaType = null;
+        }
+
+
 
         const files = req.files as Express.Multer.File[];
         if (files && files.length > 0) {
@@ -108,21 +125,49 @@ export class ReminderController {
             updateData.mediaPath = path.resolve(file.path);
             updateData.mediaType = mediaType;
         }
-        
-        await updateReminder(parseInt(id as string), updateData);
-          
+
+        await updateReminder(id, updateData);
+
         res.json({ success: true });
     });
 
     sendNow = asyncHandler(async (req: Request, res: Response) => {
-        const id = req.params.id;
-        await Scheduler.sendNow(parseInt(id as string));
+        const id = parseInt(req.params.id as string, 10);
+        if (isNaN(id)) {
+            throw new AppError('ID de recordatorio inválido.', 400);
+        }
+        const force = req.query.force === 'true' || req.body?.force === true;
+        await Scheduler.sendNow(id, force);
         res.json({ success: true });
+    });
+
+    getMedia = asyncHandler(async (req: Request, res: Response) => {
+        const id = parseInt(req.params.id as string, 10);
+        if (isNaN(id)) {
+            throw new AppError('ID de recordatorio inválido.', 400);
+        }
+
+        const reminder = await getReminderById(id);
+        if (!reminder) {
+            throw new AppError(`Recordatorio #${id} no encontrado.`, 404);
+        }
+
+        if (!reminder.mediaPath) {
+            throw new AppError(`El recordatorio #${id} no cuenta con archivo multimedia.`, 404);
+        }
+
+        const mediaResolution = await MediaResolverService.resolveMediaPath(reminder.mediaPath, reminder.mediaType);
+        if (!mediaResolution.exists || !mediaResolution.finalPath) {
+            throw new AppError(`El archivo multimedia adjunto no fue encontrado en el servidor.`, 404);
+        }
+
+        const safeFullPath = path.resolve(mediaResolution.finalPath);
+        res.sendFile(safeFullPath);
     });
 
     fixDates = asyncHandler(async (req: Request, res: Response) => {
         const reminders = await listPendingOrFailedReminders();
-        
+
         let fixed = 0;
         let deleted = 0;
         const now = new Date();
@@ -157,8 +202,10 @@ export class ReminderController {
     });
 
     scanFolder = asyncHandler(async (req: Request, res: Response) => {
-        const { globalChatId, globalTime, globalText, channel } = req.body;
-        
+        const { globalChatId, globalTime, globalText, channel, intervalMinutes } = req.body;
+        const interval = parseInt(intervalMinutes, 10) || 0;
+        const dateCounts: Record<string, number> = {};
+
         const uploadsDir = path.resolve('data/uploads');
         if (!fs.existsSync(uploadsDir)) {
             return res.json({ success: true, added: 0, message: 'El directorio data/uploads no existe.' });
@@ -171,7 +218,7 @@ export class ReminderController {
             const parsed = parseDateFromFilename(file, globalTime || '09:00');
             if (parsed) {
                 const mediaPath = path.join(uploadsDir, file).replace(/\\/g, '/');
-                
+
                 // Verificar si ya existe un recordatorio con este archivo
                 const exists = await checkReminderExistsByMediaPath(mediaPath);
                 if (!exists) {
@@ -184,11 +231,25 @@ export class ReminderController {
                     let text = globalText || 'Adjunto archivo: {ARCHIVO}';
                     text = text.replace('{ARCHIVO}', file);
 
+                    let scheduledTime = parsed.time;
+                    if (interval > 0 && scheduledTime && scheduledTime.includes('T')) {
+                        const [datePart, timePart] = scheduledTime.split('T');
+                        const count = dateCounts[datePart] || 0;
+                        dateCounts[datePart] = count + 1;
+                        if (count > 0) {
+                            const [hStr, mStr] = (timePart || globalTime || '09:00').split(':');
+                            const totalMinutes = (parseInt(hStr, 10) || 0) * 60 + (parseInt(mStr, 10) || 0) + (count * interval);
+                            const newH = Math.floor(totalMinutes / 60) % 24;
+                            const newM = totalMinutes % 60;
+                            scheduledTime = `${datePart}T${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`;
+                        }
+                    }
+
                     await createReminder(
                         'owner',
                         globalChatId || '',
                         text,
-                        parsed.time,
+                        scheduledTime,
                         mediaPath,
                         mediaType,
                         'none',

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutGrid, List, Trash2, Zap, Edit3, Paperclip } from 'lucide-react';
+import { LayoutGrid, List, Trash2, Zap, Edit3, Paperclip, Eye, ExternalLink } from 'lucide-react';
 import { Reminder } from '../../types';
 
 interface PendingListProps {
@@ -95,11 +95,49 @@ export function PendingList({
                                 </div>
                                 <span className="text-[10px] font-bold tabular-nums text-app-text-muted">{r.time}</span>
                             </div>
-                            <p className="text-sm text-app-text/80 line-clamp-2 mb-4 leading-relaxed">{r.text}</p>
+                            <p className="text-sm text-app-text/80 line-clamp-2 mb-3 leading-relaxed">{r.text}</p>
+                            {r.mediaPath && (() => {
+                                const fileName = r.mediaPath.split(/[\\/]/).pop() || 'Archivo adjunto';
+                                const isImage = r.mediaType === 'image' || /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName);
+                                return (
+                                    <div className="mb-4">
+                                        {isImage ? (
+                                            <div className="relative group/media overflow-hidden rounded-2xl border border-app-border bg-black/10 dark:bg-black/40">
+                                                <img 
+                                                    src={`/api/reminders/${r.id}/media`} 
+                                                    alt={fileName} 
+                                                    className="w-full h-32 object-cover transition-transform duration-300 group-hover/media:scale-105" 
+                                                    loading="lazy"
+                                                />
+                                                <a 
+                                                    href={`/api/reminders/${r.id}/media`} 
+                                                    target="_blank" 
+                                                    rel="noreferrer"
+                                                    className="absolute inset-0 bg-black/50 opacity-0 group-hover/media:opacity-100 flex items-center justify-center gap-1.5 text-white text-xs font-bold transition-opacity backdrop-blur-[2px]"
+                                                >
+                                                    <Eye size={14} /> Ver archivo ({fileName})
+                                                </a>
+                                            </div>
+                                        ) : (
+                                            <a 
+                                                href={`/api/reminders/${r.id}/media`} 
+                                                target="_blank" 
+                                                rel="noreferrer" 
+                                                className="flex items-center gap-2 px-3 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-500 rounded-xl border border-purple-500/20 text-xs font-bold transition-all truncate"
+                                                title={`Ver archivo: ${fileName}`}
+                                            >
+                                                <Paperclip size={14} className="shrink-0 text-purple-400" />
+                                                <span className="truncate flex-1">{fileName}</span>
+                                                <ExternalLink size={12} className="shrink-0 ml-auto opacity-70" />
+                                            </a>
+                                        )}
+                                    </div>
+                                );
+                            })()}
                             <div className="flex items-center justify-between pt-4 border-t border-app-border">
                                 <div className="flex gap-1">
                                     <button onClick={() => onEdit(r)} className="p-2 hover:bg-cyan-500/10 text-app-text-muted hover:text-cyan-500 rounded-lg transition-all"><Edit3 size={16} /></button>
-                                    <button onClick={() => onSendNow(r.id)} className="p-2 hover:bg-amber-500/10 text-app-text-muted hover:text-amber-500 rounded-lg transition-all"><Zap size={16} /></button>
+                                    <button onClick={() => onSendNow(r.id)} title="Enviar ahora" className="p-2 hover:bg-amber-500/10 text-app-text-muted hover:text-amber-500 rounded-lg transition-all"><Zap size={16} /></button>
                                 </div>
                                 <button onClick={() => onDelete(r.id)} className="p-2 hover:bg-red-500/10 text-red-500/70 rounded-lg transition-all"><Trash2 size={16} /></button>
                             </div>
@@ -151,8 +189,28 @@ export function PendingList({
                                                 <p className="text-xs font-bold text-app-text truncate max-w-[120px]">{r.chatId}</p>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4"><div className="flex items-center gap-2">{r.mediaPath && <Paperclip size={10} className="text-purple-400 shrink-0" />}<p className="text-[11px] text-app-text-muted truncate max-w-[200px]">{r.text}</p></div></td>
-                                        <td className="px-6 py-4 text-right"><div className="flex items-center justify-end gap-1"><button onClick={() => onEdit(r)} className="p-2 hover:bg-cyan-500/10 text-app-text-muted hover:text-cyan-500 rounded-lg transition-all"><Edit3 size={14} /></button><button onClick={() => onSendNow(r.id)} className="p-2 hover:bg-amber-500/10 text-app-text-muted hover:text-amber-500 rounded-lg transition-all"><Zap size={14} /></button><button onClick={() => onDelete(r.id)} className="p-2 hover:bg-red-500/10 text-red-500/70 rounded-lg transition-all"><Trash2 size={14} /></button></div></td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1">
+                                                <p className="text-[11px] text-app-text-muted truncate max-w-[200px]">{r.text}</p>
+                                                {r.mediaPath && (() => {
+                                                    const fileName = r.mediaPath.split(/[\\/]/).pop() || 'Archivo';
+                                                    return (
+                                                        <a 
+                                                            href={`/api/reminders/${r.id}/media`} 
+                                                            target="_blank" 
+                                                            rel="noreferrer" 
+                                                            className="flex items-center gap-1 text-[10px] text-purple-400 hover:text-purple-300 font-bold max-w-[180px] truncate underline underline-offset-2"
+                                                            title={`Ver archivo: ${fileName}`}
+                                                        >
+                                                            <Paperclip size={10} className="shrink-0" />
+                                                            <span className="truncate">{fileName}</span>
+                                                            <ExternalLink size={8} className="shrink-0 opacity-70" />
+                                                        </a>
+                                                    );
+                                                })()}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right"><div className="flex items-center justify-end gap-1"><button onClick={() => onEdit(r)} className="p-2 hover:bg-cyan-500/10 text-app-text-muted hover:text-cyan-500 rounded-lg transition-all"><Edit3 size={14} /></button><button onClick={() => onSendNow(r.id)} title="Enviar ahora" className="p-2 hover:bg-amber-500/10 text-app-text-muted hover:text-amber-500 rounded-lg transition-all"><Zap size={14} /></button><button onClick={() => onDelete(r.id)} className="p-2 hover:bg-red-500/10 text-red-500/70 rounded-lg transition-all"><Trash2 size={14} /></button></div></td>
                                     </motion.tr>
                                 );
                             })}

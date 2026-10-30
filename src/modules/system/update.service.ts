@@ -95,6 +95,15 @@ export class UpdateService {
     private getKnownReleases() {
         return [
             {
+                version: 'v2.8.0',
+                title: 'v2.8.0 - Gestión Multimedia en Recordatorios, Delay Anti-Ban Escalonado y Envíos Resilientes',
+                date: '2026-10-30T00:00:00Z',
+                body: 'Inspección y edición de archivos en fichas de recordatorios (Pendientes/Historial), visualizador interactivo de medios, delay configurable en subidas masivas, jitter buffer en cola de envíos y resolución de conflictos HTTP 409.',
+                prerelease: false,
+                draft: false,
+                url: 'https://github.com/LedezmaSune/BotMaRe/releases/tag/v2.8.0'
+            },
+            {
                 version: 'v2.7.0',
                 title: 'v2.7.0 - Blindaje Integral de Seguridad, Persistencia Desacoplada y Hardening Productivo',
                 date: '2026-10-17T00:00:00Z',

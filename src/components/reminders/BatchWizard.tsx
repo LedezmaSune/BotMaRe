@@ -7,6 +7,8 @@ interface BatchWizardProps {
     setBatchChatId: (val: string) => void;
     batchTime: string;
     setBatchTime: (val: string) => void;
+    batchIntervalMinutes?: number;
+    setBatchIntervalMinutes?: (val: number) => void;
     batchText: string;
     setBatchText: (val: string) => void;
     batchChannel?: string;
@@ -23,6 +25,8 @@ export function BatchWizard({
     setBatchChatId,
     batchTime,
     setBatchTime,
+    batchIntervalMinutes = 0,
+    setBatchIntervalMinutes,
     batchText,
     setBatchText,
     batchChannel = 'whatsapp',
@@ -107,7 +111,7 @@ export function BatchWizard({
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-2 block tracking-widest">Hora de Envío</label>
+                                <label className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-2 block tracking-widest">Hora de Envío Base</label>
                                 <input
                                     type="time"
                                     value={batchTime}
@@ -115,11 +119,32 @@ export function BatchWizard({
                                     className="w-full bg-slate-50 dark:bg-[#131B2C] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-4 text-sm text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-purple-500/50 transition-all shadow-inner"
                                 />
                             </div>
-                            <div className="bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 rounded-2xl p-4 flex flex-col justify-center shadow-sm">
-                                <p className="text-[9px] font-bold text-purple-600 dark:text-purple-400 uppercase mb-1">Detección Automática</p>
-                                <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-tight">Usa <b className="text-purple-600 dark:text-purple-400">DD-MM</b> o <b className="text-purple-600 dark:text-purple-400">DD-MM-YYYY</b>. El sistema <b>forzará el año actual</b> para agendarlos.</p>
-                            </div>
+                            {setBatchIntervalMinutes ? (
+                                <div>
+                                    <label className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-2 block tracking-widest">Delay entre Envíos (Minutos)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="120"
+                                        value={batchIntervalMinutes}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBatchIntervalMinutes(parseInt(e.target.value, 10) || 0)}
+                                        className="w-full bg-slate-50 dark:bg-[#131B2C] border border-slate-200 dark:border-white/5 rounded-2xl px-5 py-4 text-sm text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-purple-500/50 transition-all shadow-inner"
+                                        placeholder="0 (mismo horario)"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 rounded-2xl p-4 flex flex-col justify-center shadow-sm">
+                                    <p className="text-[9px] font-bold text-purple-600 dark:text-purple-400 uppercase mb-1">Detección Automática</p>
+                                    <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-tight">Usa <b className="text-purple-600 dark:text-purple-400">DD-MM</b> o <b className="text-purple-600 dark:text-purple-400">DD-MM-YYYY</b>. El sistema <b>forzará el año actual</b> para agendarlos.</p>
+                                </div>
+                            )}
                         </div>
+
+                        {setBatchIntervalMinutes && (
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 -mt-2 italic">
+                                * Si varios archivos coinciden en la misma fecha, cada uno se programará con <b>{batchIntervalMinutes || 0} min</b> de diferencia para evitar envíos simultáneos.
+                            </p>
+                        )}
 
                         <div>
                             <label className="text-[10px] uppercase font-black text-slate-500 dark:text-slate-400 mb-2 block tracking-widest">Mensaje Global</label>

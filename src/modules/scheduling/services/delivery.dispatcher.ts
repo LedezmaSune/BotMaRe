@@ -28,6 +28,7 @@ export class DeliveryDispatcher {
     ): Promise<DispatcherResult> {
         const reminderId = reminder.id;
         const channel = reminder.channel || 'whatsapp';
+        const wasAlreadySent = reminder.status === 'sent';
 
         try {
             // Fase 1: Bloqueo en estado 'processing'
@@ -131,7 +132,7 @@ export class DeliveryDispatcher {
             } catch (e) {}
 
             // Fase 4: Recurrencia / Reprogramación
-            if (reminder.repeat && reminder.repeat !== 'none') {
+            if (!wasAlreadySent && reminder.repeat && reminder.repeat !== 'none') {
                 const nextTimeStr = RecurrenceService.calculateNextTime({
                     time: reminder.time,
                     repeat: reminder.repeat,

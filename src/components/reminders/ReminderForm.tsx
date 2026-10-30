@@ -1,4 +1,4 @@
-import { Loader2, Save, Send, Wand2, Trash2, Plus } from 'lucide-react';
+import { Loader2, Save, Send, Wand2, Trash2, Plus, Eye, Paperclip, X } from 'lucide-react';
 import React from 'react';
 import { VariableTextarea } from '../VariableTextarea';
 import { Template } from '../../types';
@@ -23,6 +23,7 @@ interface ReminderFormProps {
     setMedia: (val: File[] | null) => void;
     media: File[] | null;
     existingMedia?: string | null;
+    onRemoveExistingMedia?: () => void;
     channel?: string;
     setChannel?: (val: 'whatsapp' | 'sms') => void;
     
@@ -47,6 +48,7 @@ export function ReminderForm({
     multipleTimes, setMultipleTimes,
     media, setMedia,
     existingMedia,
+    onRemoveExistingMedia,
     channel = 'whatsapp', setChannel,
     editingId, setEditingId,
     loading,
@@ -302,10 +304,34 @@ export function ReminderForm({
                 <div>
                     <label className="text-[10px] uppercase font-bold text-app-text-muted mb-1 block tracking-widest">Multimedia</label>
                     {editingId && existingMedia && (
-                        <div className="mb-2 p-3 bg-app-bg dark:bg-background/50 rounded-xl border border-app-border flex items-center justify-between">
-                             <span className={`text-xs font-medium truncate ${media && media.length > 0 ? 'line-through text-app-text-muted' : 'text-cyan-500'}`}>
-                                Archivo actual: {existingMedia}
-                             </span>
+                        <div className="mb-2 p-3 bg-app-bg dark:bg-background/50 rounded-xl border border-app-border flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 truncate">
+                                <Paperclip size={14} className="text-purple-500 shrink-0" />
+                                <span className={`text-xs font-bold truncate ${media && media.length > 0 ? 'line-through text-app-text-muted' : 'text-cyan-500'}`}>
+                                    {existingMedia}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                                <a
+                                    href={`/api/reminders/${editingId}/media`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center gap-1 px-2.5 py-1 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-500 text-[10px] font-bold rounded-lg border border-cyan-500/20 transition-all cursor-pointer"
+                                    title="Ver archivo actual en una nueva pestaña"
+                                >
+                                    <Eye size={12} /> Ver
+                                </a>
+                                {onRemoveExistingMedia && (
+                                    <button
+                                        type="button"
+                                        onClick={onRemoveExistingMedia}
+                                        className="flex items-center gap-1 px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-[10px] font-bold rounded-lg border border-red-500/20 transition-all cursor-pointer"
+                                        title="Eliminar este archivo del recordatorio"
+                                    >
+                                        <Trash2 size={12} /> Quitar
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     )}
                     <input

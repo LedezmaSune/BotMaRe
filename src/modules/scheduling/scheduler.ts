@@ -5,6 +5,7 @@ import { ReminderQueue } from './core/reminder-queue';
 import { TaskRunner } from './core/task-runner';
 import { DeliveryDispatcher } from './services/delivery.dispatcher';
 import { getReminderById } from '../../core/db';
+import { AppError } from '../../middleware/errorHandler';
 
 /**
  * FACHADA PRINCIPAL DEL SISTEMA DE SCHEDULING (BOTMARE)
@@ -63,17 +64,20 @@ export class Scheduler {
     /**
      * Dispara de forma manual e inmediata un recordatorio específico por su ID.
      */
-    static async sendNow(reminderId: number): Promise<void> {
+    static async sendNow(reminderId: number, force: boolean = false): Promise<void> {
         if (!this.waService || !this.reminderService || !this.smsService) {
-            throw new Error("Scheduler no ha sido inicializado.");
+            throw new AppError("Scheduler no ha sido inicializado.", 503);
         }
 
         const reminder = await getReminderById(reminderId);
         if (!reminder) {
-            throw new Error(`Recordatorio #${reminderId} no encontrado.`);
+            throw new AppError(`Recordatorio #${reminderId} no encontrado.`, 404);
         }
-        if (reminder.status === 'sent') {
-            throw new Error(`El recordatorio #${reminderId} ya fue enviado previamente.`);
+        if (reminder.status === 'processing') {
+            throw new AppError(`El recordatorio #${reminderId} ya se está procesando actualmente.`, 409);
+        }
+        if (reminder.status === 'sent' && !force) {
+            throw new AppError(`El recordatorio #${reminderId} ya fue enviado previamente.`, 409);
         }
 
         // Si la cola está activa, lo encolamos o lo despachamos directamente
@@ -85,7 +89,7 @@ export class Scheduler {
         );
 
         if (!result.success) {
-            throw new Error(result.error || `Fallo al despachar recordatorio #${reminderId}`);
+            throw new AppError(result.error || `Fallo al despachar recordatorio #${reminderId}`, 500);
         }
     }
 

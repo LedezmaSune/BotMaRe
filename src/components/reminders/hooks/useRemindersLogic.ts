@@ -42,6 +42,7 @@ export function useRemindersLogic(
     const [loading, setLoading] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [existingMedia, setExistingMedia] = useState<string | null>(null);
+    const [removeMedia, setRemoveMedia] = useState(false);
     const [repeat, setRepeat] = useState('none');
     const [repeatInterval, setRepeatInterval] = useState(1);
     const [repeatUnit, setRepeatUnit] = useState('days');
@@ -78,6 +79,7 @@ export function useRemindersLogic(
     const [showBatchWizard, setShowBatchWizard] = useState(false);
     const [batchChatId, setBatchChatId] = useState('');
     const [batchTime, setBatchTime] = useState('09:00');
+    const [batchIntervalMinutes, setBatchIntervalMinutes] = useState(0);
     const [batchText, setBatchText] = useState('Adjunto archivo: {ARCHIVO}');
     const [batchChannel, setBatchChannel] = useState<'whatsapp' | 'sms'>('whatsapp');
     const [batchProgress, setBatchProgress] = useState<{current: number, total: number, filename: string, label?: string, description?: string} | null>(null);
@@ -127,10 +129,13 @@ export function useRemindersLogic(
                 await fetch(`/api/reminders/${editingId}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chatId, text, time, repeat, repeatInterval, repeatUnit, title, channel })
+                    body: JSON.stringify({ chatId, text, time, repeat, repeatInterval, repeatUnit, title, channel, removeMedia })
                 });
             }
             setEditingId(null);
+            setExistingMedia(null);
+            setRemoveMedia(false);
+            onRefresh?.();
         } else {
             if (repeat === 'multiple_times' && multipleTimes.length > 0) {
                 const baseDate = time ? time.split('T')[0] : new Date().toISOString().split('T')[0];
@@ -167,16 +172,49 @@ export function useRemindersLogic(
         setRepeatInterval(r.repeatInterval || 1);
         setRepeatUnit(r.repeatUnit || 'days');
         setExistingMedia(r.mediaPath ? r.mediaPath.split(/[\\/]/).pop() || null : null);
+        setRemoveMedia(false);
         setChannel(r.channel || 'whatsapp');
         setMode('single');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    const handleRemoveExistingMedia = () => {
+        setExistingMedia(null);
+        setRemoveMedia(true);
+        setMedia(null);
+    };
+
     const handleSendNow = async (id: number) => {
+        if (loading) return;
         if (!confirm('¿Enviar este mensaje ahora mismo?')) return;
         setLoading(true);
         try {
-            await fetch(`/api/reminders/${id}/send-now`, { method: 'POST' });
+            const res = await fetch(`/api/reminders/${id}/send-now`, { method: 'POST' });
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                if (res.status === 409) {
+                    onRefresh?.();
+                    const message = data.error?.message || 'El recordatorio ya fue enviado previamente.';
+                    if (confirm(`${message}\n\n¿Deseas forzar el reenvío de todas formas?`)) {
+                        setLoading(true);
+                        const forceRes = await fetch(`/api/reminders/${id}/send-now?force=true`, { method: 'POST' });
+                        const forceData = await forceRes.json().catch(() => ({}));
+                        if (!forceRes.ok) {
+                            alert(`⚠️ Error al reenviar: ${forceData.error?.message || 'No se pudo reenviar el recordatorio.'}`);
+                        } else {
+                            alert('✅ Recordatorio reenviado exitosamente.');
+                        }
+                        onRefresh?.();
+                    }
+                } else {
+                    alert(`⚠️ Error al enviar: ${data.error?.message || 'No se pudo enviar el recordatorio.'}`);
+                }
+            } else {
+                onRefresh?.();
+            }
+        } catch (error: any) {
+            alert(`⚠️ Error de conexión: ${error.message}`);
         } finally {
             setLoading(false);
         }
@@ -276,15 +314,35 @@ export function useRemindersLogic(
                     description: "Registrando recordatorios en el sistema..."
                 });
 
-                const bulkItems = withDate.map((file: any) => ({
-                    chatId: batchChatId,
-                    text: batchText.replace('{ARCHIVO}', file.name),
-                    time: file.parsed.time,
-                    title: file.name,
-                    mediaPath: file.path,
-                    repeat: 'none',
-                    channel: batchChannel
-                }));
+                const dateCounts: Record<string, number> = {};
+
+                const bulkItems = withDate.map((file: any) => {
+                    let scheduledTime = file.parsed.time;
+
+                    if (batchIntervalMinutes > 0 && scheduledTime && scheduledTime.includes('T')) {
+                        const [datePart, timePart] = scheduledTime.split('T');
+                        const count = dateCounts[datePart] || 0;
+                        dateCounts[datePart] = count + 1;
+
+                        if (count > 0) {
+                            const [hStr, mStr] = (timePart || batchTime || '09:00').split(':');
+                            const totalMinutes = (parseInt(hStr, 10) || 0) * 60 + (parseInt(mStr, 10) || 0) + (count * batchIntervalMinutes);
+                            const newH = Math.floor(totalMinutes / 60) % 24;
+                            const newM = totalMinutes % 60;
+                            scheduledTime = `${datePart}T${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`;
+                        }
+                    }
+
+                    return {
+                        chatId: batchChatId,
+                        text: batchText.replace('{ARCHIVO}', file.name),
+                        time: scheduledTime,
+                        title: file.name,
+                        mediaPath: file.path,
+                        repeat: 'none',
+                        channel: batchChannel
+                    };
+                });
 
                 if (onAddBulk) {
                     await onAddBulk(bulkItems);
@@ -319,7 +377,8 @@ export function useRemindersLogic(
                     globalChatId: batchChatId,
                     globalTime: batchTime,
                     globalText: batchText,
-                    channel: batchChannel
+                    channel: batchChannel,
+                    intervalMinutes: batchIntervalMinutes
                 })
             });
             const data = await res.json();
@@ -354,6 +413,7 @@ export function useRemindersLogic(
         time, setTime,
         media, setMedia,
         existingMedia, setExistingMedia,
+        removeMedia, handleRemoveExistingMedia,
         loading, setLoading,
         editingId, setEditingId,
         repeat, setRepeat,
@@ -366,6 +426,7 @@ export function useRemindersLogic(
         showBatchWizard, setShowBatchWizard,
         batchChatId, setBatchChatId,
         batchTime, setBatchTime,
+        batchIntervalMinutes, setBatchIntervalMinutes,
         batchText, setBatchText,
         batchChannel, setBatchChannel,
         batchProgress,

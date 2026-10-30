@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutGrid, List, Trash2, Paperclip } from 'lucide-react';
+import { LayoutGrid, List, Trash2, Paperclip, Eye, ExternalLink } from 'lucide-react';
 import { Reminder } from '../../types';
 
 interface HistoryListProps {
@@ -73,7 +73,45 @@ export function HistoryList({
                                 </div>
                                 <span className="text-[10px] font-bold tabular-nums text-app-text-muted">{r.time}</span>
                             </div>
-                            <p className="text-sm text-app-text-muted/80 line-clamp-3 mb-4 leading-relaxed line-through decoration-slate-400/30">{r.text}</p>
+                            <p className="text-sm text-app-text-muted/80 line-clamp-3 mb-3 leading-relaxed line-through decoration-slate-400/30">{r.text}</p>
+                            {r.mediaPath && (() => {
+                                const fileName = r.mediaPath.split(/[\\/]/).pop() || 'Archivo adjunto';
+                                const isImage = r.mediaType === 'image' || /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName);
+                                return (
+                                    <div className="mb-4">
+                                        {isImage ? (
+                                            <div className="relative group/media overflow-hidden rounded-2xl border border-app-border bg-black/10 dark:bg-black/40">
+                                                <img 
+                                                    src={`/api/reminders/${r.id}/media`} 
+                                                    alt={fileName} 
+                                                    className="w-full h-28 object-cover transition-transform duration-300 group-hover/media:scale-105 opacity-80 group-hover/media:opacity-100" 
+                                                    loading="lazy"
+                                                />
+                                                <a 
+                                                    href={`/api/reminders/${r.id}/media`} 
+                                                    target="_blank" 
+                                                    rel="noreferrer"
+                                                    className="absolute inset-0 bg-black/50 opacity-0 group-hover/media:opacity-100 flex items-center justify-center gap-1.5 text-white text-xs font-bold transition-opacity backdrop-blur-[2px]"
+                                                >
+                                                    <Eye size={14} /> Ver archivo ({fileName})
+                                                </a>
+                                            </div>
+                                        ) : (
+                                            <a 
+                                                href={`/api/reminders/${r.id}/media`} 
+                                                target="_blank" 
+                                                rel="noreferrer" 
+                                                className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/20 text-xs font-bold transition-all truncate"
+                                                title={`Ver archivo: ${fileName}`}
+                                            >
+                                                <Paperclip size={14} className="shrink-0 text-emerald-400" />
+                                                <span className="truncate flex-1">{fileName}</span>
+                                                <ExternalLink size={12} className="shrink-0 ml-auto opacity-70" />
+                                            </a>
+                                        )}
+                                    </div>
+                                );
+                            })()}
                             <div className="flex items-center justify-between pt-4 border-t border-app-border">
                                 <span className="text-[10px] text-app-text-muted font-bold truncate max-w-[140px]">A: {r.chatId}</span>
                                 <button onClick={() => onDelete(r.id)} className="p-2 hover:bg-red-500/10 text-red-500/60 rounded-lg transition-all"><Trash2 size={16} /></button>
@@ -125,7 +163,27 @@ export function HistoryList({
                                                 <p className="text-xs font-bold text-app-text-muted truncate max-w-[120px]">{r.chatId}</p>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4"><div className="flex items-center gap-2">{r.mediaPath && <Paperclip size={10} className="text-purple-400/50 shrink-0" />}<p className="text-[11px] text-app-text-muted/80 truncate max-w-[200px] line-through decoration-slate-400/30">{r.text}</p></div></td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1">
+                                                <p className="text-[11px] text-app-text-muted/80 truncate max-w-[200px] line-through decoration-slate-400/30">{r.text}</p>
+                                                {r.mediaPath && (() => {
+                                                    const fileName = r.mediaPath.split(/[\\/]/).pop() || 'Archivo';
+                                                    return (
+                                                        <a 
+                                                            href={`/api/reminders/${r.id}/media`} 
+                                                            target="_blank" 
+                                                            rel="noreferrer" 
+                                                            className="flex items-center gap-1 text-[10px] text-emerald-400/80 hover:text-emerald-300 font-bold max-w-[180px] truncate underline underline-offset-2"
+                                                            title={`Ver archivo: ${fileName}`}
+                                                        >
+                                                            <Paperclip size={10} className="shrink-0" />
+                                                            <span className="truncate">{fileName}</span>
+                                                            <ExternalLink size={8} className="shrink-0 opacity-70" />
+                                                        </a>
+                                                    );
+                                                })()}
+                                            </div>
+                                        </td>
                                         <td className="px-6 py-4 text-right"><div className="flex items-center justify-end gap-1"><button onClick={() => onDelete(r.id)} className="p-2 hover:bg-red-500/10 text-red-500/70 rounded-lg transition-all"><Trash2 size={14} /></button></div></td>
                                     </motion.tr>
                                 );

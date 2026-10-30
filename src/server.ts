@@ -134,7 +134,7 @@ app.use(helmet({
 }));
 
 // Endpoint público de salud (sin autenticación ni datos internos)
-let appVersion = '2.7.0';
+let appVersion = '2.8.0';
 try {
     const pkgPath = path.join(process.cwd(), 'package.json');
     if (fs.existsSync(pkgPath)) {

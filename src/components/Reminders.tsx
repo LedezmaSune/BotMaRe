@@ -41,6 +41,7 @@ export function Reminders({ reminders, templates, onAdd, onAddBulk, onDelete, in
         time, setTime,
         media, setMedia,
         existingMedia,
+        handleRemoveExistingMedia,
         repeat, setRepeat,
         repeatInterval, setRepeatInterval,
         repeatUnit, setRepeatUnit,
@@ -53,6 +54,7 @@ export function Reminders({ reminders, templates, onAdd, onAddBulk, onDelete, in
         showBatchWizard, setShowBatchWizard,
         batchChatId, setBatchChatId,
         batchTime, setBatchTime,
+        batchIntervalMinutes, setBatchIntervalMinutes,
         batchText, setBatchText,
         batchChannel, setBatchChannel,
         batchProgress,
@@ -66,7 +68,7 @@ export function Reminders({ reminders, templates, onAdd, onAddBulk, onDelete, in
                 <div className="fixed inset-0 z-[999] flex items-center justify-center bg-background/60 backdrop-blur-sm">
                     <div className="flex flex-col items-center gap-4 p-8 bg-app-card border border-app-border rounded-3xl shadow-2xl animate-in zoom-in duration-300">
                         <Loader2 className="w-12 h-12 text-purple-500 animate-spin" />
-                        <p className="text-sm font-black uppercase tracking-widest text-app-text animate-pulse">Procesando Lote...</p>
+                        <p className="text-sm font-black uppercase tracking-widest text-app-text animate-pulse">Procesando...</p>
                     </div>
                 </div>
             )}
@@ -78,6 +80,8 @@ export function Reminders({ reminders, templates, onAdd, onAddBulk, onDelete, in
                     setBatchChatId={setBatchChatId}
                     batchTime={batchTime}
                     setBatchTime={setBatchTime}
+                    batchIntervalMinutes={batchIntervalMinutes}
+                    setBatchIntervalMinutes={setBatchIntervalMinutes}
                     batchText={batchText}
                     setBatchText={setBatchText}
                     batchChannel={batchChannel}
@@ -133,6 +137,7 @@ export function Reminders({ reminders, templates, onAdd, onAddBulk, onDelete, in
                                 media={media}
                                 setMedia={setMedia}
                                 existingMedia={existingMedia}
+                                onRemoveExistingMedia={handleRemoveExistingMedia}
                                 editingId={editingId} setEditingId={setEditingId}
                                 loading={loading}
                                 templates={templates}
