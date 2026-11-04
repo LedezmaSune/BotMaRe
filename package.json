@@ -93,19 +93,5 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "vitest": "^4.1.11"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@whiskeysockets/baileys",
-      "better-sqlite3",
-      "cloudflared",
-      "esbuild",
-      "protobufjs",
-      "sharp"
-    ],
-    "overrides": {
-      "@whiskeysockets/baileys": "6.7.24",
-      "axios": "^0.31.1"
-    }
   }
 }

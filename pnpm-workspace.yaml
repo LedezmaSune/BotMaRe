@@ -1,0 +1,13 @@
+allowBuilds:
+  '@whiskeysockets/baileys': true
+  better-sqlite3: true
+  cloudflared: true
+  esbuild: true
+  protobufjs: true
+  tunnelmole: true
+  unrs-resolver: true
+
+overrides:
+  '@whiskeysockets/baileys': 6.7.24
+  axios: ^0.31.1
+
