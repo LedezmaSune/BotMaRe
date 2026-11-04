@@ -306,6 +306,13 @@ else
     ok "pnpm $(pnpm -v) ya disponible."
 fi
 
+# Instalar node-gyp para compilación nativa de C++ (better-sqlite3)
+if ! command -v node-gyp &>/dev/null; then
+    info "Instalando node-gyp globalmente..."
+    npm install -g node-gyp 2>/dev/null || true
+    ok "node-gyp instalado."
+fi
+
 # Desactivar cambio automático a binarios nativos @pnpm/exe (no existen para android-arm64)
 pnpm config set manage-package-manager-versions false 2>/dev/null || true
 pnpm config set package-manager-strict false 2>/dev/null || true

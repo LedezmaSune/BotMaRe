@@ -93,15 +93,19 @@ cd BotMaRe && pnpm run menu
 # 1. Dependencias del sistema y herramientas de compilación
 pkg update -y && pkg install -y git nodejs-lts sqlite clang make python
 
-# 2. Instalar pnpm y clonar repositorio
-npm install -g pnpm
+# 2. Instalar gestores y compilador nativo
+npm install -g pnpm node-gyp
 git clone https://github.com/LedezmaSune/BotMaRe.git
 cd BotMaRe
 
-# 3. Configurar pnpm para Android (evitar binarios nativos @pnpm/exe)
-pnpm config set manage-package-manager-versions false
+# 3. Configurar entorno de compilación C++ para Termux
+export TERMUX_PREFIX="/data/data/com.termux/files/usr"
+export CC=clang CXX=clang++ LINK=clang++
+mkdir -p ~/.gyp && echo "{'variables':{'android_ndk_path':''}}" > ~/.gyp/include.gypi
+
+# 4. Instalar dependencias y compilar better-sqlite3 con SQLite del sistema
 pnpm install --ignore-scripts
-pnpm rebuild better-sqlite3
+pnpm rebuild better-sqlite3 --build-from-source --sqlite="$TERMUX_PREFIX"
 
 # 4. Compilar Dashboard (optimizado sin colapso de memoria heap)
 pnpm run build
@@ -535,6 +539,15 @@ Ejecución continua 24/7 en servidores de producción:
 
 ## ⚠️ Solución a Errores Comunes
 
+- **Termux: `sh: 1: node-gyp: not found` al compilar better-sqlite3:**
+  Instala `node-gyp` globalmente y configura las banderas de clang en Termux:
+  ```bash
+  npm install -g node-gyp
+  export TERMUX_PREFIX="/data/data/com.termux/files/usr"
+  export CC=clang CXX=clang++ LINK=clang++
+  mkdir -p ~/.gyp && echo "{'variables':{'android_ndk_path':''}}" > ~/.gyp/include.gypi
+  pnpm rebuild better-sqlite3 --build-from-source --sqlite="$TERMUX_PREFIX"
+  ```
 - **Termux: `ERR_PNPM_PNPM_ENGINE_NO_NATIVE_BINARY` (@pnpm/exe sin binario nativo para android-arm64):**
   ```bash
   pnpm config set manage-package-manager-versions false
