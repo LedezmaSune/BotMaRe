@@ -79,12 +79,35 @@
 
 ### 📱 1. Android (Termux)
 Ideal para ejecutar el bot de forma continua en tu teléfono Android sin root.
+
+**Opción A: Instalador automático en 1 paso:**
 ```bash
-# Instalador automático en 1 paso:
 curl -fsSL https://raw.githubusercontent.com/LedezmaSune/BotMaRe/main/install-termux.sh | bash
 
 # Iniciar el panel maestro:
 cd BotMaRe && pnpm run menu
+```
+
+**Opción B: Instalación manual en Termux:**
+```bash
+# 1. Dependencias del sistema y herramientas de compilación
+pkg update -y && pkg install -y git nodejs-lts sqlite clang make python
+
+# 2. Instalar pnpm y clonar repositorio
+npm install -g pnpm
+git clone https://github.com/LedezmaSune/BotMaRe.git
+cd BotMaRe
+
+# 3. Configurar pnpm para Android (evitar binarios nativos @pnpm/exe)
+pnpm config set manage-package-manager-versions false
+pnpm install --ignore-scripts
+pnpm rebuild better-sqlite3
+
+# 4. Compilar Dashboard (optimizado sin colapso de memoria heap)
+pnpm run build
+
+# 5. Iniciar BotMaRe
+pnpm run menu
 ```
 
 ---
@@ -512,6 +535,15 @@ Ejecución continua 24/7 en servidores de producción:
 
 ## ⚠️ Solución a Errores Comunes
 
+- **Termux: `ERR_PNPM_PNPM_ENGINE_NO_NATIVE_BINARY` (@pnpm/exe sin binario nativo para android-arm64):**
+  ```bash
+  pnpm config set manage-package-manager-versions false
+  ```
+  Asegúrate de contar con el archivo `.npmrc` en la raíz del proyecto para evitar que pnpm intente descargar binarios no compatibles con Android.
+- **Termux: `JavaScript heap out of memory` / `Failed to type check` en build:**
+  Next.js ya está configurado con `typescript: { ignoreBuildErrors: true }` para omitir la carga del verificador de tipos en teléfonos móviles. Si tu teléfono tiene menos de 2 GB de RAM y experimentas lentitud, puedes arrancar directamente en desarrollo con `pnpm run dev` (sin necesidad de compilar).
+- **Windows / PM2: `"pm2" no se reconoce como un comando interno o externo`:**
+  Instala PM2 de forma global en Windows con `npm install -g pm2` (o `pnpm add -g pm2`), o ejecuta el bot directamente con `pnpm run dev`, `pnpm start` o `pnpm run menu`.
 - **Recompilar binarios nativos:**
   ```bash
   pnpm rebuild better-sqlite3
@@ -534,6 +566,10 @@ Ejecución continua 24/7 en servidores de producción:
   - 🛡️ **Jitter Buffer Anti-Ban en la Cola del Scheduler:** Pausa de seguridad aleatoria (3 a 6 segundos) entre recordatorios consecutivos despachados por la cola (`ReminderQueue`), previniendo sobrecargas o bloqueos en WhatsApp.
   - ⚡ **Envío Inmediato Resiliente (`sendNow`):** Erradicación de falsas alarmas de error 500 en `NotificationHub`, mapeo semántico a códigos HTTP 409 Conflict y 404 Not Found, soporte para forzar reenvíos manuales (`force=true`) y sincronización inmediata de la interfaz.
   - 🌐 **Endpoint Seguro de Medios:** Nueva ruta `GET /api/reminders/:id/media` respaldada por `MediaResolverService` para servir archivos protegidos con resolución en caliente y protección contra Path Traversal.
+  - 🛡️ **Blindaje de Seguridad Crítico Next.js 16.4.3:** Actualización de `next` y `eslint-config-next` resolviendo la vulnerabilidad de Ejecución Remota de Código (RCE) en la API de Optimización de Imágenes (GHSA-2464-fhr4-w9xw).
+  - 📱 **Soporte y Resiliencia en Android (Termux):**
+    - Adición de `.npmrc` con `manage-package-manager-versions=false` e inmunidad al fallo `ERR_PNPM_PNPM_ENGINE_NO_NATIVE_BINARY` (@pnpm/exe en arquitecturas android-arm64).
+    - Optimización del empaquetado de producción de Next.js (`ignoreBuildErrors: true`), erradicando colapsos de memoria RAM (`JavaScript heap out of memory`) durante el build en dispositivos móviles.
   - 🧪 **Suite de 196 Tests Automatizados:** Cobertura expandida con 11 nuevos tests unitarios en Vitest sin errores de compilación TypeScript.
 - **[2.7.0] - 2026-10-17:** Blindaje Integral de Seguridad, Persistencia Desacoplada y Hardening Productivo:
   - 🛡️ **Erradicación de "Esperando Mensaje" en WhatsApp:** Corrección crítica en la gestión criptográfica Signal de Baileys (`getMessage` devuelve `undefined` en lugar de objeto vacío), evitando que retransmisiones corruptas bloqueen el chat del receptor, con reconexión atómica y estabilización de pre-claves.
