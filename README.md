@@ -103,10 +103,16 @@ bash termux.sh
 
 # (O si prefieres el menú interactivo con todas las opciones):
 pnpm run menu
+
+# (O si tienes datos móviles lentos/inestables, abre el Gestor Visual Web):
+pnpm run install:web
+# Abre en el navegador de tu celular: http://localhost:8000
 ```
 
 > [!TIP]
 > **Lanzador Rápido Todo-en-Uno (`termux.sh`):** Sincroniza los últimos cambios de GitHub (`git pull`), asegura las dependencias de Node.js, auto-descomprime el Dashboard en 0.2s, compila `better-sqlite3` automáticamente con Clang si hace falta e inicia BotMaRe en un único comando.
+>
+> **Gestor de Descargas Visual Web (`pnpm run install:web`):** Si tu conexión móvil se corta o descarga a baja velocidad (~40 KiB/s), este asistente nativo sin dependencias te permite pausar, reanudar y ver en vivo el avance porcentual y los logs desde el navegador de tu teléfono (`http://localhost:8000`).
 
 ---
 
@@ -574,6 +580,7 @@ Ejecución continua 24/7 en servidores de producción:
 ## 🔄 Historial de Actualizaciones (Changelog)
 
 - **[2.8.1] - 2026-11-07:** Estandarización Universal de pnpm@latest, Dashboard Precompilado, Auto-Iniciador Termux y Parche Next.js 16.4.3:
+  - 🌐 **Gestor de Descargas e Instalador Web Nativo (`bin/web-installer.js`):** Interfaz web móvil ultraligera de cero dependencias en puerto 8000 con Server-Sent Events (SSE), monitorización en tiempo real paquete por paquete (0-100%), descarga secuencial (`concurrency=1`, timeout 30 min) para conexiones móviles lentas o inestables, botones de Pausar/Reanudar y transferencia automática con un clic al servidor de producción.
   - ⚡ **Dashboard Precompilado Ultra-Ligero (544 KB):** Empaquetado estático de producción en `bin/dashboard-out.tar.gz` con auto-extracción en 0.2s en `bin/check-build.js`, `install-termux.sh` y `update.service.ts`, erradicando por completo los tiempos de espera y el consumo de RAM en dispositivos móviles.
   - 🤖 **Auto-Compilador de SQLite y Script `termux.sh`:** Detección en caliente de `better-sqlite3` al arranque para auto-compilar con Clang/LLVM si es necesario, y creación del script todo-en-uno `termux.sh` (`pnpm run termux`) para actualizar desde Git, resolver dependencias e iniciar en 1 solo comando.
   - 📦 **Estandarización Universal de pnpm@latest:** Todos los instaladores (`install-windows.ps1`, `install.sh`, `install-termux.sh`, `setup.sh`, `update.sh` y `UpdateService`) garantizan ahora la descarga, verificación y ejecución de `pnpm@latest` como primer paso.

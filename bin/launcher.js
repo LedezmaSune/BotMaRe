@@ -99,6 +99,7 @@ async function showMenu() {
     console.log(`    ${c.dim}│${c.reset} ${c.yellow}[15]${c.reset} 📝 Editar .env       ${c.dim}(Configuración)${c.reset}`);
     console.log(`    ${c.dim}│${c.reset} ${c.yellow}[16]${c.reset} ⏪ Restaurar Backups ${c.dim}(Emergencia)${c.reset}`);
     console.log(`    ${c.dim}│${c.reset} ${c.yellow}[17]${c.reset} 🔐 Generar Secretos  ${c.dim}(setup:secrets Criptográfico)${c.reset}`);
+    console.log(`    ${c.dim}│${c.reset} ${c.yellow}[18]${c.reset} 🌐 Gestor Web        ${c.dim}(Descargas e Instalador HTTP :8000)${c.reset}`);
     console.log(`    ${c.yellow}╰────────────────────────────────────────${c.reset}\n`);
 
     console.log(`    ${c.red}[11] ❌ Salir del Sistema${c.reset}\n`);
@@ -116,7 +117,7 @@ async function showMenu() {
         console.log(`    ${c.cyan}💡 Tip: Si acabas de actualizar o tienes errores, presiona [12] o [13].${c.reset}\n`);
     }
     
-    rl.question(`    ${c.cyan}${c.bright}➤ Selecciona una acción [1-17]:${c.reset} `, (choice) => {
+    rl.question(`    ${c.cyan}${c.bright}➤ Selecciona una acción [1-18]:${c.reset} `, (choice) => {
         handleChoice(choice.trim());
     });
 
@@ -369,6 +370,10 @@ function handleChoice(choice) {
         case '17':
             console.log(`\n    ${c.bgYellow}${c.bright} 🔐 GENERANDO SECRETOS CRIPTOGRÁFICOS (.env) ${c.reset}\n`);
             runCmd('pnpm', ['run', 'setup:secrets'], showMenu);
+            break;
+        case '18':
+            console.log(`\n    ${c.bgCyan}${c.bright} 🌐 INICIANDO ASISTENTE Y GESTOR DE DESCARGAS WEB (:8000) ${c.reset}\n`);
+            runCmd('node', ['bin/web-installer.js'], showMenu);
             break;
         default: invalidChoice(showMenu); break;
     }

@@ -12,6 +12,7 @@
     "build": "pnpm run clean && next build --webpack && pnpm run pack:dashboard",
     "start": "node bin/check-build.js && tsx --dns-result-order=ipv4first src/server.ts",
     "termux": "bash termux.sh",
+    "install:web": "node bin/web-installer.js",
     "setup": "node -e \"const fs=require('fs'); if(!fs.existsSync('.env')) fs.copyFileSync('.env.example', '.env')\" && pnpm install",
     "setup:secrets": "node bin/generate-secrets.js",
     "reset:wa": "rimraf data/whatsapp_auth.db auth_info_baileys",
