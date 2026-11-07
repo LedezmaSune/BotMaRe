@@ -22,8 +22,8 @@ fi
 
 # 2. Asegurar dependencias de Node.js
 if [ ! -d "node_modules" ] || [ ! -d "node_modules/@whiskeysockets/baileys" ]; then
-    echo "📦 [2/3] Instalando dependencias necesarias (modo seguro Termux)..."
-    pnpm install --ignore-scripts
+    echo "📦 [2/3] Instalando dependencias necesarias (modo secuencial 1x1)..."
+    pnpm install --ignore-scripts --network-concurrency 1 --fetch-timeout 1800000 --fetch-retries 10
 fi
 
 # 3. Arrancar BotMaRe
