@@ -1,10 +1,10 @@
 <div align="center">
-  <img src="https://img.shields.io/badge/BotMaRe-v2.8.0-6366f1?style=for-the-badge&logo=probot" alt="BotMaRe Banner"/>
+  <img src="https://img.shields.io/badge/BotMaRe-v2.8.1-6366f1?style=for-the-badge&logo=probot" alt="BotMaRe Banner"/>
   <h1>🦊 BotMaRe - Dashboard</h1>
   <p><strong>La plataforma definitiva de automatización para WhatsApp impulsada por Inteligencia Artificial, Orquestación Multi-Proveedor y Despliegue Multi-Plataforma.</strong></p>
 
   <p>
-    <img src="https://img.shields.io/badge/Version-2.8.0-indigo?style=flat-square" alt="Version 2.8.0"/>
+    <img src="https://img.shields.io/badge/Version-2.8.1-indigo?style=flat-square" alt="Version 2.8.1"/>
     <img src="https://img.shields.io/badge/Tests-196%20Passed-success?style=flat-square" alt="Tests 196 Passed"/>
     <img src="https://img.shields.io/badge/Node.js-20.19.0+-339933?logo=nodedotjs&logoColor=white&style=flat-square" alt="Node.js"/>
     <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&style=flat-square" alt="Next.js"/>
@@ -572,6 +572,14 @@ Ejecución continua 24/7 en servidores de producción:
 
 ## 🔄 Historial de Actualizaciones (Changelog)
 
+- **[2.8.1] - 2026-11-07:** Estandarización Universal de pnpm@latest, Blindaje Multi-Plataforma en Android (Termux) y Parche de Seguridad Next.js 16.4.3:
+  - 📦 **Estandarización Universal de pnpm@latest:** Todos los instaladores (`install-windows.ps1`, `install.sh`, `install-termux.sh`, `setup.sh`, `update.sh` y `UpdateService`) garantizan ahora la descarga, verificación y ejecución de `pnpm@latest` como primer paso.
+  - 📱 **Soporte y Resiliencia en Android (Termux ARM64):** Creación de `.npmrc` con `manage-package-manager-versions=false` y `package-manager-strict=false`, erradicando el fallo `ERR_PNPM_PNPM_ENGINE_NO_NATIVE_BINARY` ante binarios nativos inexistentes para `android-arm64`.
+  - 🧩 **Migración a pnpm-workspace.yaml:** Desacoplamiento de las directivas `overrides` y `allowBuilds` fuera de `package.json`, asegurando compatibilidad completa con pnpm v10+ y autorizando scripts nativos de Baileys, SQLite y cloudflared.
+  - 🛡️ **Permiso para Dependencias Exóticas:** Activación de `block-exotic-subdeps=false` en `.npmrc` para permitir la descarga e integración directa de `libsignal` desde el repositorio Git oficial de Baileys.
+  - ⚙️ **Compilación Nativa C++ en Termux:** Incorporación de `node-gyp` en los instaladores y exportación automática de banderas de Clang/LLVM para compilar `better-sqlite3` contra la librería SQLite del sistema.
+  - 🚀 **Optimización de Memoria en Next.js Build:** Inyección de `typescript: { ignoreBuildErrors: true }` en `next.config.mjs` para omitir el pesado chequeo de tipos en tiempo de empaquetado, eliminando por completo los errores de `JavaScript heap out of memory` en teléfonos móviles y VPS de recursos limitados.
+  - 🔒 **Parche de Seguridad Crítico Next.js 16.4.3:** Actualización de `next` y `eslint-config-next` resolviendo la vulnerabilidad de Ejecución Remota de Código (RCE) en la API de optimización de imágenes (GHSA-2464-fhr4-w9xw).
 - **[2.8.0] - 2026-10-30:** Gestión Multimedia en Recordatorios, Delay Anti-Ban Escalonado y Envíos Resilientes:
   - 📎 **Inspección Multimedia en Fichas:** Visualización directa de archivos adjuntos en tarjetas y tablas de recordatorios (Pendientes e Historial), con miniaturas interactivas para imágenes y enlaces directos para documentos, audios y videos.
   - ✏️ **Edición y Desasociación de Adjuntos:** Nuevo botón "Ver" para inspeccionar archivos actuales en una nueva pestaña y botón "Quitar" para desasociar la multimedia (`removeMedia`) si se desea transformar el recordatorio a solo texto.

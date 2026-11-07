@@ -95,6 +95,15 @@ export class UpdateService {
     private getKnownReleases() {
         return [
             {
+                version: 'v2.8.1',
+                title: 'v2.8.1 - Estandarización Universal de pnpm@latest, Blindaje Multi-Plataforma en Android y Parche Next.js 16.4.3',
+                date: '2026-11-07T00:00:00Z',
+                body: 'Estandarización de pnpm@latest en todos los instaladores (Windows, Linux, Termux, Docker), resolución de compatibilidad android-arm64, soporte de compilación con node-gyp, bypass de heap out of memory en Next.js build y parche de seguridad crítico en Next.js 16.4.3.',
+                prerelease: false,
+                draft: false,
+                url: 'https://github.com/LedezmaSune/BotMaRe/releases/tag/v2.8.1'
+            },
+            {
                 version: 'v2.8.0',
                 title: 'v2.8.0 - Gestión Multimedia en Recordatorios, Delay Anti-Ban Escalonado y Envíos Resilientes',
                 date: '2026-10-30T00:00:00Z',

@@ -16,6 +16,22 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'V 2.8.1',
+        date: '07 Noviembre 2026',
+        title: 'Estandarización Universal de pnpm@latest, Blindaje Multi-Plataforma en Android y Parche Next.js 16.4.3',
+        type: 'patch',
+        description: 'Actualización mayor de infraestructura y hardening: adopción estándar de pnpm@latest en todos los entornos (Windows, Linux, Termux, Docker y Actualizador Web), resolución del bloqueo de arquitecturas android-arm64, soporte de compilación nativa C++ con node-gyp, eliminación de colapsos de memoria heap en Next.js build y parche crítico contra vulnerabilidad RCE.',
+        features: [
+            '📦 Estandarización Universal de pnpm@latest: Todos los instaladores (install-windows.ps1, install.sh, install-termux.sh, setup.sh, update.sh y UpdateService) garantizan ahora la descarga y ejecución de pnpm@latest como primer paso.',
+            '📱 Soporte y Resiliencia en Android (Termux ARM64): Creación de .npmrc con manage-package-manager-versions=false y package-manager-strict=false, erradicando el fallo ERR_PNPM_PNPM_ENGINE_NO_NATIVE_BINARY.',
+            '🧩 Migración a pnpm-workspace.yaml: Desacoplamiento de las directivas overrides y allowBuilds fuera de package.json, asegurando compatibilidad total con pnpm v10+ y autorizando scripts nativos de Baileys, SQLite y cloudflared.',
+            '🛡️ Permiso para Dependencias Exóticas: Inclusión de block-exotic-subdeps=false en .npmrc para permitir la descarga e integración directa de libsignal desde el repositorio Git oficial de Baileys.',
+            '⚙️ Compilación Nativa C++ en Termux: Incorporación de node-gyp en los instaladores y exportación automática de banderas de Clang/LLVM para compilar better-sqlite3 contra la librería SQLite del sistema.',
+            '🚀 Optimización de Memoria en Next.js Build: Inyección de typescript: { ignoreBuildErrors: true } en next.config.mjs para omitir el pesado chequeo de tipos en tiempo de empaquetado, eliminando por completo los errores de JavaScript heap out of memory en teléfonos móviles y VPS de recursos limitados.',
+            '🔒 Parche de Seguridad Crítico Next.js 16.4.3: Actualización de next y eslint-config-next resolviendo la vulnerabilidad de Ejecución Remota de Código (RCE) en la API de optimización de imágenes (GHSA-2464-fhr4-w9xw).'
+        ]
+    },
+    {
         version: 'V 2.8.0',
         date: '30 Octubre 2026',
         title: 'Gestión Multimedia en Fichas de Recordatorios, Delay Anti-Ban Escalonado y Envíos Resilientes',
