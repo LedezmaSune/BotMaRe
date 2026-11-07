@@ -130,10 +130,18 @@ else
     npm install -g pnpm@latest 2>/dev/null || true
 fi
 
-if ! pnpm install; then
-    fail "Fallo al instalar las dependencias."
-    warn "Intenta ejecutar manualmente 'pnpm install' para ver el error completo."
-    exit 1
+if [ "$OS" = "termux" ]; then
+    info "Entorno Termux detectado. Instalando dependencias en modo seguro (--ignore-scripts)..."
+    if ! pnpm install --ignore-scripts; then
+        fail "Fallo al instalar las dependencias en Termux."
+        exit 1
+    fi
+else
+    if ! pnpm install; then
+        fail "Fallo al instalar las dependencias."
+        warn "Intenta ejecutar manualmente 'pnpm install' para ver el error completo."
+        exit 1
+    fi
 fi
 ok "Librerías y dependencias actualizadas."
 
@@ -177,12 +185,23 @@ if [[ "$OS" != "macos" ]] && [[ "$OS" != "termux" ]]; then
     fi
 fi
 
-if ! pnpm run build; then
-    fail "Error al compilar la aplicación con Next.js."
-    warn "Puedes intentar compilarlo manualmente ejecutando: pnpm run build"
-    exit 1
+if [ -f "bin/dashboard-out.tar.gz" ]; then
+    info "Extrayendo Dashboard visual precompilado (544 KB, ultra-rápido sin consumo de RAM)..."
+    mkdir -p out
+    if tar -xzf bin/dashboard-out.tar.gz -C out; then
+        ok "Dashboard visual actualizado con éxito en 1 segundo."
+    else
+        warn "Fallo al descomprimir paquete, compilando manualmente con Next.js..."
+        pnpm run build
+    fi
+else
+    if ! pnpm run build; then
+        fail "Error al compilar la aplicación con Next.js."
+        warn "Puedes intentar compilarlo manualmente ejecutando: pnpm run build"
+        exit 1
+    fi
+    ok "Dashboard reconstruido de forma exitosa."
 fi
-ok "Dashboard reconstruido de forma exitosa."
 
 # 6. Reiniciar / Finalizar
 step 5 "Preparando finalización..."

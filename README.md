@@ -93,24 +93,15 @@ cd BotMaRe && pnpm run menu
 # 1. Dependencias del sistema y herramientas de compilación
 pkg update -y && pkg install -y git nodejs-lts sqlite clang make python
 
-# 2. Instalar gestores y compilador nativo
+# 2. Instalar gestores y clonar repositorio
 npm install -g pnpm@latest node-gyp
 git clone https://github.com/LedezmaSune/BotMaRe.git
 cd BotMaRe
 
-# 3. Configurar entorno de compilación C++ para Termux
-export TERMUX_PREFIX="/data/data/com.termux/files/usr"
-export CC=clang CXX=clang++ LINK=clang++
-mkdir -p ~/.gyp && echo "{'variables':{'android_ndk_path':''}}" > ~/.gyp/include.gypi
+# 3. Iniciar, compilar y actualizar todo en 1 solo paso automático:
+bash termux.sh
 
-# 4. Instalar dependencias y compilar better-sqlite3 con SQLite del sistema
-pnpm install --ignore-scripts
-pnpm rebuild better-sqlite3 --build-from-source --sqlite="$TERMUX_PREFIX"
-
-# 4. Compilar Dashboard (optimizado sin colapso de memoria heap)
-pnpm run build
-
-# 5. Iniciar BotMaRe
+# (O si prefieres el menú interactivo con todas las opciones):
 pnpm run menu
 ```
 

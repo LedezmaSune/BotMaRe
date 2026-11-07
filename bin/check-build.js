@@ -5,6 +5,7 @@ const path = require('path');
 const outDir = path.resolve(__dirname, '../out');
 const prebuiltTar = path.resolve(__dirname, 'dashboard-out.tar.gz');
 
+// 1. Asegurar Dashboard visual (descomprimir precompilado de 544 KB o compilar)
 const isMissingOrEmpty = !fs.existsSync(outDir) || fs.readdirSync(outDir).length === 0;
 
 if (isMissingOrEmpty) {
@@ -30,6 +31,40 @@ if (isMissingOrEmpty) {
         } catch (e) {
             console.error('[BotMaRe] Error al compilar el proyecto.');
             process.exit(1);
+        }
+    }
+}
+
+// 2. En Termux: auto-compilar better-sqlite3 si aún no está compilado para Android ARM64
+const isTermux = fs.existsSync('/data/data/com.termux');
+if (isTermux) {
+    try {
+        require('better-sqlite3');
+    } catch (sqliteErr) {
+        console.log('[BotMaRe] Detectado better-sqlite3 sin compilar en Termux. Compilando automáticamente...');
+        const termuxPrefix = '/data/data/com.termux/files/usr';
+        const homeDir = process.env.HOME || '/data/data/com.termux/files/home';
+        const gypDir = path.join(homeDir, '.gyp');
+        if (!fs.existsSync(gypDir)) fs.mkdirSync(gypDir, { recursive: true });
+        fs.writeFileSync(path.join(gypDir, 'include.gypi'), "{'variables':{'android_ndk_path':''}}\n");
+
+        const env = {
+            ...process.env,
+            CC: 'clang',
+            CXX: 'clang++',
+            LINK: 'clang++',
+            npm_config_build_from_source: 'true',
+            npm_config_sqlite: termuxPrefix
+        };
+
+        try {
+            execSync(`pnpm rebuild better-sqlite3 --build-from-source --sqlite="${termuxPrefix}"`, {
+                stdio: 'inherit',
+                env
+            });
+            console.log('[BotMaRe] ¡better-sqlite3 compilado exitosamente para Termux!');
+        } catch (rebuildErr) {
+            console.warn('[BotMaRe] Advertencia al compilar better-sqlite3:', rebuildErr.message);
         }
     }
 }
