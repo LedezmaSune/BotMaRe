@@ -64,7 +64,15 @@ if (isTermux) {
             });
             console.log('[BotMaRe] ¡better-sqlite3 compilado exitosamente para Termux!');
         } catch (rebuildErr) {
-            console.warn('[BotMaRe] Advertencia al compilar better-sqlite3:', rebuildErr.message);
+            try {
+                execSync(`npm rebuild better-sqlite3 --build-from-source --sqlite="${termuxPrefix}"`, {
+                    stdio: 'inherit',
+                    env
+                });
+                console.log('[BotMaRe] ¡better-sqlite3 compilado exitosamente para Termux (vía npm)!');
+            } catch (npmErr) {
+                console.warn('[BotMaRe] Advertencia al compilar better-sqlite3 (se activará fallback multi-archivo resiliente):', npmErr.message);
+            }
         }
     }
 }

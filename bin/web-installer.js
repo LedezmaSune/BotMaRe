@@ -157,19 +157,35 @@ function finalizeInstallation() {
                 if (!fs.existsSync(gypDir)) fs.mkdirSync(gypDir, { recursive: true });
                 fs.writeFileSync(path.join(gypDir, 'include.gypi'), "{'variables':{'android_ndk_path':''}}\n");
 
-                execSync(`pnpm rebuild better-sqlite3 --build-from-source --sqlite="${termuxPrefix}"`, {
-                    cwd: ROOT_DIR,
-                    stdio: 'pipe',
-                    env: {
-                        ...process.env,
-                        CC: 'clang',
-                        CXX: 'clang++',
-                        LINK: 'clang++',
-                        npm_config_build_from_source: 'true',
-                        npm_config_sqlite: termuxPrefix
-                    }
-                });
-                appendLog('✓ better-sqlite3 compilado exitosamente.');
+                try {
+                    execSync(`pnpm rebuild better-sqlite3 --build-from-source --sqlite="${termuxPrefix}"`, {
+                        cwd: ROOT_DIR,
+                        stdio: 'pipe',
+                        env: {
+                            ...process.env,
+                            CC: 'clang',
+                            CXX: 'clang++',
+                            LINK: 'clang++',
+                            npm_config_build_from_source: 'true',
+                            npm_config_sqlite: termuxPrefix
+                        }
+                    });
+                    appendLog('✓ better-sqlite3 compilado exitosamente.');
+                } catch {
+                    execSync(`npm rebuild better-sqlite3 --build-from-source --sqlite="${termuxPrefix}"`, {
+                        cwd: ROOT_DIR,
+                        stdio: 'pipe',
+                        env: {
+                            ...process.env,
+                            CC: 'clang',
+                            CXX: 'clang++',
+                            LINK: 'clang++',
+                            npm_config_build_from_source: 'true',
+                            npm_config_sqlite: termuxPrefix
+                        }
+                    });
+                    appendLog('✓ better-sqlite3 compilado exitosamente (vía npm).');
+                }
             } catch (e) {
                 appendLog(`⚠ Advertencia al compilar better-sqlite3: ${e.message}`);
             }

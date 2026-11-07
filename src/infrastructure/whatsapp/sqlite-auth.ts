@@ -5,24 +5,92 @@ import {
     SignalDataTypeMap,
     initAuthCreds,
     BufferJSON,
-    proto
+    proto,
+    useMultiFileAuthState
 } from '@whiskeysockets/baileys';
-import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 
 /**
- * Custom SQLite provider for Baileys Authentication State.
- * This drastically improves performance on Windows by avoiding thousands of JSON files.
+ * Carga dinámica tolerante a fallos para better-sqlite3.
+ * Evita crashes críticos (unhandled rejection) si los binarios nativos de C++
+ * no se encuentran compilados aún en entornos móviles (Termux Android ARM64) o VPS.
+ */
+function loadDatabaseModule(): any {
+    try {
+        const mod = require('better-sqlite3');
+        return mod.default || mod;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Proveedor de Autenticación Híbrido y Resiliente para Baileys WhatsApp.
+ * - Modo Primario: SQLite WAL ultrarrápido (data/whatsapp_auth.db) cuando better-sqlite3 está compilado.
+ * - Modo Fallback: Almacenamiento multi-archivo estándar de Baileys (data/auth_info_baileys/) si
+ *   el binario nativo aún no está compilado, garantizando que el QR y la conexión NUNCA se bloqueen.
  */
 export async function useSQLiteAuthState(dbPath: string): Promise<{ state: AuthenticationState, saveCreds: () => Promise<void>, purgePreKeys: () => void, close: () => void, clear: () => void }> {
+    const Database = loadDatabaseModule();
+
+    // Si better-sqlite3 no está disponible o falta el binario nativo, usar fallback multi-archivo
+    if (!Database) {
+        console.warn('\n[WhatsApp Auth] ⚠️ better-sqlite3 no está compilado para este entorno.');
+        console.warn('[WhatsApp Auth] 🛡️ Activando automáticamente almacenamiento multi-archivo resiliente (useMultiFileAuthState).');
+        console.warn('[WhatsApp Auth] 👉 La vinculación de WhatsApp y la generación de QR operarán con normalidad.\n');
+
+        const fallbackDir = path.resolve(path.dirname(dbPath), 'auth_info_baileys');
+        const multiAuth = await useMultiFileAuthState(fallbackDir);
+
+        return {
+            state: multiAuth.state,
+            saveCreds: multiAuth.saveCreds,
+            purgePreKeys: () => {},
+            close: () => {},
+            clear: () => {
+                try {
+                    if (fs.existsSync(fallbackDir)) {
+                        fs.rmSync(fallbackDir, { recursive: true, force: true });
+                        console.log('[MultiFile Auth] Sesión limpiada por completo.');
+                    }
+                } catch (e: any) {
+                    console.error('[MultiFile Auth] Error al vaciar sesión:', e.message);
+                }
+            }
+        };
+    }
+
     // Ensure data directory exists
     const dir = path.dirname(dbPath);
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
     }
 
-    const db = new Database(dbPath);
+    let db: any;
+    try {
+        db = new Database(dbPath);
+    } catch (err: any) {
+        console.warn(`\n[WhatsApp Auth] ⚠️ Error al abrir ${dbPath}: ${err.message}.`);
+        console.warn('[WhatsApp Auth] 🛡️ Activando automáticamente almacenamiento multi-archivo resiliente.\n');
+
+        const fallbackDir = path.resolve(path.dirname(dbPath), 'auth_info_baileys');
+        const multiAuth = await useMultiFileAuthState(fallbackDir);
+
+        return {
+            state: multiAuth.state,
+            saveCreds: multiAuth.saveCreds,
+            purgePreKeys: () => {},
+            close: () => {},
+            clear: () => {
+                try {
+                    if (fs.existsSync(fallbackDir)) {
+                        fs.rmSync(fallbackDir, { recursive: true, force: true });
+                    }
+                } catch {}
+            }
+        };
+    }
     
     // WAL Mode para evitar bloqueos y corrupción al reiniciar o si la red falla bruscamente
     db.pragma('journal_mode = WAL');
