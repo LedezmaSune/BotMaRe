@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Herramientas nativas para compilación de dependencias (better-sqlite3)
 RUN apk add --no-cache python3 make g++
-RUN corepack enable
+RUN npm install -g pnpm@latest
 
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
@@ -25,7 +25,7 @@ FROM node:20-alpine AS prod-deps
 WORKDIR /app
 
 RUN apk add --no-cache python3 make g++
-RUN corepack enable
+RUN npm install -g pnpm@latest
 
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --prod --frozen-lockfile
@@ -39,7 +39,7 @@ WORKDIR /app
 
 # Solo curl para comprobación de salud del contenedor; sin compiladores ni toolchain
 RUN apk add --no-cache curl
-RUN corepack enable
+RUN npm install -g pnpm@latest
 
 ENV NODE_ENV=production
 

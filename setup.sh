@@ -18,8 +18,8 @@ else
         exit 1
     fi
 
-    echo "[1/3] Instalando dependencias globales..."
-    npm install -g pnpm pm2
+    echo "[1/3] Instalando dependencias globales (pnpm@latest pm2@latest)..."
+    npm install -g pnpm@latest pm2@latest
     
     echo "[2/3] Instalando dependencias del proyecto..."
     pnpm install

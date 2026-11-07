@@ -299,17 +299,19 @@ ok "Entorno de compilación configurado (clang/clang++ y SQLite nativo)."
 step 3 "Instalando gestores de paquetes..."
 
 if ! command -v pnpm &>/dev/null; then
-    info "Instalando pnpm..."
-    npm install -g pnpm
+    info "Instalando pnpm@latest..."
+    npm install -g pnpm@latest
     ok "pnpm instalado."
 else
-    ok "pnpm $(pnpm -v) ya disponible."
+    info "Asegurando la última versión de pnpm (pnpm@latest)..."
+    npm install -g pnpm@latest 2>/dev/null || true
+    ok "pnpm $(pnpm -v) listo."
 fi
 
 # Instalar node-gyp para compilación nativa de C++ (better-sqlite3)
 if ! command -v node-gyp &>/dev/null; then
     info "Instalando node-gyp globalmente..."
-    npm install -g node-gyp 2>/dev/null || true
+    npm install -g node-gyp@latest 2>/dev/null || true
     ok "node-gyp instalado."
 fi
 

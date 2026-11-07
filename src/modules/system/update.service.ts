@@ -193,9 +193,23 @@ export class UpdateService {
             }
             console.log(`[UpdateService] Código fuente sincronizado limpiamente con origin/${currentBranch}.`);
 
-            // 3. Instalar nuevas dependencias con lockfile estricto y reproducible
+            // 3. Instalar nuevas dependencias asegurando gestor pnpm actualizado
             const isTermux = fs.existsSync('/data/data/com.termux');
+            try {
+                await execAsync('pnpm -v', EXEC_OPTS);
+            } catch {
+                console.log('[UpdateService] pnpm no detectado globalmente. Instalando pnpm@latest...');
+                try {
+                    await execAsync('npm install -g pnpm@latest', EXEC_OPTS);
+                } catch (pnpmErr: any) {
+                    console.warn('[UpdateService] Advertencia al instalar pnpm:', pnpmErr.message);
+                }
+            }
             if (isTermux) {
+                try {
+                    await execAsync('pnpm config set manage-package-manager-versions false', EXEC_OPTS);
+                } catch {}
+
                 console.log('[UpdateService] Entorno Termux detectado. Instalando dependencias (pnpm install --frozen-lockfile --ignore-scripts)...');
                 await execAsync('pnpm install --frozen-lockfile --ignore-scripts', EXEC_OPTS);
             } else {

@@ -94,7 +94,7 @@ cd BotMaRe && pnpm run menu
 pkg update -y && pkg install -y git nodejs-lts sqlite clang make python
 
 # 2. Instalar gestores y compilador nativo
-npm install -g pnpm node-gyp
+npm install -g pnpm@latest node-gyp
 git clone https://github.com/LedezmaSune/BotMaRe.git
 cd BotMaRe
 

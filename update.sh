@@ -123,8 +123,11 @@ ok "Código fuente actualizado exitosamente."
 # 4. Instalar y actualizar dependencias
 step 3 "Actualizando librerías del sistema (pnpm install)..."
 if ! command -v pnpm &>/dev/null; then
-    fail "pnpm no está instalado. Ejecuta 'npm install -g pnpm' primero."
-    exit 1
+    info "pnpm no detectado. Instalando pnpm@latest..."
+    npm install -g pnpm@latest
+else
+    # Mantener pnpm en su versión más reciente
+    npm install -g pnpm@latest 2>/dev/null || true
 fi
 
 if ! pnpm install; then

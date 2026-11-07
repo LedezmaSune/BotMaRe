@@ -34,11 +34,19 @@ if (!(Get-Command "git" -ErrorAction SilentlyContinue)) {
     Write-Host " [!] Git no esta instalado. Si descargaste el .zip funcionara, pero se recomienda Git para actualizar." -ForegroundColor $yellow
 }
 
-# 3. Verificar e instalar pnpm
-Write-Host "`n[2/5] Verificando gestor de paquetes pnpm..." -ForegroundColor $cyan
+# 3. Verificar e instalar pnpm (Última versión como gestor principal)
+Write-Host "`n[2/5] Verificando e instalando gestor de paquetes pnpm (ultima version)..." -ForegroundColor $cyan
 if (!(Get-Command "pnpm" -ErrorAction SilentlyContinue)) {
-    Write-Host " [*] pnpm no detectado. Instalando automaticamente (sin requerir permisos de administrador)..." -ForegroundColor $yellow
-    npm install -g pnpm
+    Write-Host " [*] pnpm no detectado. Instalando automaticamente pnpm@latest..." -ForegroundColor $yellow
+    npm install -g pnpm@latest
+} else {
+    $currentVer = pnpm -v
+    Write-Host " [*] pnpm detectado (v$currentVer). Sincronizando con la version mas reciente (pnpm@latest)..." -ForegroundColor $yellow
+    try {
+        npm install -g pnpm@latest 2>$null
+    } catch {
+        Write-Host " [!] No se pudo actualizar pnpm globalmente, continuando con v$currentVer." -ForegroundColor $yellow
+    }
 }
 $pnpmVer = pnpm -v
 Write-Host " [OK] pnpm esta listo (v$pnpmVer)." -ForegroundColor $green

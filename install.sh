@@ -285,16 +285,18 @@ ok "Node.js $(node -v) detectado."
 step 3 "Instalando gestores de paquetes y procesos..."
 
 if ! command -v pnpm &>/dev/null; then
-    info "Instalando pnpm (gestor de paquetes ultra-rápido)..."
-    npm install -g pnpm
+    info "Instalando pnpm@latest (gestor de paquetes ultra-rápido)..."
+    npm install -g pnpm@latest
     ok "pnpm instalado."
 else
-    ok "pnpm $(pnpm -v) ya disponible."
+    info "Asegurando la última versión de pnpm (pnpm@latest)..."
+    npm install -g pnpm@latest 2>/dev/null || true
+    ok "pnpm $(pnpm -v) listo."
 fi
 
 if ! command -v pm2 &>/dev/null; then
     info "Instalando PM2 (gestor de procesos para producción)..."
-    npm install -g pm2
+    npm install -g pm2@latest
     ok "PM2 instalado."
 else
     ok "PM2 $(pm2 -v) ya disponible."
