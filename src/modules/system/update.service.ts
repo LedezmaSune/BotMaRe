@@ -226,9 +226,23 @@ export class UpdateService {
                 await execAsync('pnpm install --frozen-lockfile', EXEC_OPTS);
             }
 
-            // 4. Recompilar Dashboard
-            console.log('[UpdateService] Compilando interfaz Next.js (pnpm run build)...');
-            await execAsync('pnpm run build', EXEC_OPTS);
+            // 4. Recompilar Dashboard (Optimización con paquete precompilado)
+            const prebuiltTar = path.resolve('bin', 'dashboard-out.tar.gz');
+            if (fs.existsSync(prebuiltTar)) {
+                console.log('[UpdateService] Descomprimiendo Dashboard precompilado (544 KB)...');
+                const outDir = path.resolve('out');
+                if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+                try {
+                    await execAsync(`tar -xzf "${prebuiltTar}" -C "${outDir}"`, EXEC_OPTS);
+                    console.log('[UpdateService] Dashboard precompilado instalado exitosamente en 1 segundo.');
+                } catch {
+                    console.log('[UpdateService] Fallo al descomprimir con tar. Compilando interfaz Next.js (pnpm run build)...');
+                    await execAsync('pnpm run build', EXEC_OPTS);
+                }
+            } else {
+                console.log('[UpdateService] Compilando interfaz Next.js (pnpm run build)...');
+                await execAsync('pnpm run build', EXEC_OPTS);
+            }
 
             // 5. Auto-reinicio si se está usando PM2
             if (process.env.PM2_HOME || process.env.pm_id) {

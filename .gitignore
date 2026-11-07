@@ -57,6 +57,7 @@ bin/*
 !bin/clean-logs.js
 !bin/test-llm.ts
 !bin/generate-secrets.js
+!bin/dashboard-out.tar.gz
 *.bat
 
 # Documentation (Kept locally, excluded from Git/GitHub)

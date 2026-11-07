@@ -428,36 +428,32 @@ else
 fi
 
 # ═══════════════════════════════════════════════════════════════════
-# PASO 6: Compilar Frontend
+# PASO 6: Configurar Frontend (Dashboard)
 # ═══════════════════════════════════════════════════════════════════
-step 6 "Compilando interfaz del Dashboard..."
+step 6 "Configurando interfaz del Dashboard..."
 
-echo ""
-echo -e "${YELLOW}  ⚠  La compilación de Next.js puede ser intensiva en memoria.${NC}"
-echo -e "${YELLOW}     Si tu teléfono tiene menos de 4 GB de RAM, podría fallar.${NC}"
-echo -e "${YELLOW}     En ese caso, compila en una PC y copia la carpeta 'out/'.${NC}"
-echo ""
-
-ask_yn "  ¿Compilar el frontend ahora? (s/n): " "s" DO_BUILD
-
-if [[ "$DO_BUILD" =~ ^[Ss]$ ]]; then
-    info "Compilando... (esto puede tomar varios minutos)"
-    
-    # Limitar la memoria de Node para evitar que Termux mate el proceso
+if [ -f "bin/dashboard-out.tar.gz" ]; then
+    info "Instalando Dashboard precompilado ultra-rápido (544 KB, sin consumo de RAM)..."
+    mkdir -p out
+    if tar -xzf bin/dashboard-out.tar.gz -C out; then
+        ok "¡Dashboard precompilado instalado exitosamente en 1 segundo!"
+    else
+        warn "Fallo al descomprimir paquete. Intentando compilación con Next.js..."
+        pnpm run build
+    fi
+elif [ -d "out" ] && [ "$(ls -A out 2>/dev/null)" ]; then
+    ok "Dashboard ya disponible en out/."
+else
+    info "Compilando Dashboard con Next.js..."
     export NODE_OPTIONS="--max-old-space-size=1024"
-    
     if pnpm run build; then
         ok "¡Dashboard compilado exitosamente!"
     else
-        fail "Error durante la compilación."
+        fail "Error durante la compilación manual."
         echo ""
         warn "Opciones alternativas:"
-        echo -e "  ${CYAN}1.${NC} Compila en una PC y copia la carpeta ${BOLD}out/${NC} a Termux."
-        echo -e "  ${CYAN}2.${NC} Usa modo desarrollo: ${CYAN}pnpm run dev${NC} (no requiere build)."
-        echo -e "  ${CYAN}3.${NC} Intenta de nuevo con más memoria libre (cierra otras apps)."
+        echo -e "  ${CYAN}1.${NC} Usa modo desarrollo: ${CYAN}pnpm run dev${NC} (no requiere build)."
     fi
-else
-    warn "Build omitido. Puedes usar 'pnpm run dev' (no requiere build)."
 fi
 
 # ═══════════════════════════════════════════════════════════════════
