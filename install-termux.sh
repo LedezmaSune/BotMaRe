@@ -319,6 +319,11 @@ fi
 pnpm config set manage-package-manager-versions false 2>/dev/null || true
 pnpm config set package-manager-strict false 2>/dev/null || true
 
+# Configurar tolerancia a timeouts y concurrencia moderada para conexiones móviles
+pnpm config set fetch-timeout 600000 2>/dev/null || true
+pnpm config set fetch-retries 5 2>/dev/null || true
+pnpm config set network-concurrency 4 2>/dev/null || true
+
 # PM2 es opcional en Termux (se puede usar tmux en su lugar)
 if ! command -v pm2 &>/dev/null; then
     info "Instalando PM2 (opcional, para ejecución en segundo plano)..."

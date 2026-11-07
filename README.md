@@ -539,6 +539,13 @@ Ejecución continua 24/7 en servidores de producción:
 
 ## ⚠️ Solución a Errores Comunes
 
+- **Termux: `TimeoutError: The operation was aborted due to timeout` al descargar paquetes pesados (`next`, `googleapis`):**
+  Ocurre en conexiones móviles o Wi-Fi lentas cuando la descarga supera el límite predeterminado de 60s. Configura tiempos tolerantes y menor concurrencia:
+  ```bash
+  pnpm config set fetch-timeout 600000
+  pnpm config set network-concurrency 4
+  pnpm install --ignore-scripts
+  ```
 - **Termux: `sh: 1: node-gyp: not found` al compilar better-sqlite3:**
   Instala `node-gyp` globalmente y configura las banderas de clang en Termux:
   ```bash
