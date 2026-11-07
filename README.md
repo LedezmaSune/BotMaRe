@@ -105,6 +105,9 @@ bash termux.sh
 pnpm run menu
 ```
 
+> [!TIP]
+> **Lanzador Rápido Todo-en-Uno (`termux.sh`):** Sincroniza los últimos cambios de GitHub (`git pull`), asegura las dependencias de Node.js, auto-descomprime el Dashboard en 0.2s, compila `better-sqlite3` automáticamente con Clang si hace falta e inicia BotMaRe en un único comando.
+
 ---
 
 ### 🐧 2. Linux / Debian / Ubuntu VPS
@@ -570,7 +573,9 @@ Ejecución continua 24/7 en servidores de producción:
 
 ## 🔄 Historial de Actualizaciones (Changelog)
 
-- **[2.8.1] - 2026-11-07:** Estandarización Universal de pnpm@latest, Blindaje Multi-Plataforma en Android (Termux) y Parche de Seguridad Next.js 16.4.3:
+- **[2.8.1] - 2026-11-07:** Estandarización Universal de pnpm@latest, Dashboard Precompilado, Auto-Iniciador Termux y Parche Next.js 16.4.3:
+  - ⚡ **Dashboard Precompilado Ultra-Ligero (544 KB):** Empaquetado estático de producción en `bin/dashboard-out.tar.gz` con auto-extracción en 0.2s en `bin/check-build.js`, `install-termux.sh` y `update.service.ts`, erradicando por completo los tiempos de espera y el consumo de RAM en dispositivos móviles.
+  - 🤖 **Auto-Compilador de SQLite y Script `termux.sh`:** Detección en caliente de `better-sqlite3` al arranque para auto-compilar con Clang/LLVM si es necesario, y creación del script todo-en-uno `termux.sh` (`pnpm run termux`) para actualizar desde Git, resolver dependencias e iniciar en 1 solo comando.
   - 📦 **Estandarización Universal de pnpm@latest:** Todos los instaladores (`install-windows.ps1`, `install.sh`, `install-termux.sh`, `setup.sh`, `update.sh` y `UpdateService`) garantizan ahora la descarga, verificación y ejecución de `pnpm@latest` como primer paso.
   - 📱 **Soporte y Resiliencia en Android (Termux ARM64):** Creación de `.npmrc` con `manage-package-manager-versions=false` y `package-manager-strict=false`, erradicando el fallo `ERR_PNPM_PNPM_ENGINE_NO_NATIVE_BINARY` ante binarios nativos inexistentes para `android-arm64`.
   - 🧩 **Migración a pnpm-workspace.yaml:** Desacoplamiento de las directivas `overrides` y `allowBuilds` fuera de `package.json`, asegurando compatibilidad completa con pnpm v10+ y autorizando scripts nativos de Baileys, SQLite y cloudflared.
