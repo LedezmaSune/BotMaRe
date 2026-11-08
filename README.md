@@ -33,12 +33,13 @@
    - [🪟 Windows Local](#-3-windows-local)
    - [☁️ Despliegue en la Nube con Terraform](#-4-despliegue-en-la-nube-con-terraform)
    - [🐳 Docker / Docker Compose](#-5-docker--docker-compose)
-   - [🔐 Seguridad y Secretos (.env)](#-6-configuración-de-seguridad-y-secretos-env)
+   - [🔐 Gestión de Secretos y API Keys (1Password / .env)](#-6-configuración-de-seguridad-y-gestión-de-secretos-env--1password)
 3. [🔄 Centro de Actualizaciones](#-centro-de-actualizaciones)
-4. [🧩 Sistema de Plugins JS](#-sistema-de-plugins-js-sandbox)
-   - [📁 Estructura de un Plugin](#-estructura-de-un-plugin-datapluginsidjs)
-   - [📋 Galería de Plantillas](#-galería-de-plantillas-listas-para-usar)
-   - [🤖 Adaptación con IA](#-adaptar-plugins-de-otros-bots-con-ia)
+4. [📄 Inteligencia Artificial Multimodal, Documentos y OCR](#-inteligencia-artificial-multimodal-documentos-y-ocr)
+   - [📑 Extracción y Lectura de Documentos (PDF, Excel, Word, TXT)](#-extracción-y-lectura-de-documentos-pdf-excel-word-txt)
+   - [👁️ Visión Multimodal y OCR (Imagen a Texto)](#-visión-multimodal-y-ocr-imagen-a-texto)
+   - [🎙️ Transcripción de Audio y Notas de Voz](#-transcripción-de-audio-y-notas-de-voz-whisper)
+   - [🧠 Cerebro de IA y Auto-Respuestas Contextuales](#-cerebro-de-ia-y-auto-respuestas-contextuales)
 5. [📘 Manual de Usuario (Web & Telegram)](#-manual-de-usuario)
    - [🦊 Asistente Maestro de Telegram](#-asistente-maestro-de-telegram)
    - [🤖 Carga Masiva y Spintax](#-difusiones-masivas-y-spintax)
@@ -61,7 +62,7 @@
 | 🔐 **Gestor de Secretos Multi-Proveedor** | Soporte opcional para **1Password Secrets Manager** (`op inject` en memoria), variables del sistema (`environment`) y `.env` tradicional (`dotenv`). Tolerancia cero a fallback silencioso, token seguro en Debian/PM2 y asistente CLI interactivo. |
 | 🛡️ **Blindaje Criptográfico Signal / Baileys** | Transporte E2EE con resolución segura de reintentos (`getMessage`), eliminando bloqueos de *"Esperando mensaje"* y protegiendo la conexión durante reconexiones en caliente. |
 | ⚡ **Diagnóstico de IAs Live** | Pruebas de latencia y estado desde consola (`pnpm test:llm`), Telegram (`/diagnostico`) y Web (`⚡ Probar Conexiones IA`). |
-| 🧩 **Plugins JS con IA Nativa** | Entorno seguro Node.js VM con helper `api.callAI()` y 6 plugins oficiales (Búsqueda web, Resumen de textos, Traductor, Inspector URL, Webhooks y Google Sheets). |
+| 📄 **IA Multimodal, Documentos y OCR** | Extracción nativa de PDF, Excel (XLSX), Word (DOCX) y TXT, visión artificial (OCR imagen a texto) y transcripción de notas de voz con Whisper. |
 | 📊 **Sincronización Google Sheets** | Actualización automática periódica (15m, 1h, 12h o manual) de auto-respuestas y plantillas desde hojas de cálculo de Google. |
 | 📱 **WhatsApp Agent** | Comprensión de imágenes (Visión), transcripción de notas de voz (Whisper), documentos y QR/Pairing Code instantáneo. |
 | 🦊 **Asistente Telegram** | Control remoto total por comandos (`/diagnostico`, `/actualizar`, `/backup`, `/start`) y botones interactivos. |
@@ -186,43 +187,163 @@ BotMaRe implementa **validación estricta al arranque** antes de levantar cualqu
 | `SUPERADMIN_KEY` | Clave maestra para el Panel SuperAdmin y gestión de licencias (`Ctrl+Shift+S`). | No puede estar vacía ni contener `CAMBIA_ESTO`. |
 | `BACKUP_ENCRYPTION_KEY` | Clave simétrica de 256 bits para cifrado de respaldos locales y enviados a Telegram. | No puede estar vacía ni contener `CAMBIA_ESTO`. |
 
-#### 🛡️ Proveedores de Secretos Soportados (dotenv | environment | 1password)
+#### 🛡️ Gestión Integral de Secretos y API Keys (1Password / .env / environment)
 
-BotMaRe admite tres estrategias para la carga y resolución de secretos gestionadas por `SecretProviderManager` (ver detalles en [Guía de Integración con 1Password](./docs/1PASSWORD_INTEGRATION.md)):
+BotMaRe implementa una arquitectura de seguridad corporativa (**DevSecOps**) administrada por `SecretProviderManager` para proteger todas tus API Keys (OpenAI, Gemini, Groq, DeepSeek, Nvidia, etc.) y credenciales criptográficas críticas:
 
-* **`dotenv` (Por defecto):** Carga tradicional desde archivo `.env` local.
-* **`environment`:** Lectura directa de variables del entorno inyectadas por el sistema operativo o contenedor Docker (sin requerir `.env` físico).
-* **`1password`:** Inyección segura en memoria vía **1Password CLI** (`op inject`) a partir de la plantilla `.env.op`.
+```mermaid
+flowchart TD
+    subgraph 1Password Cloud
+        VAULT["Bóveda 1Password (ej. BotMaRe-Prod)"]
+        SA_TOKEN["Token Cuenta de Servicio (ops_...)"]
+    end
+
+    subgraph Servidor Debian / Linux VPS / PM2
+        TOKEN_FILE["/etc/botmare/op.token (0600 - user: admin1)"]
+        ENV_OP[".env.op (Plantilla con op:// URIs)"]
+        CLI["1Password CLI ('op')"]
+        NODE["Proceso Node.js (BotMaRe)"]
+        MEM["process.env en Memoria (CERO secretos en disco)"]
+    end
+
+    SA_TOKEN -->|Guardar| TOKEN_FILE
+    TOKEN_FILE -->|Autenticación sin prompt| CLI
+    ENV_OP -->|Inyección con op inject| CLI
+    VAULT <==>|"HTTPS TLS E2EE"| CLI
+    CLI -->|Inyección en caliente| MEM
+    MEM --> NODE
+```
+
+---
+
+##### 🔑 ¿Por qué es fundamental proteger tus API Keys en Producción?
+BotMaRe orquesta hasta **11 proveedores de Inteligencia Artificial** simultáneamente. Si almacenas estas claves en texto plano dentro de un archivo `.env` en tu servidor:
+1. Un descuido en un commit de Git puede exponer tus claves públicamente en internet.
+2. Si el servidor sufre una brecha de acceso, cualquier atacante que lea el disco obtendría tus créditos y datos confidenciales.
+3. Al utilizar **1Password Secrets Manager**, el archivo `.env` físico se reemplaza por `.env.op` conteniendo únicamente referencias opacas (`op://...`). **Las claves reales existen únicamente en la memoria RAM durante el tiempo de ejecución.**
+
+---
+
+##### ⚙️ Los Tres Proveedores de Secretos Soportados
+
+| Proveedor | Identificador | Características Principales | Ideal Para |
+| :--- | :--- | :--- | :--- |
+| **1Password CLI** | `1password` | Inyección segura en memoria vía `op inject`. Cero secretos en disco, rotación en caliente sin tocar el servidor, tolerancia cero a fallbacks silenciosos. | **Producción VPS / Debian / Nube** |
+| **Variables de Sistema** | `environment` | Lee directamente de `process.env` inyectadas por el orquestador sin depender de ningún archivo local. | **Docker, Kubernetes, CI/CD** |
+| **Dotenv Clásico** | `dotenv` | Lectura tradicional desde archivo plano local `.env`. | **Desarrollo local rápido y Termux** |
 
 > [!IMPORTANT]
-> **Tolerancia Cero a Fallbacks Silenciosos:** Si configuras `SECRETS_PROVIDER=1password` y la CLI de 1Password o el token de Service Account no responden o faltan permisos, el servidor aborta inmediatamente el arranque con un código de salida `process.exit(1)`. Bajo ninguna circunstancia recurre silenciosamente a un archivo `.env` residual o a credenciales por defecto.
+> **Tolerancia Cero a Fallbacks Silenciosos:** Si configuras `BOTMARE_SECRET_PROVIDER=1password` y la CLI de 1Password o el token de servicio no responden, el servidor aborta el arranque de inmediato con un código de salida `process.exit(1)`. **Bajo ninguna circunstancia recurre silenciosamente a un archivo .env residual**, protegiendo contra el uso inadvertido de claves desactualizadas o comprometidas.
 
-##### 🚀 Asistente de Configuración de Proveedor de Secretos
-Puedes configurar tu proveedor en cualquier momento mediante el asistente interactivo:
+---
+
+##### 📁 Estructura Recomendada de Ítems en la Bóveda de 1Password
+
+Cuando BotMaRe migra o se conecta a tu bóveda (por defecto **`BotMaRe-Prod`**), organiza las claves en **Notas Seguras** temáticas:
+
+| Ítem en 1Password | Campos / Variables Mapeadas | Formato de Referencia `op://` |
+| :--- | :--- | :--- |
+| **`botmare-ai`** | `groq_api_key`, `gemini_api_key`, `openai_api_key`, `deepseek_api_key`, `nvidia_api_key`, `openrouter_api_key`, `mistral_api_key`, `together_api_key`, `cerebras_api_key`, `sambanova_api_key`, `siliconflow_api_key`, `cheaperinference_api_key` | `op://BotMaRe-Prod/botmare-ai/openai_api_key` |
+| **`botmare-security`** | `superadmin_key`, `webhook_key`, `backup_key`, `jwt_secret`, `session_secret` | `op://BotMaRe-Prod/botmare-security/superadmin_key` |
+| **`botmare-dashboard`** | `password` | `op://BotMaRe-Prod/botmare-dashboard/password` |
+| **`botmare-telegram`** | `bot_token` | `op://BotMaRe-Prod/botmare-telegram/bot_token` |
+
+---
+
+##### 🚀 Asistente de Migración Automática (Web Dashboard & CLI)
+
+Tienes dos opciones para migrar automáticamente todas tus variables actuales de `.env` hacia 1Password sin editar archivos a mano:
+
+###### Opción A: Desde el Panel Web (Recomendado)
+1. Abre tu panel en **`https://tu-dominio/settings`** y localiza la tarjeta **"Proveedor de Secretos & 1Password"**.
+2. Observarás los semáforos de diagnóstico en vivo:
+   - **CLI 1PASSWORD:** `🟢 Instalada y lista`
+   - **PLANTILLA .ENV.OP:** `🟢 Configurada`
+   - **SERVICE ACCOUNT TOKEN:** `🟢 Activo`
+   - **VARIABLES EN .ENV:** `🔵 55 detectadas`
+3. Escribe el nombre de tu bóveda (ej. `BotMaRe-Prod`).
+4. Deja marcadas las casillas:
+   - `[X] Crear notas/items automáticamente en 1Password`
+   - `[X] Activar 1Password como proveedor principal tras la migración`
+5. Haz clic en **`🚀 Ejecutar Migración Ahora`**.
+6. **¿Qué hace BotMaRe internamente?**
+   - Respalda tu archivo actual con timestamp (`.env.backup.2026-...`).
+   - Mapea cada API Key sensible a su URI segura `op://`.
+   - Genera la plantilla de producción `.env.op`.
+   - Crea automáticamente la bóveda en 1Password si aún no existe.
+   - Sube todas las notas y secretos a tu cuenta de 1Password usando `op item create`.
+   - Deja activo `1password` como proveedor principal.
+
+###### Opción B: Desde la Consola (CLI Asistente)
 ```bash
 pnpm run setup:provider
-# o desde el menú de control maestro:
-npm run menu # Opción [19]
+# O desde el menú maestro:
+npm run menu # Selecciona la opción [19] 🔐 Proveedor Secretos
 ```
+Elige la opción **`[3] 🔄 Migrar variables actuales de .env a 1Password`** y el asistente realizará todo el flujo por consola.
 
-##### 🐧 Modo Producción en Debian con PM2
-Para entornos de servidor (Debian/Ubuntu), 1Password se autentica mediante Service Account Token sin exponer credenciales en la consola:
+---
+
+##### 🐧 Despliegue en Producción (Debian / Ubuntu / VPS con PM2)
+
+En servidores remotos sin interfaz gráfica, 1Password se autentica de forma no interactiva mediante una **Cuenta de Servicio (Service Account)**.
+
+###### 1. Crear la Cuenta de Servicio en 1Password:
+1. En tu consola web de 1Password (ej. `my.1password.com`), dirígete a **Herramientas de desarrollo** -> **Cuentas de servicio**.
+2. Haz clic en **Nueva cuenta de servicio** y nómbrala `BotMaRe-Prod`.
+3. Marca la casilla **Autorización para crear bóvedas**.
+4. Haz clic en **Generar token**. 1Password te entregará un token que inicia con **`ops_...`**. Cópialo.
+
+###### 2. Guardar el Token en Debian con los Permisos Correctos:
+En tu terminal de Debian, guarda el token en la ruta del sistema asignándole como propietario al usuario que ejecuta PM2 (por ejemplo, `admin1`):
+
 ```bash
-# Guardar token con permisos restringidos 0600
 sudo mkdir -p /etc/botmare
-echo "ops_eyJhbGciOiJ..." | sudo tee /etc/botmare/op.token
-sudo chmod 600 /etc/botmare/op.token
+echo "ops_TU_TOKEN_AQUI" | sudo tee /etc/botmare/op.token > /dev/null
 
-# Iniciar normalmente (ecosystem.config.js lo detecta automáticamente)
-pm2 start ecosystem.config.js
+# CRÍTICO: Asignar permisos al usuario de PM2 para que Node.js pueda leerlo
+sudo chown admin1:admin1 /etc/botmare/op.token
+sudo chmod 600 /etc/botmare/op.token
 ```
+
+###### 3. Iniciar o Reiniciar PM2:
+```bash
+cd ~/BotMaRe
+pm2 restart ecosystem.config.js --update-env
+```
+*`ecosystem.config.js` y el motor `SecretProviderManager` detectan automáticamente el archivo `/etc/botmare/op.token` al arrancar.*
+
+---
+
+##### 🔄 Rotación de API Keys en Tiempo Real (Cero Downtime)
+
+Cuando una API Key de OpenAI, Groq o Gemini caduca, es regenerada o necesita rotarse:
+1. **No toques ningún archivo en el servidor.**
+2. Abre la app de 1Password en tu celular o navegador.
+3. Busca la nota **`botmare-ai`** en la bóveda **`BotMaRe-Prod`** y actualiza el campo correspondiente.
+4. Reinicia el proceso con:
+   ```bash
+   pm2 restart BotMaRe-Unified
+   ```
+   *(O directamente desde Telegram enviando `/pm2` -> Reiniciar).*
+5. BotMaRe levantará de inmediato consumiendo la nueva API Key directamente en memoria RAM.
+
+---
+
+##### 📱 Diagnóstico y Monitorización Remota de Secretos
+
+* **Desde Telegram:** Envía el comando **`/secretos`** o toca el botón **`🔐 Secretos / 1P`** en `/start`. Podrás ejecutar una prueba de inyección en seco (dry-run) y auditar las fuentes de cada variable sin exponer jamás claves en el chat.
+* **Desde la Consola:** Ejecuta `pnpm run test:llm` para realizar una prueba de latencia y conectividad real contra cada una de tus API Keys configuradas.
+* **Modo Rescate Web:** Si la conexión con 1Password falla temporalmente, `src/server.ts` activa el modo rescate de emergencia para mantener el panel web en línea con una alerta crítica, permitiendo conmutar a `.env` con un solo clic si fuese necesario.
+
+---
 
 #### ⚠️ ¿Por qué se detiene el bot al iniciar o reiniciar?
 1. **Otras claves técnicas sin configurar (Causa más frecuente):** Si editas manualmente tu archivo `.env` y asignas tu propia contraseña en `DASHBOARD_PASS`, pero dejas `SUPERADMIN_KEY`, `WEBHOOK_API_KEY` o `BACKUP_ENCRYPTION_KEY` con el texto de ejemplo `CAMBIA_ESTO...`, el validador abortará todo el proceso (`process.exit(1)`). **Al detenerse el servidor por completo, tampoco iniciará el bot de Telegram ni WhatsApp.**
 2. **Contraseña en lista negra:** Si en `DASHBOARD_PASS` intentas usar `admin123`, `tu_contrasena_segura` o palabras que incluyan `CAMBIA_ESTO`, el arranque será denegado por considerarse inseguro.
 
-#### 💡 Flujo Recomendado de Configuración
-Para evitar errores de validación y ahorrar tiempo configurando las claves criptográficas:
+#### 💡 Flujo Recomendado de Configuración Inicial (.env Tradicional)
+Para evitar errores de validación y ahorrar tiempo configurando las claves criptográficas si prefieres usar `.env`:
 
 1. **Desde el Menú de Control Maestro (Recomendado):**
    * Presiona la opción **`[17] 🔐 Generar Secretos`** (ejecuta `pnpm run setup:secrets` internamente). Esto autogenerará claves criptográficamente seguras para todas las variables técnicas respetando las que ya tengas configuradas.
@@ -246,7 +367,7 @@ Si necesitas consultar qué usuario y contraseña tienes configurados en tu ento
 * **Launcher de BotMaRe:** Opciones `[15]` (ver/editar) o `[17]` (ver estado de generación).
 
 > [!IMPORTANT]
-> **Checklist de Producción:** Para la lista de verificación completa de seguridad, aislamiento de red (evitar abrir puerto 8000), rotación de claves y modelo de confianza de plugins, consulta [SECURITY.md](./SECURITY.md).
+> **Checklist de Producción:** Para la lista de verificación completa de seguridad, aislamiento de red (evitar abrir puerto 8000), rotación de claves y modelo de confianza, consulta [SECURITY.md](./SECURITY.md).
 
 ### ⚙️ 7. Precedencia Unificada de Configuración
 
@@ -345,148 +466,47 @@ BotMaRe cuenta con un **Centro de Actualizaciones Inteligente** accesible desde 
 
 ---
 
-## 🧩 Sistema de Plugins JS (Sandbox)
+## 📄 Inteligencia Artificial Multimodal, Documentos y OCR
 
-BotMaRe incorpora un potente motor de **Plugins en JavaScript** ejecutados en un entorno seguro **Sandbox (Node.js VM)**. Esto permite agregar comandos personalizados, menús interactivos, descargas multimedia y consumo de APIs externas sin necesidad de reiniciar el servidor.
-
-### 📁 Estructura de un Plugin (`data/plugins/<id>.js`)
-Todo plugin exporta un objeto CommonJS con la siguiente estructura estándar:
-
-```javascript
-module.exports = {
-    name: "Nombre del Plugin",
-    description: "Descripción visible en el panel y menú",
-    active: true, // true = activo, false = pausado
-    onMessage: async (ctx, api) => {
-        // Lógica de respuesta e interceptor
-    }
-};
-```
-
-#### 📥 Parámetros del Objeto `ctx` (Contexto Entrante):
-* `ctx.text`: Texto recibido del usuario.
-* `ctx.from`: Identificador (JID o número) del remitente o grupo.
-* `ctx.isGroup`: Booleano (`true` para grupos, `false` para chats directos).
-* `ctx.pushName`: Nombre público del perfil de WhatsApp.
-* `ctx.quoted`: Información del mensaje citado o respondido (si existe).
-
-#### 🛠️ Métodos del Objeto `api` (Interacción con WhatsApp e IA):
-* `await api.reply(texto)`: Envía una respuesta al chat actual.
-* `await api.sendTo(jid, texto)`: Envía un mensaje a cualquier chat o grupo específico.
-* `await api.sendMedia(url, caption, tipo)`: Descarga y envía archivos (`'image' | 'video' | 'audio' | 'document'`).
-* `await api.react(emoji)`: Reacciona con un emoji al mensaje recibido (ej: `🔍`, `📝`, `🌐`, `⚡`).
-* `await api.callAI(prompt, systemPrompt?)`: Delega tareas de análisis, resumen o traducción directamente en el motor LLM configurado en BotMaRe.
-* `api.getPlugins()`: Devuelve la lista y estado de todos los plugins instalados.
-
-#### 🌐 Librerías Globales Disponibles en Sandbox (Sin `import`/`require`):
-* `axios` y `fetch`: Para consumir servicios web y APIs REST en tiempo real.
-* `Buffer`, `URL`, `Math`, `Date`, `JSON`: Utilidades estándar de Node.js y JavaScript.
-* `console`: Métodos `log`, `warn`, `error` con prefijo `[Plugin:<id>]`.
-* `global.APIs` y `global.APIKeys`: Llaves y endpoints inyectados automáticamente.
+BotMaRe cuenta con un motor nativo de **Inteligencia Artificial Multimodal** de alto rendimiento diseñado para procesar archivos adjuntos, documentos corporativos, comprobantes y notas de voz directamente desde las conversaciones de WhatsApp sin requerir extensiones externas pesadas.
 
 ---
 
-### 📦 Catálogo de Plugins Preinstalados (`data/plugins/`)
+### 📑 Extracción y Lectura de Documentos (PDF, Excel, Word, TXT)
+BotMaRe incorpora analizadores especializados (`documentParser`) que leen el contenido de documentos enviados por los usuarios y los convierten en contexto estructurado para el modelo de IA:
 
-| Plugin | Archivo | Comando | Descripción |
-| :--- | :--- | :--- | :--- |
-| **Búsqueda Web** | `google-search.js` | `!google [consulta]` | Consulta DuckDuckGo Instant Answers, Wikipedia en Español y síntesis con IA. |
-| **Resumidor Inteligente** | `summarize-text.js` | `!resumir [texto o cita]` | Extrae idea principal y viñetas ejecutivas de textos o citas con IA. |
-| **Traductor Multilingüe** | `translate.js` | `!traducir [idioma] [texto]` | Traduce entre múltiples idiomas (`en`, `es`, `fr`, `pt`, `de`, `ja`, etc.) con IA. |
-| **Inspector de Enlaces** | `url-info.js` | `!url [enlace]` | Extrae título, descripción, tarjeta OpenGraph e imagen de cualquier página. |
-| **Integrador Webhook** | `webhook.js` | `!webhook <url> [payload]` | Envía eventos HTTP POST en tiempo real hacia Zapier, Make, n8n o endpoints propios. |
-| **Google Sheets** | `google-sheets.js` | `!sheets [url]` | Inspecciona y resume filas y columnas de hojas de cálculo de Google. |
-| **Clima en Tiempo Real** | `clima.js` | `!clima [ciudad]` | Información meteorológica actualizada al instante. |
-| **Menú Principal** | `menu.js` | `!menup` | Lista todos los plugins instalados y sus comandos disponibles. |
+| Formato | Extensión | Capacidad de Análisis |
+| :--- | :--- | :--- |
+| **Adobe PDF** | `.pdf` | Extracción completa de texto estructurado de cotizaciones, contratos, catálogos y manuales. |
+| **Microsoft Excel** | `.xlsx`, `.xls` | Conversión de hojas de cálculo, inventarios, listas de precios y balances a texto tabular interpretable por LLMs. |
+| **Microsoft Word** | `.docx`, `.doc` | Extracción de párrafos, encabezados y formato de documentos comerciales. |
+| **Texto Plano y Datos** | `.txt`, `.csv`, `.json` | Lectura directa de registros, bases de datos exportadas y notas técnicas. |
 
----
-
-### 📋 Galería de Plantillas Listas para Usar
-
-#### 1. Comando Básico con Prefijo Flexible (`!ping`, `.ping`, `/ping`)
-```javascript
-module.exports = {
-    name: "Comando Ping",
-    description: "Comprueba el estado del bot",
-    active: true,
-    onMessage: async (ctx, api) => {
-        const text = (ctx.text || "").trim();
-        const match = text.match(/^[!./#]?(ping|hola|estado)$/i);
-        if (!match) return;
-
-        const sender = ctx.pushName || "amigo";
-        await api.reply(`🏓 ¡Pong! Hola *${sender}*, BotMaRe está activo al 100%.`);
-    }
-};
-```
-
-#### 2. Envío de Imágenes y Multimedia (`api.sendMedia`)
-```javascript
-module.exports = {
-    name: "Envío Multimedia",
-    description: "Genera y envía una imagen",
-    active: true,
-    onMessage: async (ctx, api) => {
-        const text = (ctx.text || "").trim();
-        if (/^[!./#]?(imagen|foto|meme)$/i.test(text)) {
-            await api.reply("⏳ Generando tu imagen...");
-            await api.sendMedia("https://picsum.photos/800/600", "📸 ¡Aquí tienes tu imagen!", "image");
-        }
-    }
-};
-```
-
-#### 3. Consumo de API Externa en Tiempo Real (Axios / Fetch)
-```javascript
-module.exports = {
-    name: "Consulta API Externa",
-    description: "Obtiene chistes o datos desde una API pública",
-    active: true,
-    onMessage: async (ctx, api) => {
-        const text = (ctx.text || "").trim();
-        if (/^[!./#]?(chiste|broma)$/i.test(text)) {
-            try {
-                const res = await axios.get("https://v2.jokeapi.dev/joke/Any?lang=es&type=single");
-                const chiste = res.data?.joke || "¿Qué hace una abeja en el gimnasio? ¡Zumba!";
-                await api.reply(`😂 *Chiste:* \n\n${chiste}`);
-            } catch (err) {
-                await api.reply("❌ Error al consultar la API externa.");
-            }
-        }
-    }
-};
-```
-
-#### 4. Menú Interactivo Dinámico
-```javascript
-module.exports = {
-    name: "Menú de Comandos",
-    description: "Muestra la lista de plugins instalados",
-    active: true,
-    onMessage: async (ctx, api) => {
-        const text = (ctx.text || "").trim();
-        if (!/^[!./#]?(menu|comandos|plugins|help|ayuda)$/i.test(text)) return;
-
-        const plugins = api.getPlugins ? api.getPlugins() : [];
-        const activePlugins = plugins.filter(p => p.active);
-
-        let msg = `╭━━━ 🤖 *LISTA DE PLUGINS* ━━━╮\n`;
-        msg += `┃ Activos: ${activePlugins.length} plugins\n`;
-        msg += `╰━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-
-        activePlugins.forEach((p, i) => {
-            msg += `*${i + 1}. ${p.name}*\n> ${p.description}\n\n`;
-        });
-
-        await api.reply(msg);
-    }
-};
-```
+> **Ejemplo de Uso:** Un cliente envía un archivo PDF con la cotización de un proveedor y pregunta: *"¿Cuál es el monto total del presupuesto y qué servicios incluye?"*. El bot extrae el contenido del PDF, lo analiza con el motor de IA y responde de manera ejecutiva en segundos.
 
 ---
 
-### 🤖 Adaptar Plugins de Otros Bots con IA
-El Panel Web incluye un botón **"Adaptar Plugin con IA"** con un prompt preconfigurado. Solo debes copiar el prompt, pegarlo junto al código de cualquier plugin de **Mystic Bot**, **GataBot** o **Baileys** en ChatGPT, Claude o Gemini, y el modelo te devolverá el código adaptado listo para pegar en BotMaRe.
+### 👁️ Visión Multimodal y OCR (Imagen a Texto)
+El agente de WhatsApp comprende imágenes en alta resolución mediante modelos de visión multimodal de última generación (**Gemini 2.5 Flash/Pro**, **OpenAI GPT-4o**, **Groq Llama 3.2 Vision**):
+
+* **Paso de Imagen a Texto (OCR Inteligente):** Transcripción fiel de carteles, capturas de pantalla, notas escritas y comprobantes.
+* **Inspección de Comprobantes de Pago:** Detección de número de referencia, monto, banco emisor y fecha para validación de depósitos o transferencias.
+* **Identificación Visual de Productos:** El cliente envía una foto de un artículo o repuesto y el bot identifica el producto, consulta su precio o disponibilidad en el inventario y redacta la respuesta adecuada.
+
+---
+
+### 🎙️ Transcripción de Audio y Notas de Voz (Whisper)
+Cuando un usuario envía un mensaje de voz en WhatsApp:
+1. El motor de audio descarga y normaliza el archivo multimedia.
+2. Se procesa mediante el modelo **OpenAI Whisper** o **Groq Audio** para generar una transcripción precisa en español.
+3. El texto resultante se inyecta en el prompt conversacional del bot, permitiendo responder con total coherencia al audio del cliente.
+
+---
+
+### 🧠 Cerebro de IA y Auto-Respuestas Contextuales
+* **Memoria Conversacional Continua:** Mantiene el hilo de la conversación recordando los datos previos proporcionados por el cliente.
+* **Reglas de Personalidad:** Prompt maestro configurable desde el Dashboard (`/personality`) o por Telegram (`/cerebro`).
+* **Failover Inteligente:** Si un proveedor de IA se satura o agota su cuota de peticiones (Rate Limit 429), BotMaRe conmuta automáticamente al siguiente modelo de respaldo en milisegundos sin cortar la atención al usuario.
 
 ---
 
