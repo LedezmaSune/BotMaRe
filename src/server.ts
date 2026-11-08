@@ -1,13 +1,26 @@
+import fs from 'fs';
+import path from 'path';
 import { SecretProviderManager } from './core/secrets/provider';
+
 // Inicializar proveedor de secretos (dotenv, environment o 1password)
-SecretProviderManager.getInstance().initialize();
+try {
+    SecretProviderManager.getInstance().initialize();
+} catch (err: any) {
+    console.error('💥 [CRÍTICO] Fallo al inicializar proveedor de secretos:', err.message);
+    const envPath = path.resolve(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+        console.warn('⚠️ [RESCATE] Arrancando en modo rescate con .env local para mantener el Dashboard Web accesible.');
+        SecretProviderManager.getInstance().setProvider('dotenv');
+        SecretProviderManager.getInstance().initialize();
+    } else {
+        process.exit(1);
+    }
+}
 
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
-import path from 'path';
-import fs from 'fs';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
