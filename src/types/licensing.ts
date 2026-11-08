@@ -21,7 +21,6 @@ export const ALL_MODULES: ModuleDefinition[] = [
     { id: 'support', label: 'Soporte', description: 'Monitor y herramientas de asistencia técnica', path: '/support', category: 'system' },
     { id: 'crm', label: 'CRM y Etiquetas', description: 'Etiquetado de clientes y seguimiento de estados', path: '/crm', category: 'management' },
     { id: 'sheets', label: 'Google Sheets', description: 'Integración y sincronización de datos con hojas de cálculo', path: '/sheets', category: 'automation' },
-    { id: 'plugins', label: 'Plugins JS', description: 'Extensiones y scripts personalizados en JavaScript', path: '/plugins', category: 'system' },
     { id: 'webhooks', label: 'Webhooks', description: 'Integraciones salientes y entrantes vía HTTP', path: '/webhooks', category: 'automation' },
     { id: 'settings', label: 'Configuración', description: 'Ajustes del bot, credenciales y opciones de servidor', path: '/settings', category: 'system' },
     { id: 'audits', label: 'Auditoría', description: 'Registro detallado de acciones y seguridad', path: '/audits', category: 'system' },

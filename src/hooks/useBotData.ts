@@ -7,7 +7,7 @@ import { parseContactList } from '../utils/contactParser';
 const API_BASE = '/api';
 const SOCKET_URL = ''; // En el monolito unificado, el socket vive en la misma URL/Puerto que la web
 
-export type TabId = 'mass' | 'scheduling' | 'calendar' | 'templates' | 'groups' | 'personality' | 'settings' | 'audits' | 'support' | 'manual' | 'updates' | 'autoresponders' | 'sheets' | 'telemetry' | 'access' | 'crm' | 'webhooks' | 'plugins' | 'channels';
+export type TabId = 'mass' | 'scheduling' | 'calendar' | 'templates' | 'groups' | 'personality' | 'settings' | 'audits' | 'support' | 'manual' | 'updates' | 'autoresponders' | 'sheets' | 'telemetry' | 'access' | 'crm' | 'webhooks' | 'channels';
 
 export interface LicensingState {
     plan: 'STARTER' | 'PRO' | 'ENTERPRISE' | 'CUSTOM';
@@ -39,7 +39,7 @@ export function useBotData() {
         enabledModules: [
             'mass', 'scheduling', 'calendar', 'templates', 'autoresponders', 
             'groups', 'personality', 'ollama', 'access', 'support', 
-            'crm', 'sheets', 'plugins', 'webhooks', 'settings', 
+            'crm', 'sheets', 'webhooks', 'settings', 
             'audits', 'updates', 'telemetry', 'manual'
         ]
     });

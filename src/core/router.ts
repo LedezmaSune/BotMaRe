@@ -6,7 +6,6 @@ import { getSettings, isChatPaused } from './db';
 import { getConfig } from './config';
 import { accessControl } from './accessControl';
 import { crmService } from './crm.service';
-import { PluginService } from '../modules/plugins/plugin.service';
 
 const pausedUsers = new Map<string, number>();
 const processedMessageIds = new Set<string>();
@@ -227,25 +226,7 @@ export class Router {
         }
         // ==========================================
 
-        // ==========================================
-        // 2. DISPATCH A PLUGINS DE BOTMARE
-        // ==========================================
-        const pluginContext = {
-            text,
-            from: jid,
-            sender: participantClean,
-            isGroup,
-            pushName,
-            quoted: messageContent.extendedTextMessage?.contextInfo?.quotedMessage,
-            rawMessage: msg,
-            socket
-        };
-
-        const pluginHandled = await PluginService.getInstance().dispatchOnMessage(pluginContext);
-        if (pluginHandled) {
-            console.log(`[Router] ✅ Mensaje de ${participantClean} ("${text.substring(0, 30)}") procesado y respondido por un plugin.`);
-            return; // Terminar procesamiento aquí, no enviar a la IA ni a autoresponders
-        }
+        // (Plugins eliminados - los mensajes van directo al motor de IA y auto-respuestas)
 
         // ==========================================
         // 3. VERIFICACIÓN DE ESTADO DE LA IA

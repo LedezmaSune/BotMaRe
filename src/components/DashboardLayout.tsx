@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users, BookOpen, ShieldAlert, Shield, RefreshCw, Database, Webhook, Briefcase, Activity, Puzzle, Radio, Server } from 'lucide-react';
+import { History, Bell, Brain, Megaphone, CalendarDays, Layout as LayoutIcon, Settings as SettingsIcon, Menu, X, Trash2, Users, BookOpen, ShieldAlert, Shield, RefreshCw, Database, Webhook, Briefcase, Activity, Radio, Server } from 'lucide-react';
 
 import { ConnectionOverlay } from '@/components/ConnectionOverlay';
 import { ThemeToggle, UpdateChecker, AIToggle, AutorespondersToggle, SheetsToggle, GlobalClock } from '@/components/StatusHeader';
@@ -29,7 +29,6 @@ const routes: Array<{ path: string; icon: any; label: string; id: TabId }> = [
     { path: '/support', icon: ShieldAlert, label: 'Soporte', id: 'support' },
     { path: '/crm', icon: Briefcase, label: 'CRM y Etiquetas', id: 'crm' },
     { path: '/sheets', icon: Database, label: 'Google Sheets', id: 'sheets' },
-    { path: '/plugins', icon: Puzzle, label: 'Plugins JS', id: 'plugins' },
     { path: '/webhooks', icon: Webhook, label: 'Webhooks 🚧', id: 'webhooks' },
     { path: '/settings', icon: SettingsIcon, label: 'Configuración', id: 'settings' },
     { path: '/audits', icon: History, label: 'Auditoría', id: 'audits' },

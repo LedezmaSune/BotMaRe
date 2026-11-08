@@ -35,9 +35,7 @@ import { createSheetsRouter } from '../modules/autoresponders/sheets.routes';
 import accessRouter from './access.routes';
 import { createWebhooksRouter } from './webhooks.routes';
 import crmRouter from './crm.routes';
-import { createPluginsRouter } from './plugins.routes';
 import { createLicensingRouter } from './licensing.routes';
-import { PluginService } from '../modules/plugins/plugin.service';
 
 // Setup de Multer removido; ahora se importa secureUpload centralizado.
 
@@ -59,9 +57,6 @@ export function createMainRouter(waClient: WhatsAppClient) {
     if ((waClient as any).setDiffusionService) {
         (waClient as any).setDiffusionService(diffusionService);
     }
-
-    // Initialize Plugin Engine
-    PluginService.getInstance().init(waService as any);
 
     // 2. Instantiate Controllers
     const waController = new WhatsAppController(waService);
@@ -87,7 +82,6 @@ export function createMainRouter(waClient: WhatsAppClient) {
     router.use('/access', accessRouter);
     router.use('/webhooks', createWebhooksRouter(waService as any));
     router.use('/crm', crmRouter);
-    router.use('/plugins', createPluginsRouter());
     router.use('/licensing', createLicensingRouter());
 
     return router;
