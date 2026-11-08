@@ -218,49 +218,90 @@ export class SecretMigrationService {
                 ...process.env,
                 ...(serviceToken ? { OP_SERVICE_ACCOUNT_TOKEN: serviceToken } : {})
             };
+            let lastCliError = '';
 
             // Asegurar que la bóveda existe o crearla si tenemos permisos
             try {
-                child_process.execSync(`op vault get "${vaultName}"`, { env: execEnv, stdio: 'ignore', timeout: 5000 });
-            } catch {
+                child_process.execSync(`op vault get "${vaultName}"`, { env: execEnv, stdio: 'pipe', timeout: 5000 });
+            } catch (vGetErr: any) {
                 try {
-                    child_process.execSync(`op vault create "${vaultName}"`, { env: execEnv, stdio: 'ignore', timeout: 5000 });
-                } catch {}
+                    child_process.execSync(`op vault create "${vaultName}"`, { env: execEnv, stdio: 'pipe', timeout: 5000 });
+                } catch (vCreateErr: any) {
+                    const errText = vCreateErr.stderr?.toString() || vCreateErr.message || '';
+                    if (errText) lastCliError = errText.trim();
+                }
             }
 
             for (const [itemTitle, fields] of Object.entries(itemsData)) {
-                try {
-                    // Construir argumentos para crear o editar la nota segura en 1Password
-                    const fieldArgs = Object.entries(fields)
-                        .map(([fName, fVal]) => `"${fName}=${fVal.replace(/"/g, '\\"')}"`)
-                        .join(' ');
+                let itemHandled = false;
 
-                    // Intentar crear el ítem en la bóveda
+                // Intento 1: Creación mediante JSON por stdin (soporte oficial de 1Password CLI v2 para campos personalizados)
+                try {
+                    const itemPayload = {
+                        title: itemTitle,
+                        category: "SECURE_NOTE",
+                        fields: Object.entries(fields).map(([fName, fVal]) => ({
+                            id: fName,
+                            type: "CONCEALED",
+                            label: fName,
+                            value: fVal
+                        }))
+                    };
+
                     child_process.execSync(
-                        `op item create --category="Secure Note" --title="${itemTitle}" --vault="${vaultName}" ${fieldArgs}`,
-                        { env: execEnv, stdio: ['ignore', 'pipe', 'pipe'], timeout: 10000 }
+                        `op item create --vault="${vaultName}" -`,
+                        {
+                            input: JSON.stringify(itemPayload),
+                            env: execEnv,
+                            stdio: ['pipe', 'pipe', 'pipe'],
+                            timeout: 15000
+                        }
                     );
                     itemsCreatedInVault.push(itemTitle);
-                } catch {
-                    // Si ya existe, intentar editar los campos
+                    itemHandled = true;
+                } catch (jsonErr: any) {
+                    const jsonStderr = jsonErr.stderr?.toString() || jsonErr.message || '';
+                    if (jsonStderr) lastCliError = jsonStderr.trim();
+
+                    // Intento 2: Asignación por línea de comandos usando sintaxis estricta [password]
                     try {
-                        const editArgs = Object.entries(fields)
-                            .map(([fName, fVal]) => `"${fName}=${fVal.replace(/"/g, '\\"')}"`)
+                        const fieldArgs = Object.entries(fields)
+                            .map(([fName, fVal]) => `"${fName}[password]=${fVal.replace(/"/g, '\\"')}"`)
                             .join(' ');
 
                         child_process.execSync(
-                            `op item edit "${itemTitle}" --vault="${vaultName}" ${editArgs}`,
-                            { env: execEnv, stdio: ['ignore', 'pipe', 'pipe'], timeout: 10000 }
+                            `op item create --category="Secure Note" --title="${itemTitle}" --vault="${vaultName}" ${fieldArgs}`,
+                            { env: execEnv, stdio: ['pipe', 'pipe', 'pipe'], timeout: 15000 }
                         );
                         itemsCreatedInVault.push(itemTitle);
-                    } catch {
-                        // Continuar con los demás ítems sin romper la migración
+                        itemHandled = true;
+                    } catch (createErr: any) {
+                        const createStderr = createErr.stderr?.toString() || createErr.message || '';
+                        if (createStderr) lastCliError = createStderr.trim();
+
+                        // Intento 3: Si el ítem ya existe en la bóveda, editar sus campos
+                        try {
+                            const editArgs = Object.entries(fields)
+                                .map(([fName, fVal]) => `"${fName}[password]=${fVal.replace(/"/g, '\\"')}"`)
+                                .join(' ');
+
+                            child_process.execSync(
+                                `op item edit "${itemTitle}" --vault="${vaultName}" ${editArgs}`,
+                                { env: execEnv, stdio: ['pipe', 'pipe', 'pipe'], timeout: 15000 }
+                            );
+                            itemsCreatedInVault.push(itemTitle);
+                            itemHandled = true;
+                        } catch (editErr: any) {
+                            const editStderr = editErr.stderr?.toString() || editErr.message || '';
+                            if (editStderr) lastCliError = editStderr.trim();
+                        }
                     }
                 }
             }
 
             if (itemsCreatedInVault.length === 0 && Object.keys(itemsData).length > 0) {
-                migrationWarning = 'La plantilla .env.op se generó, pero no se pudieron crear los ítems en la bóveda de 1Password. Verifica que el token de servicio (/etc/botmare/op.token) esté guardado y tenga acceso a la bóveda.';
+                const cleanError = lastCliError ? manager.sanitizeErrorMessage(lastCliError) : '';
+                migrationWarning = `La plantilla .env.op se generó, pero no se pudieron crear los ítems en 1Password${cleanError ? `: ${cleanError}` : '. Verifica que /etc/botmare/op.token tenga acceso a la bóveda.'}`;
             }
         }
 
