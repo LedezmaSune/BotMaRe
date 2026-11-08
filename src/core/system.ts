@@ -25,6 +25,7 @@ export class SystemUtils {
             const val = process.env[key];
             if (!val || val.trim() === '') return true;
             if (val.includes('CAMBIA_ESTO')) return true;
+            if (val.trim().startsWith('op://')) return true;
             if (invalidDefaults[key] && invalidDefaults[key].includes(val.trim())) return true;
             return false;
         });
@@ -32,7 +33,12 @@ export class SystemUtils {
         if (missing.length > 0) {
             console.error('\n🚨 [Seguridad] ERROR FATAL: Faltan variables de entorno obligatorias para el arranque seguro:');
             missing.forEach(key => {
-                console.error(`   ❌ ${key}: no configurada, vacía o contiene valor inseguro por defecto.`);
+                const val = process.env[key];
+                if (val && val.trim().startsWith('op://')) {
+                    console.error(`   ❌ ${key}: Referencia de 1Password no resuelta ('${val}').`);
+                } else {
+                    console.error(`   ❌ ${key}: no configurada, vacía o contiene valor inseguro por defecto.`);
+                }
             });
             console.error('\n💡 Solución inmediata:');
             console.error('   Ejecuta: pnpm run setup:secrets');

@@ -16,6 +16,22 @@ interface Release {
 // Fallback local en caso de que la API de GitHub no responda
 const FALLBACK_RELEASES: Release[] = [
     {
+        version: 'V 2.8.2',
+        date: '08 Noviembre 2026',
+        title: 'Integración Opcional de 1Password Secrets Manager, Setup Interactivo y Monitoreo en Telegram',
+        type: 'minor',
+        description: 'Implementación de arquitectura desacoplada para gestión de secretos en producción con soporte opcional de 1Password CLI, inyección segura en memoria (op inject), tolerancia cero a fallbacks silenciosos, asistente interactivo por consola y panel de inspección seguro en Telegram.',
+        features: [
+            '🔐 Gestor de Secretos Multi-Proveedor (SecretProviderManager): Arquitectura basada en Strategy Pattern con soporte dinámico para dotenv (local tradicional), environment (variables del sistema/Docker) y 1password (1Password CLI).',
+            '🛡️ Inyección Segura en Memoria (op inject): Resolución directa de referencias op://vault/item/field hacia process.env sin tocar disco ni almacenar secretos en archivos planos.',
+            '🛑 Blindaje DevSecOps Estricto (Cero Fallback Silencioso): Si 1Password está configurado y la CLI o el token de Service Account fallan, el servidor aborta el inicio inmediatamente para prevenir el uso accidental de secretos locales desactualizados o predeterminados.',
+            '🤖 Integración y Monitoreo en Telegram: Nuevo comando /secretos y botón interactivo "🔐 Secretos / 1P" en /start con prueba de salud en vivo (diagnóstico) y mapeo de variables sin exponer valores confidenciales.',
+            '🐧 Soporte de Producción en Debian y PM2: Detección automática del token de Service Account desde rutas seguras del sistema (/etc/botmare/op.token con chmod 600) en ecosystem.config.js.',
+            '🧙 Asistente Interactivo CLI (bin/setup-secrets-provider.js): Nuevo asistente sin dependencias externas ejecutable con pnpm run setup:provider o desde la opción 19 del Launcher.',
+            '🧪 Suite de Pruebas Unitarias Automatizadas: 12 nuevos tests unitarios en tests/unit/secrets-provider.test.ts con 100% de éxito y redacción activa de credenciales en logs de error.'
+        ]
+    },
+    {
         version: 'V 2.8.1',
         date: '07 Noviembre 2026',
         title: 'Estandarización Universal de pnpm@latest, Blindaje Multi-Plataforma en Android y Parche Next.js 16.4.3',

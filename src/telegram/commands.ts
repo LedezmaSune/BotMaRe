@@ -26,6 +26,7 @@ async function syncTelegramCommands(bot: Bot, maxRetries = 3, delayMs = 3500) {
     { command: "ssh", description: "🧑‍💻 Acceso SSH reverso (tmate)" },
     { command: "tailscale", description: "🛡️ Red privada Tailscale" },
     { command: "pm2", description: "⚙️ Control de procesos PM2" },
+    { command: "secretos", description: "🔐 Estado del proveedor de secretos (1P/.env)" },
     { command: "borrarmemorial", description: "🧹 Borrar memoria del bot" },
     { command: "setadmin", description: "👑 Añadir número admin de WhatsApp" },
     { command: "backup", description: "📦 Generar respaldo manual (ZIP)" },
@@ -48,6 +49,29 @@ export function registerCommands(bot: Bot, waService: WhatsAppService, diffusion
   // Sincronización de comandos en segundo plano con reintentos silenciosos
   syncTelegramCommands(bot).catch(() => null);
 
+  bot.command(["secretos", "seguridad", "1password"], async (ctx) => {
+    const { SecretProviderManager } = await import("../core/secrets/provider");
+    const health = SecretProviderManager.getInstance().checkHealth();
+    const statusEmoji = health.status === 'ok' ? '🟢' : (health.status === 'warning' ? '🟡' : '🔴');
+    const providerLabel = health.provider === '1password' ? '🛡️ 1Password Secrets Manager' : (health.provider === 'environment' ? '💻 Variables de Entorno (SO)' : '📁 Archivo .env Local');
+
+    const keyboard = new InlineKeyboard()
+      .text("🔄 Probar Conexión", "secrets_test")
+      .text("📊 Ver Variables", "secrets_vars").row();
+
+    const message = 
+      `🔐 *Estado del Proveedor de Secretos*\n\n` +
+      `• *Proveedor:* ${providerLabel}\n` +
+      `• *Estado:* ${statusEmoji} *${health.status.toUpperCase()}*\n` +
+      `• *Origen:* \`${health.details.source}\`\n` +
+      (health.details.vaultName ? `• *Bóveda:* \`${health.details.vaultName}\`\n` : '') +
+      `• *Claves Obligatorias:* ${health.details.resolvedCount}/5 resueltas\n` +
+      (health.details.error ? `\n⚠️ *Aviso:* _${health.details.error}_\n` : '') +
+      `\n_Cero filtración: Tus contraseñas nunca se transmiten por el chat._`;
+
+    await ctx.reply(message, { reply_markup: keyboard, parse_mode: "Markdown" });
+  });
+
   bot.command("start", async (ctx) => {
     const keyboard = new InlineKeyboard()
       .text("🌌 Panel Web", "menu_dashboard")
@@ -65,7 +89,8 @@ export function registerCommands(bot: Bot, waService: WhatsAppService, diffusion
       .text("🌐 Cloudflare", "menu_tunel").row()
       .text("🛡️ Tailscale IP", "menu_tailscale")
       .text("🧑‍💻 Acceso SSH", "menu_ssh").row()
-      .text("⚙️ Control PM2", "menu_pm2");
+      .text("⚙️ Control PM2", "menu_pm2").row()
+      .text("🔐 Secretos / 1P", "menu_secrets");
     
     const brandName = process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe';
     await ctx.reply(

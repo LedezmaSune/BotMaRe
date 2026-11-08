@@ -26,6 +26,88 @@ export const Settings: React.FC<SettingsProps> = ({ settings, networkStatus, onU
     const [uploadStatus, setUploadStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const [isTestingLLM, setIsTestingLLM] = useState(false);
     const [llmTestMap, setLlmTestMap] = useState<Record<string, { success: boolean; latencyMs: number; error?: string }>>({});
+    
+    // Estados del Gestor de Secretos y 1Password
+    const [secretsStatus, setSecretsStatus] = useState<{
+        provider: string;
+        isOpCliAvailable: boolean;
+        hasEnv: boolean;
+        hasOpTemplate: boolean;
+        serviceAccountPresent: boolean;
+        envKeyCount: number;
+        health?: any;
+    } | null>(null);
+    const [showMigrateModal, setShowMigrateModal] = useState(false);
+    const [vaultName, setVaultName] = useState('BotMaRe-Prod');
+    const [createInVault, setCreateInVault] = useState(false);
+    const [activateProvider, setActivateProvider] = useState(true);
+    const [migrationResult, setMigrationResult] = useState<any>(null);
+    const [isMigrating, setIsMigrating] = useState(false);
+
+    const fetchSecretsStatus = async () => {
+        try {
+            const res = await fetch('/api/settings/secrets-status');
+            const data = await res.json();
+            if (data && data.success) {
+                setSecretsStatus(data);
+            }
+        } catch (e) {
+            console.error('Error cargando estado de secretos:', e);
+        }
+    };
+
+    useEffect(() => {
+        fetchSecretsStatus();
+    }, []);
+
+    const handleMigrate = async () => {
+        setIsMigrating(true);
+        setMigrationResult(null);
+        try {
+            const res = await fetch('/api/settings/secrets-migrate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vaultName, createInVault, activateProvider })
+            });
+            const data = await res.json();
+            setMigrationResult(data);
+            await fetchSecretsStatus();
+        } catch (e: any) {
+            setMigrationResult({ success: false, error: e.message });
+        } finally {
+            setIsMigrating(false);
+        }
+    };
+
+    const handleSwitchProvider = async (target: 'dotenv' | '1password' | 'environment') => {
+        try {
+            const res = await fetch('/api/settings/secrets-switch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ provider: target })
+            });
+            const data = await res.json();
+            if (data && data.success) {
+                await fetchSecretsStatus();
+                alert(`Proveedor cambiado a: ${target}`);
+            }
+        } catch (e: any) {
+            alert('Error al cambiar proveedor: ' + e.message);
+        }
+    };
+
+    const handleDownloadOpTemplate = () => {
+        const template = `# 🦊 BotMaRe AI - 1Password References Template\n# Bóveda: ${vaultName}\n\nDASHBOARD_USER=admin\nDASHBOARD_PASS=op://${vaultName}/botmare-dashboard/password\nSUPERADMIN_KEY=op://${vaultName}/botmare-security/superadmin_key\nWEBHOOK_API_KEY=op://${vaultName}/botmare-security/webhook_key\nBACKUP_ENCRYPTION_KEY=op://${vaultName}/botmare-security/backup_key\nGROQ_API_KEY=op://${vaultName}/botmare-ai/groq_api_key\nTELEGRAM_BOT_TOKEN=op://${vaultName}/botmare-telegram/token\n`;
+        const blob = new Blob([template], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '.env.op';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
 
     useEffect(() => {
         if (settings) {
@@ -255,6 +337,190 @@ DASHBOARD_PASS=admin123
                     </p>
                 </div>
             </div>
+
+            {/* Secrets Manager & 1Password Card */}
+            <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                className="bg-app-card/40 backdrop-blur-xl border border-app-border rounded-3xl p-8 shadow-xl mt-8 relative overflow-hidden"
+            >
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 border-b border-app-border/40 pb-6">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-purple-500/10 rounded-2xl border border-purple-500/20">
+                            <Shield className="text-purple-400" size={28} />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <h2 className="text-xl font-bold text-white tracking-tight">Proveedor de Secretos & 1Password</h2>
+                                <span className={`text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${
+                                    secretsStatus?.provider === '1password'
+                                        ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                                        : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                                }`}>
+                                    {secretsStatus?.provider === '1password' ? '🛡️ 1Password CLI' : '📁 .env Local'}
+                                </span>
+                            </div>
+                            <p className="text-app-text-muted text-sm mt-1">
+                                Inyección segura en memoria (op inject), cero secretos en disco y tolerancia cero a fallbacks silenciosos.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                        <button
+                            onClick={() => setShowMigrateModal(!showMigrateModal)}
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-[0_0_15px_rgba(147,51,234,0.3)] transition-all active:scale-95"
+                        >
+                            <RefreshCw size={14} className={isMigrating ? 'animate-spin' : ''} />
+                            {showMigrateModal ? 'Cerrar Asistente' : '🔄 Migrar .env a 1Password'}
+                        </button>
+
+                        <button
+                            onClick={() => handleSwitchProvider(secretsStatus?.provider === '1password' ? 'dotenv' : '1password')}
+                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border border-app-border bg-black/30 hover:bg-black/50 text-app-text-muted hover:text-white transition-all active:scale-95"
+                        >
+                            {secretsStatus?.provider === '1password' ? '📁 Volver a .env' : '🛡️ Activar 1Password'}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Status indicators */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-black/20 border border-app-border/40 rounded-2xl p-4">
+                        <div className="text-[10px] uppercase font-bold text-app-text-muted tracking-wider mb-1">CLI 1Password</div>
+                        <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${secretsStatus?.isOpCliAvailable ? 'bg-emerald-400' : 'bg-red-400'}`}></div>
+                            <span className="text-xs font-bold text-white">
+                                {secretsStatus?.isOpCliAvailable ? 'Instalada y lista' : 'No detectada'}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="bg-black/20 border border-app-border/40 rounded-2xl p-4">
+                        <div className="text-[10px] uppercase font-bold text-app-text-muted tracking-wider mb-1">Plantilla .env.op</div>
+                        <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${secretsStatus?.hasOpTemplate ? 'bg-emerald-400' : 'bg-yellow-400'}`}></div>
+                            <span className="text-xs font-bold text-white">
+                                {secretsStatus?.hasOpTemplate ? 'Configurada' : 'Sin plantilla'}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="bg-black/20 border border-app-border/40 rounded-2xl p-4">
+                        <div className="text-[10px] uppercase font-bold text-app-text-muted tracking-wider mb-1">Service Account Token</div>
+                        <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${secretsStatus?.serviceAccountPresent ? 'bg-emerald-400' : 'bg-zinc-500'}`}></div>
+                            <span className="text-xs font-bold text-white">
+                                {secretsStatus?.serviceAccountPresent ? 'Activo (Debian)' : 'No configurado'}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="bg-black/20 border border-app-border/40 rounded-2xl p-4">
+                        <div className="text-[10px] uppercase font-bold text-app-text-muted tracking-wider mb-1">Variables en .env</div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
+                            <span className="text-xs font-bold text-white">
+                                {secretsStatus?.envKeyCount || 0} detectadas
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Migration Interactive Panel */}
+                {showMigrateModal && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="bg-black/40 border border-purple-500/30 rounded-2xl p-6 mb-6 space-y-4"
+                    >
+                        <div className="flex items-center gap-3 text-purple-300 font-bold text-sm">
+                            <Key size={18} />
+                            Asistente Web de Migración: .env ➔ 1Password
+                        </div>
+                        <p className="text-xs text-app-text-muted leading-relaxed">
+                            Este proceso leerá tu archivo <code className="text-cyan-300">.env</code> local, creará una copia de respaldo automática (<code className="text-yellow-300">.env.backup</code>), mapeará cada credencial sensible a referencias seguras <code className="text-purple-300">op://</code> y generará tu plantilla <code className="text-cyan-300">.env.op</code> sin exponer secretos en pantalla.
+                        </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                            <div>
+                                <label className="block text-xs font-bold text-app-text-muted mb-1">
+                                    Nombre de la Bóveda de 1Password
+                                </label>
+                                <input
+                                    type="text"
+                                    value={vaultName}
+                                    onChange={(e) => setVaultName(e.target.value)}
+                                    placeholder="BotMaRe-Prod"
+                                    className="w-full bg-black/40 border border-app-border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500/50"
+                                />
+                            </div>
+
+                            <div className="flex flex-col justify-center space-y-2 pt-2 md:pt-4">
+                                <label className="flex items-center gap-2 text-xs text-white cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={createInVault}
+                                        onChange={(e) => setCreateInVault(e.target.checked)}
+                                        className="rounded border-app-border bg-black/40 text-purple-500 focus:ring-0"
+                                    />
+                                    <span>Crear notas/ítems automáticamente en 1Password (requiere CLI iniciada)</span>
+                                </label>
+
+                                <label className="flex items-center gap-2 text-xs text-white cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={activateProvider}
+                                        onChange={(e) => setActivateProvider(e.target.checked)}
+                                        className="rounded border-app-border bg-black/40 text-purple-500 focus:ring-0"
+                                    />
+                                    <span>Activar 1Password como proveedor principal tras la migración</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3 pt-2">
+                            <button
+                                onClick={handleMigrate}
+                                disabled={isMigrating}
+                                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-white shadow-lg transition-all active:scale-95 disabled:opacity-50"
+                            >
+                                {isMigrating ? 'Migrando Secretos...' : '🚀 Ejecutar Migración Ahora'}
+                            </button>
+
+                            <button
+                                onClick={handleDownloadOpTemplate}
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-app-text-muted hover:text-white border border-app-border/60 transition-all"
+                            >
+                                <Download size={14} />
+                                Descargar Ejemplo .env.op
+                            </button>
+                        </div>
+
+                        {migrationResult && (
+                            <div className={`p-4 rounded-xl border text-xs leading-relaxed ${
+                                migrationResult.success
+                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                                    : 'bg-red-500/10 border-red-500/30 text-red-300'
+                            }`}>
+                                {migrationResult.success ? (
+                                    <div>
+                                        <div className="font-bold mb-1">✔ ¡Migración completada exitosamente!</div>
+                                        <div>• Se mapearon {migrationResult.migratedKeys?.length || 0} variables en <code className="text-white">.env.op</code> hacia la bóveda <code className="text-white">{migrationResult.vaultName}</code>.</div>
+                                        <div>• Respaldo de seguridad creado en: <code className="text-white">{migrationResult.backupPath}</code>.</div>
+                                        {migrationResult.itemsCreatedInVault?.length > 0 && (
+                                            <div>• Ítems creados en 1Password: {migrationResult.itemsCreatedInVault.join(', ')}.</div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div>✖ Error en la migración: {migrationResult.error}</div>
+                                )}
+                            </div>
+                        )}
+                    </motion.div>
+                )}
+            </motion.div>
 
             {/* Network & Connectivity Card */}
             <motion.div 

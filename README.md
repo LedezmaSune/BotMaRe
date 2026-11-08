@@ -1,11 +1,11 @@
 <div align="center">
-  <img src="https://img.shields.io/badge/BotMaRe-v2.8.1-6366f1?style=for-the-badge&logo=probot" alt="BotMaRe Banner"/>
+  <img src="https://img.shields.io/badge/BotMaRe-v2.8.2-6366f1?style=for-the-badge&logo=probot" alt="BotMaRe Banner"/>
   <h1>🦊 BotMaRe - Dashboard</h1>
   <p><strong>La plataforma definitiva de automatización para WhatsApp impulsada por Inteligencia Artificial, Orquestación Multi-Proveedor y Despliegue Multi-Plataforma.</strong></p>
 
   <p>
-    <img src="https://img.shields.io/badge/Version-2.8.1-indigo?style=flat-square" alt="Version 2.8.1"/>
-    <img src="https://img.shields.io/badge/Tests-196%20Passed-success?style=flat-square" alt="Tests 196 Passed"/>
+    <img src="https://img.shields.io/badge/Version-2.8.2-indigo?style=flat-square" alt="Version 2.8.1"/>
+    <img src="https://img.shields.io/badge/Tests-208%20Passed-success?style=flat-square" alt="Tests 196 Passed"/>
     <img src="https://img.shields.io/badge/Node.js-20.19.0+-339933?logo=nodedotjs&logoColor=white&style=flat-square" alt="Node.js"/>
     <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&style=flat-square" alt="Next.js"/>
     <img src="https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white&style=flat-square" alt="TypeScript"/>
@@ -58,6 +58,7 @@
 | Característica | Descripción |
 | :--- | :--- |
 | 🧠 **IA Multi-Proveedor (11 IAs)** | Groq, Cerebras, SambaNova, SiliconFlow (DeepSeek V3/R1), Mistral, Together, Gemini 2.5, DeepSeek, OpenRouter, Nvidia NIM y OpenAI con Failover automático. |
+| 🔐 **Gestor de Secretos Multi-Proveedor** | Soporte opcional para **1Password Secrets Manager** (`op inject` en memoria), variables del sistema (`environment`) y `.env` tradicional (`dotenv`). Tolerancia cero a fallback silencioso, token seguro en Debian/PM2 y asistente CLI interactivo. |
 | 🛡️ **Blindaje Criptográfico Signal / Baileys** | Transporte E2EE con resolución segura de reintentos (`getMessage`), eliminando bloqueos de *"Esperando mensaje"* y protegiendo la conexión durante reconexiones en caliente. |
 | ⚡ **Diagnóstico de IAs Live** | Pruebas de latencia y estado desde consola (`pnpm test:llm`), Telegram (`/diagnostico`) y Web (`⚡ Probar Conexiones IA`). |
 | 🧩 **Plugins JS con IA Nativa** | Entorno seguro Node.js VM con helper `api.callAI()` y 6 plugins oficiales (Búsqueda web, Resumen de textos, Traductor, Inspector URL, Webhooks y Google Sheets). |
@@ -70,7 +71,7 @@
 | 🗄️ **Persistencia Desacoplada** | Arquitectura multi-driver mediante `IDatabaseAdapter` con soporte intercambiable para LowDB (JSON), MongoDB Atlas y SQLite WAL, erradicando E/S bloqueante en CRM y telemetría. |
 | 🔒 **Hardening Integral de Seguridad** | Autenticación timing-safe en webhooks (`crypto.timingSafeEqual`), cifrado AES-256-GCM para respaldos, rate limiting con bloqueo por fuerza bruta y blindaje SSRF con DNS estricto. |
 | 🐳 **Docker Multi-Stage No-Root** | Contenedor productivo ultra-ligero basado en `node:20-alpine` bajo usuario no privilegiado `node`, sin compiladores C++ y con healthcheck en `/healthz`. |
-| 🧪 **Suite de 189 Tests Automatizados** | 25 suites de pruebas unitarias, de integración real y de contrato bajo Vitest, y cero errores de compilación TypeScript. |
+| 🧪 **Suite de 208 Tests Automatizados** | 25 suites de pruebas unitarias, de integración real y de contrato bajo Vitest, y cero errores de compilación TypeScript. |
 | ☁️ **Infraestructura como Código** | Archivos `main.tf` listos para aprovisionar VPS en AWS, Hetzner, DigitalOcean u Oracle Cloud. |
 
 ---
@@ -173,7 +174,7 @@ curl -f http://localhost:8000/healthz
 
 ---
 
-### 🔐 6. Configuración de Seguridad y Secretos (.env)
+### 🔐 6. Configuración de Seguridad y Secretos (.env / 1Password)
 
 BotMaRe implementa **validación estricta al arranque** antes de levantar cualquier servicio (Dashboard, WhatsApp, Telegram o Base de Datos). El sistema exige **5 variables de seguridad obligatorias**:
 
@@ -184,6 +185,37 @@ BotMaRe implementa **validación estricta al arranque** antes de levantar cualqu
 | `WEBHOOK_API_KEY` | Clave API para webhooks entrantes (Make, Zapier, Google Sheets). | No puede estar vacía ni contener `CAMBIA_ESTO`. |
 | `SUPERADMIN_KEY` | Clave maestra para el Panel SuperAdmin y gestión de licencias (`Ctrl+Shift+S`). | No puede estar vacía ni contener `CAMBIA_ESTO`. |
 | `BACKUP_ENCRYPTION_KEY` | Clave simétrica de 256 bits para cifrado de respaldos locales y enviados a Telegram. | No puede estar vacía ni contener `CAMBIA_ESTO`. |
+
+#### 🛡️ Proveedores de Secretos Soportados (dotenv | environment | 1password)
+
+BotMaRe admite tres estrategias para la carga y resolución de secretos gestionadas por `SecretProviderManager` (ver detalles en [Guía de Integración con 1Password](./docs/1PASSWORD_INTEGRATION.md)):
+
+* **`dotenv` (Por defecto):** Carga tradicional desde archivo `.env` local.
+* **`environment`:** Lectura directa de variables del entorno inyectadas por el sistema operativo o contenedor Docker (sin requerir `.env` físico).
+* **`1password`:** Inyección segura en memoria vía **1Password CLI** (`op inject`) a partir de la plantilla `.env.op`.
+
+> [!IMPORTANT]
+> **Tolerancia Cero a Fallbacks Silenciosos:** Si configuras `SECRETS_PROVIDER=1password` y la CLI de 1Password o el token de Service Account no responden o faltan permisos, el servidor aborta inmediatamente el arranque con un código de salida `process.exit(1)`. Bajo ninguna circunstancia recurre silenciosamente a un archivo `.env` residual o a credenciales por defecto.
+
+##### 🚀 Asistente de Configuración de Proveedor de Secretos
+Puedes configurar tu proveedor en cualquier momento mediante el asistente interactivo:
+```bash
+pnpm run setup:provider
+# o desde el menú de control maestro:
+npm run menu # Opción [19]
+```
+
+##### 🐧 Modo Producción en Debian con PM2
+Para entornos de servidor (Debian/Ubuntu), 1Password se autentica mediante Service Account Token sin exponer credenciales en la consola:
+```bash
+# Guardar token con permisos restringidos 0600
+sudo mkdir -p /etc/botmare
+echo "ops_eyJhbGciOiJ..." | sudo tee /etc/botmare/op.token
+sudo chmod 600 /etc/botmare/op.token
+
+# Iniciar normalmente (ecosystem.config.js lo detecta automáticamente)
+pm2 start ecosystem.config.js
+```
 
 #### ⚠️ ¿Por qué se detiene el bot al iniciar o reiniciar?
 1. **Otras claves técnicas sin configurar (Causa más frecuente):** Si editas manualmente tu archivo `.env` y asignas tu propia contraseña en `DASHBOARD_PASS`, pero dejas `SUPERADMIN_KEY`, `WEBHOOK_API_KEY` o `BACKUP_ENCRYPTION_KEY` con el texto de ejemplo `CAMBIA_ESTO...`, el validador abortará todo el proceso (`process.exit(1)`). **Al detenerse el servidor por completo, tampoco iniciará el bot de Telegram ni WhatsApp.**
@@ -475,6 +507,7 @@ Puedes supervisar, configurar y operar BotMaRe de forma remota usando tu bot de 
 - `👉 /lista` - Control de Listas Blancas (Whitelist) y Negras (Blacklist).
 - `👉 /auditoria` - Muestra los últimos 10 movimientos y eventos del sistema.
 - `👉 /notificaciones` - Activa o desactiva alertas del sistema en Telegram.
+- `👉 /secretos` - Muestra el proveedor activo (`1password`, `dotenv` o `environment`), realiza diagnóstico en vivo de la bóveda e inspecciona referencias `op://` sin exponer valores confidenciales.
 
 #### ⚙️ Mantenimiento y Servidor
 - `👉 /actualizar` - Busca y aplica nuevas versiones desde GitHub.
@@ -578,6 +611,15 @@ Ejecución continua 24/7 en servidores de producción:
 ---
 
 ## 🔄 Historial de Actualizaciones (Changelog)
+
+- **[2.8.2] - 2026-11-08:** Integración Opcional de 1Password Secrets Manager, Setup Interactivo y Monitoreo en Telegram:
+  - 🔐 **Gestor de Secretos Multi-Proveedor (`SecretProviderManager`):** Arquitectura desacoplada basada en el patrón Strategy con soporte dinámico para `dotenv` (local tradicional), `environment` (variables del sistema/Docker) y `1password` (1Password CLI).
+  - 🛡️ **Inyección Segura en Memoria (`op inject`):** Resolución directa de referencias `op://vault/item/field` hacia `process.env` en memoria sin almacenar secretos descifrados en el disco.
+  - 🛑 **Blindaje DevSecOps Estricto (Cero Fallback Silencioso):** Si `SECRETS_PROVIDER=1password` y la CLI o el token fallan, el servidor aborta el inicio inmediatamente para prevenir el uso accidental de secretos locales desactualizados o predeterminados.
+  - 🤖 **Integración y Monitoreo en Telegram:** Nuevo comando `/secretos` y botón interactivo "🔐 Secretos / 1P" en `/start` con prueba de salud en vivo (diagnóstico) y mapeo de variables sin exponer valores confidenciales.
+  - 🐧 **Soporte de Producción en Debian y PM2:** Detección automática del token de Service Account desde rutas seguras del sistema (`/etc/botmare/op.token` con permisos `0600`) en `ecosystem.config.js`.
+  - 🧙 **Asistente Interactivo CLI (`bin/setup-secrets-provider.js`):** Asistente sin dependencias externas ejecutable con `pnpm run setup:provider` o desde la opción 19 del Launcher.
+  - 🧪 **Suite de Pruebas Unitarias Automatizadas:** 12 nuevos tests unitarios en `tests/unit/secrets-provider.test.ts` con 100% de éxito y redacción activa de credenciales en logs de error.
 
 - **[2.8.1] - 2026-11-07:** Estandarización Universal de pnpm@latest, Dashboard Precompilado, Auto-Iniciador Termux y Parche Next.js 16.4.3:
   - 🌐 **Gestor de Descargas e Instalador Web Nativo (`bin/web-installer.js`):** Interfaz web móvil ultraligera de cero dependencias en puerto 8000 con Server-Sent Events (SSE), monitorización en tiempo real paquete por paquete (0-100%), descarga secuencial (`concurrency=1`, timeout 30 min) para conexiones móviles lentas o inestables, botones de Pausar/Reanudar y transferencia automática con un clic al servidor de producción.

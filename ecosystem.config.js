@@ -1,4 +1,29 @@
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
+
+// En Debian / Linux sin entorno gráfico, cargar el token de servicio de 1Password si existe en rutas seguras
+if (!process.env.OP_SERVICE_ACCOUNT_TOKEN) {
+  const tokenPaths = [
+    '/etc/botmare/op.token',
+    path.join(os.homedir(), '.config/botmare/op_service_account.token'),
+    path.join(__dirname, '.op_token')
+  ];
+
+  for (const tPath of tokenPaths) {
+    try {
+      if (fs.existsSync(tPath)) {
+        process.env.OP_SERVICE_ACCOUNT_TOKEN = fs.readFileSync(tPath, 'utf8').trim();
+        break;
+      }
+    } catch {}
+  }
+}
+
+// Determinar el archivo de variables (.env tradicional o plantilla .env.op)
+const envFile = fs.existsSync(path.join(__dirname, '.env'))
+  ? path.join(__dirname, '.env')
+  : (fs.existsSync(path.join(__dirname, '.env.op')) ? path.join(__dirname, '.env.op') : undefined);
 
 module.exports = {
   apps: [
@@ -20,9 +45,11 @@ module.exports = {
       exp_backoff_restart_delay: 100,
       
       // Native PM2 env file support
-      env_file: path.join(__dirname, '.env'),
+      ...(envFile ? { env_file: envFile } : {}),
       env: {
         NODE_ENV: "production",
+        ...(process.env.OP_SERVICE_ACCOUNT_TOKEN ? { OP_SERVICE_ACCOUNT_TOKEN: process.env.OP_SERVICE_ACCOUNT_TOKEN } : {}),
+        ...(process.env.BOTMARE_SECRET_PROVIDER ? { BOTMARE_SECRET_PROVIDER: process.env.BOTMARE_SECRET_PROVIDER } : {})
       },
 
       error_file: path.join(__dirname, "data/logs/err.log"),

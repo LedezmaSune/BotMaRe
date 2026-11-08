@@ -1,5 +1,9 @@
 import crypto from 'crypto';
 
+export * from './secrets/types';
+export * from './secrets/provider';
+export * from './secrets/migration';
+
 /**
  * Obtiene una variable de entorno obligatoria.
  * Lanza un error si la variable no está definida o está vacía.

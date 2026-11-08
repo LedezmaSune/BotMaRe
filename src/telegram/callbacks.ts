@@ -152,6 +152,7 @@ export function registerCallbacks(bot: Bot, waService: WhatsAppService) {
           `📱 *Canales y Servicios*\n` +
           `• WhatsApp: 🟢 Motor activo\n` +
           `• Telegram: 🟢 Bot admin\n` +
+          `• Bóveda/Secretos: ${process.env.BOTMARE_SECRET_PROVIDER === "1password" ? "🔐 1Password" : "📁 .env Local"}\n` +
           `• Pasarela SMS: ${smsStatus}\n` +
           `• Webhooks Externos: 🚧 (Próximamente)\n\n` +
           `_Reporte generado en tiempo real._`;
@@ -220,7 +221,71 @@ export function registerCallbacks(bot: Bot, waService: WhatsAppService) {
         } else {
             await ctx.reply(`🔴 *Tailscale Inactivo*\n\nNo se encontró una IP de red privada (100.x.x.x).`, { parse_mode: "Markdown" });
         }
+      } else if (data === "menu_secrets") {
+        const { SecretProviderManager } = await import("../core/secrets/provider");
+        const health = SecretProviderManager.getInstance().checkHealth();
+        const statusEmoji = health.status === 'ok' ? '🟢' : (health.status === 'warning' ? '🟡' : '🔴');
+        const providerLabel = health.provider === '1password' ? '🛡️ 1Password Secrets Manager' : (health.provider === 'environment' ? '💻 Variables de Entorno (SO)' : '📁 Archivo .env Local');
+
+        const keyboard = new InlineKeyboard()
+          .text("🔄 Probar Conexión", "secrets_test")
+          .text("📊 Ver Variables", "secrets_vars");
+
+        const text = `🔐 *Gestor de Secretos de ${process.env.NEXT_PUBLIC_SYSTEM_BRAND_NAME || 'BotMaRe'}*\n\n` +
+          `• *Proveedor:* ${providerLabel}\n` +
+          `• *Estado:* ${statusEmoji} *${health.status.toUpperCase()}*\n` +
+          `• *Origen:* \`${health.details.source}\`\n` +
+          (health.details.vaultName ? `• *Bóveda:* \`${health.details.vaultName}\`\n` : '') +
+          `• *Claves Obligatorias:* ${health.details.resolvedCount}/5 resueltas\n` +
+          (health.details.error ? `\n⚠️ *Aviso:* _${health.details.error}_\n` : '') +
+          `\n_Cero filtración: Las credenciales reales se mantienen cifradas y nunca se exponen por chat._`;
+
+        await ctx.reply(text, { reply_markup: keyboard, parse_mode: "Markdown" });
       }
+      return;
+    }
+
+    if (data === "secrets_test") {
+      await ctx.answerCallbackQuery({ text: "Comprobando proveedor de secretos..." });
+      const { SecretProviderManager } = await import("../core/secrets/provider");
+      const health = SecretProviderManager.getInstance().checkHealth();
+      const statusEmoji = health.status === 'ok' ? '🟢' : (health.status === 'warning' ? '🟡' : '🔴');
+      
+      let report = `🔐 *Diagnóstico de Bóveda y Secretos*\n\n` +
+        `• *Proveedor:* ${health.provider.toUpperCase()}\n` +
+        `• *Estado:* ${statusEmoji} *${health.status.toUpperCase()}*\n` +
+        `• *CLI 1Password:* ${health.details.cliAvailable ? '✅ Disponible' : '❌ No detectado'}\n` +
+        (health.details.vaultName ? `• *Bóveda:* \`${health.details.vaultName}\`\n` : '') +
+        `• *Claves Obligatorias:* ${health.details.resolvedCount}/5\n` +
+        (health.details.error ? `\n⚠️ *Detalle:* _${health.details.error}_\n` : `\n✅ *Todas las variables obligatorias están validadas y seguras.*\n`) +
+        `\n_Fecha de verificación: ${new Date().toLocaleTimeString()}._`;
+
+      const keyboard = new InlineKeyboard()
+        .text("🔄 Reintentar", "secrets_test")
+        .text("📊 Ver Variables", "secrets_vars");
+
+      await ctx.reply(report, { reply_markup: keyboard, parse_mode: "Markdown" });
+      return;
+    }
+
+    if (data === "secrets_vars") {
+      await ctx.answerCallbackQuery();
+      const { SecretProviderManager } = await import("../core/secrets/provider");
+      const vars = SecretProviderManager.getInstance().getSecretReferencesInfo();
+      
+      let text = `📊 *Mapeo de Variables de Seguridad*\n\n`;
+      for (const v of vars) {
+        const statusIcon = v.isSet ? '🟢' : '⚪';
+        const srcText = v.source === '1password' ? '1Password' : (v.source === 'env' ? 'Entorno' : 'No asignada');
+        text += `• \`${v.key}\`: ${statusIcon} (${srcText})\n`;
+        if (v.reference) {
+          text += `  └ Ref: \`${v.reference}\`\n`;
+        }
+      }
+      text += `\n_Solo se muestran nombres de referencias y estado, nunca el valor secreto._`;
+
+      const keyboard = new InlineKeyboard().text("🔙 Volver a Secretos", "menu_secrets");
+      await ctx.reply(text, { reply_markup: keyboard, parse_mode: "Markdown" });
       return;
     }
 

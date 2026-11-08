@@ -267,5 +267,68 @@ export class SettingsController {
         
         res.json({ success: true, learnedCount: content.length });
     });
+
+    getSecretsStatus = asyncHandler(async (_req: Request, res: Response) => {
+        const { SecretProviderManager } = await import('../../core/secrets');
+        const manager = SecretProviderManager.getInstance();
+        const health = manager.checkHealth();
+        const envPath = path.resolve(process.cwd(), '.env');
+        const templatePath = path.resolve(process.cwd(), '.env.op');
+
+        let envKeyCount = 0;
+        if (fs.existsSync(envPath)) {
+            try {
+                const envContent = fs.readFileSync(envPath, 'utf8');
+                const lines = envContent.split(/\r?\n/);
+                envKeyCount = lines.filter(l => l.trim() && !l.trim().startsWith('#') && l.includes('=')).length;
+            } catch {}
+        }
+
+        res.json({
+            success: true,
+            provider: manager.getProvider(),
+            isOpCliAvailable: manager.isOpCliAvailable(),
+            hasEnv: fs.existsSync(envPath),
+            hasOpTemplate: fs.existsSync(templatePath),
+            serviceAccountPresent: !!process.env.OP_SERVICE_ACCOUNT_TOKEN,
+            envKeyCount,
+            health
+        });
+    });
+
+    migrateSecrets = asyncHandler(async (req: Request, res: Response) => {
+        const { SecretMigrationService } = await import('../../core/secrets');
+        const { vaultName, createInVault, activateProvider } = req.body || {};
+
+        const result = await SecretMigrationService.migrate({
+            vaultName: vaultName || 'BotMaRe-Prod',
+            createInVault: !!createInVault,
+            activateProvider: activateProvider !== false
+        });
+
+        res.json(result);
+    });
+
+    switchSecretsProvider = asyncHandler(async (req: Request, res: Response) => {
+        const { SecretProviderManager } = await import('../../core/secrets');
+        const { provider } = req.body;
+        if (!provider || !['dotenv', 'environment', '1password'].includes(provider)) {
+            return res.status(400).json({ success: false, error: "Proveedor no válido. Debe ser 'dotenv', 'environment' o '1password'." });
+        }
+
+        const manager = SecretProviderManager.getInstance();
+        const envPath = path.resolve(process.cwd(), '.env');
+        let envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
+        const keyRegex = /^BOTMARE_SECRET_PROVIDER=.*$/m;
+        if (keyRegex.test(envContent)) {
+            envContent = envContent.replace(keyRegex, `BOTMARE_SECRET_PROVIDER=${provider}`);
+        } else {
+            envContent = `BOTMARE_SECRET_PROVIDER=${provider}\n` + envContent;
+        }
+        fs.writeFileSync(envPath, envContent, 'utf8');
+        manager.setProvider(provider);
+
+        res.json({ success: true, provider, message: `Proveedor cambiado a '${provider}' exitosamente.` });
+    });
 }
 

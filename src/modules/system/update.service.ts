@@ -95,6 +95,15 @@ export class UpdateService {
     private getKnownReleases() {
         return [
             {
+                version: 'v2.8.2',
+                title: 'v2.8.2 - Integración Opcional de 1Password Secrets Manager, Setup Interactivo y Monitoreo en Telegram',
+                date: '2026-11-08T00:00:00Z',
+                body: 'Arquitectura desacoplada de gestión de secretos (SecretProviderManager) con soporte de 1Password CLI en memoria (op inject), tolerancia cero a fallbacks silenciosos, token seguro en Debian/PM2 (/etc/botmare/op.token), asistente de configuración (pnpm setup:provider) y supervisión en Telegram (/secretos).',
+                prerelease: false,
+                draft: false,
+                url: 'https://github.com/LedezmaSune/BotMaRe/releases/tag/v2.8.2'
+            },
+            {
                 version: 'v2.8.1',
                 title: 'v2.8.1 - Estandarización Universal de pnpm@latest, Blindaje Multi-Plataforma en Android y Parche Next.js 16.4.3',
                 date: '2026-11-07T00:00:00Z',

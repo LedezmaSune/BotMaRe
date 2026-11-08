@@ -11,6 +11,11 @@ export function createSettingsRouter(controller: SettingsController) {
     
     router.post('/parse-env', controller.parseEnvFile);
     router.post('/learn-url', controller.learnFromUrl);
+
+    // Endpoints del Gestor de Secretos y 1Password
+    router.get('/secrets-status', controller.getSecretsStatus);
+    router.post('/secrets-migrate', controller.migrateSecrets);
+    router.post('/secrets-switch', controller.switchSecretsProvider);
     
     return router;
 }

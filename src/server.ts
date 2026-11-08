@@ -1,5 +1,6 @@
-import dotenv from 'dotenv';
-dotenv.config(); // Cargado en la primera línea para evitar que otros imports dependientes de variables de entorno fallen
+import { SecretProviderManager } from './core/secrets/provider';
+// Inicializar proveedor de secretos (dotenv, environment o 1password)
+SecretProviderManager.getInstance().initialize();
 
 import express from 'express';
 import http from 'http';
@@ -134,7 +135,7 @@ app.use(helmet({
 }));
 
 // Endpoint público de salud (sin autenticación ni datos internos)
-let appVersion = '2.8.1';
+let appVersion = '2.8.2';
 try {
     const pkgPath = path.join(process.cwd(), 'package.json');
     if (fs.existsSync(pkgPath)) {
@@ -243,7 +244,9 @@ async function bootstrap() {
     
     // En Docker el archivo físico .env no se copia dentro del contenedor, sino que se inyecta en memoria.
     // Comprobamos si NO hay archivo físico Y TAMPOCO hay variables de IA inyectadas en memoria.
-    if (!fs.existsSync(path.join(process.cwd(), '.env')) && !process.env.GROQ_MODEL && !process.env.GEMINI_MODEL && !process.env.OPENAI_MODEL) {
+    const providerMgr = SecretProviderManager.getInstance();
+    const isExternalProvider = providerMgr.getProvider() === '1password' || providerMgr.getProvider() === 'environment';
+    if (!fs.existsSync(path.join(process.cwd(), '.env')) && !isExternalProvider && !process.env.GROQ_MODEL && !process.env.GEMINI_MODEL && !process.env.OPENAI_MODEL) {
         try {
             const { startSetupServer } = await import('../setup-web/server');
             await startSetupServer();
@@ -260,7 +263,7 @@ async function bootstrap() {
     try {
         SystemUtils.ensureDirs();
         SystemUtils.validateEnv();
-        s0.succeed("Carpetas del sistema y .env validados.");
+        s0.succeed(`Carpetas del sistema y proveedor de secretos (${providerMgr.getProvider()}) validados.`);
     } catch (e: any) {
         s0.fail(`Error de validación: ${e.message}`);
         process.exit(1);
