@@ -290,7 +290,7 @@ export class SettingsController {
             isOpCliAvailable: manager.isOpCliAvailable(),
             hasEnv: fs.existsSync(envPath),
             hasOpTemplate: fs.existsSync(templatePath),
-            serviceAccountPresent: !!process.env.OP_SERVICE_ACCOUNT_TOKEN,
+            serviceAccountPresent: !!SecretProviderManager.ensureServiceAccountToken(),
             envKeyCount,
             health
         });

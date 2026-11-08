@@ -56,6 +56,35 @@ export class SecretProviderManager {
     }
 
     /**
+     * Asegura y retorna el token de servicio de 1Password cargado en process.env.
+     * Busca en process.env y en rutas estándar de Linux/Debian (/etc/botmare/op.token).
+     */
+    public static ensureServiceAccountToken(): string | null {
+        if (process.env.OP_SERVICE_ACCOUNT_TOKEN && process.env.OP_SERVICE_ACCOUNT_TOKEN.trim()) {
+            return process.env.OP_SERVICE_ACCOUNT_TOKEN.trim();
+        }
+
+        const candidatePaths = [
+            '/etc/botmare/op.token',
+            path.join(process.env.HOME || (process.platform === 'win32' ? process.env.USERPROFILE || '' : ''), '.config/botmare/op_service_account.token'),
+            path.resolve(process.cwd(), '.op_token')
+        ];
+
+        for (const cPath of candidatePaths) {
+            try {
+                if (fs.existsSync(cPath)) {
+                    const token = fs.readFileSync(cPath, 'utf8').trim();
+                    if (token) {
+                        process.env.OP_SERVICE_ACCOUNT_TOKEN = token;
+                        return token;
+                    }
+                }
+            } catch {}
+        }
+        return null;
+    }
+
+    /**
      * Inicializa la carga de secretos según el proveedor seleccionado.
      * REGLA DEVSECOPS: PROHIBIDO fallback silencioso a otro proveedor si 1Password falla.
      */
@@ -111,6 +140,9 @@ export class SecretProviderManager {
      * - Falla de forma explícita y audible ante cualquier error de autenticación o sintaxis.
      */
     private initialize1Password(): void {
+        // Asegurar que el token de cuenta de servicio esté cargado en process.env
+        SecretProviderManager.ensureServiceAccountToken();
+
         // 1. Verificar si 1Password CLI está disponible en el PATH
         if (!this.isOpCliAvailable()) {
             throw new Error(
@@ -171,6 +203,7 @@ export class SecretProviderManager {
      */
     public isOpCliAvailable(): boolean {
         try {
+            SecretProviderManager.ensureServiceAccountToken();
             child_process.execSync('op --version', { stdio: 'ignore', timeout: 3000 });
             return true;
         } catch {

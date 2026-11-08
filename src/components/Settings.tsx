@@ -512,6 +512,9 @@ DASHBOARD_PASS=admin123
                                         {migrationResult.itemsCreatedInVault?.length > 0 && (
                                             <div>• Ítems creados en 1Password: {migrationResult.itemsCreatedInVault.join(', ')}.</div>
                                         )}
+                                        {migrationResult.warning && (
+                                            <div className="mt-1 text-amber-300">⚠ {migrationResult.warning}</div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div>✖ Error en la migración: {migrationResult.error}</div>

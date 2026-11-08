@@ -19,6 +19,7 @@ export interface MigrationResult {
     templatePath: string;
     backupPath: string;
     itemsCreatedInVault: string[];
+    warning?: string;
     error?: string;
 }
 
@@ -209,8 +210,24 @@ export class SecretMigrationService {
         // 3. Crear ítems en 1Password si fue solicitado y la CLI está disponible
         const itemsCreatedInVault: string[] = [];
         const manager = SecretProviderManager.getInstance();
+        const serviceToken = SecretProviderManager.ensureServiceAccountToken();
+        let migrationWarning: string | undefined = undefined;
 
         if (options.createInVault && manager.isOpCliAvailable()) {
+            const execEnv: NodeJS.ProcessEnv = {
+                ...process.env,
+                ...(serviceToken ? { OP_SERVICE_ACCOUNT_TOKEN: serviceToken } : {})
+            };
+
+            // Asegurar que la bóveda existe o crearla si tenemos permisos
+            try {
+                child_process.execSync(`op vault get "${vaultName}"`, { env: execEnv, stdio: 'ignore', timeout: 5000 });
+            } catch {
+                try {
+                    child_process.execSync(`op vault create "${vaultName}"`, { env: execEnv, stdio: 'ignore', timeout: 5000 });
+                } catch {}
+            }
+
             for (const [itemTitle, fields] of Object.entries(itemsData)) {
                 try {
                     // Construir argumentos para crear o editar la nota segura en 1Password
@@ -221,7 +238,7 @@ export class SecretMigrationService {
                     // Intentar crear el ítem en la bóveda
                     child_process.execSync(
                         `op item create --category="Secure Note" --title="${itemTitle}" --vault="${vaultName}" ${fieldArgs}`,
-                        { stdio: ['ignore', 'pipe', 'pipe'], timeout: 10000 }
+                        { env: execEnv, stdio: ['ignore', 'pipe', 'pipe'], timeout: 10000 }
                     );
                     itemsCreatedInVault.push(itemTitle);
                 } catch {
@@ -233,13 +250,17 @@ export class SecretMigrationService {
 
                         child_process.execSync(
                             `op item edit "${itemTitle}" --vault="${vaultName}" ${editArgs}`,
-                            { stdio: ['ignore', 'pipe', 'pipe'], timeout: 10000 }
+                            { env: execEnv, stdio: ['ignore', 'pipe', 'pipe'], timeout: 10000 }
                         );
                         itemsCreatedInVault.push(itemTitle);
                     } catch {
                         // Continuar con los demás ítems sin romper la migración
                     }
                 }
+            }
+
+            if (itemsCreatedInVault.length === 0 && Object.keys(itemsData).length > 0) {
+                migrationWarning = 'La plantilla .env.op se generó, pero no se pudieron crear los ítems en la bóveda de 1Password. Verifica que el token de servicio (/etc/botmare/op.token) esté guardado y tenga acceso a la bóveda.';
             }
         }
 
@@ -263,7 +284,8 @@ export class SecretMigrationService {
             totalKeys: Object.keys(itemsData).reduce((acc, k) => acc + Object.keys(itemsData[k]).length, 0),
             templatePath,
             backupPath,
-            itemsCreatedInVault
+            itemsCreatedInVault,
+            warning: migrationWarning
         };
     }
 }
